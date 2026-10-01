@@ -7,11 +7,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newSimState } from '../src/core/sim-state.mjs';
-import { buildBuilding } from '../src/infra/infra.mjs';
+import { buildBuilding, demolishBuilding } from '../src/infra/infra.mjs';
 import { tickAircraft } from '../src/sim/aircraft.mjs';
 import { tickEconomy, tickPassengers } from '../src/economy/economy.mjs';
 import { tickPlanner } from '../src/flights/flights.mjs';
-import { rebuildGraph } from '../src/pathfinding/path.mjs';
+import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../src/pathfinding/path.mjs';
 
 // Même helper que les sondes de l'audit (probes.mjs) : un avion de test.
 function ac(id, overrides = {}) {
@@ -151,4 +151,49 @@ test('AC15 : invariants de réservation tenus sur un cycle multi-vols', () => {
     if (departed.size >= 3) break;
   }
   assert.ok(departed.size >= 1, 'au moins un vol complet sans double réservation');
+});
+
+// R3 (A6) : démolition d'un terminal multi-portes dont UNE porte est occupée.
+// Setup identique à la sonde A6 (probes.mjs) : porte 2 réservée (acId=1),
+// avion au sol dessus → la démolition doit être REFUSÉE (porte occupée).
+test('R3-A6 : terminal à porte occupée ne se démolit pas', () => {
+  const sim = airport();
+  const gate = sim.infra.gates[1];
+  gate.acId = 1;
+  sim.aircraft = [ac(1, { phase: 'ground', gateId: gate.id })];
+  const nbGates = sim.infra.gates.length;
+  const result = demolishBuilding(sim, sim.infra.terminals[0].id);
+  assert.equal(result.ok, false, 'refusé (porte occupée)');
+  assert.ok(String(result.why).includes('porte occupée'), 'motif lisible');
+  assert.equal(sim.infra.terminals.length, 1, 'le terminal est intact');
+  assert.equal(sim.infra.gates.length, nbGates, 'les portes du terminal sont intactes');
+  assert.equal(sim.aircraft[0].gateId, gate.id, "l'avion garde sa porte (pas de référence périmée)");
+});
+
+// R3 (A7) : démolir un taxiway occupé invalide le chemin SANS exception.
+// Setup identique à la sonde A7 (probes.mjs) : avion en taxi sur le chemin,
+// démolition du taxiway, puis tick → l'avion passe en « blocked » et retente
+// (plus d'exception « Cannot read properties of undefined (reading 'seg') »).
+test('R3-A7 : démolir un taxiway occupé ne lève pas d\'exception', () => {
+  const sim = airport();
+  const rw = sim.infra.runways[0];
+  const tw = sim.infra.taxiways[0];
+  const g = sim.infra.gates[0];
+  const path = findPath(sim, gateNodeOf(sim, g.id), runwayExitNode(sim, rw.id), new Set());
+  assert.ok(path && path.length >= 2, 'chemin avant démolition');
+  // Dans la géométrie connective, path = [nœud taxiway, nœud de sortie de
+  // piste] (arête directe inter-segments) : l'avion roule AU DÉPART du
+  // taxiway (path[0], seg = l'ID du taxiway) — c'est LE segment qui va être
+  // détruit (l'équivalent de la sonde A7, où path[1] était le nœud taxiway).
+  const node = sim._graph.nodes[path[0]];
+  sim.aircraft = [ac(1, { phase: 'taxi', gateId: g.id, runwayId: rw.id,
+    path, pathPtr: 0, x: node.x, y: node.y, seg: node.seg, heading: 'gate' })];
+  assert.equal(node.seg, tw.id, "l'avion est bien SUR le taxiway à détruire");
+  const result = demolishBuilding(sim, tw.id);
+  assert.equal(result.ok, true, 'la démolition passe (le taxiway n\'est pas protégé)');
+  assert.equal(sim.aircraft[0].path, null, "le chemin de l'avion est remis à zéro");
+  let error = null;
+  try { tickAircraft(sim, 0.1); } catch (e) { error = e.message; }
+  assert.equal(error, null, "pas d'exception au tick suivant la démolition");
+  assert.equal(sim.aircraft[0].phase, 'blocked', "l'avion est bloqué (chemin invalide → attente, réessai)");
 });

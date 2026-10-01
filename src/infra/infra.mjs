@@ -3,7 +3,7 @@
 // Grille d'occupation 10×10 px : un segment de 200 px = 20 cellules, ça suffit
 // pour « est-ce que ça empiète sur autre chose ? » et « est-ce qu'un avion peut
 // poser/rouler ici ». ponytail : grille carrée simple, pas d'arborescence spatiale.
-import { BUILDINGS, UNLOCKS } from '../data/catalog.mjs';
+import { BUILDINGS, UNLOCKS, TERMINAL_GATE_SIZES } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
 
 const CELL = 10;
@@ -94,7 +94,10 @@ function makeGates(id, b, sizes) {
 // Pose un bâtiment (placement + grille + graph dirty). L'argent reste à
 // l'appelant : buildBuilding débite, l'aéroport de départ (new-game.mjs, A-2)
 // est gratuit (fourni par le jeu).
-export function placeBuilding(sim, b, gateSizes = ['S', 'M', 'M', 'S']) {
+// BL-05 (A8) : les terminaux créent leurs 4 portes sur le bord bas —
+// S/M/M/L : la porte L est CONSTRUCTIBLE, les gros avions ont donc une infra
+// réalisable (piste L de la grille 1000). On ne limite pas les vols L.
+export function placeBuilding(sim, b, gateSizes = TERMINAL_GATE_SIZES) {
   if (b.type === 'runway') { b.len = b.h; sim.infra.runways.push(b); }
   else if (b.type === 'taxiway') sim.infra.taxiways.push(b);
   else if (b.type === 'terminal') {
@@ -116,16 +119,31 @@ export function demolishBuilding(sim, id) {
   const find = (arr) => arr.find((b) => b.id === id);
   const b = find(sim.infra.runways) || find(sim.infra.taxiways) || find(sim.infra.terminals) || find(sim.infra.services);
   if (!b) return { ok: false, why: 'inconnu' };
-  // Un terminal a des portes : refusé si une porte est occupée.
+  // Un terminal a des portes : refusé si UNE de ses portes est occupée
+  // (R3, A6 : le test regardait la première porte seulement — un terminal
+  // multi-portes avec la 2e occupée passait le test et était détruit).
   if (b.type === 'terminal') {
-    const g = sim.infra.gates.find((g) => g.terminalId === id);
-    if (g && g.acId) return { ok: false, why: 'porte occupée' };
+    if (sim.infra.gates.some((g) => g.terminalId === id && g.acId)) {
+      return { ok: false, why: 'porte occupée' };
+    }
     sim.infra.gates = sim.infra.gates.filter((g) => g.terminalId !== id);
     // les avions en attente d'une porte de ce terminal retournent en holding
     for (const ac of sim.aircraft) if (ac.gateId && ac.gateId.startsWith(`${id}-`)) ac.gateId = null;
   }
   if (b.type === 'runway' && sim.aircraft.some((a) => a.runwayId === id)) {
     return { ok: false, why: 'piste en service' };
+  }
+  // (R3, A7) Un avion dont le chemin PASSE PAR (ou EST SUR) le segment détruit
+  // aurait un chemin périmé (indices dans l'ancien graphe, nœuds supprimés) →
+  // exception au prochain tick. On remet à zéro AVANT le rebuild (il faut
+  // l'ancien graphe pour repérer les nœuds du segment détruit) : au prochain
+  // tick l'avion passe en « blocked » et retente un nouveau chemin (retry
+  // équitable, annulation si blocage persistant) — plus d'exception.
+  if (b.type === 'taxiway' || b.type === 'runway') {
+    const onDead = (i) => sim._graph.nodes[i] && sim._graph.nodes[i].seg === id;
+    for (const ac of sim.aircraft) {
+      if (ac.path && ac.path.some(onDead)) { ac.path = null; ac.seg = null; }
+    }
   }
   const refund = Math.round(b.cost * BUILDINGS[b.type].sellRefund);
   sim.economy.money += refund;
