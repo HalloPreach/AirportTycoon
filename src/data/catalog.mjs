@@ -10,7 +10,17 @@ export const BUILDINGS = Object.freeze({
   hangar:   { name: 'Hangar maintenance', cost: 1500, w: 160, h: 120, sellRefund: 0.5 },
 });
 
-export const AIRPORT_OPS_PER_DAY = 400; // coût d'exploitation de l'aéroport entier, par jour de jeu
+// ponytail: coût horaire (le tick est en secondes de jeu) — 400/jour ≈ 16,7/h,
+// réparti socle (A12 : l'argent diminue MÊME sans vol) + services construits.
+export const OPEX_PER_SEC = Object.freeze({
+  runway: 1.2,     // piste : 230,4 $/jour
+  taxiway: 0.2,    // 4,8 $/jour
+  terminal: 1.8,   // 43,2 $/jour
+  fuel: 4,
+  hangar: 2,
+  maintenance: 1.5,
+  catering: 2.5,
+});
 
 // Catégories d'avions : ce qui contraint l'infra (piste assez longue, porte de la bonne taille).
 export const AIRCRAFT = Object.freeze({
@@ -40,6 +50,8 @@ export const UNLOCKS = Object.freeze([
 ]);
 
 // Décomposition du cycle avion (ordre d'exécution, l'état est la donnée).
+// AC18 (A9) : « docking » = amarrage physique du nœud de porte au centre de la
+// porte (taxi → docking → gate).
 export const PHASES = Object.freeze([
-  'approach', 'holding', 'landing', 'exit', 'taxi', 'gate', 'disembark', 'ground', 'board', 'pushback', 'departure',
+  'approach', 'holding', 'landing', 'exit', 'taxi', 'docking', 'gate', 'disembark', 'ground', 'board', 'pushback', 'departure',
 ]);

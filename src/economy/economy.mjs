@@ -2,8 +2,8 @@
 // déficit/faillite, satisfaction passagers. Logique pure, mutue sim.economy + sim.passengers.
 // Recettes : atterrissage/porte au SOL, billets au DÉCOLLAGE.
 import { pushEvent } from '../core/sim-state.mjs';
+import { OPEX_PER_SEC } from '../data/catalog.mjs';
 
-const OPEX_PER_SEC = { fuel: 4, hangar: 2, maintenance: 1.5, catering: 2.5 };
 const FUEL_COST_PER_PAX = 0.5;   // carburant : coûté au départ (critère carburant)
 const BANKRUPT_LIMIT = -10000;   // solde sous ce seuil = faillite
 
@@ -32,17 +32,25 @@ export function onGateArrived(sim, ac) {
   earn(sim, 100, 'gate');
 }
 
-// Départ : recettes passagers (billets) − carburant.
+// Départ : recettes passagers (billets), puis carburant en DÉPENSE dédiée.
+// BL-14 (A-6) : le carburant passe par `charge` (compte spent.fuel) — jamais une
+// « recette négative » : l'ancien earn(-x, 'fuel-cost') contaminait revenue
+// (bilan « recettes » faux) et, sous la garde satisfaction 0 %, la dépense
+// carburant sautait silencieusement (elle passait aussi par earn).
 export function onGateDeparted(sim, ac) {
   earn(sim, ac.pax * 25, 'pax');
-  earn(sim, -ac.pax * FUEL_COST_PER_PAX, 'fuel-cost'); // le carburant est une dépense
+  charge(sim, ac.pax * FUEL_COST_PER_PAX, 'fuel');
 }
 
-// Exploitation continue : chaque service ACTIF coûte (seulement s'il est construit).
+// Exploitation continue (BL-14, R8/A12) : le socle aéroportuaire (piste, taxiway,
+// terminal) coûte MÊME SANS VOL, et chaque service ACTIF (construit) coûte aussi.
 // Non protégée par canAfford : c'est une dépense fixe qui PEUT creuser le déficit
 // (critère 8) ; la faillite vient ensuite si le solde reste trop négatif.
 export function tickEconomy(sim, dt) {
   let opex = 0;
+  for (const r of sim.infra.runways) opex += (OPEX_PER_SEC.runway ?? 0) * dt;
+  for (const t of sim.infra.taxiways) opex += (OPEX_PER_SEC.taxiway ?? 0) * dt;
+  for (const t of sim.infra.terminals) opex += (OPEX_PER_SEC.terminal ?? 0) * dt;
   for (const s of sim.infra.services) opex += (OPEX_PER_SEC[s.type] ?? 0) * dt;
   if (opex) {
     sim.economy.money -= opex;
@@ -63,6 +71,30 @@ export function checkBankruptcy(sim) {
     sim.economy.bankrupt = true;
     pushEvent(sim, { kind: 'bankrupt' });
   }
+}
+
+// Bilan par PÉRIODE (les compteurs sont cumulés depuis le début de la partie) :
+// recettes / exploitation / carburant / investissements, avec les CAUSES du
+// déficit quand le solde est négatif (AC23 : un bilan qui se lit, pas un chiffre).
+export function periodStatement(sim) {
+  const e = sim.economy;
+  const revenue = Object.values(e.revenue).reduce((a, b) => a + b, 0);
+  const opex = e.spent.opex ?? 0;
+  const fuel = e.spent.fuel ?? 0;
+  // Investissements = tout ce qui a été payé en BÂTIMENTS (clés de spent autres
+  // qu'opex/fuel — construction, remboursement de démolition compris).
+  const invest = Object.entries(e.spent).reduce(
+    (a, [k, v]) => (k === 'opex' || k === 'fuel' ? a : a + v), 0);
+  const net = revenue - opex - fuel - invest;
+  const causes = [];
+  if (net < 0) {
+    if (opex > 0) causes.push(`exploitation ${Math.round(opex)} $ (socle + services)`);
+    if (fuel > 0) causes.push(`carburant ${Math.round(fuel)} $`);
+    if (invest > 0) causes.push(`investissements ${Math.round(invest)} $`);
+    if (e.debt > 0) causes.push(`intérêts sur la dette ${Math.round(e.debt)} $`);
+    if (!causes.length) causes.push('solde dû aux remboursements de démolition');
+  }
+  return { revenue, opex, fuel, invest, net, money: e.money, debt: e.debt, causes };
 }
 
 // Satisfaction : les services de confort la soutiennent, les retards la dégradent.
