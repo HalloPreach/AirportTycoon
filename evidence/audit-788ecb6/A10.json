@@ -1,0 +1,8 @@
+{
+  "commitGit": "788ecb66718f1389c5e836f0704ecb8028dfe398",
+  "runAt": "2026-10-01T23:32:07.514Z",
+  "name": "A10 — état de sauvegarde invalide accepté, puis crash au tick",
+  "confirmed": true,
+  "accepted": true,
+  "error": "Cannot read properties of null (reading 'length')"
+}

@@ -1,0 +1,24 @@
+{
+  "commitGit": "788ecb66718f1389c5e836f0704ecb8028dfe398",
+  "runAt": "2026-10-01T23:32:07.573Z",
+  "name": "A14 — compteur du test multivols compte plusieurs fois le même départ",
+  "originalTestPasses": false,
+  "counter": 0,
+  "uniqueDepartures": 0,
+  "departedIds": [],
+  "phasesAtStop": [
+    {
+      "id": 1,
+      "phase": "cancelled"
+    },
+    {
+      "id": 2,
+      "phase": "cancelled"
+    },
+    {
+      "id": 3,
+      "phase": "cancelled"
+    }
+  ],
+  "confirmed": false
+}

@@ -7,9 +7,10 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
 | Carte | Statut |
 |---|---|
 | BL-00 Reproduction 8 risques + PROGRESS.md | **fait (2026-10-01)** |
-| BL-01 Nouvelle partie aéroport fourni | **en cours** (worker t_a02aea3e, non commité) |
+| BL-01 Nouvelle partie aéroport fourni | **fait (commits c815180 + 382defd)** |
 | BL-02 Connectivité physique (R1) | **fait (2026-10-02, worker t_fe23a99e)** |
 | BL-05 R3 démolition (A6/A7) | **fait (2026-10-02, worker t_e207fa79)** |
+| BL-04 R5 déplacement continu (A9) | **fait (2026-10-02, worker t_7a67c46d)** |
 | BL-03..BL-19 | en attente de leurs dépendances (BL-03 attend BL-02, BL-04/BL-05/BL-09 attendent BL-03, …) |
 
 ## Preuves obtenues
@@ -49,6 +50,19 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
     sondes attendent encore le comportement BUGGUÉ), R4 (A8/A13) et R8 (A14) :
     cartes à venir.
   - Valideur : `npm test` → 48/48 pass sur `722afa3` (46 + 2 tests de régression R3-A6/A7).
+- **BL-04 (2026-10-02) : R5 plus reproduisible.** Correction de A9 sur le commit
+  `788ecb6` (preuve : `evidence/audit-788ecb6/A9.json`) :
+  - Cause racine : `doLanding` recollait l'avion sur l'axe de piste en UN tick
+    (saut horizontal de 600 px, dt 0.1) et `doGate` était un simple relais de
+    phase — l'avion restait 51,5 px du centre de la porte (au nœud du taxiway).
+  - Correction : le landing converge latéralement vers l'axe de piste à V.taxi
+    (borné par tick) ; nouvelle phase « docking » (taxi → docking → gate) qui
+    roule l'avion du nœud de porte au CENTRE de la porte. Preuve : écart
+    porte-centre = **0** (avant 51,5), max pas horizontal = **6 px** (avant
+    600). SONDÉ CORRIGÉ dans `probes.mjs` (A9 attend le comportement corrigé) ;
+    `SUMMARY.json` : R5 confirmée (comportement corrigé).
+  - 2 tests de régression AC18 ajoutés dans `tests/sim.test.mjs` (échouaient
+    sur le code d'avant) ; `npm test` → 54/54 pass sur `788ecb6`.
 
 ## Décision
 
