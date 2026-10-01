@@ -19,6 +19,12 @@ export const AIRCRAFT = Object.freeze({
   large:  { name: 'Boeing 747',   seats: 350, minRunway: 800, gate: 'L', approach: 360, taxi: 30, revenuePerPax: 150, refuel: 320 },
 });
 
+// BL-05 (A8, décision) : les portes L EXISTENT — chaque terminal en construit
+// une (ci-dessous). Les gros avions (L, minRunway 800) servent les terminaux
+// sur les pistes fournies (1000, A-2) : aucun vol L bloqué indéfiniment.
+// On ne limite pas le catalogue des vols L : la compatibilité reste réalisable.
+export const TERMINAL_GATE_SIZES = Object.freeze(['S', 'M', 'M', 'L']);
+
 // Compagnies : une couleur + la taille d'avion qu'elles opèrent (les contraintes viennent de la catégorie).
 export const AIRLINES = Object.freeze([
   { id: 'solaire', name: 'Solaire Air', color: '#f0a', types: ['small'] },

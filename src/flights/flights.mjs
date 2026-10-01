@@ -14,7 +14,10 @@ export function spawnArrivals(sim, dt, rng = Math.random) {
   if (sim._spawnAcc < SPAWN_EVERY_S) return;
   sim._spawnAcc = 0;
   if (!sim.infra.runways.length) return; // rien à poser → pas de vols (critère « aucune piste »)
-  const pending = sim.aircraft.filter((a) => a.phase === 'approach' || a.phase === 'holding' || a.phase === 'landing').length;
+  // A-5 (A13) : le plafond compte AUSSI les avions `blocked` — sans ça, les
+  // annulations A-5 (600 s) laissent le plafond vide et les arrivées repartent
+  // sans fin : 10 avions bloqués en permanence, satisfaction 0 %, jamais d'arrêt.
+  const pending = sim.aircraft.filter((a) => a.phase === 'approach' || a.phase === 'holding' || a.phase === 'landing' || a.phase === 'blocked').length;
   if (pending >= MAX_PENDING) return;
   const airline = pick(rng, AIRLINES);
   const acType = pick(rng, airline.types);

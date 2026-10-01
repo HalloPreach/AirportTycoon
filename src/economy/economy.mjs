@@ -18,7 +18,10 @@ export function charge(sim, cost, cat) {
 }
 
 // Encaisse une recette (catégorie pour les stats).
+// BL-05 (A13) : satisfaction 0 % = aéroport que plus personne ne sert → aucune
+// recette ne croît tant qu'elle ne remonte (les vols se purgent, pas de revenus).
 export function earn(sim, amount, cat) {
+  if (sim.passengers.satisfaction <= 0) return; // pas de croissance en insatisfaction totale
   sim.economy.money += amount;
   sim.economy.revenue[cat] = (sim.economy.revenue[cat] ?? 0) + amount;
 }
@@ -70,7 +73,10 @@ export function tickPassengers(sim, dt) {
   const comfort = (sim.infra.services.some((s) => s.type === 'catering') ? 0.2 : 0)
                 + (sim.infra.services.some((s) => s.type === 'maintenance') ? 0.1 : 0);
   if (comfort) p.satisfaction = Math.min(100, p.satisfaction + comfort * dt);
-  // Retards accumulés des avions en attente → insatisfaction.
-  const delayed = sim.aircraft.filter((a) => a.delayed > 0).length;
+  // Retards ACTUELS (en holding / bloqués) → insatisfaction.
+  // BL-05 (A13) : on ne compte PAS `a.delayed > 0` — ce compteur cumulé n'est
+  // jamais remis à zéro, donc UN retard ancien condamnerait la satisfaction à
+  // 0 % définitivement (le spec exige une satisfaction évolutive).
+  const delayed = sim.aircraft.filter((a) => a.phase === 'holding' || a.phase === 'blocked').length;
   if (delayed) p.satisfaction = Math.max(0, p.satisfaction - 0.2 * delayed * dt);
 }
