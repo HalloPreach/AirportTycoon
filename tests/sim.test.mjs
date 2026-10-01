@@ -286,3 +286,54 @@ test('sauvegarde invalide / incompatible est rejetée (robustesse)', () => {
   // champ manquant (sim)
   assert.throws(() => deserialize(JSON.stringify({ v: SAVE_VERSION, state: { screen: 'game' } })), /manquant/i);
 });
+
+// --- AC18 (A9, R5) : déplacement continu + amarrage réel à la porte ----------
+
+test('AC18 (A9) : pas de saut de position, amarrage au centre de la porte', () => {
+  const sim = newSimState();
+  buildAirport(sim);
+  // Setup identique à la sonde A9 : un avion en approche au NORD de la piste
+  // (x=200, y=-150) ; la piste est à x=800. Avant la correction : le landing
+  // recollait l'avion sur l'axe de piste en UN tick (saut de 600 px) et, à la
+  // porte, l'avion restait 51,5 px du centre (au nœud du taxiway, pas amarré).
+  sim.aircraft.push({
+    id: 1, airline: 'solaire', acType: 'small', pax: 5, phase: 'approach',
+    x: 200, y: -150, gateId: null, runwayId: null, delayed: 0, timer: 0,
+    path: null, pathPtr: 0, seg: null, heading: 'gate',
+  });
+  const ac = sim.aircraft[0];
+  let previousX = ac.x, largestStep = 0;
+  for (let i = 0; i < 6000; i++) {
+    tickAircraft(sim, 0.1);
+    largestStep = Math.max(largestStep, Math.abs(ac.x - previousX));
+    previousX = ac.x;
+    if (ac.phase === 'gate') break;
+  }
+  assert.equal(ac.phase, 'gate', "l'avion est arrivé à la porte");
+  // (1) Déplacement continu : le delta horizontal max par tick est borné —
+  // pas de téléportation (avant : 600 px en un tick, dt 0.1).
+  assert.ok(largestStep < 100, `pas de saut de position (max par tick : ${largestStep.toFixed(1)} px)`);
+  // (2) Amarrage réel : à la phase « gate », l'avion est au CENTRE de la porte
+  // (le nœud de porte n'est pas le centre — avant : 51,5 px d'écart).
+  const g = sim.infra.gates.find((x) => x.id === ac.gateId);
+  const distance = Math.hypot(ac.x - (g.x + g.w / 2), ac.y - (g.y + g.h / 2));
+  assert.ok(distance < 20, `amarré au centre de la porte (écart : ${distance.toFixed(1)} px)`);
+});
+
+test('AC18 (A9) : la phase « docking » précède « gate » (cycle spatial complet)', () => {
+  const sim = newSimState();
+  buildAirport(sim);
+  sim.aircraft.push({
+    id: 1, airline: 'solaire', acType: 'small', pax: 5, phase: 'approach',
+    x: 800, y: -150, gateId: null, runwayId: null, delayed: 0, timer: 0,
+    path: null, pathPtr: 0, seg: null, heading: 'gate',
+  });
+  const seen = new Set();
+  for (let i = 0; i < 6000; i++) {
+    tickAircraft(sim, 0.1);
+    seen.add(sim.aircraft[0].phase);
+    if (sim.aircraft[0].phase === 'gate') break;
+  }
+  assert.ok(seen.has('docking'), '« docking » vu avant « gate » (taxi → docking → gate)');
+  assert.ok(seen.has('gate'), '« gate » atteint après amarrage');
+});

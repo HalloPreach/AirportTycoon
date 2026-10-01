@@ -1,9 +1,12 @@
 // Cycle avion (simulation pure, déterministe si rng/positions fixés).
 // Ordre d'un vol entrant complet :
-//   approach → holding (si attente) → landing → exit → taxi → gate →
+//   approach → holding (si attente) → landing → exit → taxi → docking → gate →
 //   disembark → ground → board → pushback → taxi → holding → departure
 // Chaque avion est UN objet avec sa position monde (x,y) — visible, se déplace
-// le long du réseau, jamais de téléportation (règle du brief).
+// le long du réseau, jamais de téléportation (règle du brief). AC18 (A9) :
+// landing converge vers l'axe de la piste sans saut, et « docking » amène
+// physiquement l'avion au CENTRE de la porte (le nœud de porte n'est pas le
+// centre).
 // Les ressources partagées (piste, segment, porte) provoquent conflits/retards.
 import { AIRCRAFT } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
@@ -40,6 +43,7 @@ export function tickAircraft(sim, dt) {
       case 'landing':   doLanding(sim, ac, dt, spec); break;
       case 'exit':      doExit(sim, ac, dt, spec, occupied); break;
       case 'taxi':      doTaxi(sim, ac, dt, occupied); break;
+      case 'docking':   doDocking(sim, ac, dt); break;
       case 'gate':      doGate(sim, ac, dt); break;
       case 'disembark': doOps(sim, ac, dt); break;
       case 'ground':    doOps(sim, ac, dt); break;
@@ -98,11 +102,20 @@ function doHolding(sim, ac, dt, spec, occupied) {
 }
 
 // LANDING : roule le long de la piste vers le bas (décollage au bout opposé).
+// AC18 (A9) : PLUS de saut horizontal — l'axe de la piste est CONVERGÉ latéralement
+// à la vitesse taxi (borné par tick), la descente continue à V.landing : la trajectoire
+// est continue (max ~14 px/tick à dt 0.1), pas d'accrochage sur l'axe au milieu de
+// l'approche.
 function doLanding(sim, ac, dt, spec) {
   const rw = sim.infra.runways.find((r) => r.id === ac.runwayId);
   if (!rw) { ac.phase = 'holding'; return; }
   const bottomY = rw.y + rw.h;
-  ac.x = rw.x + rw.w / 2; // centré sur l'axe de la piste
+  const axis = rw.x + rw.w / 2; // axe de la piste
+  if (ac.x !== axis) {
+    const d = axis - ac.x;
+    const lat = V.taxi * dt; // roulage latéral borné (pas de téléportation)
+    ac.x += d > 0 ? Math.min(d, lat) : Math.max(d, -lat);
+  }
   ac.y = Math.min(bottomY, ac.y + V.landing * dt);
   if (ac.y >= bottomY - 1) {
     // fin de piste → sortie de piste (exit) : on cherche le chemin taxi vers une porte
@@ -152,7 +165,10 @@ function doTaxi(sim, ac, dt, occupied) {
   if (nextIdx >= ac.path.length) {
     // arrivé au nœud cible (le dernier du chemin)
     if (ac.heading === 'gate') {
-      ac.phase = 'gate'; ac.seg = null;
+      // AC18 (A9) : le nœud de porte n'est PAS le centre de la porte (nœud du
+      // taxiway, ~51 px du centre) : phase DOCKING = amarrage physique au centre
+      // de la porte, position réelle conservée (pas de téléportation).
+      ac.phase = 'docking'; ac.seg = null; ac.timer = 0;
       const g = sim.infra.gates.find((g) => g.id === ac.gateId);
       if (g) g.acId = ac.id;
       onGateArrived(sim, ac);
@@ -188,7 +204,22 @@ function doTaxi(sim, ac, dt, occupied) {
   if (ac.seg != null) occupied.add(ac.seg);
 }
 
-// GATE : l'avion est amarré à la porte. Opérations au sol :
+// DOCKING (AC18, A9) : amarrage physique — l'avion roule lentement du nœud de
+// taxiway jusqu'au CENTRE de la porte (le nœud de porte n'est pas le centre :
+// c'est le nœud du segment qu'elle joint, ~51 px plus loin). Position réelle,
+// borné par tick, aucune téléportation.
+function doDocking(sim, ac, dt) {
+  const g = sim.infra.gates.find((g) => g.id === ac.gateId);
+  if (!g) { ac.phase = 'gate'; return; } // porte disparue : on reste amarré sur place
+  const gx = g.x + g.w / 2, gy = g.y + g.h / 2;
+  const dx = gx - ac.x, dy = gy - ac.y;
+  const dist = Math.hypot(dx, dy);
+  const step = V.taxi * dt;
+  if (dist <= step) { ac.x = gx; ac.y = gy; ac.phase = 'gate'; }
+  else { ac.x += (dx / dist) * step; ac.y += (dy / dist) * step; }
+}
+
+// GATE : l'avion est amarré à la porte (au CENTRE, vu doDocking). Opérations au sol :
 // débarquement → sol → embarquement. Chaque étape dure GATE_OPS_S/3.
 // On compte les passagers transportés à l'embarquement (critère 7).
 function doGate(sim, ac, dt) {
