@@ -72,22 +72,34 @@ export function buildBuilding(sim, type, x, y) {
     pushEvent(sim, { kind: 'build-blocked', type, x, y });
     return null;
   }
-  const id = sim.infra.nextId++;
-  const b = { id, type, x, y, w: spec.w, h: spec.h, cost: spec.cost };
+  const b = placeBuilding(sim, { id: sim.infra.nextId++, type, x, y, w: spec.w, h: spec.h, cost: spec.cost });
   sim.economy.money -= spec.cost;
   sim.economy.spent[type] = (sim.economy.spent[type] ?? 0) + spec.cost;
-  if (type === 'runway') { b.len = spec.h; sim.infra.runways.push(b); }
-  else if (type === 'taxiway') sim.infra.taxiways.push(b);
-  else if (type === 'terminal') {
-    // Terminal = 4 portes (S/M/M/S) alignées sur son bord bas, une par colonne.
-    // Chaque porte est une petite plateforme ; le joueur relie la porte au réseau
-    // par un segment de taxiway (sinon findPath renvoie null → avion « bloqué »).
-    const gates = ['S', 'M', 'M', 'S'].map((size, i) => ({
-      id: `${id}-g${i}`, size, terminalId: id,
-      x: b.x + 25 + i * 45, y: b.y + b.h - 10, w: 40, h: 10,
-      cleaning: 0, maintenance: 0,
-      acId: null,
-    }));
+  pushEvent(sim, { kind: 'built', type, id: b.id });
+  return b;
+}
+
+// Portes d'un terminal : petites plateformes alignées sur le bord bas, une par
+// colonne. Le joueur relie chaque porte au réseau par un taxiway (sinon
+// findPath renvoie null → avion « bloqué »).
+function makeGates(id, b, sizes) {
+  return sizes.map((size, i) => ({
+    id: `${id}-g${i}`, size, terminalId: id,
+    x: b.x + 25 + i * 45, y: b.y + b.h - 10, w: 40, h: 10,
+    cleaning: 0, maintenance: 0,
+    acId: null,
+  }));
+}
+
+// Pose un bâtiment (placement + grille + graph dirty). L'argent reste à
+// l'appelant : buildBuilding débite, l'aéroport de départ (new-game.mjs, A-2)
+// est gratuit (fourni par le jeu).
+export function placeBuilding(sim, b, gateSizes = ['S', 'M', 'M', 'S']) {
+  if (b.type === 'runway') { b.len = b.h; sim.infra.runways.push(b); }
+  else if (b.type === 'taxiway') sim.infra.taxiways.push(b);
+  else if (b.type === 'terminal') {
+    // Terminal = portes alignées sur son bord bas (par défaut S/M/M/S).
+    const gates = makeGates(b.id, b, gateSizes);
     b.gates = gates.map((g) => g.id);
     sim.infra.terminals.push(b);
     sim.infra.gates.push(...gates);
@@ -95,7 +107,6 @@ export function buildBuilding(sim, type, x, y) {
   else sim.infra.services.push(b);
   buildGrid(sim);
   sim._graphDirty = true; // l'infra a changé → le graphe pathfinding doit être recalculé
-  pushEvent(sim, { kind: 'built', type, id });
   return b;
 }
 

@@ -149,25 +149,44 @@ async function main() {
   })()`);
   check('sim présente après nouvelle partie (critère 1)', simReady === true);
 
-  // Construit un aéroport minimal (mêmes coordonnées que les tests Node).
-  const built = await evaluate(`(async () => {
+  // Aéroport fourni (A-2) : vérifie le plan de départ SANS construire —
+  // 1 piste + 1 terminal minimal (2 portes M) + 1 taxiway, réseau valide.
+  const provided = await evaluate(`(async () => {
     const g = window.__game;
-    const { buildBuilding } = await import('./src/infra/infra.mjs');
+    const { rebuildGraph, findPath, gateNodeOf, runwayExitNode } = await import('./src/pathfinding/path.mjs');
     const sim = g.state.sim;
-    const rw = buildBuilding(sim, 'runway', 750, 100);
-    const tw = buildBuilding(sim, 'taxiway', 400, 1050);
-    const te = buildBuilding(sim, 'terminal', 400, 900);
-    return { rw: !!rw, tw: !!tw, te: !!te, money: Math.round(sim.economy.money) };
+    rebuildGraph(sim);
+    const from = runwayExitNode(sim, sim.infra.runways[0].id);
+    const to = gateNodeOf(sim, sim.infra.gates[0].id);
+    const path = from != null && to != null ? findPath(sim, from, to, new Set()) : null;
+    return {
+      runways: sim.infra.runways.length,
+      taxiways: sim.infra.taxiways.length,
+      gates: sim.infra.gates.length,
+      money: Math.round(sim.economy.money),
+      pathOk: !!(path && path.length >= 2),
+    };
   })()`, true);
-  check('construire un petit aéroport (critère 2)', built?.rw && built?.tw && built?.te,
-    `solde=${built?.money}`);
+  check('aéroport fourni : 1 piste + 1 terminal (2 portes M) + 1 taxiway (A-2)',
+    provided?.runways === 1 && provided?.taxiways === 1 && provided?.gates === 2,
+    `pistes=${provided?.runways} taxiways=${provided?.taxiways} portes=${provided?.gates} solde=${provided?.money}`);
+  check('réseau de départ physiquement valide (chemin piste→porte)',
+    provided?.pathOk === true, 'findPath piste→porte trouvé sans construction');
 
   // Avance la sim (MÊME pipeline que la boucle de jeu) et vérifie qu'un vol
   // atterrit, roule à une porte, repart et rapporte de l'argent (critères 3,4,7,8).
+  // Un vol medium est forcé (comme le test Node new-game.mjs) : les 2 portes du
+  // terminal fourni sont M → il complète son cycle sur l'aéroport fourni.
   const simOut = await evaluate(`(async () => {
     const g = window.__game;
     g.state.paused = false;
     const { tick } = await import('./src/core/tick.mjs');
+    const sim = g.state.sim;
+    sim.aircraft.push({ // vol forcé : cycle complet sur l'aéroport fourni (sans construction)
+      id: sim.nextAcId++, airline: 'atlantique', color: '#1e88e5', acType: 'medium', pax: 80,
+      phase: 'approach', x: 800, y: -150, gateId: null, runwayId: null,
+      delayed: 0, timer: 0, path: null, pathPtr: 0, seg: null, heading: 'gate',
+    });
     for (let i = 0; i < 600; i++) tick(g.state, 1); // 600 s de jeu (x1)
     const s = g.state.sim;
     const phases = new Set();

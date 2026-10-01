@@ -11,7 +11,7 @@ import { makeToasts } from './ui/toast.mjs';
 import { makeBuildTool } from './ui/build-tool.mjs';
 import { makeSavePanel } from './ui/save-panel.mjs';
 import { clearSave } from './persistence/save.mjs';
-import { freshSimState } from './core/sim.mjs';
+import { makeGameState } from './core/new-game.mjs';
 
 export function boot(canvas) {
   const state = newGame();
@@ -33,18 +33,16 @@ export function boot(canvas) {
   // le menu, pour que « Recharger » (critères 12-13) retrouve l'état joué.
   bus.on('quit', () => { savePanel.autoSave(); if (state.screen === SCREENS.GAME) setScreen(state, SCREENS.MENU); });
 
-  // Nouvelle partie : état frais + sim (si prête). Object.assign = mêmes références.
-  // `sim` est assigné séparément : Object.assign ne supprime pas un champ absent
-  // (une sim existante ne doit pas survivre à une nouvelle partie).
-  async function startNewGame() {
-    const fresh = newGame();
-    const sim = await freshSimState();
-    Object.assign(state, fresh);
-    state.sim = sim || null;
+  // Nouvelle partie (A-2) : état frais + aéroport de départ fourni (piste + terminal
+  // 2 portes + taxiway, réseau physiquement valide). makeGameState est synchrone :
+  // Object.assign remplace tout l'état sur l'objet suivi par la boucle de jeu.
+  function startNewGame() {
+    const fresh = makeGameState();
+    Object.assign(state, fresh); // mêmes références (state.sim = fresh.sim)
     state._alertSeen = 0;
     clearSave(); // une nouvelle partie efface l'ancienne sauvegarde (« Reprendre » = la partie en cours)
     setScreen(state, SCREENS.GAME);
-    toasts.toast('Nouvelle partie — construis ton aéroport (B)', 'ok');
+    toasts.toast('Nouvelle partie — aéroport fourni, étends-le (B)', 'ok');
   }
 
   // Panneau sauvegarde (S sauvegarder, L charger).
