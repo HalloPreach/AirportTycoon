@@ -1,6 +1,6 @@
 // Rendu canvas 2D : LIT l'état, ne calcule rien de jeu (règle UI fine).
 // Sprites vectoriels simples — ponytail : à remplacer par de vrais assets une fois la boucle jouable.
-export function makeRenderer(canvas) {
+export function makeRenderer(canvas, { overlays = [] } = {}) {
   const ctx = canvas.getContext('2d');
 
   function resize() {
@@ -42,11 +42,75 @@ export function makeRenderer(canvas) {
     ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
   }
 
-  // Écran de jeu : terrain sous la caméra.
+  // Bâtiments posés (lecture seule de state.sim.infra). Couleurs par type.
+  const BLD_COLOR = {
+    runway: '#455a64', taxiway: '#78909c', terminal: '#1e88e5',
+    fuel: '#fdd835', hangar: '#ef6c00',
+  };
+  function drawInfra(state, cam) {
+    const sim = state.sim;
+    if (!sim || !sim.infra) return;
+    const all = [
+      ...sim.infra.runways, ...sim.infra.taxiways,
+      ...sim.infra.terminals, ...sim.infra.services,
+    ];
+    for (const b of all) {
+      const kind = b.type || b.kind; // la sim pose `type` ; les sauvegardes M1 `kind`
+      const [x, y] = screenToCanvas(b.x, b.y, cam);
+      const w = b.w * cam.zoom, h = b.h * cam.zoom;
+      ctx.fillStyle = BLD_COLOR[kind] || '#90a4ae';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x, y, w, h);
+      // Étiquette lisible au zoom près.
+      if (cam.zoom >= 0.6) {
+        ctx.fillStyle = '#fff';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText(kind, x + 4, y + 3);
+      }
+    }
+    // Portes (gates) : petits carrés sur le bord des terminaux, colorés par taille,
+    // rouge quand un avion est à quai (lecture seule de sim.infra.gates).
+    if (sim.infra.gates && sim.infra.gates.length) {
+      const GATE_COLOR = { S: '#4caf50', M: '#ff9800', L: '#2196f3' };
+      for (const g of sim.infra.gates) {
+        if (g.x === undefined) continue;
+        const [x, y] = screenToCanvas(g.x, g.y, cam);
+        ctx.fillStyle = g.acId ? '#e53935' : (GATE_COLOR[g.size] || '#9e9e9e');
+        ctx.fillRect(x, y, g.w * cam.zoom, g.h * cam.zoom);
+      }
+    }
+  }
+
+  // Avions visibles et en mouvement (lecture seule de state.sim.aircraft).
+  // La sim stocke l'orientation comme une chaîne ('gate'/'runway') et pas des
+  // radians → on ne pivote qu'avec une vraie orientation numérique.
+  function drawAircraft(state, cam) {
+    const sim = state.sim;
+    if (!sim || !sim.aircraft) return;
+    for (const a of sim.aircraft) {
+      if (a.x === undefined || a.y === undefined) continue; // pas encore positionné
+      const [x, y] = screenToCanvas(a.x, a.y, cam);
+      ctx.save();
+      ctx.translate(x, y);
+      if (typeof a.heading === 'number') ctx.rotate(a.heading);
+      ctx.fillStyle = a.color || '#eceff1';
+      // Silhouette simple : fuselage + ailes (échelle monde, 20 px de long).
+      ctx.fillRect(-10 * cam.zoom, -2 * cam.zoom, 20 * cam.zoom, 4 * cam.zoom);
+      ctx.fillRect(-2 * cam.zoom, -8 * cam.zoom, 4 * cam.zoom, 16 * cam.zoom);
+      ctx.restore();
+    }
+  }
+
+  // Écran de jeu : terrain + infra + avions sous la caméra.
   function drawGame(state, cam) {
     ctx.fillStyle = '#263238';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     drawTerrain(state, cam);
+    drawInfra(state, cam);
+    drawAircraft(state, cam);
   }
 
   // Menu de départ : le jeu n'est pas encore commencé.
@@ -59,18 +123,29 @@ export function makeRenderer(canvas) {
     ctx.textBaseline = 'middle';
     ctx.fillText('Airport Tycoon', canvas.width / 2, canvas.height / 2 - 40);
     ctx.font = '20px system-ui, sans-serif';
-    ctx.fillText('Appuie sur N pour commencer · Q pour quitter', canvas.width / 2, canvas.height / 2 + 20);
+    ctx.fillText('N — Nouvelle partie · R — Reprendre la sauvegarde (au menu)', canvas.width / 2, canvas.height / 2 + 20);
+    ctx.fillText('Q — Quitter · La partie se sauvegarde aussi automatiquement', canvas.width / 2, canvas.height / 2 + 50);
   }
 
-  // Bandeau pause / vitesse, affiché par-dessus le jeu.
+  // Bandeau HUD : temps, vitesse, pause + (si sim) fonds, passagers, satisfaction.
   function drawHud(state) {
     const lines = [
       `Temps : ${Math.floor(state.time / 60)}:${String(Math.floor(state.time % 60)).padStart(2, '0')}`,
       `Vitesse : x${[1, 2, 4][state.speedIndex]}`,
     ];
+    const sim = state.sim;
+    if (sim && sim.economy) {
+      // La sim passe de `funds` (M1) à `money` — on lit les deux pour la rétrocompat.
+      const m = sim.economy.money ?? sim.economy.funds;
+      if (m !== undefined) lines.push(`Fonds : ${Math.round(m)} $`);
+    }
+    if (sim && sim.passengers) {
+      lines.push(`Passagers : ${sim.passengers.totalCarried} · ${Math.round(sim.passengers.satisfaction)} %`);
+    }
     if (state.paused) lines.push('PAUSE (P pour reprendre)');
+    const w = 240;
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(12, 12, 220, 24 * lines.length + 16);
+    ctx.fillRect(12, 12, w, 24 * lines.length + 16);
     ctx.fillStyle = '#fff';
     ctx.font = '16px system-ui, sans-serif';
     ctx.textAlign = 'left';
@@ -84,6 +159,8 @@ export function makeRenderer(canvas) {
       drawMenu();
     } else {
       drawGame(state, cam);
+      // Superpositions (fantôme de construction…) — la logique de pose reste dans la sim/UI.
+      for (const overlay of overlays) overlay(ctx, cam, viewSize());
       drawHud(state);
     }
     // Exposition pour les tests/CDP sans exposer les règles de jeu

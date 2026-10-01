@@ -7,6 +7,32 @@
   <style>
     html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #263238; }
     canvas { display: block; }
+    /* UI fine : barre d'outils de construction + toasts (feedback lisible). */
+    .toolbar {
+      position: fixed; left: 12px; bottom: 12px; display: flex; gap: 6px;
+      background: rgba(0,0,0,0.55); border-radius: 8px; padding: 8px;
+      font: 12px system-ui, sans-serif; color: #fff; z-index: 10;
+      align-items: center; max-width: calc(100vw - 24px); flex-wrap: wrap;
+    }
+    .toolbar .tool {
+      background: #37474f; color: #fff; border: 1px solid #546e7a;
+      border-radius: 6px; padding: 4px 8px; cursor: pointer; font: inherit;
+    }
+    .toolbar .tool--danger { background: #4e342e; border-color: #8d6e63; }
+    .toolbar .tool--active { background: #1e88e5; border-color: #64b5f6; }
+    .toolbar .toolbar-hint { color: #b0bec5; padding: 0 4px; }
+    .toasts {
+      position: fixed; right: 12px; bottom: 12px; display: flex;
+      flex-direction: column; gap: 6px; z-index: 10; max-width: 320px;
+    }
+    .toast {
+      background: rgba(38,50,56,0.92); color: #fff; border-radius: 8px;
+      padding: 8px 12px; font: 13px system-ui, sans-serif; border-left: 4px solid #90a4ae;
+      transition: opacity 0.2s;
+    }
+    .toast--ok { border-left-color: #43a047; }
+    .toast--err { border-left-color: #e53935; }
+    .toast--out { opacity: 0; }
   </style>
 </head>
 <body>

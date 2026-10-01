@@ -1,0 +1,54 @@
+// Panneau Sauvegarde : charge/enregistre la sauvegarde via localStorage et
+// affiche le résultat en toast (succès ou échec lisible).
+// Règle : la LOGIQUE (sérialiser, valider) est dans src/persistence/save.mjs ;
+// ici on ne fait que relier la UI à ces fonctions et rendre les erreurs lisibles.
+import { saveToStorage, loadFromStorage, clearSave, hasSave } from '../persistence/save.mjs';
+
+export function makeSavePanel(state, { toast }) {
+  // Enregistre l'état courant (manuel, touche S). Uniquement en jeu : sauvegarder
+  // au menu écraserait la partie avec un état de menu inutilisable.
+  function saveNow() {
+    if (state.screen !== 'game') { toast('Sauvegarde disponible en jeu (S)', 'info'); return false; }
+    const ok = saveToStorage(state);
+    toast(ok ? 'Sauvegarde effectuée' : 'Impossible de sauvegarder (espace disque)', ok ? 'ok' : 'err');
+    return ok;
+  }
+
+  // Sauvegarde SILENCIEUSE (automatique : fermeture de page, quitter, périodique).
+  // Même écriture que saveNow mais sans toast : l'automatique ne doit pas polluer.
+  function autoSave() {
+    if (state.screen !== 'game') return false;
+    return saveToStorage(state);
+  }
+
+  // Y a-t-il une sauvegarde à proposer au menu (« Reprendre ») ?
+  function canResume() { return hasSave(); }
+
+  // Restaure la sauvegarde ; si elle est absente ou invalide, signale en clair.
+  function loadNow() {
+    let restored;
+    try {
+      restored = loadFromStorage();
+    } catch (e) {
+      toast(e.message || 'Sauvegarde illisible', 'err');
+      clearSave(); // on ne laisse pas une sauvegarde corrompue bloquer le jeu
+      return false;
+    }
+    if (!restored) {
+      toast('Aucune sauvegarde trouvée', 'info');
+      return false;
+    }
+    // On remplace le contenu de `state` EN PLACE (la caméra et la boucle gardent
+    // leurs références). `sim` est assigné SÉPARÉMENT : Object.assign ne
+    // supprime jamais un champ absent du clone (une partie sans sim ne doit pas
+    // laisser l'ancienne sim en place, et l'inverse non plus).
+    Object.assign(state, restored);
+    state.sim = restored.sim || null;
+    state.paused = false;
+    state._alertSeen = 0; // les alertes restaurées sont déjà connues du joueur
+    toast('Jeu restauré', 'ok');
+    return true;
+  }
+
+  return { saveNow, loadNow, autoSave, canResume };
+}

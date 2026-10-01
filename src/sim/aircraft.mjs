@@ -1,0 +1,243 @@
+// Cycle avion (simulation pure, déterministe si rng/positions fixés).
+// Ordre d'un vol entrant complet :
+//   approach → holding (si attente) → landing → exit → taxi → gate →
+//   disembark → ground → board → pushback → taxi → holding → departure
+// Chaque avion est UN objet avec sa position monde (x,y) — visible, se déplace
+// le long du réseau, jamais de téléportation (règle du brief).
+// Les ressources partagées (piste, segment, porte) provoquent conflits/retards.
+import { AIRCRAFT } from '../data/catalog.mjs';
+import { pushEvent } from '../core/sim-state.mjs';
+import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
+import { onGateArrived, onGateDeparted } from '../economy/economy.mjs';
+
+const V = { approach: 220, landing: 130, taxi: 60, pushback: 30, departure: 150 };
+const GATE_OPS_S = 60;   // débarquement+sol+embarquement : durée d'occupation porte
+const HOLDING_RETRY_S = 5; // réessayer de se placer toutes les 5 s si bloqué
+
+// Le battement avions : avance chaque avion selon sa phase.
+export function tickAircraft(sim, dt) {
+  if (sim._graphDirty) { rebuildGraph(sim); sim._graphDirty = false; }
+  const occupied = new Set();
+  for (const a of sim.aircraft) if (a.seg) occupied.add(a.seg);
+
+  for (const ac of sim.aircraft) {
+    const spec = AIRCRAFT[ac.acType];
+    switch (ac.phase) {
+      case 'approach':  doApproach(sim, ac, dt, spec); break;
+      case 'holding':   doHolding(sim, ac, dt, spec, occupied); break;
+      case 'landing':   doLanding(sim, ac, dt, spec); break;
+      case 'exit':      doExit(sim, ac, dt, spec, occupied); break;
+      case 'taxi':      doTaxi(sim, ac, dt, occupied); break;
+      case 'gate':      doGate(sim, ac, dt); break;
+      case 'disembark': doOps(sim, ac, dt); break;
+      case 'ground':    doOps(sim, ac, dt); break;
+      case 'board':     doOps(sim, ac, dt); break;
+      case 'pushback':  doPushback(sim, ac, dt, spec, occupied); break;
+      case 'departure': doDeparture(sim, ac, dt); break;
+      case 'blocked':   doBlocked(sim, ac, dt, spec, occupied); break;
+      default: break; // departed / cancelled : purgés par le planificateur
+    }
+  }
+}
+
+// APPROACH : l'avion descend vers la piste (appro). S'il n'y a pas encore de piste
+// compatible OU si la piste est occupée, il passe en holding (attente) — jamais de
+// deux avions sur la même piste en même temps (conflit de ressource).
+function doApproach(sim, ac, dt, spec) {
+  const rw = runwayFor(sim, spec.minRunway);
+  if (!rw) { ac.phase = 'holding'; ac.timer = 0; return; }
+  const busy = sim.aircraft.some((a) => a.id !== ac.id && a.runwayId === rw.id
+    && ['landing', 'exit', 'taxi'].includes(a.phase));
+  if (busy) { ac.runwayId = rw.id; ac.phase = 'holding'; ac.timer = 0; return; }
+  ac.runwayId = rw.id;
+  const topY = rw.y; // haut de la piste (arrivée de l'approche)
+  const speed = V.approach * dt;
+  if (ac.y < topY) {
+    ac.y = Math.min(topY, ac.y + speed);
+  } else {
+    ac.phase = 'landing'; // arrivé au haut de la piste : atterrissage
+    ac.timer = 0;
+  }
+}
+
+// HOLDING : l'avion tourne au-dessus de la piste en attendant qu'elle se libère.
+// Les retards s'accumulent (critère 6). Aucune téléportation : il continue de
+// descendre s'il est en approche, sinon il fait le tour (oscille doucement).
+function doHolding(sim, ac, dt, spec, occupied) {
+  const rw = runwayFor(sim, spec.minRunway);
+  ac.delayed += dt;
+  if (!rw) return; // pas de piste : le planificateur gère retard/annulation
+  const topY = rw.y;
+  if (ac.y < topY) {
+    ac.y = Math.min(topY, ac.y + V.approach * dt); // toujours en descente
+  } else {
+    ac.x += Math.sin(ac.timer * 0.4) * 20 * dt; // survol / attente
+  }
+  ac._holdAcc = (ac._holdAcc ?? 0) + dt;
+  const runwayBusy = sim.aircraft.some((a) => a.id !== ac.id && a.runwayId === rw.id
+    && ['landing', 'exit'].includes(a.phase));
+  if (ac._holdAcc >= HOLDING_RETRY_S) {
+    ac._holdAcc = 0;
+    if (!runwayBusy && ac.y >= topY) {
+      ac.runwayId = rw.id;
+      ac.phase = 'landing';
+      ac.timer = 0;
+    }
+  }
+}
+
+// LANDING : roule le long de la piste vers le bas (décollage au bout opposé).
+function doLanding(sim, ac, dt, spec) {
+  const rw = sim.infra.runways.find((r) => r.id === ac.runwayId);
+  if (!rw) { ac.phase = 'holding'; return; }
+  const bottomY = rw.y + rw.h;
+  ac.x = rw.x + rw.w / 2; // centré sur l'axe de la piste
+  ac.y = Math.min(bottomY, ac.y + V.landing * dt);
+  if (ac.y >= bottomY - 1) {
+    // fin de piste → sortie de piste (exit) : on cherche le chemin taxi vers une porte
+    ac.phase = 'exit';
+    ac.timer = 0;
+  }
+}
+
+// EXIT : on quitte la piste, on part vers une porte compatible. On calcule le chemin.
+function doExit(sim, ac, dt, spec, occupied) {
+  const gate = gateFor(sim, spec.gate, ac.id);
+  if (!gate) { ac.phase = 'blocked'; ac.timer = 0; return; }
+  ac.gateId = gate.id;
+  const fromNode = runwayExitNode(sim, ac.runwayId);
+  const toNode = gateNodeOf(sim, gate.id);
+  const path = findPath(sim, fromNode, toNode, occupied);
+  if (!path || path.length < 2) { ac.phase = 'blocked'; ac.timer = 0; return; }
+  ac.path = path;
+  ac.pathPtr = 0;
+  ac.seg = sim._graph.nodes[ac.path[0]].seg;
+  ac.heading = 'gate';
+  ac.phase = 'taxi';
+}
+
+// TAXI : suit le chemin ; s'arrête si le segment d'arrivée est occupé (conflit de ressource).
+function doTaxi(sim, ac, dt, occupied) {
+  if (!ac.path) { ac.phase = 'blocked'; return; }
+  const nodes = sim._graph.nodes;
+  const nextIdx = ac.pathPtr + 1;
+  if (nextIdx >= ac.path.length) {
+    // arrivé au nœud cible (le dernier du chemin)
+    if (ac.heading === 'gate') {
+      ac.phase = 'gate'; ac.seg = null;
+      const g = sim.infra.gates.find((g) => g.id === ac.gateId);
+      if (g) g.acId = ac.id;
+      onGateArrived(sim, ac);
+    } else {
+      ac.phase = 'departure'; ac.seg = null; // prêt à décoller depuis le bas de la piste
+    }
+    return;
+  }
+  const nextNode = nodes[ac.path[nextIdx]];
+  const nextSeg = nextNode.seg;
+  // conflit : le segment d'arrivée est pris par un autre avion → on s'arrête (attente)
+  if (occupied.has(nextSeg) && nextSeg !== ac.seg) {
+    ac.delayed += dt;
+    return;
+  }
+  // on avance vers le nœud suivant
+  const dx = nextNode.x - ac.x;
+  const dy = nextNode.y - ac.y;
+  const dist = Math.hypot(dx, dy);
+  const step = V.taxi * dt;
+  if (dist <= step) {
+    ac.x = nextNode.x;
+    ac.y = nextNode.y;
+    ac.pathPtr = nextIdx;
+    ac.seg = nodes[ac.path[ac.pathPtr]].seg; // le segment qu'on occupe maintenant
+  } else {
+    ac.x += (dx / dist) * step;
+    ac.y += (dy / dist) * step;
+    ac.seg = nextSeg; // on entre sur le segment d'arrivée
+  }
+}
+
+// GATE : l'avion est amarré à la porte. Opérations au sol :
+// débarquement → sol → embarquement. Chaque étape dure GATE_OPS_S/3.
+// On compte les passagers transportés à l'embarquement (critère 7).
+function doGate(sim, ac, dt) {
+  ac.phase = 'disembark';
+  ac.timer = 0;
+}
+
+// OPÉRATIONS AU SOL : débarquement → sol → embarquement → pushback.
+function doOps(sim, ac, dt) {
+  ac.timer += dt;
+  const step = GATE_OPS_S / 3;
+  if (ac.timer < step) return; // l'étape en cours dure GATE_OPS_S/3
+  if (ac.phase === 'disembark') { ac.phase = 'ground'; ac.timer = 0; }
+  else if (ac.phase === 'ground') { ac.phase = 'board'; ac.timer = 0; }
+  else if (ac.phase === 'board') {
+    sim.passengers.totalCarried += ac.pax; // les passagers montent
+    ac.phase = 'pushback';
+    ac.timer = 0;
+  }
+}
+
+// PUSHBACK : on sort de la porte (chemin inverse : porte → nœud de piste).
+function doPushback(sim, ac, dt, spec, occupied) {
+  // libère la porte
+  const g = sim.infra.gates.find((g) => g.id === ac.gateId);
+  if (g) g.acId = null;
+  const fromNode = gateNodeOf(sim, ac.gateId);
+  const toNode = runwayExitNode(sim, ac.runwayId);
+  const path = findPath(sim, fromNode, toNode, occupied);
+  if (!path || path.length < 2) {
+    ac.phase = 'blocked'; ac.timer = 0;
+    return;
+  }
+  ac.path = path;
+  ac.pathPtr = 0;
+  ac.seg = sim._graph.nodes[ac.path[0]].seg;
+  ac.heading = 'runway';
+  ac.phase = 'taxi';
+}
+
+// DÉPART : roulage vers le haut de la piste (départ au bout opposé), puis sortie de la carte.
+function doDeparture(sim, ac, dt) {
+  const rw = sim.infra.runways.find((r) => r.id === ac.runwayId);
+  if (!rw) { ac.phase = 'holding'; return; }
+  ac.x = rw.x + rw.w / 2;
+  ac.y -= V.departure * dt;
+  if (ac.y < rw.y - 120) {
+    onGateDeparted(sim, ac); // recettes passagers au décollage
+    ac.phase = 'departed';
+    ac.seg = null;
+    pushEvent(sim, { kind: 'flight-out', volId: ac.id, airline: ac.airline, pax: ac.pax });
+  }
+}
+
+// BLOQUÉ : aucun chemin (taxiway coupé / porte indisponible). On retente régulièrement.
+function doBlocked(sim, ac, dt, spec, occupied) {
+  ac.delayed += dt;
+  ac.timer += dt;
+  if (ac.timer < HOLDING_RETRY_S) return;
+  ac.timer = 0;
+  // réessayer selon le contexte : heading = 'gate' (on voulait aller à une porte)
+  if (ac.heading === 'gate') {
+    doExit(sim, ac, dt, spec, occupied);
+  } else {
+    // on partait de la porte : on retente pushback
+    doPushback(sim, ac, dt, spec, occupied);
+  }
+}
+
+// --- Aides de sélection de ressources (compatibilité/disponibilité). -----------
+
+// Piste compatible : la plus courte piste qui dépasse la longueur min requise.
+function runwayFor(sim, minLen) {
+  const rws = sim.infra.runways.filter((r) => r.len >= minLen);
+  if (!rws.length) return null;
+  rws.sort((a, b) => a.len - b.len);
+  return rws[0];
+}
+
+// Porte compatible : bonne taille, libre. (On laisse la décision d'occupation à doTaxi.)
+function gateFor(sim, size, excludeAcId) {
+  return sim.infra.gates.find((g) => g.size === size && (!g.acId || g.acId === excludeAcId));
+}

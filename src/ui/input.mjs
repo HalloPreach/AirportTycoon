@@ -13,7 +13,6 @@ export function makeInputHandlers(canvas, bus, camera, viewSize) {
     if (e.key in KEY_PAN) { keys.add(e.key); e.preventDefault(); }
     else if (e.key === 'p' || e.key === 'P') bus.emit('pause');
     else if (e.key === 'q' || e.key === 'Q') bus.emit('quit');
-    else if (e.key === 'Escape') bus.emit('pause');
   });
   window.addEventListener('keyup', (e) => keys.delete(e.key));
 

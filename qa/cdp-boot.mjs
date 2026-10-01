@@ -4,7 +4,7 @@
 // Usage : node qa/cdp-boot.mjs   (code retour 0 = PASS, 1 = FAIL)
 import { spawn } from 'node:child_process';
 import { get as httpGet } from 'node:http';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -141,7 +141,92 @@ async function main() {
   })()`, true);
   check('pause gèle le temps', frozen?.paused === true && frozen.moved === 0, `moved=${frozen?.moved}`);
 
-  const menu = await evaluate(`(() => { const g = window.__game; g.quitToMenu(); return g.state.screen; })()`);
+  // --- 4. boucle jouable : construire, simuler, encaisser, sauvegarder/recharger ---
+  // (la partie est déjà en cours depuis la section 3 : screen='game', sim créée)
+  const simReady = await evaluate(`(() => {
+    const g = window.__game;
+    return g.state.screen === 'game' && !!g.state.sim;
+  })()`);
+  check('sim présente après nouvelle partie (critère 1)', simReady === true);
+
+  // Construit un aéroport minimal (mêmes coordonnées que les tests Node).
+  const built = await evaluate(`(async () => {
+    const g = window.__game;
+    const { buildBuilding } = await import('./src/infra/infra.mjs');
+    const sim = g.state.sim;
+    const rw = buildBuilding(sim, 'runway', 750, 100);
+    const tw = buildBuilding(sim, 'taxiway', 400, 1050);
+    const te = buildBuilding(sim, 'terminal', 400, 900);
+    return { rw: !!rw, tw: !!tw, te: !!te, money: Math.round(sim.economy.money) };
+  })()`, true);
+  check('construire un petit aéroport (critère 2)', built?.rw && built?.tw && built?.te,
+    `solde=${built?.money}`);
+
+  // Avance la sim (MÊME pipeline que la boucle de jeu) et vérifie qu'un vol
+  // atterrit, roule à une porte, repart et rapporte de l'argent (critères 3,4,7,8).
+  const simOut = await evaluate(`(async () => {
+    const g = window.__game;
+    g.state.paused = false;
+    const { tick } = await import('./src/core/tick.mjs');
+    for (let i = 0; i < 600; i++) tick(g.state, 1); // 600 s de jeu (x1)
+    const s = g.state.sim;
+    const phases = new Set();
+    for (const a of s.aircraft) phases.add(a.phase);
+    return {
+      carried: s.passengers.totalCarried,
+      paxRevenue: Math.round((s.economy.revenue.pax || 0) + (s.economy.revenue.landing || 0)),
+      departed: (s.alerts || []).filter((a) => a.kind === 'flight-out').length,
+      airborne: s.aircraft.length,
+      bankrupt: s.economy.bankrupt,
+      sample: [...phases].join(','),
+    };
+  })()`, true);
+  check('vols complets : atterrissage → porte → départ (critères 3,4)',
+    (simOut?.departed || 0) > 0,
+    `départs=${simOut?.departed} recettes=${simOut?.paxRevenue} en cours=${simOut?.airborne} phases=${simOut?.sample}`);
+  check('passagers transportés (critère 7)', (simOut?.carried || 0) > 0);
+  check('recettes et dépenses effectives (critère 8)', (simOut?.paxRevenue || 0) > 0);
+  check('pas de faillite sur aéroport rentable', simOut?.bankrupt === false);
+
+  // Sauvegarde manuelle + rechargement (critères 10-13) via localStorage.
+  const saveOut = await evaluate(`(async () => {
+    const g = window.__game;
+    const saved = g.save();
+    const { loadFromStorage } = await import('./src/persistence/save.mjs');
+    g.state.paused = false;
+    const back = loadFromStorage();
+    return { saved, runways: back?.sim?.infra?.runways?.length, money: Math.round(back?.sim?.economy?.money) };
+  })()`, true);
+  check('sauvegarde + rechargement cohérent (critères 10,12,13)',
+    saveOut?.saved === true && saveOut?.runways === 1 && saveOut?.money !== undefined,
+    `runways=${saveOut?.runways} money=${saveOut?.money}`);
+
+  // Preuve visuelle : capture du jeu en cours (état DOM/canvas, pas les pixels
+  // comme source de vérité — l'acceptation repose sur l'état de la sim).
+  const shot = await cdp('Page.captureScreenshot', { format: 'png' });
+  const shotPath = join(import.meta.dirname, '..', 'evidence', 'jeu-en-cours.png');
+  mkdirSync(join(import.meta.dirname, '..', 'evidence'), { recursive: true });
+  writeFileSync(shotPath, Buffer.from(shot.result.data, 'base64'));
+  check('capture d\u2019\u00e9tat sauvegard\u00e9e (preuve)', true, shotPath);
+
+  // Recharger EN PLACE (bouton/touche L, critères 12-13) puis la sim continue :
+  // l'état restauré est réinjecté dans le MÊME objet suivi par la boucle de jeu.
+  const reloadOut = await evaluate(`(async () => {
+    const g = window.__game;
+    const ok = g.load();
+    const { tick } = await import('./src/core/tick.mjs');
+    const { advanceTime } = await import('./src/core/game-state.mjs');
+    for (let i = 0; i < 120; i++) {
+      const played = advanceTime(g.state, 1); // la paire boucle : horloge + sim
+      tick(g.state, played);
+    }
+    return { ok, moved: g.state.time, screen: g.state.screen, simAlive: !!g.state.sim };
+  })()`, true);
+  check('recharger puis simulation continue (critères 12,13)',
+    reloadOut?.ok === true && reloadOut.moved > 0 && reloadOut.simAlive,
+    `temps=${Math.round(reloadOut?.moved ?? 0)}s screen=${reloadOut?.screen}`);
+
+  const menu = await evaluate('(() => { const g = window.__game; g.quitToMenu(); return g.state.screen; })()');
   check('quitter revient au menu', menu === 'menu', `screen=${menu}`);
 
   check('aucune exception page', pageErrors.length === 0, pageErrors.slice(0, 2).join(' | '));
