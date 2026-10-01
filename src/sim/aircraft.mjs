@@ -13,12 +13,24 @@ import { onGateArrived, onGateDeparted } from '../economy/economy.mjs';
 const V = { approach: 220, landing: 130, taxi: 60, pushback: 30, departure: 150 };
 const GATE_OPS_S = 60;   // débarquement+sol+embarquement : durée d'occupation porte
 const HOLDING_RETRY_S = 5; // réessayer de se placer toutes les 5 s si bloqué
+const BLOCKED_CANCEL_S = 600; // 10 min sim : blocage persistant → annulation (décision A-5)
+
+// Piste occupée par un AUTRE avion (AC15, A4) : atterrissage/décollage/sortie
+// exclusifs sur une même piste. Deux demandes au même tick ne partagent pas la piste.
+function runwayBusy(sim, runwayId, excludeAcId) {
+  return sim.aircraft.some((a) => a.id !== excludeAcId && a.runwayId === runwayId
+    && ['landing', 'exit', 'departure'].includes(a.phase));
+}
 
 // Le battement avions : avance chaque avion selon sa phase.
+// Réservations exclusives (BL-03, AC15) : une occupation par segment est construite
+// AVANT le tour des avions (snapshot) pour que deux avions n'entrent jamais dans le
+// même segment libre au même tick (A3), puis les réservations se mettent à jour au
+// déplacement de chaque avion.
 export function tickAircraft(sim, dt) {
   if (sim._graphDirty) { rebuildGraph(sim); sim._graphDirty = false; }
   const occupied = new Set();
-  for (const a of sim.aircraft) if (a.seg) occupied.add(a.seg);
+  for (const a of sim.aircraft) if (a.seg != null) occupied.add(a.seg);
 
   for (const ac of sim.aircraft) {
     const spec = AIRCRAFT[ac.acType];
@@ -46,9 +58,8 @@ export function tickAircraft(sim, dt) {
 function doApproach(sim, ac, dt, spec) {
   const rw = runwayFor(sim, spec.minRunway);
   if (!rw) { ac.phase = 'holding'; ac.timer = 0; return; }
-  const busy = sim.aircraft.some((a) => a.id !== ac.id && a.runwayId === rw.id
-    && ['landing', 'exit', 'taxi'].includes(a.phase));
-  if (busy) { ac.runwayId = rw.id; ac.phase = 'holding'; ac.timer = 0; return; }
+  // Piste occupée par un autre avion → attente (A4 : landing/départ exclusifs).
+  if (runwayBusy(sim, rw.id, ac.id)) { ac.runwayId = rw.id; ac.phase = 'holding'; ac.timer = 0; return; }
   ac.runwayId = rw.id;
   const topY = rw.y; // haut de la piste (arrivée de l'approche)
   const speed = V.approach * dt;
@@ -74,11 +85,11 @@ function doHolding(sim, ac, dt, spec, occupied) {
     ac.x += Math.sin(ac.timer * 0.4) * 20 * dt; // survol / attente
   }
   ac._holdAcc = (ac._holdAcc ?? 0) + dt;
-  const runwayBusy = sim.aircraft.some((a) => a.id !== ac.id && a.runwayId === rw.id
-    && ['landing', 'exit'].includes(a.phase));
   if (ac._holdAcc >= HOLDING_RETRY_S) {
     ac._holdAcc = 0;
-    if (!runwayBusy && ac.y >= topY) {
+    // La piste est exclusive (A4) : on n'y entre que si personne d'autre
+    // n'y atterrit, n'en sort, ou n'en décolle.
+    if (!runwayBusy(sim, rw.id, ac.id) && ac.y >= topY) {
       ac.runwayId = rw.id;
       ac.phase = 'landing';
       ac.timer = 0;
@@ -101,17 +112,34 @@ function doLanding(sim, ac, dt, spec) {
 }
 
 // EXIT : on quitte la piste, on part vers une porte compatible. On calcule le chemin.
+// A5 : la porte est RÉSERVÉE à l'attribution (g.acId = ac.id) — deux avions ne
+// reçoivent jamais la même porte avant leur arrivée ; la porte reste réservée
+// jusqu'au pushback (libération sûre).
 function doExit(sim, ac, dt, spec, occupied) {
-  const gate = gateFor(sim, spec.gate, ac.id);
+  // Réservation atomique : on cherche une porte libre ET on la réserve ICI, au
+  // même tick (g.acId = ac.id). Une porte réservée par UN AUTRE avion est sautée.
+  // Un avion qui a déjà sa porte (retry depuis blocked) peut la RÉUTILISER :
+  // g.acId === ac.id compte comme libre pour lui (pas de double réservation).
+  const gate = sim.infra.gates.find((g) => g.size === spec.gate && (!g.acId || g.acId === ac.id));
   if (!gate) { ac.phase = 'blocked'; ac.timer = 0; return; }
+  gate.acId = ac.id; // A5 : porte réservée à cet avion jusqu'au pushback
   ac.gateId = gate.id;
   const fromNode = runwayExitNode(sim, ac.runwayId);
   const toNode = gateNodeOf(sim, gate.id);
   const path = findPath(sim, fromNode, toNode, occupied);
-  if (!path || path.length < 2) { ac.phase = 'blocked'; ac.timer = 0; return; }
+  if (!path || path.length < 2) {
+    // Pas de chemin → libération SÛRE : on rend la porte (g.acId) et on oublie
+    // le gateId (pas de référence périmée — le prochain retry reprendra à neuf).
+    gate.acId = null;
+    ac.gateId = null;
+    ac.phase = 'blocked'; ac.timer = 0; return;
+  }
   ac.path = path;
   ac.pathPtr = 0;
   ac.seg = sim._graph.nodes[ac.path[0]].seg;
+  // A3 : le segment d'arrivée du prochain pas est réservé immédiatement — un
+  // autre avion ne peut plus entrer dedans au même tick (réservation exclusive).
+  if (ac.seg != null) occupied.add(ac.seg);
   ac.heading = 'gate';
   ac.phase = 'taxi';
 }
@@ -155,6 +183,9 @@ function doTaxi(sim, ac, dt, occupied) {
     ac.y += (dy / dist) * step;
     ac.seg = nextSeg; // on entre sur le segment d'arrivée
   }
+  // A3 : la réservation du segment d'arrivée se met à jour ICI, au déplacement.
+  // Un autre avion ne peut plus entrer dans ce segment au même tick (exclusive).
+  if (ac.seg != null) occupied.add(ac.seg);
 }
 
 // GATE : l'avion est amarré à la porte. Opérations au sol :
@@ -194,6 +225,7 @@ function doPushback(sim, ac, dt, spec, occupied) {
   ac.path = path;
   ac.pathPtr = 0;
   ac.seg = sim._graph.nodes[ac.path[0]].seg;
+  if (ac.seg != null) occupied.add(ac.seg); // A3 : réservation exclusive du segment
   ac.heading = 'runway';
   ac.phase = 'taxi';
 }
@@ -213,9 +245,22 @@ function doDeparture(sim, ac, dt) {
 }
 
 // BLOQUÉ : aucun chemin (taxiway coupé / porte indisponible). On retente régulièrement.
+// A-5 : un blocage PERSISTANT est compté (ac._blockedAcc) et annulé après
+// BLOCKED_CANCEL_S (10 min sim) : pas de croissance infinie des vols bloqués.
+// La cause est visible (événement « flight-cancelled », toast dans l'UI).
 function doBlocked(sim, ac, dt, spec, occupied) {
   ac.delayed += dt;
   ac.timer += dt;
+  ac._blockedAcc = (ac._blockedAcc ?? 0) + dt;
+  if (ac._blockedAcc >= BLOCKED_CANCEL_S) {
+    // Blocage persistant → annulation (décision A-5 : comptés + annulés).
+    const g = sim.infra.gates.find((g) => g.id === ac.gateId);
+    if (g && g.acId === ac.id) g.acId = null; // libération sûre de la porte réservée
+    ac.seg = null;
+    ac.phase = 'cancelled';
+    pushEvent(sim, { kind: 'flight-cancelled', volId: ac.id, airline: ac.airline, why: 'blocage persistant' });
+    return;
+  }
   if (ac.timer < HOLDING_RETRY_S) return;
   ac.timer = 0;
   // réessayer selon le contexte : heading = 'gate' (on voulait aller à une porte)
@@ -225,6 +270,7 @@ function doBlocked(sim, ac, dt, spec, occupied) {
     // on partait de la porte : on retente pushback
     doPushback(sim, ac, dt, spec, occupied);
   }
+  if (ac.phase !== 'blocked') ac._blockedAcc = 0; // rétabli → le compteur repart à zéro
 }
 
 // --- Aides de sélection de ressources (compatibilité/disponibilité). -----------
@@ -235,9 +281,4 @@ function runwayFor(sim, minLen) {
   if (!rws.length) return null;
   rws.sort((a, b) => a.len - b.len);
   return rws[0];
-}
-
-// Porte compatible : bonne taille, libre. (On laisse la décision d'occupation à doTaxi.)
-function gateFor(sim, size, excludeAcId) {
-  return sim.infra.gates.find((g) => g.size === size && (!g.acId || g.acId === excludeAcId));
 }
