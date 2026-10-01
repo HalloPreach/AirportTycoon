@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newSimState } from '../src/core/sim-state.mjs';
-import { buildBuilding, gateFor, runwayFor, tickUnlocks } from '../src/infra/infra.mjs';
+import { buildBuilding, demolishBuilding, gateFor, runwayFor, tickUnlocks } from '../src/infra/infra.mjs';
 import { spawnArrivals, tickPlanner } from '../src/flights/flights.mjs';
 import { tickAircraft } from '../src/sim/aircraft.mjs';
 import { tickEconomy, tickPassengers } from '../src/economy/economy.mjs';
@@ -25,14 +25,19 @@ function rng(seed) {
   };
 }
 
-// Un aéroport minimal jouable : une piste, un taxiway qui relie la piste au terminal,
-// et un terminal avec ses portes. (La géométrie est choisie pour que findPath trouve
-// un chemin réseau piste → porte : c'est le cas « bien conçu » du brief.)
+// Un aéroport minimal jouable : une piste, un taxiway qui RELIE la piste au terminal
+// (les deux se touchent physiquement), et un terminal avec ses portes.
+// La géométrie est choisie pour que findPath trouve un chemin réseau piste → porte :
+// c'est le cas « bien conçu » du brief.
+// (BL-02 : avant la correction, le taxiway était à (400,1050) — il ne touchait
+// ni la piste (750..850) ni le terminal : le graphe le liait par « proximité »
+// (distance 107 < 320) alors qu'aucun taxiway ne relie la piste au terminal.
+// Le cas bien conçu exige des segments qui se TOUCHENT.)
 function buildAirport(sim) {
   rebuildGraph(sim);
-  buildBuilding(sim, 'runway', 750, 100);       // piste verticale (y 100..1100)
-  buildBuilding(sim, 'taxiway', 400, 1050);     // taxiway horizontal reliant piste ↔ terminal
-  buildBuilding(sim, 'terminal', 400, 900);
+  buildBuilding(sim, 'runway', 750, 100);        // piste verticale (y 100..1100)
+  buildBuilding(sim, 'taxiway', 550, 1050);     // taxiway : touche la piste (58 px) et le terminal
+  buildBuilding(sim, 'terminal', 550, 900);
   rebuildGraph(sim);
 }
 
@@ -194,6 +199,62 @@ test('pathfinding : chemin réseau piste→porte existe (robustesse)', () => {
   assert.ok(to != null, 'nœud de porte');
   const path = findPath(sim, from, to, new Set());
   assert.ok(path && path.length >= 2, 'chemin taxiway trouvé');
+});
+
+// --- BL-02 : connectivité physique (probes A1/A2 de l'audit, R1) -------------
+
+test('porte sans taxiway relié : HORS réseau, chemin refusé (sonde A1)', () => {
+  const sim = newSimState();
+  // La sonde A1 de l'audit : une piste + un terminal, ZÉRO taxiway.
+  buildBuilding(sim, 'runway', 750, 100);
+  buildBuilding(sim, 'terminal', 1100, 100);
+  rebuildGraph(sim);
+  // A1 : la porte ne doit PLUS se rattacher « à la cible la plus proche »
+  // (ici, la piste, à 374 px) : sans taxiway construit, elle est hors réseau.
+  for (const g of sim.infra.gates) {
+    assert.equal(gateNodeOf(sim, g.id), undefined, `porte ${g.id} sans taxiway doit être hors réseau`);
+  }
+  // Conséquence : aucun chemin vers une porte inexistante dans le réseau.
+  const from = runwayExitNode(sim, sim.infra.runways[0].id);
+  assert.ok(from != null);
+  assert.equal(findPath(sim, from, undefined, new Set()), null);
+});
+
+test('segments séparés par du terrain : pas de liaison fantôme (sonde A2)', () => {
+  const sim = newSimState();
+  // La sonde A2 : deux segments DISTINCTS séparés par 150 px de terrain vide
+  // (taxiway [600..800] / [400..600] à (800,1100) ↔ (600,1070) : distance ~207 px
+  // < l'ancienne borne NODE_DIST=320 → l'ancien graphe créait une arête fantôme).
+  const t1 = buildBuilding(sim, 'taxiway', 600, 1050);
+  const t2 = buildBuilding(sim, 'taxiway', 200, 1050); // [200..400] : ne touche PAS t1 [600..800]
+  rebuildGraph(sim);
+  const n = sim._graph.nodes;
+  const i1 = n.findIndex((x) => x.seg === t1.id && x.x === 600); // bout gauche de t1
+  const i2 = n.findIndex((x) => x.seg === t2.id && x.x === 400); // bout droit de t2
+  const direct = sim._graph.edges.get(i1).some((e) => e.to === i2);
+  assert.equal(direct, false, 'pas d\'arête entre deux segments qui ne se touchent pas');
+  // Et aucun chemin entre les deux bouts : les deux taxiways sont déconnectés.
+  assert.equal(findPath(sim, i1, i2, new Set()), null, 'deux segments non reliés → pas de chemin');
+});
+
+test('couper le taxiway = blocage réel, pas de chemin résiduel (AC14)', () => {
+  const sim = newSimState();
+  buildAirport(sim);
+  const gate = sim.infra.gates[0];
+  const from = runwayExitNode(sim, sim.infra.runways[0].id);
+  const to = gateNodeOf(sim, gate.id);
+  const before = findPath(sim, from, to, new Set());
+  assert.ok(before && before.length >= 2, 'avant le coupage, le chemin existe');
+  // On détruit LE taxiway qui relie la piste au terminal.
+  const tw = sim.infra.taxiways[0];
+  const res = demolishBuilding(sim, tw.id);
+  assert.equal(res.ok, true);
+  rebuildGraph(sim);
+  // Le terminal reste (ses portes existent), mais le taxiway est détruit →
+  // les portes ne touchent plus AUCUN segment du réseau → hors réseau, findPath = null.
+  assert.ok(sim.infra.gates.length > 0, 'les portes du terminal existent encore');
+  assert.equal(gateNodeOf(sim, gate.id), undefined, 'porte coupée du réseau après démolition');
+  assert.equal(findPath(sim, from, gateNodeOf(sim, gate.id), new Set()), null, 'pas de chemin résiduel');
 });
 
 test('sauvegarde/restauration cohérente (critères 10,11,13)', () => {
