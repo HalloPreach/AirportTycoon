@@ -46,14 +46,14 @@ test négatif A1/A2 + coupage de taxiway.
 Aucun blocant. Point d'attention : `run-probes.js` est un harnais racine (non commité)
 qui lit les sondes du dossier d'audit ; garder à jour si les sondes changent.
 
-**Collision BL-01 × BL-02 (2026-10-02) :** les deux cartes tournent en parallèle sur la
-même arborescence. Le worker BL-01 (t_a02aea3e) a laissé des modifications NON COMMITÉES
-(`src/core/new-game.mjs`, `src/infra/infra.mjs`, `tests/new-game.test.mjs`) dont le plan
-de départ (taxiway 400,1050 + terminal 400,900) repose sur la connectivité par proximité
-que BL-02 supprime → `tests/new-game.test.mjs` échoue (2/2) sous le correctif BL-02.
-BL-01 devra réaligner son `START_LAYOUT` sur la géométrie « touchante » prouvée
-(taxiway (550,1050) + terminal (550,900), voir le commentaire du fixture dans
-`tests/sim.test.mjs`) et committer son travail. Le commit BL-02 ne touche QUE
+**Collision BL-01 × BL-02 (2026-10-02) — RÉSOLUE.** Les deux cartes tournaient en
+parallèle sur la même arborescence : le worker BL-01 (t_a02aea3e) avait d'abord
+ébauché un `START_LAYOUT` (taxiway 400,1050 + terminal 400,900) reposant sur la
+connectivité par proximité que BL-02 supprime → `tests/new-game.test.mjs` échouait
+(2/2). BL-01 a réaligné son plan sur la géométrie « touchante » prouvée
+(taxiway (550,1050) + terminal (550,900)) : le validateur complet passe 41/41.
+BL-01 devra committer son travail (`src/core/new-game.mjs`, `src/infra/infra.mjs`,
+`tests/new-game.test.mjs`). Le commit BL-02 ne touche QUE
 `src/pathfinding/path.mjs` + `tests/sim.test.mjs` + `PROGRESS.md`.
 
 ## Prochaine tâche bornée

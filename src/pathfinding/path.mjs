@@ -3,8 +3,9 @@
 // par infra.buildGrid → on le cache ici sur sim._graph.
 //
 // Modèle : chaque segment (taxiway, piste) donne 2 nœuds (extrémités de sa tranche
-// courte) ; deux nœuds sont reliés si les deux segments sont proches. Un avion roule
-// le long du chemin nœud par nœud ; une arête « occupée » = un autre avion dessus.
+// courte) ; deux nœuds sont reliés si les deux segments se TOUCHENT (taxiway
+// construit, marge JOINT_MARGIN). Un avion roule le long du chemin nœud par nœud ;
+// une arête « occupée » = un autre avion dessus.
 import { AIRCRAFT } from '../data/catalog.mjs';
 
 // Tolérance de jonction (px) : deux segments ne se lient que s'ils se TOUCHENT
@@ -131,7 +132,7 @@ function h(sim, a, b) {
   return Math.hypot(n[a].x - n[b].x, n[a].y - n[b].y); // heuristique euclidienne admissible
 }
 
-// Le plus proche nœud de porte (ou null si la porte n'est pas reliée au réseau).
+// Nœud de porte (ou undefined si la porte est hors réseau : aucun segment ne la touche).
 export function gateNodeOf(sim, gateId) {
   return sim._graph ? sim._graph.gateNode.get(gateId) : undefined;
 }
