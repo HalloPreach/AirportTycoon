@@ -1,0 +1,11 @@
+{
+  "commitGit": "c815180ae500edb7b07778377570978f3ab95c75",
+  "runAt": "2026-10-01T22:58:03.482Z",
+  "name": "A5 — deux avions reçoivent la même porte avant leur arrivée",
+  "confirmed": false,
+  "assignedGates": [
+    null,
+    null
+  ],
+  "gateOccupant": null
+}
