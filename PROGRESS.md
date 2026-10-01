@@ -11,6 +11,7 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
 | BL-02 Connectivité physique (R1) | **fait (2026-10-02, worker t_fe23a99e)** |
 | BL-05 R3 démolition (A6/A7) | **fait (2026-10-02, worker t_e207fa79)** |
 | BL-04 R5 déplacement continu (A9) | **fait (2026-10-02, worker t_7a67c46d)** |
+| BL-14 Finances socle (A12, R8) | **fait (2026-10-02, worker t_f7d733b7, commits 6cb4064 + 4771ff3)** |
 | BL-03..BL-19 | en attente de leurs dépendances (BL-03 attend BL-02, BL-04/BL-05/BL-09 attendent BL-03, …) |
 
 ## Preuves obtenues
@@ -63,6 +64,20 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
     `SUMMARY.json` : R5 confirmée (comportement corrigé).
   - 2 tests de régression AC18 ajoutés dans `tests/sim.test.mjs` (échouaient
     sur le code d'avant) ; `npm test` → 54/54 pass sur `788ecb6`.
+- **BL-14 (2026-10-02) : R8/A12 plus reproduisibles.** Correction sur le commit
+  `6cb4064` (preuve : `evidence/audit-6cb4064/A12.json`) :
+  - Cause racine : `tickEconomy` ne comptait que les services construits
+    (fuel/hangar/maintenance/catering) — le socle (piste, taxiway, terminal) ne
+    coûtait rien : sans vol, les fonds ne bougeaient jamais (R8) et l'exploitation
+    n'existait pas (A12 : `moneyAfterOneSimHour` = `moneyBefore`).
+  - Correction : `OPEX_PER_SEC` (catalog.mjs) couvre piste 1.2/s, taxiway 0.2/s,
+    terminal 1.8/s + services ; le carburant des départs passe par `charge`
+    (compte dédié `spent.fuel`, A-6) — plus de « recette négative »
+    `revenue['fuel-cost']`. Nouveau `periodStatement(sim)` : bilan lisible
+    (recettes/exploitation/carburant/investissements + causes du déficit, AC23).
+  - Preuve : `A12.json` → `confirmed: false` (`moneyAfterOneSimHour: -200540`,
+    `spent.opex: 11520`). 5 tests dans `tests/economy.test.mjs` (scénarios
+    déficit/faillite + rentable) ; `node --test tests/*.test.mjs` → 59/59 pass.
 
 ## Décision
 
