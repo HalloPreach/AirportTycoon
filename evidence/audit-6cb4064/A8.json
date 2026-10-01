@@ -1,0 +1,12 @@
+{
+  "commitGit": "6cb40644034fafe063a70335bd29abe43d3bf72d",
+  "runAt": "2026-10-01T23:35:32.177Z",
+  "name": "A8 — toutes les portes constructibles sont S/M, aucune L",
+  "confirmed": false,
+  "sizes": [
+    "S",
+    "M",
+    "M",
+    "L"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "commitGit": "6cb40644034fafe063a70335bd29abe43d3bf72d",
+  "runAt": "2026-10-01T23:35:32.175Z",
+  "name": "A2 — liaison entre segments séparés par du terrain",
+  "confirmed": true,
+  "physicalGapX": 0,
+  "path": [
+    {
+      "x": 800,
+      "y": 1100,
+      "seg": 1
+    },
+    {
+      "x": 550,
+      "y": 1070,
+      "seg": 2
+    }
+  ]
+}
