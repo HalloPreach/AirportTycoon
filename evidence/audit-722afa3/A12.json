@@ -1,0 +1,13 @@
+{
+  "commitGit": "722afa3f23046c111ca798484a78deaadb618414",
+  "runAt": "2026-10-01T23:14:36.874Z",
+  "name": "A12 — aucun coût d’exploitation du socle aéroportuaire",
+  "confirmed": true,
+  "moneyBefore": 6100,
+  "moneyAfterOneSimHour": 6100,
+  "spent": {
+    "runway": 2500,
+    "taxiway": 400,
+    "terminal": 3000
+  }
+}

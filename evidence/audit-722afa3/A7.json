@@ -1,0 +1,16 @@
+{
+  "commitGit": "722afa3f23046c111ca798484a78deaadb618414",
+  "runAt": "2026-10-01T23:14:36.872Z",
+  "name": "A7 — démolir un taxiway occupé invalide le chemin et provoque une exception",
+  "confirmed": true,
+  "result": {
+    "ok": true,
+    "refund": 200
+  },
+  "pathBefore": [
+    0,
+    3
+  ],
+  "error": null,
+  "phaseAfter": "blocked"
+}

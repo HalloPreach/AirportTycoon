@@ -1,0 +1,12 @@
+{
+  "commitGit": "722afa3f23046c111ca798484a78deaadb618414",
+  "runAt": "2026-10-01T23:14:36.872Z",
+  "name": "A6 — démolition du terminal avec sa deuxième porte occupée",
+  "confirmed": true,
+  "result": {
+    "ok": false,
+    "why": "porte occupée"
+  },
+  "aircraftPhase": "ground",
+  "gateIdAfter": "3-g1"
+}

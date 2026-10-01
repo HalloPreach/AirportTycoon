@@ -9,6 +9,7 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
 | BL-00 Reproduction 8 risques + PROGRESS.md | **fait (2026-10-01)** |
 | BL-01 Nouvelle partie aéroport fourni | **en cours** (worker t_a02aea3e, non commité) |
 | BL-02 Connectivité physique (R1) | **fait (2026-10-02, worker t_fe23a99e)** |
+| BL-05 R3 démolition (A6/A7) | **fait (2026-10-02, worker t_e207fa79)** |
 | BL-03..BL-19 | en attente de leurs dépendances (BL-03 attend BL-02, BL-04/BL-05/BL-09 attendent BL-03, …) |
 
 ## Preuves obtenues
@@ -31,6 +32,23 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
     = blocage réel) : 39/39 pass sur les fichiers non touchés par BL-01 (sim/game/build-save).
 - Valideur : `node --test tests/*.test.mjs` → 36/36 pass sur `80a90ab`
   (36 ✔, 0 fail, 98 ms ; npm-cli.js cassé ici, A-4).
+- **BL-05 (2026-10-02) : R3 plus reproduisible.** Re-lance des sondes sur
+  `722afa3` (commit de correction) → `evidence/audit-722afa3/` :
+  - **A6** : démolition REFUSÉE (`ok: false`, `why: "porte occupée"`) — avant :
+    le terminal multi-portes était détruit avec un avion au sol (`gateIdAfter: null`).
+    **Confirmée (comportement corrigé).**
+  - **A7** : démolition du taxiway, `error: null`, avion passé en `blocked`
+    (chemin périmé remis à zéro à la démolition, retry au tick suivant) — avant :
+    `Cannot read properties of undefined (reading 'seg')`. **Confirmée (comportement corrigé).**
+  - SONDÉS CORRIGÉS dans `probes.mjs` (dossier d'audit) : A6/A7 attendent maintenant le
+    comportement CORRIGÉ (refus / pas d'exception), géométrie connective BL-02
+    (avion posé sur `path[0]`, nœud du taxiway). `SUMMARY.json` : 4/8 risques
+    confirmés — **R3 (A6/A7 : comportement corrigé)**, R5 (A9), R6 (A10/A11), R7 (A12) ;
+    non confirmés : R1 (A1 : sonde KO sur `gateNodeOf` undefined — comportement
+    corrigé, sonde à mettre à jour par sa carte), R2 (A3/A4/A5 : BL-03 corrigé, les
+    sondes attendent encore le comportement BUGGUÉ), R4 (A8/A13) et R8 (A14) :
+    cartes à venir.
+  - Valideur : `npm test` → 48/48 pass sur `722afa3` (46 + 2 tests de régression R3-A6/A7).
 
 ## Décision
 

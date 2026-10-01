@@ -1,0 +1,117 @@
+{
+  "name": "résumé BL-00 — reproduction des risques R1..R8",
+  "commitGit": "722afa3f23046c111ca798484a78deaadb618414",
+  "runAt": "2026-10-01T23:14:36.926Z",
+  "risks": {
+    "R1": {
+      "confirmed": false,
+      "evidences": [
+        {
+          "A": 1,
+          "confirmed": false,
+          "probeError": "Cannot read properties of undefined (reading 'x')"
+        },
+        {
+          "A": 2,
+          "confirmed": true,
+          "probeError": null
+        }
+      ]
+    },
+    "R2": {
+      "confirmed": false,
+      "evidences": [
+        {
+          "A": 3,
+          "confirmed": false,
+          "probeError": null
+        },
+        {
+          "A": 4,
+          "confirmed": false,
+          "probeError": null
+        },
+        {
+          "A": 5,
+          "confirmed": false,
+          "probeError": null
+        }
+      ]
+    },
+    "R3": {
+      "confirmed": true,
+      "evidences": [
+        {
+          "A": 6,
+          "confirmed": true,
+          "probeError": null
+        },
+        {
+          "A": 7,
+          "confirmed": true,
+          "probeError": null
+        }
+      ]
+    },
+    "R4": {
+      "confirmed": false,
+      "evidences": [
+        {
+          "A": 8,
+          "confirmed": false,
+          "probeError": null
+        },
+        {
+          "A": 13,
+          "confirmed": false,
+          "probeError": null
+        }
+      ]
+    },
+    "R5": {
+      "confirmed": true,
+      "evidences": [
+        {
+          "A": 9,
+          "confirmed": true,
+          "probeError": null
+        }
+      ]
+    },
+    "R6": {
+      "confirmed": true,
+      "evidences": [
+        {
+          "A": 10,
+          "confirmed": true,
+          "probeError": null
+        },
+        {
+          "A": 11,
+          "confirmed": true,
+          "probeError": null
+        }
+      ]
+    },
+    "R7": {
+      "confirmed": true,
+      "evidences": [
+        {
+          "A": 12,
+          "confirmed": true,
+          "probeError": null
+        }
+      ]
+    },
+    "R8": {
+      "confirmed": false,
+      "evidences": [
+        {
+          "A": 14,
+          "confirmed": false,
+          "probeError": null
+        }
+      ]
+    }
+  }
+}
