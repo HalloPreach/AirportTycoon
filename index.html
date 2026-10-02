@@ -8,6 +8,19 @@
     html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #263238; }
     canvas { display: block; }
     /* UI fine : barre d'outils de construction + toasts (feedback lisible). */
+    /* R20 : barre de commandes du MENU en haut (boutons souris ; les raccourcis
+       N/R restent disponibles). La toolbar de construction reste en bas à
+       gauche et reçoit les boutons de commandes du jeu (pause, vitesse,
+       sauvegarde, reprise) — les raccourcis P/F/S/L complètent la souris. */
+    .menu-btns {
+      position: fixed; left: 50%; top: 12px; transform: translateX(-50%);
+      display: flex; flex-wrap: wrap; gap: 6px; z-index: 10;
+      justify-content: center; max-width: 92vw;
+    }
+    .menu-btns .tool {
+      background: #37474f; color: #fff; border: 1px solid #546e7a;
+      border-radius: 6px; padding: 6px 12px; cursor: pointer; font: 14px system-ui;
+    }
     .toolbar {
       position: fixed; left: 12px; bottom: 12px; display: flex; gap: 6px;
       background: rgba(0,0,0,0.55); border-radius: 8px; padding: 8px;
@@ -77,6 +90,16 @@
     .pline--bad { color: #ef9a9a; }
     .pline--warn { color: #fff59d; }
     .aline { padding: 1px 0; color: #cfd8dc; }
+    /* R20 : carte d'introduction (premier cycle, désactivable) — bas gauche,
+       au-dessus de la barre de construction (la barre reste en bas à gauche). */
+    .intro {
+      position: fixed; left: 12px; bottom: 96px; z-index: 10; max-width: 340px;
+      background: rgba(0,0,0,0.6); border: 1px solid #546e7a; border-radius: 8px;
+      padding: 8px; font: 12px system-ui, sans-serif; color: #fff;
+    }
+    .intro h4 { margin: 0 0 4px; color: #ffe082; font-size: 13px; }
+    .intro p { margin: 0 0 6px; color: #eceff1; }
+    .intro-actions { display: flex; gap: 6px; flex-wrap: wrap; }
   </style>
 </head>
 <body>

@@ -1,6 +1,6 @@
 // Rendu canvas 2D : LIT l'état, ne calcule rien de jeu (règle UI fine).
 // Sprites vectoriels simples — ponytail : à remplacer par de vrais assets une fois la boucle jouable.
-export function makeRenderer(canvas, { overlays = [] } = {}) {
+export function makeRenderer(canvas, { overlays = [], onMenuCommands = null } = {}) {
   const ctx = canvas.getContext('2d');
 
   function resize() {
@@ -115,6 +115,13 @@ export function makeRenderer(canvas, { overlays = [] } = {}) {
   }
 
   // Menu de départ : le jeu n'est pas encore commencé.
+  // R20 : les commandes du menu sont DES BOUTONS (souris) — les touches N/R
+  // restent en raccourci (le texte l'indique). Le bouton « Reprendre »
+  // n'existe QUE s'il y a une sauvegarde (savePanel.canResume).
+  // Le bloc DOM est créé UNE FOIS (render est appelé à chaque frame) et
+  // seulement mis à jour de façon idempotente.
+  let menuBox = null;
+  let resumeBtn = null;
   function drawMenu() {
     ctx.fillStyle = '#1a237e';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -123,9 +130,26 @@ export function makeRenderer(canvas, { overlays = [] } = {}) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('Airport Tycoon', canvas.width / 2, canvas.height / 2 - 40);
-    ctx.font = '20px system-ui, sans-serif';
-    ctx.fillText('N — Nouvelle partie · R — Reprendre la sauvegarde (au menu)', canvas.width / 2, canvas.height / 2 + 20);
-    ctx.fillText('Q — Quitter · La partie se sauvegarde aussi automatiquement', canvas.width / 2, canvas.height / 2 + 50);
+    ctx.font = '16px system-ui, sans-serif';
+    ctx.fillText('Nouvelle partie (N) — un aéroport fourni : piste + terminal 2 portes', canvas.width / 2, canvas.height / 2 + 20);
+    ctx.fillText('Reprendre (R) — recharger la dernière sauvegarde · sauvegarde aussi automatique', canvas.width / 2, canvas.height / 2 + 44);
+    if (!menuBox) {
+      menuBox = document.createElement('div');
+      menuBox.className = 'menu-btns';
+      menuBox.setAttribute('role', 'toolbar');
+      menuBox.setAttribute('aria-label', 'Commandes du menu (nouvelle partie, reprise de la sauvegarde)');
+      const btnNew = document.createElement('button');
+      btnNew.className = 'tool';
+      btnNew.textContent = 'Nouvelle partie (N)';
+      btnNew.addEventListener('click', () => onMenuCommands.newGame());
+      resumeBtn = document.createElement('button');
+      resumeBtn.className = 'tool';
+      resumeBtn.textContent = 'Reprendre la sauvegarde (R)';
+      resumeBtn.addEventListener('click', () => onMenuCommands.resume());
+      menuBox.append(btnNew, resumeBtn);
+      document.body.appendChild(menuBox);
+    }
+    resumeBtn.style.display = onMenuCommands.canResume() ? '' : 'none';
   }
 
   // Bandeau HUD : temps, vitesse, pause + (si sim) fonds, passagers, satisfaction.
@@ -164,6 +188,7 @@ export function makeRenderer(canvas, { overlays = [] } = {}) {
     if (state.screen === 'menu') {
       drawMenu();
     } else {
+      if (menuBox) menuBox.style.display = 'none'; // R20 : les boutons du menu ne se superposent pas au jeu
       drawGame(state, cam);
       // Superpositions (fantôme de construction…) — la logique de pose reste dans la sim/UI.
       for (const overlay of overlays) overlay(ctx, cam, viewSize());

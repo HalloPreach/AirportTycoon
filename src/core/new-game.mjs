@@ -43,6 +43,11 @@ export function makeGameState(seed = undefined) {
   // pour que « nouvelle partie » reparte d'une préférence propre (et pas de
   // l'ancienne partie). main.mjs le pousse vers le miroir DOM (la case).
   state.planningAuto = false;
+  // R20 : progression de l'introduction du premier cycle (UI, sérialisée avec
+  // l'état entier → elle REPREND après sauvegarde ; « nouvelle partie » =
+  // étape 1, non désactivée). Les deux états désactivants (done/skipped)
+  // survivent au save/load : l'intro ne se re-suit pas après une reprise.
+  state.intro = { step: 0, done: false, skipped: false };
   for (const spec of START_LAYOUT) {
     // Aéroport fourni : placement gratuit (pas de débit, pas de test de fonds).
     // Terminal minimal = 2 portes M (l'offre ne génère que des vols medium au

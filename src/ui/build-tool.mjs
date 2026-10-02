@@ -7,7 +7,7 @@ import { BUILDINGS, UNLOCKS } from '../data/catalog.mjs';
 
 const KINDS = ['runway', 'taxiway', 'terminal', 'fuel', 'hangar', 'catering', 'cleaning', 'baggage'];
 
-export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced }) {
+export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced, controls = [] }) {
   const tool = { mode: false, kind: 'runway', demolishMode: false, ghost: null };
 
   // Barre d'outils (DOM, en bas à gauche) — accessible : boutons <button> réels.
@@ -34,6 +34,19 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
     tool.demolishMode = !tool.demolishMode; tool.mode = false; sync();
   });
   bar.appendChild(demolishBtn);
+  // R20 : boutons SOURIS des commandes du jeu (pause, vitesse, sauvegarde,
+  // reprise) — les MÊMES commandes que les raccourcis clavier (les touches
+  // complètent, elles ne sont pas seules porteuses). L'UI ne tranche rien :
+  // le clic appelle la commande (main.mjs), le label note le raccourci.
+  for (const c of controls) {
+    const btn = document.createElement('button');
+    btn.className = 'tool';
+    btn.textContent = c.label;
+    if (c.key) btn.title = `Raccourci : ${c.key}`;
+    btn.addEventListener('click', c.action);
+    bar.appendChild(btn);
+    c._btn = btn; // l'état actif (pause) est resynchronisé par refreshControls
+  }
   const hint = document.createElement('span');
   hint.className = 'toolbar-hint';
   hint.textContent = 'B : construire · 1-8 : bâtiment · X : démolir · A : auto-accept vols · Échap : annuler';
@@ -149,6 +162,16 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
     }
     tool.ghost = null;
   });
+
+  // R20 : les boutons de commandes reflètent l'état courant (vitesse, pause).
+  // `refreshControls` est appelé à chaque frame par main.mjs — le label du
+  // bouton vitesse suit state.speedIndex, la classe active suit state.paused.
+  tool.refreshControls = () => {
+    for (const c of controls) {
+      if (c.labelOf) c._btn.textContent = c.labelOf(state);
+      if (c.activeOf) c._btn.classList.toggle('tool--active', c.activeOf(state));
+    }
+  };
 
   // Rendu du fantôme (appelé par le renderer : drawGhost(ctx, cam, view)).
   tool.drawGhost = (ctx, cam, view) => {

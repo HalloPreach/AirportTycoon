@@ -1,7 +1,7 @@
 // Point d'entrée du jeu (navigateur). Câble : état, bus, caméra, entrées, rendu, boucle,
 // UI fine (toasts, outil construction, panneau sauvegarde). Aucune règle de jeu ici —
 // juste du câblage (règle : l'UI est fine, elle lit l'état et émet des commandes).
-import { newGame, setScreen, togglePause, cycleSpeed, SCREENS } from './core/game-state.mjs';
+import { newGame, setScreen, togglePause, cycleSpeed, SCREENS, SPEEDS } from './core/game-state.mjs';
 import { EventBus } from './core/events.mjs';
 import { Camera } from './ui/camera.mjs';
 import { makeInputHandlers } from './ui/input.mjs';
@@ -12,6 +12,7 @@ import { makeBuildTool } from './ui/build-tool.mjs';
 import { makeSavePanel } from './ui/save-panel.mjs';
 import { makePlanningPanel } from './ui/planning-panel.mjs';
 import { makePanels } from './ui/panels.mjs';
+import { makeIntro } from './ui/intro.mjs';
 import { drawNetworkOverlay } from './ui/overlay.mjs';
 import { clearSave } from './persistence/save.mjs';
 import { makeGameState } from './core/new-game.mjs';
@@ -21,12 +22,39 @@ export function boot(canvas) {
   const bus = new EventBus();
   const camera = new Camera(state);
   const toasts = makeToasts(document.body);
+  // R20 : boutons SOURIS des commandes du jeu (les raccourcis clavier P/F/S/L
+  // restent — la souris est la voie première, les touches complètent). Les
+  // actions référencent `savePanel` (déclaré plus bas dans boot) par closure :
+  // le clic n'arrive qu'après l'initialisation complète — aucun problème de
+  // portée. Le clic émet la MÊME commande que la touche (UI fine : pas de règle).
+  const controls = [
+    { label: 'Pause (P)', key: 'P',
+      action: () => togglePause(state),
+      labelOf: (s) => (s.paused ? 'Reprendre (P)' : 'Pause (P)'),
+      activeOf: (s) => s.paused },
+    { label: 'Vitesse (F)', key: 'F',
+      action: () => cycleSpeed(state),
+      labelOf: (s) => `Vitesse x${SPEEDS[s.speedIndex]} (F)` },
+    { label: 'Sauvegarder (S)', key: 'S',
+      action: () => savePanel.saveNow() },
+    { label: 'Charger la sauvegarde (L)', key: 'L',
+      action: () => savePanel.loadNow() },
+  ];
   const buildTool = makeBuildTool({
     canvas, state,
     camera,
     viewSize: () => ({ width: canvas.width, height: canvas.height }),
     toast: toasts.toast,
+    controls,
   });
+  // R20 : commandes du MENU en boutons souris (N nouvelle partie / R reprise)
+  // — les touches restent en raccourci (le texte du menu les note).
+  function resumeFromSave() { if (state.screen === SCREENS.MENU && savePanel.loadNow()) state.screen = SCREENS.GAME; }
+  const menuCommands = {
+    newGame: startNewGame,
+    resume: resumeFromSave,
+    canResume: () => savePanel.canResume(),
+  };
   const renderer = makeRenderer(canvas, {
     overlays: [
       buildTool.drawGhost,
@@ -35,6 +63,7 @@ export function boot(canvas) {
       // même graphe et la même règle que la sim (voir ui/overlay.mjs).
       (ctx, cam, vs) => { if (state.networkOverlay && state.sim) drawNetworkOverlay(ctx, cam, vs, state.sim); },
     ],
+    onMenuCommands: menuCommands,
   });
   makeInputHandlers(canvas, bus, camera, renderer.viewSize);
   // Panneaux de consultation (NONMVP-5) : inspection / bilan / stats / alertes
@@ -44,6 +73,12 @@ export function boot(canvas) {
     viewSize: () => ({ width: canvas.width, height: canvas.height }),
     buildTool,
   });
+
+  // R20 : introduction du PREMIER CYCLE (carte courte, désactivable — « Passer
+  // l'intro » / « Terminer ») : accepter un vol → observer sa porte → finances
+  // → goulot → investir. UI fine (aucune règle) ; la progression est sur
+  // `state.intro` (sérialisée → elle reprend après sauvegarde).
+  const intro = makeIntro(state);
 
   // Commandes de bas niveau : l'UI émet, l'état tranche.
   bus.on('pause', () => togglePause(state));
@@ -152,6 +187,10 @@ export function boot(canvas) {
     if (state.planningAuto) planningPanel.tickAuto();
     planningPanel.refresh(); // reconstruction des lignes seulement si le planning a changé
     panels.refresh(); // idem (signature) : DOM stable tant que l'état ne change pas
+    // R20 : l'intro (carte du premier cycle) + les boutons de commandes
+    // (vitesse/pause reflètent l'état courant) suivent à chaque frame.
+    intro.refresh();
+    buildTool.refreshControls();
   });
 
   // Clavier global : les touches de déplacement restent dans input.mjs ;
@@ -160,7 +199,7 @@ export function boot(canvas) {
   window.addEventListener('keydown', (e) => {
     const k = e.key.toLowerCase();
     if (k === 'n') { if (state.screen === SCREENS.MENU) startNewGame(); }
-    else if (k === 'r') { if (state.screen === SCREENS.MENU && savePanel.loadNow()) state.screen = SCREENS.GAME; }
+    else if (k === 'r') { resumeFromSave(); }
     else if (k === 'f') { if (state.screen === SCREENS.GAME) cycleSpeed(state); }
     else if (k === 's') savePanel.saveNow();
     else if (k === 'l') savePanel.loadNow();
@@ -210,6 +249,7 @@ export function boot(canvas) {
     buildTool,
     toasts,
     panels,
+    intro, // R20 : l'introduction (tests CDP : étape courante, done/skipped)
   };
 }
 

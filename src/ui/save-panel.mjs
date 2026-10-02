@@ -56,6 +56,10 @@ export function makeSavePanel(state, { toast, syncPlanningPanel, onLoad }) {
     // elle en émet la commande syncPlanningPanel, câblée par main.mjs).
     // (avant R06, la préférence était un flag local du panneau : le load la
     // perdait. Maintenant elle est sur le state = sérialisée = rechargée.)
+    // R20 : l'intro (state.intro) suit le MÊME chemin que planningAuto —
+    // Object.assign la restaure ; une sauvegarde ANCIENNE sans ce champ garde
+    // la valeur de la session courante (le champ vit sur le state, il n'est
+    // jamais re-supprimé — même pattern que state.sim juste au-dessus).
     syncPlanningPanel?.(); // la case auto-accept (BL-16 / R06) suit le state restauré
     onLoad?.(); // R07 : la sélection d'inspection (pick) pointe vers l'ANCIENNE sim
                  // (objet disparu) — elle est invalidée par le hook câblé dans main.mjs
