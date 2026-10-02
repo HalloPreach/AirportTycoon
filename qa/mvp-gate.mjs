@@ -149,28 +149,34 @@ async function evaluate(expr) {
   return res.result?.result?.value;
 }
 
-// ENTRÉE RÉELLE clavier (AC27) : rawKeyDown → keyDown (texte) → keyUp.
+// ENTRÉE RÉELLE clavier (AC27) : rawKeyDown → keyUp.
+// ponytail: UNSEUL rawKeyDown (pas de keyDown « text » entre les deux) — sonde
+// _probe-keys.mjs (run 226) : sous Edge headless, rawKeyDown + keyDown(text) +
+// keyUp génère 6 événements keydown DOM pour UNE pression (Chromium paire les
+// événements en retard dans la file d'input) → tout toggle du jeu (b, x, p)
+// s'annule pair. rawKeyDown + keyUp = exactement 1 keydown = une vraie frappe.
+// Les touches spéciales (flèches/Échap) gardent keyDown sans text (holdKey).
 async function key(k) {
   const code = k.length === 1 ? `Key${k.toUpperCase()}` : k;
   const vk = k.length === 1 ? k.toUpperCase().charCodeAt(0) : 0;
   await cdp('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: k, code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk });
-  await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, text: k, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk });
   await cdp('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk });
 }
 
-// Séquence de touches EN UNE RALE (aucun await entre les 6 événements) : les 6
-// événements CDP partent sur le WebSocket en un lot SYNCHRONE, donc tous sont en
-// file d'attente AVANT la prochaine frame rAF. Requis pour R3/A7 : R (reprendre)
-// + P (pause) doivent se superposer pour figer la fenêtre « avant 1er tick »
-// (sim._graph null) — un await entre les deux laisserait un tick reconstruire le
-// graphe et ruinerait le test.
+// Séquence de touches EN UNE RALE (aucun await entre les événements) : les 4
+// événements CDP partent sur le WebSocket en un lot SYNCHRONE, donc tous sont
+// en file d'attente AVANT la prochaine frame rAF. Requis pour R3/A7 : R
+// (reprendre) + P (pause) doivent se superposer pour figer la fenêtre « avant 1er
+// tick » (sim._graph null) — un await entre les deux laisserait un tick
+// reconstruire le graphe et ruinerait le test. MÊME RÈGLE rawKeyDown/keyUp que
+// key() : le keyDown « text » doublait chaque keydown (sonde _probe-keys.mjs)
+// et annulait la pause par paire.
 function keyBurst(keys) {
   const p = [];
   for (const k of keys) {
     const code = k.length === 1 ? `Key${k.toUpperCase()}` : k;
     const vk = k.length === 1 ? k.toUpperCase().charCodeAt(0) : 0;
     p.push(cdp('Input.dispatchKeyEvent', { type: 'rawKeyDown', key: k, code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk }));
-    p.push(cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, text: k, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk }));
     p.push(cdp('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk }));
   }
   return Promise.all(p);
@@ -306,14 +312,22 @@ async function run() {
   if (!(pos.sx > 0 && pos.sx < pos.cw && pos.sy > 0 && pos.sy < pos.ch)) {
     throw new Error(`cible hors canvas : ${JSON.stringify(pos)} — panne à corriger`);
   }
+  const t0 = (await snap()).taxiways; // baseline AVANT le clic
   await clickAt(pos.sx, pos.sy);
   // ponytail: compte RELATIF (baseline peut bouger — WIP sibling BL-12 sur le tree
-  // partagé) : le delta fait foi, pas le chiffre absolu.
-  const t0 = (await snap()).taxiways;
-  const built = await waitFor(`window.__game.state.sim.infra.taxiways.length === ${t0 + 1}`, 15000, 'pose du 2e taxiway');
+  // partagé) : le delta fait foi, pas le chiffre absolu. Le prédicat renvoie le
+  // COMPTE (pas un booléen) : waitFor résout avec la valeur du prédicat, donc
+  // built est un nombre et `built === t0 + 1` tient.
+  const built = await waitFor(
+    `(() => { const n = window.__game.state.sim.infra.taxiways.length; return n === ${t0 + 1} ? n : null; })()`,
+    15000, 'pose du 2e taxiway');
   check('EV-3.2b construction réelle (B + 2 + clic souris)', built === t0 + 1, `taxiways ${t0} → ${built}`);
 
   // (3) VOLS — F × 3 (x1 → x2 → x4) : arrivées, cycles, passagers, recettes.
+  // BL-16 (AC20) : un vol n'arrive QUE si le JEU l'accepte — la touche A (entrée
+  // réelle, comme les autres) active l'auto-accept : le jeu décide pour le joueur,
+  // la sim déploie les vols « accepted ». Sans décision, aucun vol n'existerait.
+  await key('a'); await sleep(100);
   await key('f'); await sleep(100); await key('f'); await sleep(100); await key('f');
   await shot('02-vols.png');
   const s3 = await waitFor(
@@ -385,7 +399,13 @@ async function run() {
   //     clavier réel (la panne fonctionne en pause : la caméra est pilotée par la
   //     frame UI, pas par le tick sim). X + clic réel : demolishBuilding lit
   //     _graph === null → le null-guard rebuildGraph (d43b290) → AUCUNE exception.
-  await panTo(1200, 300, 120, 120); // centre le taxiway isolé (fonctionne en pause)
+  //     TOLÉRANCE SERRÉE (12 px) : le hit-test de démolition est le rectangle du
+  //     taxiway (40 px de haut, ±20 px autour du centre) — la tol 120 px par
+  //     défaut laissait le clic jusqu'à 120 px du centre → le clic tombait à
+  //     côté (run BL-16 : sy=349 au lieu de 450, world y 199 hors de [280..320]
+  //     → hit undefined, rien ne se démolit, timeout R3/A7). Avec tol 12 le
+  //     point est à ±12 px du centre de VUE : le clic au centre est dedans.
+  await panTo(1200, 300, 12, 120); // centre SERRÉ le taxiway isolé (fonctionne en pause)
   const pos6 = await screenPosFor(1200, 300); // le taxiway isolé posé en (2)
   check('R3/A6a le taxiway isolé est visible (pan réel en pause)',
     pos6.sx > 0 && pos6.sx < pos6.cw && pos6.sy > 0 && pos6.sy < pos6.ch,
@@ -394,8 +414,24 @@ async function run() {
     throw new Error(`cible (6) hors canvas : ${JSON.stringify(pos6)} — pan à corriger`);
   }
   await key('x');
+  // FIX R3/A7 (diagnostic run 226) : clic SUR le taxiway (pos6 = position
+  // monde→écran MESURÉE du taxiway, pas le centre canvas). panTo(1200,300,tol12)
+  // ne converge PAS toujours en pause → le taxiway peut être à ~100px du centre
+  // (rapport run 226 : pos6=(734,342) vs centre (640,450)) ; un clic au centre
+  // canvas rate le hit-rect du taxiway (±100 x / ±20 y) → demolishBuilding
+  // jamais appelé → taxiways reste 1 → timeout R3/A7. Cliquer sur pos6 (centre
+  // MONDE du taxiway) est robuste à l'inexactitude du pan.
   await clickAt(pos6.sx, pos6.sy);
   await key('Escape');
+  // Le handler de démolition est ASYNC (await import('../infra/infra.mjs') avant
+  // demolishBuilding) : un snap immédiat peut lire l'état AVANT que la démolition
+  // s'applique → faux FAIL (taxiways=1). On poll la disparition réelle du taxiway
+  // isolé (compte === 0), comme la phase build. La preuve « graphe null au moment
+  // de la démolition » est déjà capturée dans s6 (AVANT pan/démolition), elle n'est
+  // pas affaiblie par le polling.
+  await waitFor(
+    `(() => { const n = window.__game.state.sim.infra.taxiways.length; return n === 0; })()`,
+    10000, 'démolition du taxiway isolé (R3/A7)');
   const s7 = await snap();
   check('R3/A7 démolition réelle AVANT 1er tick (X + clic, graphe null)',
     s7.taxiways === 0, `taxiways=${s7.taxiways} (0 attendu : plus aucun) money=${s7.money} (remboursement)`);

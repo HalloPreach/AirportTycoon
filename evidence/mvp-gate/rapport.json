@@ -1,0 +1,151 @@
+{
+  "date": "2026-10-02T03:27:58.419Z",
+  "result": "PASS",
+  "results": [
+    {
+      "name": "serveur statique local démarré (serve.mjs)",
+      "ok": true,
+      "detail": "port=8314"
+    },
+    {
+      "name": "EV-3.1 nouvelle partie (touche N réelle, menu → jeu)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "EV-3.2a conversion écran (lecture seule caméra, dans le canvas)",
+      "ok": true,
+      "detail": "{\"sx\":1040,\"sy\":150,\"cw\":1280,\"ch\":900}"
+    },
+    {
+      "name": "EV-3.2b construction réelle (B + 2 + clic souris)",
+      "ok": true,
+      "detail": "taxiways 1 → 2"
+    },
+    {
+      "name": "EV-3.3 vols exécutés — passagers transportés (AC7)",
+      "ok": true,
+      "detail": "carried=122 t=203s phases=blocked"
+    },
+    {
+      "name": "EV-3.4 finances : recettes générées",
+      "ok": true,
+      "detail": "{\"landing\":200,\"gate\":100,\"pax\":1525}"
+    },
+    {
+      "name": "EV-3.5 conflits de ressources (démolition → blocked/holding)",
+      "ok": true,
+      "detail": "taxiways=1 (base 2) phases=blocked delayed=1"
+    },
+    {
+      "name": "EV-3.6 sauvegarde réelle (touche S, présent en localStorage)",
+      "ok": true,
+      "detail": "argent=12668"
+    },
+    {
+      "name": "EV-3.7 RELOAD + touche R : reprise de la sauvegarde (la PORTE)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "EV-3.8 reprise : l’état est restauré (passagers/argent conservés)",
+      "ok": true,
+      "detail": "carried=122 taxiways=1 (attendu 1) money=12668 graph=null"
+    },
+    {
+      "name": "R3/A6a le taxiway isolé est visible (pan réel en pause)",
+      "ok": true,
+      "detail": "{\"sx\":628.9999999999898,\"sy\":444.9600000000067,\"cw\":1280,\"ch\":900}"
+    },
+    {
+      "name": "R3/A7 démolition réelle AVANT 1er tick (X + clic, graphe null)",
+      "ok": true,
+      "detail": "taxiways=0 (0 attendu : plus aucun) money=12868 (remboursement)"
+    },
+    {
+      "name": "R3/A7 le graphe était null au moment de la démolition (null-guard exercé)",
+      "ok": true,
+      "detail": "graphNull avant=true"
+    },
+    {
+      "name": "R3/A7 zéro exception page (null-guard rebuildGraph d43b290 PASS)",
+      "ok": true,
+      "detail": "exceptions=0"
+    },
+    {
+      "name": "EV-3.9 rejeu après reprise : la sim continue (pas de plantage)",
+      "ok": true,
+      "detail": "t=206s phases=blocked"
+    },
+    {
+      "name": "EV-5 réseau : toutes les requêtes sont LOCALES (aucune externe)",
+      "ok": true,
+      "detail": "reqs=51"
+    },
+    {
+      "name": "EV-6 zéro exception de page sur toute la session",
+      "ok": true,
+      "detail": "exceptions=0"
+    },
+    {
+      "name": "EV-6 zéro console.error sur toute la session",
+      "ok": true,
+      "detail": "errors=0"
+    }
+  ],
+  "requests": [
+    "http://127.0.0.1:8314/",
+    "http://127.0.0.1:8314/src/main.mjs",
+    "http://127.0.0.1:8314/src/core/game-state.mjs",
+    "http://127.0.0.1:8314/src/core/events.mjs",
+    "http://127.0.0.1:8314/src/ui/camera.mjs",
+    "http://127.0.0.1:8314/src/ui/input.mjs",
+    "http://127.0.0.1:8314/src/ui/renderer.mjs",
+    "http://127.0.0.1:8314/src/core/loop.mjs",
+    "http://127.0.0.1:8314/src/ui/toast.mjs",
+    "http://127.0.0.1:8314/src/ui/build-tool.mjs",
+    "http://127.0.0.1:8314/src/ui/save-panel.mjs",
+    "http://127.0.0.1:8314/src/ui/planning-panel.mjs",
+    "http://127.0.0.1:8314/src/persistence/save.mjs",
+    "http://127.0.0.1:8314/src/core/new-game.mjs",
+    "http://127.0.0.1:8314/src/core/sim.mjs",
+    "http://127.0.0.1:8314/src/core/sim-state.mjs",
+    "http://127.0.0.1:8314/src/infra/infra.mjs",
+    "http://127.0.0.1:8314/src/data/catalog.mjs",
+    "http://127.0.0.1:8314/src/flights/flights.mjs",
+    "http://127.0.0.1:8314/src/pathfinding/path.mjs",
+    "http://127.0.0.1:8314/src/core/tick.mjs",
+    "http://127.0.0.1:8314/src/sim/aircraft.mjs",
+    "http://127.0.0.1:8314/src/economy/economy.mjs",
+    "http://127.0.0.1:8314/src/core/rng.mjs",
+    "http://127.0.0.1:8314/favicon.ico",
+    "http://127.0.0.1:8314/src/sim/passengers.mjs",
+    "http://127.0.0.1:8314/",
+    "http://127.0.0.1:8314/src/main.mjs",
+    "http://127.0.0.1:8314/src/core/game-state.mjs",
+    "http://127.0.0.1:8314/src/core/events.mjs",
+    "http://127.0.0.1:8314/src/ui/camera.mjs",
+    "http://127.0.0.1:8314/src/ui/input.mjs",
+    "http://127.0.0.1:8314/src/ui/renderer.mjs",
+    "http://127.0.0.1:8314/src/core/loop.mjs",
+    "http://127.0.0.1:8314/src/ui/toast.mjs",
+    "http://127.0.0.1:8314/src/ui/build-tool.mjs",
+    "http://127.0.0.1:8314/src/ui/save-panel.mjs",
+    "http://127.0.0.1:8314/src/ui/planning-panel.mjs",
+    "http://127.0.0.1:8314/src/persistence/save.mjs",
+    "http://127.0.0.1:8314/src/core/new-game.mjs",
+    "http://127.0.0.1:8314/src/core/sim.mjs",
+    "http://127.0.0.1:8314/src/data/catalog.mjs",
+    "http://127.0.0.1:8314/src/flights/flights.mjs",
+    "http://127.0.0.1:8314/src/core/sim-state.mjs",
+    "http://127.0.0.1:8314/src/infra/infra.mjs",
+    "http://127.0.0.1:8314/src/pathfinding/path.mjs",
+    "http://127.0.0.1:8314/src/core/tick.mjs",
+    "http://127.0.0.1:8314/src/sim/aircraft.mjs",
+    "http://127.0.0.1:8314/src/economy/economy.mjs",
+    "http://127.0.0.1:8314/src/core/rng.mjs",
+    "http://127.0.0.1:8314/src/sim/passengers.mjs"
+  ],
+  "consoleErrors": [],
+  "pageExceptions": []
+}

@@ -1,0 +1,26 @@
+{
+  "screen": "menu",
+  "screenPosFor": {
+    "resultType": "object",
+    "value": {
+      "sx": 1040,
+      "sy": 150,
+      "cw": 1280,
+      "ch": 900
+    }
+  },
+  "stateSnapshot": {
+    "resultType": "object",
+    "value": {
+      "screen": "menu",
+      "money": null
+    }
+  },
+  "afterReload": {
+    "resultType": "object",
+    "value": {
+      "sx": 1,
+      "cw": 1280
+    }
+  }
+}
