@@ -4,7 +4,7 @@
 const fs = require('fs');
 const a = fs.readFileSync(process.argv[2], 'utf8');
 const b = fs.readFileSync(process.argv[3], 'utf8');
-const norm = (s) => s.replace(/"rngSeed":\s*\d+/g, '"rngSeed":X').replace(/"runId":\s*"[^"]*"/g, '"runId":"X"');
+const norm = (s) => s.replace(/"rngSeed":\s*\d+/g, '"rngSeed":X').replace(/"seed":\s*\d+/g, '"seed":X').replace(/"runId":\s*"[^"]*"/g, '"runId":"X"');
 console.log('identiques a part rngSeed ?', norm(a) === norm(b));
 const repA = JSON.parse(fs.readFileSync(process.argv[4], 'utf8'));
 const repB = JSON.parse(fs.readFileSync(process.argv[5], 'utf8'));
