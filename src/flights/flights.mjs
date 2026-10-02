@@ -12,6 +12,7 @@
 // Horloge : le planificateur EST le propriétaire de sim.time (sim.time += dt) —
 // la sim avance au temps de JEU, indépendamment de l'horloge UI (state.time).
 import { AIRLINES, AIRCRAFT } from '../data/catalog.mjs';
+import { runwayFor } from '../infra/infra.mjs'; // R05 : critère de compatibilité piste = UNE seule fonction (infra.mjs)
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 import { isSurge, runwayClosed } from '../sim/incidents.mjs';
@@ -40,7 +41,8 @@ export function tickPlanner(sim, dt, rng = Math.random) {
       continue;
     }
     // pas de piste assez longue ni de porte de taille : retard (critère 6).
-    if (!sim.infra.runways.some((r) => r.len >= ac.minRunway) ||
+    // R05 : le critère « piste compatible » est centralisé (infra.mjs).
+    if (!runwayFor(sim, ac.minRunway) ||
         !sim.infra.gates.some((g) => g.size === ac.gate)) {
       a.delayed += dt;
       markPlannedDelayed(sim, a.id);
@@ -128,7 +130,7 @@ export function spawnArrivals(sim, dt, rng = Math.random) {
 function servableTypes(sim) {
   return Object.keys(AIRCRAFT).filter((k) => {
     const spec = AIRCRAFT[k];
-    return sim.infra.runways.some((r) => r.len >= spec.minRunway)
+    return !!runwayFor(sim, spec.minRunway) // R05 : critère compatibilité piste centralisé (infra.mjs)
       && sim.infra.gates.some((g) => g.size === spec.gate);
   });
 }
@@ -216,13 +218,16 @@ export function decideFlight(sim, volId, accept) {
 //   cause        : motif lisible si non compatible/disponible/accessible
 export function attributeFlight(sim, acType) {
   const ac = AIRCRAFT[acType];
-  const hasRunway = sim.infra.runways.some((r) => r.len >= ac.minRunway);
+  // R05 : « compatible » = UNE piste ASSEZ LONGUE + UNE porte DE LA BONNE TAILLE
+  // (critère centralisé : infra.mjs) — le gain de la 2e piste est ici MESURABLE
+  // (la compatibilité ne dépend plus de la 1re piste seulement).
+  const hasRunway = !!runwayFor(sim, ac.minRunway);
   const hasGate = sim.infra.gates.some((g) => g.size === ac.gate);
   const compatible = hasRunway && hasGate;
   const available = pendingCount(sim) < MAX_PENDING;
   const accessible = compatible && hasAccessiblePath(sim, ac.gate);
   const alternatives = Object.keys(AIRCRAFT)
-    .filter((k) => k !== acType && sim.infra.runways.some((r) => r.len >= AIRCRAFT[k].minRunway)
+    .filter((k) => k !== acType && !!runwayFor(sim, AIRCRAFT[k].minRunway)
       && sim.infra.gates.some((g) => g.size === AIRCRAFT[k].gate));
   let cause = 'servi';
   if (!hasRunway) cause = `piste trop courte (voulue ≥ ${ac.minRunway})`;

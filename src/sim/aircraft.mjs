@@ -28,7 +28,7 @@
 import { AIRCRAFT, REFUEL_TIME_S, GATE_WEAR_PER_SEC, GATE_MAINT_PER_SEC, GATE_WEAR_DELAY_S } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
-import { gateFor } from '../infra/infra.mjs';
+import { gateFor, pickRunway, runwayBusy, runwayFor } from '../infra/infra.mjs';
 import { onGateArrived, onGateDeparted, onFlightCancelled } from '../economy/economy.mjs';
 import { arrivePassengers, countCarried, boardDelay, groupComplete } from './passengers.mjs';
 import { runwayClosed, fuelOut } from './incidents.mjs';
@@ -46,13 +46,6 @@ const HOLDING_CANCEL_S = 600; // 10 min sim : attente d'atterrissage bornée (R0
 // BL-12 : stations carburant — UNE station = UNE LANCE (2e lance à partir de la
 // 2e station : la saturation devient mesurable, critère de fin).
 const FUEL_LANCES_PER_STATION = 1;
-
-// Piste occupée par un AUTRE avion (AC15, A4) : atterrissage/décollage/sortie
-// exclusifs sur une même piste. Deux demandes au même tick ne partagent pas la piste.
-function runwayBusy(sim, runwayId, excludeAcId) {
-  return sim.aircraft.some((a) => a.id !== excludeAcId && a.runwayId === runwayId
-    && ['landing', 'exit', 'departure'].includes(a.phase));
-}
 
 // Le battement avions : avance chaque avion selon sa phase.
 // Réservations exclusives (BL-03, AC15) : une occupation par segment est construite
@@ -87,17 +80,20 @@ export function tickAircraft(sim, dt) {
 }
 
 // APPROACH : l'avion descend vers la piste (appro). S'il n'y a pas encore de piste
-// compatible OU si la piste est occupée, il passe en holding (attente) — jamais de
-// deux avions sur la même piste en même temps (conflit de ressource).
+// compatible, la (seule) piste compatible est FERMÉE (incident), ou si toutes
+// les pistes compatibles sont occupées, il passe en holding (attente) — jamais
+// de deux avions sur la même piste en même temps (conflit de ressource).
 function doApproach(sim, ac, dt, spec) {
+  // R05 : le CHOIX d'atterrissage est CENTRALISÉ (infra.mjs : compatibilité +
+  // occupation + ordre stable) — la MEILLEURE piste compatible ET LIBRE : la 1re
+  // n'est plus CHOISIE par défaut (sondée : 2e libre choisie si 1re prise).
+  const rw = pickRunway(sim, spec.minRunway, ac.id);
   // BL-14 : piste FERMÉE (incident) → aucun atterrissage (le départ, lui,
   // continue) : l'avion patiente en holding, son retard s'accumule (la
   // conséquence est MESURABLE, la récupération = réouverture).
-  if (runwayClosed(sim)) { ac.phase = 'holding'; ac.timer = 0; return; }
-  const rw = runwayFor(sim, spec.minRunway);
-  if (!rw) { ac.phase = 'holding'; ac.timer = 0; return; }
-  // Piste occupée par un autre avion → attente (A4 : landing/départ exclusifs).
-  if (runwayBusy(sim, rw.id, ac.id)) { ac.runwayId = rw.id; ac.phase = 'holding'; ac.timer = 0; return; }
+  // Aucune piste compatible / toutes occupées → HOLDING (A4), doHolding prend
+  // le relais (le compteur d'attente bornée R04 ne tourne QUE sur blocage).
+  if (!rw || runwayClosed(sim)) { ac.phase = 'holding'; ac.timer = 0; return; }
   ac.runwayId = rw.id;
   const topY = rw.y; // haut de la piste (arrivée de l'approche)
   const speed = V.approach * dt;
@@ -113,15 +109,21 @@ function doApproach(sim, ac, dt, spec) {
 // Les retards s'accumulent (critère 6). Aucune téléportation : il continue de
 // descendre s'il est en approche, sinon il fait le tour (oscille doucement).
 function doHolding(sim, ac, dt, spec, occupied) {
-  const rw = runwayFor(sim, spec.minRunway);
+  // R05 : le choix d'atterrissage est CENTRALISÉ (infra.mjs) : la MEILLEURE
+  // piste compatible ET LIBRE (null si toutes occupées → attente, A4).
+  const rw = pickRunway(sim, spec.minRunway, ac.id);
   ac.delayed += dt;
   // R04 (A-4) : BLOCAGE PERMANENT en holding = piste FERMÉE (incident) ou
   // AUCUNE piste compatible. Il est DIAGNOSTIQUÉ (la cause est nommée dans
   // l'événement d'annulation) et FINI par une règle bornée (HOLDING_CANCEL_S,
   // comme A-5) : pas de tournées au tour indéfiniment. La CONGESTION normale
-  // (piste occupée par un autre avion) N'EST PAS un blocage : le compteur
+  // (toutes les pistes compatibles OCCUPÉES) N'EST PAS un blocage : le compteur
   // reste à zéro — une attente brève ne provoque jamais d'annulation abusive.
-  const holdWhy = !rw ? 'pas de piste assez longue' : (runwayClosed(sim) ? 'piste fermée' : null);
+  // (runwayFor = compatibilité SEULE, sans occupation : on distingue « aucune
+  // compatible » (blocage permanent → annulation bornée) de « toutes
+  // occupées » (congestion, R05 — le compteur reste à zéro).)
+  const holdWhy = !runwayFor(sim, spec.minRunway) ? 'pas de piste assez longue'
+    : (runwayClosed(sim) ? 'piste fermée' : null);
   if (holdWhy) {
     ac._holdBlocked = (ac._holdBlocked ?? 0) + dt;
     if (ac._holdBlocked >= HOLDING_CANCEL_S) {
@@ -133,7 +135,7 @@ function doHolding(sim, ac, dt, spec, occupied) {
   } else {
     ac._holdBlocked = 0;
   }
-  if (!rw) return; // pas de piste : le compteur d'attente bornée tourne ci-dessus
+  if (!rw) return; // toutes occupées (congestion) : on patiente sans annulation
   const topY = rw.y;
   if (ac.y < topY) {
     ac.y = Math.min(topY, ac.y + V.approach * dt); // toujours en descente
@@ -282,7 +284,15 @@ function doDocking(sim, ac, dt) {
 // carburant (BL-12) → débarquement → sol → embarquement. Chaque étape dure GATE_OPS_S/3.
 // On compte les passagers transportés à l'embarquement (critère 7).
 function doGate(sim, ac, dt) {
-  arrivePassengers(sim, ac); // le vol commence le déchargement (passagers agrégés)
+  // R05 : arrivePassengers est IDEMPOTENT par vol — un avion qui RE-ENTRE en gate
+  // (pushback échoué → doBlocked → doExit, R04) a DÉJÀ injecté ses pax au 1er
+  // passage : sans ce garde, le 2e passage ré-injecte (injectedTotal gonfle, un
+  // groupe « base » orphelin reste à jamais, AC40 casse). Le 2e passage n'ajoute
+  // donc plus de pax au parcours (elles sont déjà dans la file).
+  if (!ac._paxInjected) {
+    arrivePassengers(sim, ac);
+    ac._paxInjected = true;
+  }
   ac.phase = 'refuel';
   ac.timer = 0;
 }
@@ -450,14 +460,4 @@ function doBlocked(sim, ac, dt, spec, occupied) {
     doPushback(sim, ac, dt, spec, occupied);
   }
   if (ac.phase !== 'blocked') ac._blockedAcc = 0; // rétabli → le compteur repart à zéro
-}
-
-// --- Aides de sélection de ressources (compatibilité/disponibilité). -----------
-
-// Piste compatible : la plus courte piste qui dépasse la longueur min requise.
-function runwayFor(sim, minLen) {
-  const rws = sim.infra.runways.filter((r) => r.len >= minLen);
-  if (!rws.length) return null;
-  rws.sort((a, b) => a.len - b.len);
-  return rws[0];
 }

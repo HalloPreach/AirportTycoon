@@ -5,7 +5,7 @@
 // poser/rouler ici ». ponytail : grille carrée simple, pas d'arborescence spatiale.
 import { BUILDINGS, UNLOCKS, TERMINAL_GATE_SIZES, HANGAR_CLEAN_PER_SEC, CLEANING_RATE_PER_SEC } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
-import { rebuildGraph } from '../pathfinding/path.mjs';
+import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 
 const CELL = 10;
 
@@ -162,20 +162,104 @@ export function demolishBuilding(sim, id) {
   return { ok: true, refund };
 }
 
-// Piste compatible pour un avion : la plus courte piste qui dépasse sa longueur min.
-export function runwayFor(sim, minLen) {
-  const rws = sim.infra.runways.filter((r) => r.len >= minLen);
-  if (!rws.length) return null;
-  rws.sort((a, b) => a.len - b.len);
-  return rws[0];
+// R05 (t_482d879d) : les CRITÈRES de piste/port sont CENTRALISÉS ici — la
+// compatibilité (piste assez longue, porte de la bonne taille), l'occupation
+// (piste/porte libre), l'ordre STABLE en égalités et le choix sont UN seul
+// endroit : aircraft.mjs (atterrissage) ET flights.mjs (planification) en
+// redirent la logique. Avant R05, « 1re piste compatible toujours choisie » :
+// runwayFor (aircraft.mjs) ignorait l'occupation — la 2e piste libre n'était
+// jamais choisie.
+//
+// Ordre STABLE et DÉTERMINISTE : tri sur (longueur, id). Les ids sont des
+// nombres croissants (infra.nextId) → en égalité de longueur le plus ancien
+// gagne, SANS dépendre de l'ordre d'insertion du tableau (Array.prototype.sort
+// n'est pas stable en Node < 12 ; ici le comparateur total le rend certain).
+// ponytail : l'ordre « libres en tête, puis (longueur, id) » COUVRE l'ordre
+// stable en égalités demandé (l'id est le tiebreak total) — la sonde de test
+// (tests/r05-runway.test.mjs) vérifie le GAIN de la 2e piste : quand la 1re
+// est occupée, la 2e libre est bien choisie (et non la 1re, comme avant R05).
+
+// Piste occupée par un AUTRE avion (AC15, A4) : atterrissage/décollage/sortie
+// exclusifs sur une même piste. Deux demandes au même tick ne partagent pas la
+// piste. Le cas est DÉRIVÉ des phases — aucun champ dédié (l'occupation est la
+// phase). R05 : UNIQUE règle d'occupation (aircraft + les sélecteurs ci-dessous
+// la partagent — la centralisation que R05 exige, au lieu d'en redire la
+// logique partout).
+export function runwayBusy(sim, runwayId, excludeAcId) {
+  return sim.aircraft.some((a) => a.id !== excludeAcId && a.runwayId === runwayId
+    && ['landing', 'exit', 'departure'].includes(a.phase));
 }
 
+// Piste LIBRE pour un avion : aucune AUTRE avion ne l'occupe (A4 : exclusif).
+function runwayFree(sim, rw, excludeAcId) {
+  return !runwayBusy(sim, rw.id, excludeAcId);
+}
+
+// Toutes les pistes COMPATIBLES (longueur ≥ minRunway), ordonnées DETERMINISTEMENT :
+// 1) libres en tête — une piste LIBRE avant une piste occupée (la règle R05
+//    : la 2e piste libre est choisie si la 1re est occupée) ;
+// 2) longueur croissante (la plus courte qui suffit — critère historique) ;
+// 3) id croissant (égalité de longueur : le plus ancien, déterministe).
+export function runwayCandidates(sim, minRunway, excludeAcId = null) {
+  const ok = sim.infra.runways.filter((r) => r.len >= minRunway);
+  return ok.sort((a, b) =>
+    (runwayFree(sim, b, excludeAcId) - runwayFree(sim, a, excludeAcId))
+    || (a.len - b.len)
+    || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+}
+
+// Le CHOIX d'atterrissage (R05) : la MEILLEURE piste compatible ET LIBRE, ou
+// null si toutes sont occupées. Le « d'abord la piste libre » est VÉRIFIÉ par
+// la sonde de test (tests/r05-runway.test.mjs), pas par un re-calage du trafic.
+export function pickRunway(sim, minRunway, excludeAcId = null) {
+  const cands = runwayCandidates(sim, minRunway, excludeAcId);
+  return cands.length && runwayFree(sim, cands[0], excludeAcId) ? cands[0] : null;
+}
+
+// Piste compatible pour un avion : la plus courte piste qui dépasse sa longueur
+// min (critère de COMPATIBILITÉ seul, SANS regard à l'occupation — le choix
+// d'atterrissage est pickRunway ci-dessus).
+export function runwayFor(sim, minLen) {
+  return runwayCandidates(sim, minLen)[0] || null;
+}
+
+// Porte JOIGNABLE au réseau : son nœud de porte EXISTE (un segment la touche)
+// ET au moins UNE sortie de piste est atteignable — le MÊME critère que
+// flights.hasAccessiblePath (primitives pathfinding réutilisées, pas de 2e règle).
+function gateReachable(sim, gate) {
+  if (sim._graphDirty) { rebuildGraph(sim); sim._graphDirty = false; }
+  if (!sim._graph) return false;
+  const to = gateNodeOf(sim, gate.id);
+  if (to == null) return false; // porte hors réseau (aucun taxiway ne la touche)
+  const occupied = new Set(); // « joignable » = sans conflit d'occupation
+  for (const r of sim.infra.runways) {
+    const from = runwayExitNode(sim, r.id);
+    if (from == null) continue;
+    if (findPath(sim, from, to, occupied)) return true;
+  }
+  return false;
+}
+// ponytail : gateReachable fait un findPath par piste par porte candidate (graphe
+// minuscule) — OK tant que le joueur ne construit pas ~100 terminaux ; si ça
+// ralentit, un cache de l'ensemble « portes joignables » par (re)buildGraph.
+
 // Porte compatible : une porte de la bonne taille, libre, dont le terminal est intact.
+// ORDRE STABLE ET DÉTERMINISTE :
+// 1) une porte JOIGNABLE au réseau (taxiway) AVANT une porte déconnectée —
+//    la validation R05 : « 1re porte compatible déconnectée, autre porte libre
+//    connectée : choisir l'autre » (l'avion bloqué sans réseau = retard purement
+//    artificiel, A1) ;
+// 2) usure (cleaning+maintenance) croissante — la porte la plus propre ;
+// 3) id croissant (terminalId puis index) — en égalité, le plus ANCIEN.
+// La porte LIBRE (acId null ou réservée par l'avion exclu) est un pré-filtre :
+// une porte réservée par UN AUTRE avion est sautée (A5).
 export function gateFor(sim, size, excludeAcId) {
   const free = sim.infra.gates.filter((g) => g.size === size && (!g.acId || g.acId === excludeAcId));
   if (!free.length) return null;
-  // préférer une porte dont le nettoyage/maintenance est à jour
-  free.sort((a, b) => (a.cleaning + a.maintenance) - (b.cleaning + b.maintenance));
+  free.sort((a, b) =>
+    (Number(gateReachable(sim, b)) - Number(gateReachable(sim, a)))
+    || ((a.cleaning + a.maintenance) - (b.cleaning + b.maintenance))
+    || (a.terminalId - b.terminalId || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)));
   return free[0];
 }
 
