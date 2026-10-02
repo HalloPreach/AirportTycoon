@@ -21,6 +21,11 @@ const START_LAYOUT = Object.freeze([
 export function makeGameState() {
   const state = newGame();
   state.sim = newSimState();
+  // R06 (D1) : préférence auto-accept = FAUX à la nouvelle partie. C'est le
+  // champ du STATE (sérialisé en entier dans la sauvegarde), réinitialisé ici
+  // pour que « nouvelle partie » reparte d'une préférence propre (et pas de
+  // l'ancienne partie). main.mjs le pousse vers le miroir DOM (la case).
+  state.planningAuto = false;
   for (const spec of START_LAYOUT) {
     // Aéroport fourni : placement gratuit (pas de débit, pas de test de fonds).
     // Terminal minimal = 2 portes M (l'offre ne génère que des vols medium au

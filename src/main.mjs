@@ -48,23 +48,32 @@ export function boot(canvas) {
   function startNewGame() {
     const fresh = makeGameState();
     Object.assign(state, fresh); // mêmes références (state.sim = fresh.sim)
+    // R06 (D1) : makeGameState() réinitialise planningAuto à false (champ du
+    // state, sérialisé) → l'Object.assign ci-dessus PORTE le reset (source
+    // unique dans la factory). On ne fait que resynchroniser le miroir DOM
+    // (la case auto-accept suit l'état) — pas un second reset parallèle.
+    planningPanel.setAuto(false);
     state._alertSeen = 0;
     clearSave(); // une nouvelle partie efface l'ancienne sauvegarde (« Reprendre » = la partie en cours)
     setScreen(state, SCREENS.GAME);
     toasts.toast('Nouvelle partie — aéroport fourni, étends-le (B)', 'ok');
   }
 
+  // R06 (D1) : la préférence auto-accept a UNE seule source de vérité
+  // (state.planningAuto) et UNE seule commande (setPlanningAuto). La touche A
+  // ET la case du panneau passent toutes deux par cette commande → plus de
+  // flag local (panel.auto) qui se désynchroniserait de l'état.
+  function setPlanningAuto(on) {
+    state.planningAuto = !!on;
+    planningPanel.setAuto(!!on); // le miroir DOM (la case) suit l'état
+    toasts.toast(on ? 'Auto-accept ON' : 'Auto-accept OFF', 'info');
+  }
   // Panneau planning (BL-16, AC20) : liste consultable des vols + accepter/refuser
   // + case auto-accept (politique JOUEUR — la décision sim reste decideFlight).
   // (créé AVANT savePanel : le load synchronise la case sur state.planningAuto).
-  const planningPanel = makePlanningPanel({ state, toast: toasts.toast });
-  state.planningAuto = false; // la préférence est sur le STATE (sérialisé en entier)
-  // Touch A (et la case du panneau) basculent l'auto-accept ; le deux restent syncs.
-  function setPlanningAuto(on) {
-    state.planningAuto = on;
-    planningPanel.setAuto(on); // la case suit la touche (et inversement)
-    toasts.toast(on ? 'Auto-accept ON (touche A)' : 'Auto-accept OFF (touche A)', 'info');
-  }
+  // La case émet onAutoChange = setPlanningAuto : la MÊME commande que la touche A.
+  const planningPanel = makePlanningPanel({ state, toast: toasts.toast, onAutoChange: setPlanningAuto });
+  state.planningAuto = false; // préférence par défaut : source sérialisée sur le state
 
   // Panneau sauvegarde (S sauvegarder, L charger).
   const savePanel = makeSavePanel(state, {

@@ -50,10 +50,13 @@ export function makeSavePanel(state, { toast, syncPlanningPanel }) {
     state.sim = restored.sim || null;
     state.paused = false;
     state._alertSeen = 0; // les alertes restaurées sont déjà connues du joueur
-    // La préférence auto-accept (BL-16) est sur le state restauré : le DOM du
-    // panneau suit (le callback est fourni par main.mjs — la UI fine n'a pas
-    // l'objet du panneau, elle en émet la commande via l'hook).
-    syncPlanningPanel?.(); // la case auto-accept (BL-16) suit le state restauré
+    // R06 (D2) : la préférence auto-accept (state.planningAuto) est sérialisée
+    // AVEC le state entier (serialize) et restaurée ici par Object.assign → le
+    // DOM du panneau suit via le hook (la UI fine n'a pas l'objet du panneau,
+    // elle en émet la commande syncPlanningPanel, câblée par main.mjs).
+    // (avant R06, la préférence était un flag local du panneau : le load la
+    // perdait. Maintenant elle est sur le state = sérialisée = rechargée.)
+    syncPlanningPanel?.(); // la case auto-accept (BL-16 / R06) suit le state restauré
     toast('Jeu restauré', 'ok');
     return true;
   }

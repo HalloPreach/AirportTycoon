@@ -12,6 +12,32 @@ import { tickAircraft } from '../src/sim/aircraft.mjs';
 import { tickEconomy, tickPassengers } from '../src/economy/economy.mjs';
 import { START_FUNDS } from '../src/core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../src/pathfinding/path.mjs';
+import { serialize, deserialize } from '../src/persistence/save.mjs';
+
+// R06 (D1) : la préférence auto-accept est un champ du STATE (source unique),
+// réinitialisé à false par une nouvelle partie. (Avant : flag local du panneau,
+// « nouvelle partie » le laissait en place silencieusement.)
+test('R06 (D1) : nouvelle partie → state.planningAuto réinitialisé à false', () => {
+  // Partie 1 : l'utilisateur active l'auto-accept.
+  const s1 = makeGameState();
+  s1.planningAuto = true;
+  // Nouvelle partie : l'ancienne préférence ne doit PAS persister.
+  const s2 = makeGameState();
+  assert.equal(s2.planningAuto, false, 'la nouvelle partie repart planningAuto=false');
+  // (l'état global fait la même chose : Object.assign(state, fresh) porte le reset)
+  const live = { planningAuto: true, time: 0 };
+  Object.assign(live, makeGameState());
+  assert.equal(live.planningAuto, false, 'Object.assign(state, fresh) porte le reset');
+});
+
+// R06 (D2) : la préférence auto-accept est sérialisée AVEC le state et
+// restaurée au chargement (elle survit à la sauvegarde).
+test('R06 (D2) : planningAuto survit à la sauvegarde (sérialisée + restaurée)', () => {
+  const s = makeGameState();
+  s.planningAuto = true; // l'utilisateur a activé l'auto-accept
+  const back = deserialize(serialize(s));
+  assert.equal(back.planningAuto, true, 'la préférence est restaurée après load');
+});
 
 test('nouvelle partie (A-2) : aéroport fourni, gratuit, réseau physiquement valide', () => {
   const state = makeGameState();

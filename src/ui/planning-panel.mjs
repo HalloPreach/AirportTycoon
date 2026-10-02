@@ -5,6 +5,10 @@
 // et le toast pour le feedback. La liste est SÉRIEUSE : elle n'est reconstruite
 // que quand le planning change (signature id:status) — sinon les boutons
 // disparaîtraient sous la souris à chaque frame et les clics ne partiraient pas.
+// R06 (D1) : la préférence auto-accept a UNE seule source de vérité,
+// state.planningAuto (sérialisée). La case n'est plus un state local : elle
+// ÉMÉT la même commande que la touche A (onAutoChange, câblée par main.mjs)
+// et n'est qu'un Miroir DOM de state.planningAuto (rendu via setAuto).
 import { decideFlight } from '../flights/flights.mjs';
 import { AIRCRAFT, AIRLINES } from '../data/catalog.mjs';
 
@@ -13,8 +17,8 @@ const STATUS = Object.freeze({
   delayed: 'retardé', cancelled: 'annulé',
 });
 
-export function makePlanningPanel({ state, toast }) {
-  const panel = { auto: false };
+export function makePlanningPanel({ state, toast, onAutoChange }) {
+  const panel = {};
 
   // DOM fixe (créé UNE fois) : le titre, la case auto, la zone de lignes.
   // Seule la zone de lignes change — et seulement quand le planning change.
@@ -30,18 +34,20 @@ export function makePlanningPanel({ state, toast }) {
   autoLabel.className = 'planning-auto';
   const autoCb = document.createElement('input');
   autoCb.type = 'checkbox';
-  autoCb.checked = !!panel.auto;
+  autoCb.checked = !!state.planningAuto; // miroir de l'état (source unique), pas un state
   autoCb.addEventListener('change', () => {
-    panel.auto = autoCb.checked;
-    toast(autoCb.checked ? 'Auto-accept ON (les vols prévus s\'acceptent seuls)' : 'Auto-accept OFF', 'info');
+    // La case n'écrit PAS un flag local : elle émet l'intention vers l'état,
+    // par la MÊME commande que la touche A (D1 — plus de source parallèle).
+    onAutoChange?.(autoCb.checked);
   });
   autoLabel.append(autoCb, document.createTextNode(' auto-accepter les vols prévus'));
   box.append(title, rows, autoLabel);
   document.body.appendChild(box);
 
-  // Synchronise la case sur l'état (touche A / rechargement) sans re-déclencher
-  // d'événement (on change .checked, pas .click()).
-  panel.setAuto = (on) => { panel.auto = !!on; autoCb.checked = !!on; };
+  // Synchronise le miroir DOM de la case sur l'état (touche A / rechargement /
+  // nouvelle partie) sans re-déclencher d'événement (on change .checked, pas
+  // .click()). C'est un miroir : la source reste state.planningAuto (D1).
+  panel.setAuto = (on) => { autoCb.checked = !!on; };
 
   function airlineName(id) { return (AIRLINES.find((x) => x.id === id) || { name: id }).name; }
   // Horloge de la sim en heures:minutes:secondes (le planning est « consultable
@@ -105,8 +111,11 @@ export function makePlanningPanel({ state, toast }) {
   // sim : decideFlight reste la SEULE porte de décision, la sim ne déploie jamais
   // un vol qu'elle a elle-même accepté. La préférence survit à la sauvegarde
   // (elle est sur le state — le format entier est sérialisé, pas le sim seul).
+  // D1 : la case lit state.planningAuto (source unique) — pas un flag local.
+  // main.mjs ne l'appelle QUE si state.planningAuto est vrai (double garde :
+  // la lecture ici est défensive, la porte reste l'état).
   panel.tickAuto = () => {
-    if (!panel.auto) return;
+    if (!state.planningAuto) return;
     const sim = state.sim;
     if (state.screen !== 'game' || !sim) return;
     for (const e of sim.planning) {
