@@ -131,6 +131,8 @@ const TOTAL = Math.round(HOURS * 3600);
 let step = 0;
 const counts = { built: 0, flightIn: 0, flightOut: 0, flightCancelled: 0, unlocked: 0, bankrupt: 0, runwayClosed: 0, fuelOut: 0, surgeStart: 0, noFuel: 0 };
 const minMoney = { t: 0, money: sim.economy.money };
+const prev = { carried: 0 }; // invariants par tick (esprit du gate bl17 : un état incohérent = ABORT)
+const PHASES = new Set(['approach','holding','landing','exit','taxi','docking','gate','refuel','disembark','ground','board','pushback','departure','blocked','cancelled','departed']);
 while (step < TOTAL) {
   applyDueEvents(r);
   // Politique autoAccept du jeu : la décision se prend AVANT le tick (main.mjs) —
@@ -141,6 +143,22 @@ while (step < TOTAL) {
   }
   sim.alerts.length = 0;
   tick(state, DT, rng);
+  // Invariants (8/8) : NaN, pax MONOTONES, positions finies, phases connues,
+  // planning cohérent — un seul = la stabilité est rompue (abort).
+  if (!Number.isFinite(sim.economy.money) || !Number.isFinite(sim.passengers.satisfaction)) {
+    throw new Error(`t=${sim.time} : money/satisfaction non finie (NaN ?)`);
+  }
+  if (sim.passengers.totalCarried < prev.carried) throw new Error(`t=${sim.time} : pax NON monotones`);
+  prev.carried = sim.passengers.totalCarried;
+  for (const a of sim.aircraft) {
+    if (!Number.isFinite(a.x) || !Number.isFinite(a.y)) throw new Error(`t=${sim.time} : avion #${a.id} position non finie`);
+    if (!PHASES.has(a.phase)) throw new Error(`t=${sim.time} : avion #${a.id} phase inconnue « ${a.phase} »`);
+  }
+  for (const e of sim.planning) {
+    if (!Number.isFinite(e.planned) || !(e.status in { planned: 1, accepted: 1, 'in-flight': 1, delayed: 1, cancelled: 1 })) {
+      throw new Error(`t=${sim.time} : planning incohérent #${e.id} (${e.status})`);
+    }
+  }
   for (const ev of sim.alerts) {
     const k = ev.kind;
     if (k === 'built') counts.built++;

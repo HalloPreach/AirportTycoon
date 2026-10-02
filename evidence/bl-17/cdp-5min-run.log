@@ -1,0 +1,12 @@
+PASS serveur statique local démarré (serve.mjs) — port=8490
+PASS nouvelle partie (touche N réelle, aéroport fourni) — screen=game t=0s
+PASS vitesse maximale x4 (touche F réelle × 2) + auto-accept ON (A) — speed=x4 paused=false
+PASS session 5 minutes réelles exécutée (300 s wall clock) — échantillons=300 réel=302.6s
+PASS AC26/R3 FPS : médiane ≥ 30 img/s sur 5 min (stabilité du rendu) — médiane=58 min=7 max=65
+PASS A-9 horloges distinctes : temps sim ≠ temps réel (facteur ≈ 4×, jamais = 1) — sim=1210s réel=302.6s facteur=4×
+PASS stabilité : money/passagers FINIS + jamais en pause + jeu vivant (5 min) — carried=444 money=345953 t=1211s
+PASS captures d'état lisibles (7 PNG : start, 5 min, fin) — 00-start.png=34907o 01-min1.png=34033o 02-min2.png=45513o 03-min3.png=43732o 04-min4.png=43350o 05-min5.png=41213o 06-end.png=41043o
+PASS zéro exception de page sur 5 min — exceptions=0
+PASS zéro console.error sur 5 min — errors=0
+
+=== PASS — 10/10 (evidence: evidence/bl-17/cdp-5min) ===
