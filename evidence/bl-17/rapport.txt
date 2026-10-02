@@ -1,7 +1,7 @@
 # BL-17 — rapport sim 48 h (node qa/bl17-sim48h.mjs)
-Date : 2026-10-02T04:13:11.943Z
+Date : 2026-10-02T04:18:21.365Z
 Seed PRNG : 42 (EV-10)
-Résultat : PASS (7/7)
+Résultat : PASS (8/8)
 
 PASS AC26a 48 h stables : 172 800 ticks sans état incohérent (invariants par tick)
 PASS AC26b vols générés et transportés (auto-accept ON, 0-24 h) — carried=36608
@@ -10,8 +10,10 @@ PASS AC26b incident forcé : conséquence mesurée (holding pendant la fermeture
 PASS AC26b incident forcé : récupération (transport repart après réouverture) — carried 44-48h=3486
 PASS EV-10 reproductibilité : 2 passes (seed 42) → état final identique — money=19641.74 carried=36608 rngCounter=6507
 PASS performance : 2 × 172 800 ticks exécutés — passe 1 = 0.178s, passe 2 = 0.156s
+PASS A-9 horloges distinctes : temps sim ≠ temps réel (facteur mesuré, jamais = 1) — sim=172801s réel=178ms facteur=970792.13×
 
 État final (passe 1) : carried=36608 money=19641.74 rngCounter=6507
+A-9 horloges (passe 1) : temps sim=172801s / temps réel=178ms → facteur 970792.13× (pas la même horloge)
 Recettes par catégorie : {"landing":71738,"gate":35869,"pax":457302}
 Phases observées (cumul ticks) : {"approach":1831,"landing":7984,"exit":998,"taxi":3822,"docking":404,"gate":359,"refuel":359,"disembark":7180,"ground":7180,"board":9495,"blocked":384289,"pushback":359,"departure":2848,"departed":356,"cancelled":638,"holding":7455}
 

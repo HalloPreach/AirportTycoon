@@ -1,0 +1,25 @@
+# BL-17 — rapport CDP 5 minutes (node qa/bl17-cdp.mjs)
+Date : 2026-10-02T04:23:29.306Z
+Résultat : PASS (10/10)
+
+PASS serveur statique local démarré (serve.mjs) — port=8490
+PASS nouvelle partie (touche N réelle, aéroport fourni) — screen=game t=0s
+PASS vitesse maximale x4 (touche F réelle × 2) + auto-accept ON (A) — speed=x4 paused=false
+PASS session 5 minutes réelles exécutée (300 s wall clock) — échantillons=300 réel=302.6s
+PASS AC26/R3 FPS : médiane ≥ 30 img/s sur 5 min (stabilité du rendu) — médiane=58 min=7 max=65
+PASS A-9 horloges distinctes : temps sim ≠ temps réel (facteur ≈ 4×, jamais = 1) — sim=1210s réel=302.6s facteur=4×
+PASS stabilité : money/passagers FINIS + jamais en pause + jeu vivant (5 min) — carried=444 money=345953 t=1211s
+PASS captures d'état lisibles (7 PNG : start, 5 min, fin) — 00-start.png=34907o 01-min1.png=34033o 02-min2.png=45513o 03-min3.png=43732o 04-min4.png=43350o 05-min5.png=41213o 06-end.png=41043o
+PASS zéro exception de page sur 5 min — exceptions=0
+PASS zéro console.error sur 5 min — errors=0
+
+FPS : médiane=58 (min=7 max=65, 300 échantillons/s)
+
+États par minute (t réel, x4) :
+min=1 t=238s money=346001 carried=122 ac=1 paused=false phases=blocked
+min=2 t=480s money=348515 carried=346 ac=4 paused=false phases=blocked,blocked,blocked,approach
+min=3 t=722s money=347741 carried=346 ac=4 paused=false phases=blocked,blocked,blocked,blocked
+min=4 t=964s money=345967 carried=346 ac=4 paused=false phases=blocked,blocked,holding,holding
+min=5 t=1206s money=345969 carried=444 ac=3 paused=false phases=blocked,board,landing
+
+A-9 horloges : temps sim=1210s / temps réel=302.6s → facteur 4× (vitesse x4 du jeu, jamais la même horloge)

@@ -135,7 +135,8 @@ function runOnce() {
       });
     }
   }
-  const elapsed = (Date.now() - t0) / 1000;
+  const elapsedMs = Date.now() - t0;
+  const elapsed = elapsedMs / 1000;
   // État final condensé (comparaison de reproductibilité : mêmes entrées → mêmes sorties).
   // BL-18 : `elapsed` (horloge RÉELLE Date.now) n'est PAS de l'état sim — il est
   // exclu de l'objet comparé, sinon les 2 passes ne seraient JAMAIS identiques (EV-10).
@@ -147,7 +148,15 @@ function runOnce() {
     rngCounter: sim.rngCounter, // état du PRNG : même valeur = suite reproductible
     phaseCounts,
   };
-  return { final, hourly, incidentAt, incidentForced, windowMaxHolding, elapsed };
+  // A-9 (AC26) : l'horloge de la sim et l'horloge RÉELLE ne sont JAMAIS la même
+  // horloge — la preuve est dans le rapport : temps simulé (48 h = 172 800 s),
+  // temps réel écoulé (quelques secondes) et le FACTEUR entre les deux.
+  const a9 = {
+    simTimeSec: sim.time,
+    realElapsedMs: elapsedMs,
+    timeFactor: Math.round((sim.time / (elapsedMs / 1000)) * 100) / 100,
+  };
+  return { final, hourly, incidentAt, incidentForced, windowMaxHolding, elapsed, a9 };
 }
 
 // --- exécution : 2 passes identiques + verdict ---------------------------------
@@ -179,6 +188,9 @@ check('EV-10 reproductibilité : 2 passes (seed 42) → état final identique', 
   `money=${r1.final.money} carried=${r1.final.carried} rngCounter=${r1.final.rngCounter}`);
 check('performance : 2 × 172 800 ticks exécutés', true,
   `passe 1 = ${r1.elapsed}s, passe 2 = ${r2.elapsed}s`);
+check('A-9 horloges distinctes : temps sim ≠ temps réel (facteur mesuré, jamais = 1)',
+  Number.isFinite(r1.a9.simTimeSec) && Number.isFinite(r1.a9.realElapsedMs) && r1.a9.timeFactor !== 1,
+  `sim=${r1.a9.simTimeSec}s réel=${r1.a9.realElapsedMs}ms facteur=${r1.a9.timeFactor}×`);
 
 // Rapport + verdict (le code retour porte le verdict).
 const failed = results.filter((r) => !r.ok);
@@ -191,6 +203,7 @@ const txt = [
   ...results.map((r) => `${r.ok ? 'PASS' : 'FAIL'} ${r.name}${r.detail ? ' — ' + r.detail : ''}`),
   '',
   `État final (passe 1) : carried=${r1.final.carried} money=${r1.final.money} rngCounter=${r1.final.rngCounter}`,
+  `A-9 horloges (passe 1) : temps sim=${r1.a9.simTimeSec}s / temps réel=${r1.a9.realElapsedMs}ms → facteur ${r1.a9.timeFactor}× (pas la même horloge)`,
   `Recettes par catégorie : ${JSON.stringify(r1.final.revenue)}`,
   `Phases observées (cumul ticks) : ${JSON.stringify(r1.final.phaseCounts)}`,
   '',
@@ -202,7 +215,7 @@ writeFileSync(join(EVID, 'rapport.txt'), txt);
 writeFileSync(join(EVID, 'rapport.json'), JSON.stringify({
   date: new Date().toISOString(), seed: SEED,
   result: failed.length ? 'FAIL' : 'PASS', results,
-  final: r1.final, reproducible: repro, hourly: r1.hourly,
+  final: r1.final, reproducible: repro, hourly: r1.hourly, a9: r1.a9,
 }, null, 2));
 console.log(`\n=== ${failed.length ? 'FAIL' : 'PASS'} — ${results.length - failed.length}/${results.length} (evidence: evidence/bl-17) ===`);
 process.exitCode = failed.length ? 1 : 0;
