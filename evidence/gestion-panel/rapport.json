@@ -1,0 +1,113 @@
+{
+  "date": "2026-10-02T05:48:45.081Z",
+  "result": "PASS",
+  "results": [
+    {
+      "name": "serveur statique local démarré (serve.mjs)",
+      "ok": true,
+      "detail": "port=8267"
+    },
+    {
+      "name": "5 panneaux présents dans le DOM",
+      "ok": true,
+      "detail": "5"
+    },
+    {
+      "name": "titres des 5 panneaux (inspection/bilan/stats/alertes/réseau)",
+      "ok": true,
+      "detail": "Inspection — clic sur la carte | Bilan financier | Statistiques | Alertes (historique) | Diagnostic réseau"
+    },
+    {
+      "name": "diagnostic réseau : graphe construit + portes atteignables (état initial)",
+      "ok": true,
+      "detail": "Diagnostic réseauFile d’arrivées0/4Graphe4 nœudsPortes Matteignables depuis la piste"
+    },
+    {
+      "name": "bilan financier affiché (Solde/Résultat/Recettes)",
+      "ok": true,
+      "detail": "Bilan financierSolde344 999 $Résultat-1 $Recettes0 $Exploitation−1 $Carburant−0 $Indemnités vols ann"
+    },
+    {
+      "name": "statistiques affichées (passagers transportés/satisfaction/files)",
+      "ok": true,
+      "detail": "StatistiquesTemps de jeu00:00:00Passagers transportés0Satisfaction100 %Filescheck-in 0 · sécurité 0 · embarquement 0Avio"
+    },
+    {
+      "name": "clic carte réel → inspection remplie (bâtiment : Terminal 200×150)",
+      "ok": true,
+      "detail": "Inspection — clic sur la carteTerminal #3200×150 pxCoût d’origine0 $Remboursement démolition0 $Portes3-g0 (M) "
+    },
+    {
+      "name": "taxiway visible avant démolition (pan réel)",
+      "ok": true,
+      "detail": "{\"sx\":647.0799999999998,\"sy\":464.48000000000025,\"cw\":1280,\"ch\":900}"
+    },
+    {
+      "name": "diagnostic réseau : portes INACCESSIBLES (réseau coupé)",
+      "ok": true,
+      "detail": "Diagnostic réseauFile d’arrivées0/4Graphe2 nœudsPortes MINACCESSIBLES (réseau coupé)"
+    },
+    {
+      "name": "historique d'alertes : l'alerte « demolished » (taxiway) est affichée",
+      "ok": true,
+      "detail": "Alertes (historique)demolished"
+    },
+    {
+      "name": "diagnostic réseau : file d'arrivées SATURÉE (4/4)",
+      "ok": true,
+      "detail": "Diagnostic réseauFile d’arrivées4/4Graphe2 nœudsPortes MINACCESSIBLES (réseau coupé)"
+    },
+    {
+      "name": "inspection toujours lisible pendant la saturation (0 exception)",
+      "ok": true,
+      "detail": "exceptions=0"
+    },
+    {
+      "name": "EV-5 réseau : toutes les requêtes sont LOCALES (aucune externe)",
+      "ok": true,
+      "detail": "reqs=28"
+    },
+    {
+      "name": "EV-6 zéro exception de page sur toute la session",
+      "ok": true,
+      "detail": "exceptions=0"
+    },
+    {
+      "name": "EV-6 zéro console.error sur toute la session",
+      "ok": true,
+      "detail": "errors=0"
+    }
+  ],
+  "requests": [
+    "http://127.0.0.1:8267/index.html",
+    "http://127.0.0.1:8267/src/main.mjs",
+    "http://127.0.0.1:8267/src/core/game-state.mjs",
+    "http://127.0.0.1:8267/src/core/events.mjs",
+    "http://127.0.0.1:8267/src/ui/camera.mjs",
+    "http://127.0.0.1:8267/src/ui/input.mjs",
+    "http://127.0.0.1:8267/src/ui/renderer.mjs",
+    "http://127.0.0.1:8267/src/core/loop.mjs",
+    "http://127.0.0.1:8267/src/ui/toast.mjs",
+    "http://127.0.0.1:8267/src/ui/build-tool.mjs",
+    "http://127.0.0.1:8267/src/ui/save-panel.mjs",
+    "http://127.0.0.1:8267/src/ui/planning-panel.mjs",
+    "http://127.0.0.1:8267/src/ui/panels.mjs",
+    "http://127.0.0.1:8267/src/persistence/save.mjs",
+    "http://127.0.0.1:8267/src/core/new-game.mjs",
+    "http://127.0.0.1:8267/src/core/sim.mjs",
+    "http://127.0.0.1:8267/src/data/catalog.mjs",
+    "http://127.0.0.1:8267/src/flights/flights.mjs",
+    "http://127.0.0.1:8267/src/core/sim-state.mjs",
+    "http://127.0.0.1:8267/src/infra/infra.mjs",
+    "http://127.0.0.1:8267/src/economy/economy.mjs",
+    "http://127.0.0.1:8267/src/pathfinding/path.mjs",
+    "http://127.0.0.1:8267/src/sim/incidents.mjs",
+    "http://127.0.0.1:8267/src/sim/passengers.mjs",
+    "http://127.0.0.1:8267/favicon.ico",
+    "http://127.0.0.1:8267/src/core/tick.mjs",
+    "http://127.0.0.1:8267/src/sim/aircraft.mjs",
+    "http://127.0.0.1:8267/src/core/rng.mjs"
+  ],
+  "consoleErrors": [],
+  "pageExceptions": []
+}

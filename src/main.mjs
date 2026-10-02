@@ -11,6 +11,7 @@ import { makeToasts } from './ui/toast.mjs';
 import { makeBuildTool } from './ui/build-tool.mjs';
 import { makeSavePanel } from './ui/save-panel.mjs';
 import { makePlanningPanel } from './ui/planning-panel.mjs';
+import { makePanels } from './ui/panels.mjs';
 import { clearSave } from './persistence/save.mjs';
 import { makeGameState } from './core/new-game.mjs';
 
@@ -27,6 +28,13 @@ export function boot(canvas) {
   });
   const renderer = makeRenderer(canvas, { overlays: [buildTool.drawGhost] });
   makeInputHandlers(canvas, bus, camera, renderer.viewSize);
+  // Panneaux de consultation (NONMVP-5) : inspection / bilan / stats / alertes
+  // / diagnostic réseau — UI fine, lecture seule (aucune règle, aucune mutation).
+  const panels = makePanels({
+    state, camera,
+    viewSize: () => ({ width: canvas.width, height: canvas.height }),
+    buildTool,
+  });
 
   // Commandes de bas niveau : l'UI émet, l'état tranche.
   bus.on('pause', () => togglePause(state));
@@ -100,6 +108,7 @@ export function boot(canvas) {
   bus.on('frame', () => {
     if (state.planningAuto) planningPanel.tickAuto();
     planningPanel.refresh(); // reconstruction des lignes seulement si le planning a changé
+    panels.refresh(); // idem (signature) : DOM stable tant que l'état ne change pas
   });
 
   // Clavier global : les touches de déplacement restent dans input.mjs ;
@@ -149,6 +158,7 @@ export function boot(canvas) {
     canResume: () => savePanel.canResume(),
     buildTool,
     toasts,
+    panels,
   };
 }
 

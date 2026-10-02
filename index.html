@@ -50,6 +50,24 @@
     .planning-row button:last-of-type { border-color: #8d6e63; background: #4e342e; }
     .planning-empty { color: #90a4ae; font-style: italic; margin: 2px 0; }
     .planning-auto { display: flex; gap: 4px; align-items: center; color: #b0bec5; margin-top: 4px; }
+    /* Panneaux NONMVP-5 (inspection, bilan, stats, alertes, diagnostic réseau) :
+       colonne en bas à droite, sous les toasts ; défile si trop haute. */
+    .panels {
+      position: fixed; right: 12px; bottom: 64px; z-index: 10;
+      display: flex; flex-direction: column; gap: 8px; max-width: 360px;
+      max-height: calc(100vh - 90px); overflow-y: auto;
+    }
+    .panel {
+      background: rgba(0,0,0,0.55); border-radius: 8px; padding: 8px;
+      font: 12px system-ui, sans-serif; color: #fff;
+    }
+    .panel h4 { margin: 0 0 4px; color: #b0bec5; font-size: 12px; }
+    .pline { display: flex; gap: 6px; padding: 1px 0; }
+    .pline > span { color: #b0bec5; min-width: 110px; flex: none; }
+    .pline--good { color: #a5d6a7; }
+    .pline--bad { color: #ef9a9a; }
+    .pline--warn { color: #fff59d; }
+    .aline { padding: 1px 0; color: #cfd8dc; }
   </style>
 </head>
 <body>

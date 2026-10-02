@@ -1,25 +1,25 @@
 # BL-17 — rapport CDP 5 minutes (node qa/bl17-cdp.mjs)
-Date : 2026-10-02T04:34:43.982Z
+Date : 2026-10-02T05:43:50.539Z
 Résultat : PASS (10/10)
 
-PASS serveur statique local démarré (serve.mjs) — port=8205
+PASS serveur statique local démarré (serve.mjs) — port=8295
 PASS nouvelle partie (touche N réelle, aéroport fourni) — screen=game t=0s
 PASS vitesse maximale x4 (touche F réelle × 2) + auto-accept ON (A) — speed=x4 paused=false
-PASS session 5 minutes réelles exécutée (300 s wall clock) — échantillons=300 réel=302.8s
-PASS AC26/R3 FPS : médiane ≥ 30 img/s sur 5 min (stabilité du rendu) — médiane=58 min=7 max=64
-PASS A-9 horloges distinctes : temps sim ≠ temps réel (facteur ≈ 4×, jamais = 1) — sim=1211s réel=302.8s facteur=4×
-PASS stabilité : money/passagers FINIS + jamais en pause + jeu vivant (5 min) — carried=444 money=346250 t=1212s
-PASS captures d'état lisibles (7 PNG : start, 5 min, fin) — 00-start.png=34907o 01-min1.png=34033o 02-min2.png=45400o 03-min3.png=43768o 04-min4.png=43333o 05-min5.png=41127o 06-end.png=41192o
+PASS session 5 minutes réelles exécutée (300 s wall clock) — échantillons=300 réel=303.0s
+PASS AC26/R3 FPS : médiane ≥ 30 img/s sur 5 min (stabilité du rendu) — médiane=57 min=8 max=65
+PASS A-9 horloges distinctes : temps sim ≠ temps réel (facteur ≈ 4×, jamais = 1) — sim=1212s réel=303.0s facteur=4×
+PASS stabilité : money/passagers FINIS + jamais en pause + jeu vivant (5 min) — carried=444 money=346248 t=1213s
+PASS captures d'état lisibles (7 PNG : start, 5 min, fin) — 00-start.png=65154o 01-min1.png=66862o 02-min2.png=80373o 03-min3.png=81509o 04-min4.png=86967o 05-min5.png=84886o 06-end.png=84911o
 PASS zéro exception de page sur 5 min — exceptions=0
 PASS zéro console.error sur 5 min — errors=0
 
-FPS : médiane=58 (min=7 max=64, 300 échantillons/s)
+FPS : médiane=57 (min=8 max=65, 300 échantillons/s)
 
 États par minute (t réel, x4) :
 min=1 t=239s money=346000 carried=122 ac=1 paused=false phases=blocked
 min=2 t=481s money=348513 carried=346 ac=4 paused=false phases=blocked,blocked,blocked,approach
-min=3 t=723s money=347737 carried=346 ac=4 paused=false phases=blocked,blocked,blocked,blocked
-min=4 t=965s money=345963 carried=346 ac=4 paused=false phases=blocked,blocked,holding,holding
-min=5 t=1207s money=345965 carried=444 ac=3 paused=false phases=blocked,board,landing
+min=3 t=723s money=347738 carried=346 ac=4 paused=false phases=blocked,blocked,blocked,blocked
+min=4 t=966s money=345962 carried=346 ac=4 paused=false phases=blocked,blocked,holding,holding
+min=5 t=1208s money=345964 carried=444 ac=3 paused=false phases=blocked,board,landing
 
-A-9 horloges : temps sim=1211s / temps réel=302.8s → facteur 4× (vitesse x4 du jeu, jamais la même horloge)
+A-9 horloges : temps sim=1212s / temps réel=303.0s → facteur 4× (vitesse x4 du jeu, jamais la même horloge)

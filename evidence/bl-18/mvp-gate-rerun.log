@@ -1,4 +1,8 @@
-PASS serveur statique local démarré (serve.mjs) — port=8343
+# PORTE MVP — rapport QA (node qa/mvp-gate.mjs)
+Date : 2026-10-02T04:47:40.701Z
+Résultat : PASS (18/18)
+
+PASS serveur statique local démarré (serve.mjs) — port=8377
 PASS EV-3.1 nouvelle partie (touche N réelle, menu → jeu)
 PASS EV-3.2a conversion écran (lecture seule caméra, dans le canvas) — {"sx":1040,"sy":150,"cw":1280,"ch":900}
 PASS EV-3.2b construction réelle (B + 2 + clic souris) — taxiways 1 → 2
@@ -8,7 +12,7 @@ PASS EV-3.5 conflits de ressources (démolition → blocked/holding) — taxiway
 PASS EV-3.6 sauvegarde réelle (touche S, présent en localStorage) — argent=345668
 PASS EV-3.7 RELOAD + touche R : reprise de la sauvegarde (la PORTE)
 PASS EV-3.8 reprise : l’état est restauré (passagers/argent conservés) — carried=122 taxiways=1 (attendu 1) money=345668 graph=null
-PASS R3/A6a le taxiway isolé est visible (pan réel en pause) — {"sx":632.6599999999837,"sy":460.3200000000004,"cw":1280,"ch":900}
+PASS R3/A6a le taxiway isolé est visible (pan réel en pause) — {"sx":651.0199999999936,"sy":443.5199999999995,"cw":1280,"ch":900}
 PASS R3/A7 démolition réelle AVANT 1er tick (X + clic, graphe null) — taxiways=0 (0 attendu : plus aucun) money=345868 (remboursement)
 PASS R3/A7 le graphe était null au moment de la démolition (null-guard exercé) — graphNull avant=true
 PASS R3/A7 zéro exception page (null-guard rebuildGraph d43b290 PASS) — exceptions=0
@@ -17,4 +21,59 @@ PASS EV-5 réseau : toutes les requêtes sont LOCALES (aucune externe) — reqs=
 PASS EV-6 zéro exception de page sur toute la session — exceptions=0
 PASS EV-6 zéro console.error sur toute la session — errors=0
 
-=== PASS — 18/18 ===
+Requêtes réseau observées (53) :
+http://127.0.0.1:8377/
+http://127.0.0.1:8377/src/main.mjs
+http://127.0.0.1:8377/src/core/game-state.mjs
+http://127.0.0.1:8377/src/core/events.mjs
+http://127.0.0.1:8377/src/ui/camera.mjs
+http://127.0.0.1:8377/src/ui/input.mjs
+http://127.0.0.1:8377/src/ui/renderer.mjs
+http://127.0.0.1:8377/src/core/loop.mjs
+http://127.0.0.1:8377/src/ui/toast.mjs
+http://127.0.0.1:8377/src/ui/build-tool.mjs
+http://127.0.0.1:8377/src/ui/save-panel.mjs
+http://127.0.0.1:8377/src/ui/planning-panel.mjs
+http://127.0.0.1:8377/src/persistence/save.mjs
+http://127.0.0.1:8377/src/core/new-game.mjs
+http://127.0.0.1:8377/src/core/sim.mjs
+http://127.0.0.1:8377/src/data/catalog.mjs
+http://127.0.0.1:8377/src/core/sim-state.mjs
+http://127.0.0.1:8377/src/infra/infra.mjs
+http://127.0.0.1:8377/src/flights/flights.mjs
+http://127.0.0.1:8377/src/pathfinding/path.mjs
+http://127.0.0.1:8377/src/sim/incidents.mjs
+http://127.0.0.1:8377/src/core/tick.mjs
+http://127.0.0.1:8377/src/sim/aircraft.mjs
+http://127.0.0.1:8377/src/economy/economy.mjs
+http://127.0.0.1:8377/src/core/rng.mjs
+http://127.0.0.1:8377/favicon.ico
+http://127.0.0.1:8377/src/sim/passengers.mjs
+http://127.0.0.1:8377/
+http://127.0.0.1:8377/src/main.mjs
+http://127.0.0.1:8377/src/core/game-state.mjs
+http://127.0.0.1:8377/src/core/events.mjs
+http://127.0.0.1:8377/src/ui/camera.mjs
+http://127.0.0.1:8377/src/ui/input.mjs
+http://127.0.0.1:8377/src/ui/renderer.mjs
+http://127.0.0.1:8377/src/core/loop.mjs
+http://127.0.0.1:8377/src/ui/toast.mjs
+http://127.0.0.1:8377/src/ui/build-tool.mjs
+http://127.0.0.1:8377/src/ui/save-panel.mjs
+http://127.0.0.1:8377/src/ui/planning-panel.mjs
+http://127.0.0.1:8377/src/persistence/save.mjs
+http://127.0.0.1:8377/src/core/new-game.mjs
+http://127.0.0.1:8377/src/core/sim.mjs
+http://127.0.0.1:8377/src/data/catalog.mjs
+http://127.0.0.1:8377/src/flights/flights.mjs
+http://127.0.0.1:8377/src/core/sim-state.mjs
+http://127.0.0.1:8377/src/infra/infra.mjs
+http://127.0.0.1:8377/src/pathfinding/path.mjs
+http://127.0.0.1:8377/src/sim/incidents.mjs
+http://127.0.0.1:8377/src/core/tick.mjs
+http://127.0.0.1:8377/src/sim/aircraft.mjs
+http://127.0.0.1:8377/src/economy/economy.mjs
+http://127.0.0.1:8377/src/core/rng.mjs
+http://127.0.0.1:8377/src/sim/passengers.mjs
+Console errors (0) :
+Exceptions de page (0) :

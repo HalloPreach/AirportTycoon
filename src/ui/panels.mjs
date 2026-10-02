@@ -1,0 +1,273 @@
+// Panneaux NONMVP-5 : les 5 panneaux manquants — inspection avion + bâtiment
+// (clic sur la carte), bilan financier détaillé, statistiques, historique
+// d'alertes, diagnostic réseau (coupé / saturation). UI FINE : on ne lit que
+// l'état + les getters purs EXISTANTS (economy.periodStatement, path.findPath)
+// — aucune règle n'est ajoutée, aucune mutation de la sim (le panneau réseau ne
+// reconstruit JAMAIS le graphe : avant le 1er tick il est null et c'est voulu,
+// R3/A7 — on le dit, on ne le fabrique pas). Pattern de planning-panel : DOM
+// fixe créé une fois, la zone de contenu se reconstruit seulement quand la
+// signature change (les éléments ne disparaissent pas sous la souris, les
+// clics ne partent pas).
+import { periodStatement } from '../economy/economy.mjs';
+import { findPath, runwayExitNode } from '../pathfinding/path.mjs';
+import { AIRCRAFT, AIRLINES, BUILDINGS } from '../data/catalog.mjs';
+
+const PHASES_FR = Object.freeze({
+  approach: 'approche', holding: 'attente', landing: 'atterrissage', exit: 'sortie de piste',
+  taxi: 'taxi', docking: 'amarrage', gate: 'au sol', refuel: 'carburant',
+  disembark: 'désbarquement', ground: 'au sol', board: 'embarquement',
+  pushback: 'poussée', departure: 'décollage', blocked: 'bloqué',
+  departed: 'parti', cancelled: 'annulé',
+});
+// Plafond de file d'arrivées (MAX_PENDING de flights.mjs) : le diagnostic de
+// saturation le compare. ponytail: constante dupliquée ici, à synchroniser si
+// MAX_PENDING bouge.
+const PENDING_CAP = 4;
+
+function fmtClock(t) {
+  const s = Math.max(0, Math.floor(t || 0));
+  return `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}
+function money(v) { return `${Math.round(v || 0).toLocaleString('fr-FR')} $`; }
+function line(parent, label, value, kind) {
+  const d = document.createElement('div');
+  d.className = 'pline' + (kind ? ` pline--${kind}` : '');
+  const l = document.createElement('span');
+  l.textContent = label;
+  d.append(l, document.createTextNode(value));
+  parent.appendChild(d);
+}
+
+// Section : titre + zone. refresh(sigOf, paint) reconstruit la zone UNIQUEMENT
+// si la signature a changé (sinon DOM stable, comme planning-panel).
+function makeSection(parent, cls, title) {
+  const box = document.createElement('section');
+  box.className = cls;
+  const h = document.createElement('h4');
+  h.textContent = title;
+  const body = document.createElement('div');
+  box.append(h, body);
+  parent.appendChild(box);
+  let sig = null;
+  return {
+    refresh: (sigOf, paint) => {
+      const s = sigOf();
+      if (s === sig) return;
+      sig = s;
+      paint(body);
+    },
+  };
+}
+
+export function makePanels({ state, camera, viewSize, buildTool }) {
+  const col = document.createElement('div');
+  col.className = 'panels';
+  col.setAttribute('role', 'complementary');
+  col.setAttribute('aria-label', 'Panneaux de consultation (inspection, finances, stats, alertes, réseau)');
+  document.body.appendChild(col);
+
+  // --- 1. Inspection avion + bâtiment (clic sur la carte) -------------------
+  const inspect = makeSection(col, 'panel', 'Inspection — clic sur la carte');
+  let pick = null; // { kind: 'ac' | 'bldg', id } — rendu live (l'objet peut partir)
+  function refreshInspect() {
+    inspect.refresh(
+      () => (pick ? `${pick.kind}:${pick.id}` : 'none'),
+      (body) => {
+        body.replaceChildren();
+        const sim = state.sim;
+        if (!pick || !sim) {
+          line(body, '', 'Cliquez sur un avion ou un bâtiment.');
+          return;
+        }
+        if (pick.kind === 'ac') {
+          const ac = sim.aircraft.find((a) => a.id === pick.id);
+          if (!ac) { line(body, `Avion #${pick.id}`, 'parti — plus en simulation'); return; }
+          const spec = AIRCRAFT[ac.acType] || {};
+          const airline = (AIRLINES.find((x) => x.id === ac.airline) || { name: ac.airline }).name;
+          line(body, `Avion #${ac.id}`, `${airline} · ${spec.name || ac.acType}`);
+          line(body, 'Phase', `${PHASES_FR[ac.phase] || ac.phase}` + (ac.delayed > 0 ? ` (retard ${Math.round(ac.delayed)} s)` : ''));
+          line(body, 'Passagers', `${ac.pax} pax`);
+          if (ac.gateId) line(body, 'Porte', ac.gateId);
+          if (ac.runwayId) line(body, 'Piste', ac.runwayId);
+          line(body, 'Position', `${Math.round(ac.x)}, ${Math.round(ac.y)}`);
+        } else {
+          const find = (arr) => (arr || []).find((b) => b.id === pick.id);
+          const b = find(sim.infra.runways) || find(sim.infra.taxiways)
+            || find(sim.infra.terminals) || find(sim.infra.services);
+          if (!b) { line(body, `Bâtiment #${pick.id}`, 'démoli — plus en simulation'); return; }
+          const def = BUILDINGS[b.type] || { name: b.type, sellRefund: 0 };
+          line(body, `${def.name} #${b.id}`, `${b.w}×${b.h} px`);
+          line(body, 'Coût d’origine', money(b.cost));
+          line(body, 'Remboursement démolition', money((b.cost || 0) * def.sellRefund));
+          if (b.type === 'runway') line(body, 'Longueur', `${b.len} px`);
+          if (b.type === 'terminal') {
+            const gates = (sim.infra.gates || []).filter((g) => g.terminalId === b.id);
+            line(body, 'Portes', gates.map((g) => `${g.id} (${g.size}${g.acId ? ` · avion #${g.acId}` : ''})`).join(' · ') || 'aucune');
+          }
+        }
+      },
+    );
+  }
+
+  // Clic sur la carte : avion (rayon ~30 px écran) puis bâtiment (rect).
+  // L'outil de construction/démolition garde la priorité s'il est actif (son
+  // propre click listener gère la pose/démolition).
+  const canvas = document.querySelector('#game');
+  canvas.addEventListener('click', (e) => {
+    if (buildTool && buildTool.isActive()) return; // le clic est géré par l'outil
+    if (state.screen !== 'game' || !state.sim) return;
+    const v = viewSize();
+    const wx = camera.screenToWorldX(e.offsetX, v.width);
+    const wy = camera.screenToWorldY(e.offsetY, v.height);
+    const sim = state.sim;
+    const r = 30 / camera.zoom; // rayon d'inspection en unités MONDE (le zoom compte)
+    const ac = sim.aircraft.find((a) => Math.abs(a.x - wx) <= r && Math.abs(a.y - wy) <= r);
+    if (ac) { pick = { kind: 'ac', id: ac.id }; return; }
+    const b = [...sim.infra.runways, ...sim.infra.taxiways, ...sim.infra.terminals, ...sim.infra.services]
+      .find((x) => wx >= x.x && wx <= x.x + x.w && wy >= x.y && wy <= x.y + x.h);
+    pick = b ? { kind: 'bldg', id: b.id } : null;
+  });
+
+  // --- 2. Bilan financier détaillé (surfacer economy.periodStatement) -------
+  const fin = makeSection(col, 'panel', 'Bilan financier');
+  function refreshFin() {
+    fin.refresh(
+      () => {
+        const sim = state.sim;
+        return sim ? JSON.stringify(periodStatement(sim)) : 'none';
+      },
+      (body) => {
+        body.replaceChildren();
+        const sim = state.sim;
+        if (!sim) return;
+        const s = periodStatement(sim); // LE bilan existant (economy.mjs) — rien à recalculer
+        line(body, 'Solde', money(s.money), s.money < 0 ? 'bad' : 'good');
+        line(body, 'Résultat', money(s.net), s.net < 0 ? 'bad' : 'good');
+        line(body, 'Recettes', money(s.revenue));
+        line(body, 'Exploitation', `−${money(s.opex)}`);
+        line(body, 'Carburant', `−${money(s.fuel)}`);
+        line(body, 'Indemnités vols annulés', `−${money(s.compensation)}`);
+        line(body, 'Investissements', `−${money(s.invest)}`);
+        if (s.debt > 0) line(body, 'Dette (intérêts)', money(s.debt));
+        if (s.money < 0) line(body, 'Causes du déficit', s.causes.join(' ; '), 'warn');
+        if (sim.economy.bankrupt) line(body, 'État', 'FAILLITE', 'bad');
+      },
+    );
+  }
+
+  // --- 3. Statistiques -------------------------------------------------------
+  const stats = makeSection(col, 'panel', 'Statistiques');
+  function refreshStats() {
+    stats.refresh(
+      () => {
+        const sim = state.sim;
+        if (!sim) return 'none';
+        const p = sim.passengers;
+        return [
+          Math.floor(sim.time || 0), Math.round(p.satisfaction), p.totalCarried,
+          p.queue.checkin, p.queue.security, p.queue.board,
+          sim.aircraft.length, sim.planning.length,
+        ].join('|');
+      },
+      (body) => {
+        body.replaceChildren();
+        const sim = state.sim;
+        if (!sim) return;
+        const p = sim.passengers;
+        line(body, 'Temps de jeu', fmtClock(sim.time));
+        line(body, 'Passagers transportés', `${p.totalCarried}`);
+        line(body, 'Satisfaction', `${Math.round(p.satisfaction)} %`);
+        line(body, 'Files', `check-in ${p.queue.checkin} · sécurité ${p.queue.security} · embarquement ${p.queue.board}`);
+        const inFlight = sim.aircraft.filter((a) => ['approach', 'holding', 'landing', 'blocked'].includes(a.phase)).length;
+        line(body, 'Avions', `${sim.aircraft.length} (${inFlight} en vol/attente · ${sim.aircraft.length - inFlight} au sol)`);
+        line(body, 'Vols planifiés', `${sim.planning.length}`);
+      },
+    );
+  }
+
+  // --- 4. Historique d'alertes (sim.alerts, les plus récentes d'abord) ------
+  const hist = makeSection(col, 'panel', 'Alertes (historique)');
+  function refreshHist() {
+    hist.refresh(
+      () => {
+        const sim = state.sim;
+        return sim ? `${(sim.alerts || []).length}` : 'none'; // signature = longueur seule
+      },
+      (body) => {
+        body.replaceChildren();
+        const all = state.sim ? state.sim.alerts || [] : [];
+        // ponytail: on n'affiche que les 50 plus récentes (l'historique complet
+        // vit dans sim.alerts ; un bornage en sim si ça devient un besoin).
+        const last = all.slice(-50).reverse();
+        if (!last.length) { line(body, '', 'Aucune alerte.'); return; }
+        for (const a of last) {
+          const d = document.createElement('div');
+          d.className = 'aline';
+          d.textContent = a.why ? `${a.kind} — ${a.why}` : a.kind;
+          body.appendChild(d);
+        }
+        if (all.length > 50) line(body, '', `… ${all.length - 50} plus anciennes (non affichées)`);
+      },
+    );
+  }
+
+  // --- 5. Diagnostic réseau : coupé / saturation ----------------------------
+  const net = makeSection(col, 'panel', 'Diagnostic réseau');
+  function refreshNet() {
+    net.refresh(
+      () => {
+        const sim = state.sim;
+        if (!sim) return 'none';
+        const i = sim.incidents || {};
+        const pending = sim.aircraft.filter((a) => ['approach', 'holding', 'landing', 'blocked'].includes(a.phase)).length;
+        return [
+          sim._graph ? sim._graph.nodes.length : null, sim._graphDirty ? 1 : 0,
+          sim.infra.runways.length, sim.infra.gates.length,
+          pending, i.runway?.closed > 0 ? 1 : 0, i.fuel?.out > 0 ? 1 : 0, i.surge?.active ? 1 : 0,
+        ].join('|');
+      },
+      (body) => {
+        body.replaceChildren();
+        const sim = state.sim;
+        if (!sim) return;
+        const i = sim.incidents || {};
+        // SATURATION : file d'arrivées face au plafond (MAX_PENDING, flights.mjs).
+        const pending = sim.aircraft.filter((a) => ['approach', 'holding', 'landing', 'blocked'].includes(a.phase)).length;
+        line(body, 'File d’arrivées', `${pending}/${PENDING_CAP}`, pending >= PENDING_CAP ? 'bad' : '');
+        if (i.runway?.closed > 0) line(body, 'Piste', `FERMÉE (${Math.ceil(i.runway.closed)} s restants)`, 'bad');
+        if (i.fuel?.out > 0) line(body, 'Carburant', `panne stations (${Math.ceil(i.fuel.out)} s)`, 'bad');
+        if (i.surge?.active) line(body, 'Demande', 'pic actif (cadence doublée)', 'warn');
+        // COUPÉ : lecture SEULE du graphe — JAMAIS de rebuildGraph ici (avant le
+        // 1er tick le graphe est null et c'est voulu : on l'affiche, on ne le
+        // fabrique pas, R3/A7).
+        const g = sim._graph;
+        if (!g) { line(body, 'Graphe', 'pas encore construit (avant le 1er tick)', 'warn'); return; }
+        line(body, 'Graphe', `${g.nodes.length} nœuds`);
+        // Par taille de porte : un chemin PISTE→PORTE existe-t-il ? (findPath,
+        // occupation vide = la question « est-ce joignable », pas « qui est dessus »).
+        for (const size of ['S', 'M', 'L']) {
+          const gates = (sim.infra.gates || []).filter((x) => x.size === size);
+          if (!gates.length) continue;
+          let ok = false;
+          for (const x of gates) {
+            const to = g.gateNode.get(x.id);
+            if (to == null) continue; // porte HORS réseau : aucun segment ne la touche
+            for (const rw of sim.infra.runways) {
+              const from = runwayExitNode(sim, rw.id);
+              if (from != null && findPath(sim, from, to, new Set())) { ok = true; break; }
+            }
+            if (ok) break;
+          }
+          line(body, `Portes ${size}`, ok ? 'atteignables depuis la piste' : 'INACCESSIBLES (réseau coupé)', ok ? '' : 'bad');
+        }
+      },
+    );
+  }
+
+  return {
+    // Appel à chaque frame (bus 'frame') : chaque panneau ne reconstruit son DOM
+    // que si sa signature a changé — coût négligeable sinon (pattern planning).
+    refresh: () => { refreshInspect(); refreshFin(); refreshStats(); refreshHist(); refreshNet(); },
+    col,
+  };
+}
