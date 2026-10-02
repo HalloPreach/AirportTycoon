@@ -13,6 +13,7 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
 | BL-04 R3 démolition après rechargement (A8) | **fait (2026-10-02, worker t_2f0ec04f, commit d43b290)** |
 | BL-04 R5 déplacement continu (A9) | **fait (2026-10-02, worker t_7a67c46d)** |
 | BL-14 Finances socle (A12, R8) | **fait (2026-10-02, worker t_f7d733b7, commits 6cb4064 + 4771ff3)** |
+| BL-13 Parcours passager agrégé (NONMVP-2, AC7, AC22, AC40) | **fait (2026-10-02, worker t_ad0ed66b, commit a3f405e)** |
 | BL-03..BL-19 | en attente de leurs dépendances (BL-03 attend BL-02, BL-04/BL-05/BL-09 attendent BL-03, …) |
 
 ## Preuves obtenues
@@ -92,6 +93,20 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
   - Preuve : `A12.json` → `confirmed: false` (`moneyAfterOneSimHour: -200540`,
     `spent.opex: 11520`). 5 tests dans `tests/economy.test.mjs` (scénarios
     déficit/faillite + rentable) ; `node --test tests/*.test.mjs` → 59/59 pass.
+- **BL-13 (2026-10-02) : parcours passager agrégé livré** (commit `a3f405e`) :
+  nouveau module `src/sim/passengers.mjs` — les passagers voyagent en GROUPES
+  liés vol/terminal (AC22), pas un simple total transporté (AC40) : parcours
+  débarquement → check-in → sécurité → attente → embarquement, files VISIBLES
+  (`sim.passengers.queue`, occupation 0..1, HUD `src/ui/renderer.mjs`),
+  satisfaction ÉVOLUTIONNE (pénalité sur les files saturées, récupération
+  quand les files sont vides — un retard ancien ne condamne pas indéfiniment).
+  Comptage unique à l'embarquement (`countCarried`) ; les groupes orphelins
+  (vol parti en cours de parcours) sont épurgés sans fausse comptabilité.
+  5 tests dans `tests/passengers.test.mjs` : saturation (files pleines,
+  satisfaction mesurable qui baisse), dénouement (files vides, satisfaction
+  remonte), 4 × 144 pax → `totalCarried` = 576 exactement, orphelins (vols
+  partis sans embarquer → 0 compté), repos (aucune perte fantôme).
+  `node --test tests/*.test.mjs` → 83/83 pass.
 
 ## Décision
 
