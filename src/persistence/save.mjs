@@ -17,8 +17,35 @@
 //         REJETÉE proprement (erreur lisible) — le 1er tick ne crashe plus.
 //   EV-10: l'état du générateur aléatoire (seed + compteur) est conservé dans la
 //         sauvegarde pour reproductibilité (déterminisme).
+//
+// R10 (schéma explicite + migration) — la validation couvre :
+//   - version stricte : v ≠ courante → rejet lisible (pas de migration : le jeu est
+//     local/offline, une sauvegarde trop ancienne est REFUSÉE, jamais migrée —
+//     politique D4 : rejet dur + cas non migrables documentés ici et dans la doc).
+//   - identifiants : UN id par avion et par liste d'infra (pas de doublon qui
+//     casserait les lookups gateNodeOf/runwayExitNode et les réservations).
+//   - capacités : le type d'avion (acType) doit être UN CATÉLOGUE CONNU — la
+//     vitesse de l'avion EST dérivée de ce type (AIRCRAFT[acType].approach/taxi),
+//     un type inconnu ferait crasher le 1er tick (spec.minRunway undefined).
+//   - références des DEUX côtés : avion → piste/porte EXISTANTE (déjà, A10) ET
+//     porte → avion EXISTANT (g.acId : une porte « réservée » à un avion disparu
+//     serait bloquée à JAMAIS — on la rejette proprement).
+//   - chemins non restaurables : le chemin (ac.path, indices de nœuds du graphe)
+//     EST reconstruit par la sim au 1er tick (rebuildGraph, R03) — on ne le
+//     restaure PAS, on le marque dérivé. On valide seulement que, S'il est présent,
+//     c'est bien un TABLEAU (une path corrompue en nombre/objet ferait crashe le
+//     rebuild) ; la reconstruction elle-même gère « pas de chemin » → blocage lisible.
+//   - dérivés NON restaurés comme source : `sim._graph` ET `sim.infra.grid` (grille
+//     d'occupation) sont des CACHES DÉRIvés recalculés à partir des bâtiments —
+//     ils sont RETIRÉS de la copie de sortie (replacer) puis RECONSTRUITS au
+//     chargement (pas d'écriture dupliquée : la source reste l'infra, pas la cache).
+//   - files passagers : si `passengers` est présent, queue/groups/satisfaction sont
+//     des types CONSISTANTS (le tick passagers les avance — un type corrompu
+//     rendrait les files NaN).
 // ponytail: version de schéma entière (un chiffre). Si un futur champ casse le
 // format, on bump SAVE_VERSION et on rejette l'ancienne au lieu de crasher.
+import { AIRCRAFT } from '../data/catalog.mjs';
+import { buildGrid } from '../infra/infra.mjs';
 
 export const SAVE_KEY = 'airport-tycoon-save';
 export const SAVE_VERSION = 1;
@@ -65,8 +92,11 @@ function validateSim(sim) {
   if (sim.rngCounter !== undefined && !Number.isInteger(sim.rngCounter)) {
     throw new Error('Sauvegarde invalide : compteur du générateur non entier');
   }
-  // Identifiants + références : chaque bâtiment/avion PRÉSENT a un id ; un avion qui
-  // pointe vers une piste/porte doit viser un id EXISTANT (pas une référence périmée).
+  // Identifiants + références : chaque bâtiment/avion PRÉSENT a un id UNIQUE ; un
+  // avion qui pointe vers une piste/porte doit viser un id EXISTANT (pas une
+  // référence périmée) ; R10 : la porte qui pointe vers un avion doit aussi viser
+  // un avion EXISTANT (référence des DEUX côtés) et le type d'avion doit être connu
+  // (capacité : la vitesse est dérivée du type).
   // BL-12 : « refuel » (remise à niveau carburant) rejoint la liste des phases.
   const PHASES = new Set(['approach', 'holding', 'landing', 'exit', 'taxi', 'docking',
     'gate', 'refuel', 'disembark', 'ground', 'board', 'pushback', 'departure', 'blocked',
@@ -78,11 +108,40 @@ function validateSim(sim) {
   for (const list of lists) for (const b of list) {
     if (!isObj(b) || b.id == null) throw new Error('Sauvegarde invalide : bâtiment sans identifiant');
   }
+  // R10 (identifiants) : UN id par liste d'infra — un doublon casserait les lookups
+  // (gateNodeOf / runwayExitNode) et les réservations. On détecte par liste.
+  for (const list of lists) {
+    const seen = new Set();
+    for (const b of list) {
+      if (seen.has(b.id)) throw new Error(`Sauvegarde invalide : identifiant infra en double (${b.id})`);
+      seen.add(b.id);
+    }
+  }
   const runwayIds = new Set((isArr(infra && infra.runways) ? infra.runways : []).map((r) => r.id));
   const gateIds = new Set((isArr(infra && infra.gates) ? infra.gates : []).map((g) => g.id));
+  const acIds = new Set();
   if (isArr(sim.aircraft)) for (const ac of sim.aircraft) {
     if (!isObj(ac) || ac.id == null) throw new Error('Sauvegarde invalide : avion sans identifiant');
+    // R10 (identifiants) : un avion par id — un doublon double-compterait la
+    // réservation de porte / le segment (les deux avions visaient le même id).
+    if (acIds.has(ac.id)) throw new Error(`Sauvegarde invalide : avion ${ac.id} en double`);
+    acIds.add(ac.id);
+    // R10 (capacités) : le TYPE d'avion doit être au CATALOGUE — la vitesse et les
+    // contraintes (piste/porte) en sont dérivées ; un type inconnu ferait crasher
+    // le 1er tick (AIRCRAFT[acType] undefined → spec.minRunway undefined).
+    if (ac.acType !== undefined && !AIRCRAFT[ac.acType]) {
+      throw new Error(`Sauvegarde invalide : type avion inconnu « ${ac.acType} » (avion ${ac.id})`);
+    }
     if (!PHASES.has(ac.phase)) throw new Error(`Sauvegarde invalide : phase inconnue « ${ac.phase} »`);
+    // R10 (chemin non restaurable) : le chemin est un CACHÉ DÉRIVÉ du graphe
+    // (indices de nœuds) — il est RECONSTRUIT au 1er tick (rebuildGraph, R03).
+    // On ne le restaure PAS ; on valide seulement que, s'il est PRÉSENT (ni null
+    // ni undefined — « pas de chemin en cours » est légitime, ex. phase approche),
+    // c'est bien un TABLEAU (une path corrompue en chaîne/nombre ferait crasher le
+    // rebuild). La reconstruction gère « pas de chemin » → blocage lisible.
+    if (ac.path != null && !isArr(ac.path)) {
+      throw new Error(`Sauvegarde invalide : chemin non restaurable (avion ${ac.id})`);
+    }
     if (ac.runwayId != null && !runwayIds.has(ac.runwayId)) {
       throw new Error(`Sauvegarde invalide : avion ${ac.id} → piste inexistante ${ac.runwayId}`);
     }
@@ -90,16 +149,44 @@ function validateSim(sim) {
       throw new Error(`Sauvegarde invalide : avion ${ac.id} → porte inexistante ${ac.gateId}`);
     }
   }
+  // R10 (référence des DEUX côtés) : une porte RÉSERVÉE (g.acId) doit viser un
+  // avion EXISTANT. Sans ça, une porte « occupée » par un avion disparu resterait
+  // verrouillée à JAMAIS (demolish refuse « porte occupée ») → on la rejette.
+  if (isObj(infra) && isArr(infra.gates)) for (const g of infra.gates) {
+    if (g.acId != null && !acIds.has(g.acId)) {
+      throw new Error(`Sauvegarde invalide : porte ${g.id} réservée par un avion inexistant (${g.acId})`);
+    }
+  }
+  // R10 (files passagers) : si `passengers` est PRÉSENT, les files (queue) et les
+  // groupes (groups) sont des types CONSISTANTS — le tick les avance (q[stage] -= …)
+  // : un champ non numérique rendrait les files NaN et la satisfaction non bornée.
+  if (isObj(sim.passengers)) {
+    const q = sim.passengers.queue;
+    if (isObj(q)) for (const s of ['checkin', 'security', 'board']) {
+      if (s in q && !isFiniteNum(q[s])) {
+        throw new Error(`Sauvegarde invalide : file passagers « ${s} » non numérique`);
+      }
+    }
+    if ('groups' in sim.passengers && !isArr(sim.passengers.groups)) {
+      throw new Error('Sauvegarde invalide : groupes de passagers non listable');
+    }
+  }
 }
 
 // Sérialise un état de jeu en chaîne JSON (stockable). FONCTION PURE (A11) :
-// le replacer retire `sim._graph` (cache dérivé Maps/Sets) de la COPIE de sortie
-// SANS toucher à l'objet vivant — la partie en cours reste intacte. La sim
-// reconstruit le graphe au prochain tick (via `_graphDirty`).
+// le replacer retire les caches DÉRIvés de la COPIE de sortie SANS toucher à
+// l'objet vivant — la partie en cours reste intacte. Deux caches dérivées sont
+// recalculées à partir des bâtiments (la SOURCE) au chargement, donc on ne les
+// persiste PAS :
+//   - `sim._graph` (grapphe pathfinding, Maps/Sets) → reconstruit (R03).
+//   - `sim.infra.grid` (grille d'occupation, Uint8Array) → `buildGrid` la
+//     recalcule. Non persistée : un Uint8Array sérialise en 19200 clés
+//     numériques (gigantesque) et au retour JSON devient `{}` → `fits()`
+//     lirait chaque cellule comme VIDE (on construirait par-dessus tout).
 export function serialize(state) {
   return JSON.stringify(
     { v: SAVE_VERSION, state },
-    (key, value) => (key === '_graph' ? undefined : value),
+    (key, value) => (key === '_graph' || key === 'grid' ? undefined : value),
   );
 }
 
@@ -136,6 +223,18 @@ export function deserialize(json) {
     // ET la partie reste reproductible à la reprise.
     if (!Number.isInteger(out.sim.rngSeed)) out.sim.rngSeed = 0;
     if (!Number.isInteger(out.sim.rngCounter)) out.sim.rngCounter = 0;
+    // R10 (valeurs dérivées) : la GRILLE D'OCCUPATION (`infra.grid`) est un
+    // cache dérivé des BÂTIMENTS (la source) — elle est recalculée ici depuis
+    // l'infra, pas restaurée (pas d'écriture dupliquée). `buildGrid` remplit
+    // w/h/cells depuis les 5 listes ; on garantit leur présence (absente → []).
+    if (isObj(out.sim.infra)) {
+      const infra = out.sim.infra;
+      for (const k of ['runways', 'taxiways', 'terminals', 'gates', 'services']) {
+        if (!Array.isArray(infra[k])) infra[k] = [];
+      }
+      if (!isObj(infra.grid)) infra.grid = {}; // buildGrid remplit w/h/cells
+      buildGrid(out.sim);
+    }
   }
   return out;
 }
