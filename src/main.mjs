@@ -107,6 +107,22 @@ export function boot(canvas) {
     'locked': (e) => `${e.name} : ${e.need} passagers transportés requis`,
     'bankrupt': () => 'FAILLITE — les caisses sont vides',
   };
+  // R14 : un tick qui lève (bug de règle, état corrompu) arrive ici via
+  // 'sim-error' (voir loop.mjs) — erreur lisible en toast, le jeu ne crashe pas.
+  // Throttle : le tick peut rejeter à CHAQUE frame (erreur persistante) ; on
+  // n'affiche la MÊME erreur qu'une fois par fenêtre, et on la laisse
+  // ré-apparaître au bout de 30 s si elle persiste (pas un spam à chaque frame).
+  let lastSimErrorText = null;
+  let lastSimErrorAt = 0;
+  bus.on('sim-error', (e) => {
+    const text = `Erreur de simulation : ${e?.message || 'inconnue'}`;
+    const now = Date.now();
+    if (text === lastSimErrorText && now - lastSimErrorAt < 30000) return;
+    lastSimErrorText = text;
+    lastSimErrorAt = now;
+    toasts.toast(text, 'err');
+  });
+
   bus.on('frame', () => {
     const sim = state.sim;
     if (!sim || !sim.alerts) return;

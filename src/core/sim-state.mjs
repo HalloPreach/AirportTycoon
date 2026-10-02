@@ -61,5 +61,18 @@ export function newSimState() {
   };
 }
 
+// R14 : le journal est BORNE (MAX_ALERTS) — la partie de 48 h génère des
+// milliers d'alertes, qui gonfleraient sim.alerts ET la sauvegarde (serialize
+// écrit l'état entier à chaque auto-save) sans limite. On garde les 500 plus
+// récentes : l'historique du panneau affiche déjà « les 50 plus récentes +
+// compteur des plus anciennes » (ui/panels.mjs), et les toasts n'affichent que
+// les 4 dernières — au-delà de MAX_ALERTS, le détail ancien n'a plus de
+// destinataire. (Le consommateur main.mjs pointe par INDICE et consomme à
+// chaque frame : les événements jamais lus restent dans la fenêtre des 500.)
+const MAX_ALERTS = 500;
+
 // Événement lisible pour l'UI (toast/alerte). L'UI lit sim.alerts, elle ne pollue pas l'état.
-export function pushEvent(sim, e) { sim.alerts.push(e); }
+export function pushEvent(sim, e) {
+  sim.alerts.push(e);
+  if (sim.alerts.length > MAX_ALERTS) sim.alerts.splice(0, sim.alerts.length - MAX_ALERTS);
+}

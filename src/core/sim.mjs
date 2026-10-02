@@ -36,6 +36,11 @@ export async function simTick(state, dt) {
   if (m && m.tick) m.tick(state, dt);
 }
 
+// Stub injectable (tests r14) : si un test pose `globalThis.__simTick`, la
+// boucle l'utilise au lieu du tick réel — permet d'essayer un tick qui lève
+// sans builder de faux modules. En jeu, l'absence du stub = zéro surcoût.
+export const tickFn = (state, dt) => (globalThis.__simTick || simTick)(state, dt);
+
 // État de sim d'une nouvelle partie (null si la sim n'est pas encore prête).
 export async function freshSimState() {
   const m = await ensureSim();
