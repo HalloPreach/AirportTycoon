@@ -15,6 +15,7 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
 | BL-14 Finances socle (A12, R8) | **fait (2026-10-02, worker t_f7d733b7, commits 6cb4064 + 4771ff3)** |
 | BL-13 Parcours passager agrégé (NONMVP-2, AC7, AC22, AC40) | **fait (2026-10-02, worker t_ad0ed66b, commit a3f405e)** |
 | BL-12 Services au sol : carburant/maintenance/catering (AC21) | **fait (2026-10-02, worker t_851e0e2d)** |
+| BL-15 Économie profonde + déblocages utiles (NONMVP-4, AC6/AC9/AC23/AC26f) | **fait (2026-10-02, worker t_02c8531f, commit à venir)** |
 | BL-03..BL-19 | en attente de leurs dépendances (BL-03 attend BL-02, BL-04/BL-05/BL-09 attendent BL-03, …) |
 
 ## Preuves obtenues
@@ -125,6 +126,26 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
   3 tests dans `tests/services.test.mjs` : 2 lances → 2e plein immédiat (≈0 s),
   1 lance → 2e attend le 1er (retard mesurable ≈55 s), 0 station → départ sec
   (événement `no-fuel` + billets moitiés). `node --test tests/*.test.mjs` → 86/86 pass.
+- **BL-15 (2026-10-02) : économie profonde livrée** (NONMVP-4, AC6/AC9/AC23)
+  — la qualité et les incidents se paient dans la TRÉSORERIE :
+  - **Satisfaction = variable économique** (`earn` de `economy.mjs`) : la
+    recette est PROPORTIONNELLE à la satisfaction (50 % = moitié des billets)
+    — la garde BL-05 (0 % = aucune recette) est conservée, le carburant
+    continue d'être payé (dépense). La qualité dégradée se voit dans le solde.
+  - **Incident = coût financier** : `onFlightCancelled` (nouvelle) — le vol
+    annulé (blocage persistant, A-5) paie une INDEMNITÉ (500 $, compte
+    `spent.compensation` — jamais une recette négative, discipline A-6).
+  - **Bilan lisible (AC23)** : `periodStatement` expose l'INDEMNITÉ en cause
+    du déficit ; les CONSTRUCTIONS passent dans un compte dédié
+    (`spent.construction`, `buildBuilding`) — plus de collision du compte
+    « fuel » (construction vs carburant) : le bilan se lit.
+  - **Scénarios exécutés** (`tests/finance-bl15.test.mjs`, 5 tests) :
+    DÉFICITAIRE (sous-équipé + surdimensionné → net négatif, faillite
+    atteinte, causes lues) ET RENTABLE (même aéroport + station carburant →
+    net positif) — l'A/B de l'amélioration (AC9) est de ~47 600 $ sur l'heure
+    simulée ; satisfaction 50 %/0 % (recettes moitiées / bloquées, carburant
+    toujours payé) ; indemnité exposée + nommée en cause.
+  `node --test tests/*.test.mjs` → 91/91 pass.
 
 ## Décision
 

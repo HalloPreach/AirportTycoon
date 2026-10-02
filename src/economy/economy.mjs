@@ -9,6 +9,10 @@ import { OPEX_PER_SEC } from '../data/catalog.mjs';
 
 const FUEL_COST_PER_PAX = 0.5;   // carburant : coûté au départ (critère carburant)
 const BANKRUPT_LIMIT = -10000;   // solde sous ce seuil = faillite
+// BL-15 (AC6) : un vol ANNULLÉ (blocage persistant, A-5) coûte une indemnité
+// passagers (compte spent.compensation, pas une recette négative — même
+// discipline que le carburant, A-6) : l'incident a un coût financier lisible.
+const COMP_FEE_PER_CANCEL = 500;
 
 export function canAfford(sim, cost) { return sim.economy.money >= cost; }
 
@@ -23,10 +27,15 @@ export function charge(sim, cost, cat) {
 // Encaisse une recette (catégorie pour les stats).
 // BL-05 (A13) : satisfaction 0 % = aéroport que plus personne ne sert → aucune
 // recette ne croît tant qu'elle ne remonte (les vols se purgent, pas de revenus).
+// BL-15 (AC6) : la satisfaction EST une variable économique — la recette est
+// PROPORTIONNELLE à la satisfaction (100 % = plein, 50 % = moitié) : la qualité
+// dégradée se paie en recettes, pas seulement en satisfaction « cosmétique ».
 export function earn(sim, amount, cat) {
-  if (sim.passengers.satisfaction <= 0) return; // pas de croissance en insatisfaction totale
-  sim.economy.money += amount;
-  sim.economy.revenue[cat] = (sim.economy.revenue[cat] ?? 0) + amount;
+  const sat = sim.passengers?.satisfaction ?? 100;
+  if (sat <= 0) return; // pas de croissance en insatisfaction totale
+  const m = amount * sat / 100; // recette multipliée par la satisfaction
+  sim.economy.money += m;
+  sim.economy.revenue[cat] = (sim.economy.revenue[cat] ?? 0) + m;
 }
 
 // Atterri au sol : droits d'atterrissage + redevance porte.
@@ -46,6 +55,14 @@ export function onGateArrived(sim, ac) {
 export function onGateDeparted(sim, ac) {
   earn(sim, ac.pax * (ac._dryDeparture ? 12.5 : 25), 'pax');
   charge(sim, ac.pax * FUEL_COST_PER_PAX, 'fuel');
+}
+
+// BL-15 (AC6) : indemnité vol annulé — l'incident a un coût financier VISIBLE
+// (compte spent.compensation, jamais une recette négative). Appelé par le
+// module avions à l'annulation d'un vol (blocage persistant, A-5) : l'effet
+// « incident → finances » du critère AC6 est mesurable (charge, pas earn).
+export function onFlightCancelled(sim) {
+  charge(sim, COMP_FEE_PER_CANCEL, 'compensation');
 }
 
 // Exploitation continue (BL-14, R8/A12) : le socle aéroportuaire (piste, taxiway,
@@ -80,27 +97,29 @@ export function checkBankruptcy(sim) {
 }
 
 // Bilan par PÉRIODE (les compteurs sont cumulés depuis le début de la partie) :
-// recettes / exploitation / carburant / investissements, avec les CAUSES du
-// déficit quand le solde est négatif (AC23 : un bilan qui se lit, pas un chiffre).
+// recettes / exploitation / carburant / indemnités / investissements, avec
+// les CAUSES du déficit quand le solde est négatif (AC23 : un bilan qui se
+// lit, pas un chiffre). BL-15 : l'investissement = le compte CONSTRUCTION
+// (bâtiments payés, démolition remboursée dans revenue) — séparé du carburant
+// (dépense des départs) et des indemnités vols annulés (spent.compensation).
 export function periodStatement(sim) {
   const e = sim.economy;
   const revenue = Object.values(e.revenue).reduce((a, b) => a + b, 0);
   const opex = e.spent.opex ?? 0;
   const fuel = e.spent.fuel ?? 0;
-  // Investissements = tout ce qui a été payé en BÂTIMENTS (clés de spent autres
-  // qu'opex/fuel — construction, remboursement de démolition compris).
-  const invest = Object.entries(e.spent).reduce(
-    (a, [k, v]) => (k === 'opex' || k === 'fuel' ? a : a + v), 0);
-  const net = revenue - opex - fuel - invest;
+  const compensation = e.spent.compensation ?? 0;
+  const invest = e.spent.construction ?? 0;
+  const net = revenue - opex - fuel - invest - compensation;
   const causes = [];
   if (net < 0) {
     if (opex > 0) causes.push(`exploitation ${Math.round(opex)} $ (socle + services)`);
     if (fuel > 0) causes.push(`carburant ${Math.round(fuel)} $`);
+    if (compensation > 0) causes.push(`indemnités vols annulés ${Math.round(compensation)} $`);
     if (invest > 0) causes.push(`investissements ${Math.round(invest)} $`);
     if (e.debt > 0) causes.push(`intérêts sur la dette ${Math.round(e.debt)} $`);
     if (!causes.length) causes.push('solde dû aux remboursements de démolition');
   }
-  return { revenue, opex, fuel, invest, net, money: e.money, debt: e.debt, causes };
+  return { revenue, opex, fuel, compensation, invest, net, money: e.money, debt: e.debt, causes };
 }
 
 // tickPassengers : ré-export (le parcours passagers vit dans sim/passengers.mjs).

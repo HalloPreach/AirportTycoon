@@ -75,7 +75,10 @@ export function buildBuilding(sim, type, x, y) {
   }
   const b = placeBuilding(sim, { id: sim.infra.nextId++, type, x, y, w: spec.w, h: spec.h, cost: spec.cost });
   sim.economy.money -= spec.cost;
-  sim.economy.spent[type] = (sim.economy.spent[type] ?? 0) + spec.cost;
+  // BL-15 : les CONSTRUCTIONS partent d'un compte dédié (spent.construction) —
+  // le compte « fuel » est réservé à la DÉPENSE carburant des départs (A-6) :
+  // un bilan qui mêle construction et carburant ne se lit plus (AC23).
+  sim.economy.spent.construction = (sim.economy.spent.construction ?? 0) + spec.cost;
   pushEvent(sim, { kind: 'built', type, id: b.id });
   return b;
 }

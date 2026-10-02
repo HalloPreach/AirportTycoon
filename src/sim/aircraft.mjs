@@ -11,7 +11,7 @@
 import { AIRCRAFT, REFUEL_TIME_S, GATE_WEAR_PER_SEC, HANGAR_CLEAN_PER_SEC, GATE_WEAR_DELAY_S } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
-import { onGateArrived, onGateDeparted } from '../economy/economy.mjs';
+import { onGateArrived, onGateDeparted, onFlightCancelled } from '../economy/economy.mjs';
 import { arrivePassengers, countCarried, boardDelay } from './passengers.mjs';
 
 const V = { approach: 220, landing: 130, taxi: 60, pushback: 30, departure: 150 };
@@ -368,6 +368,7 @@ function doBlocked(sim, ac, dt, spec, occupied) {
     if (g && g.acId === ac.id) g.acId = null; // libération sûre de la porte réservée
     ac.seg = null;
     ac.phase = 'cancelled';
+    onFlightCancelled(sim); // BL-15 (AC6) : l'incident a un coût (indemnité)
     pushEvent(sim, { kind: 'flight-cancelled', volId: ac.id, airline: ac.airline, why: 'blocage persistant' });
     return;
   }
