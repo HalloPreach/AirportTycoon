@@ -14,7 +14,7 @@ lu en lecture seule (`qa/_g-status.cjs`, `qa/_r08-lock.cjs`).
 | Gate | Jalon | Statut | Justification |
 |------|-------|--------|---------------|
 | G0 | Référence (J0) | **VALIDÉ** | 4 critères (a)-(d) relancés et passés sur `e3dc3fc` (§ G0) |
-| G1 | Fiabilité (J1) | **BLOQUÉ** | R08, R10, R13, R14 non livrées (critère a non satisfait) (§ G1) |
+| G1 | Fiabilité (J1) | **BLOQUÉ** | R10, R13, R14 non livrées (R08 livrée après coupure ; critère a non satisfait) (§ G1) |
 | G2 | Compréhension (J2) | **BLOQUÉ** | cascade : R15-R20 en todo (amont J1 non validé) (§ G2-G7) |
 | G3 | Progression (J3) | **BLOQUÉ** | cascade : R21-R26 en todo (amont J1+J2 non validés) |
 | G4 | Exploitation (J4) | **BLOQUÉ** | cascade : R27-R31 en todo (amont J3 non validé) |
@@ -27,10 +27,10 @@ mais les preuves des cartes + le scénario intégré du jalon. Sur prérequis no
 le G reste ouvert, jamais `done` — d'où le statut BLOQUÉ (justifié) et non VALIDÉ pour
 G1-G7. Aucune carte G n'est passée en `done` sans prérequis.
 
-État Kanban vérifié (live, `qa/_g-status.cjs`) : 11 done (R01, R02, G0, R03-R07, R09,
-R11, R12), R08 running (worker actif, run démarré 1790953446), R13 ready, le reste todo.
-Le board reflète donc l'état réel ; les statuts n'ont pas été modifiés (tous cohérents),
-la justification des blocages est portée ici + en commentaire sur G1.
+État Kanban vérifié (live, `qa/_g-status.cjs`, à la coupure) : 12 done (R01, R02, G0,
+R03-R12), R10 running (pris dans la file), R13 ready, R14 + le reste todo. Le board
+reflète l'état réel ; les statuts n'ont pas été modifiés (tous cohérents), la
+justification des blocages est portée ici + en commentaire sur G1.
 
 ## G0 — Référence (J0) : VALIDÉ sur `e3dc3fc`
 
@@ -79,15 +79,15 @@ Critère (a) : « chaque R03-R14 fermée avec preuve test/sim ». État des 12 p
 | R05 critères piste/port | done `e3dc3fc` ✓ | centralisés, sondage gain 2e piste |
 | R06 auto-accept unifiée | done t_c932707c ✓ | `state.planningAuto` source unique |
 | R07 inspection vivante | done t_232419f6 ✓ | signature état objet suivi |
-| **R08 lances en panne** | **running** ✗ | run en cours (fix D2 `doRefuel`) ; tentative précédente bloquée checkout occupé |
+| **R08 lances en panne** | done ✓ (après coupure) | livrée `21b7ad7` : acquisition/libération lance CENTRALISÉE (acquireLance/releaseLance), test `tests/r08-lances.test.mjs` (suite 147→**153/153**) ; au moment de la coupe R08 était running, R10 a repris la file |
 | R09 PRNG | done `356e15b` ✓ | seed mélangé dans mulberry32, 2 seeds → 2 suites |
-| **R10 rejets lisibles + migration** | **todo** ✗ | non démarrée (prérequis R03-R09 ✓ donc dispatchable) |
+| **R10 rejets lisibles + migration** | **running** ✗ | run en cours (pris dans la file après R08) ; prérequis R03-R09 tous done |
 | R11 coûts obligatoires | done t_eef3e9c8 ✓ | débit même en déficit, achat facultatif seul refusé |
 | R12 réconciliation | done `92ef251` ✓ | dette 1×, EV-9 tient, dette en ligne du bilan |
 | **R13** | **ready** ✗ | en file, non exécutée |
 | **R14** | **todo** ✗ | verrouillée derrière R10/R13 (prérequis R03-R13) |
 
-Justification du BLOQUÉ : 4/12 prérequis non livrés (R08 running, R10 todo, R13 ready,
+Justification du BLOQUÉ : 3/12 prérequis non livrés (R10 running, R13 ready, R14 todo)
 R14 todo) → critères (a) et (b) (partie intégrée) inaccessibles. Les preuves partielles
 déjà présentes sont notées pour accélérer la validation : R09 (2 seeds → 2 suites ✓),
 R11/R12 (déficit réel + identité trésorerie, tests R12 dans la suite 147/147 ✓),
