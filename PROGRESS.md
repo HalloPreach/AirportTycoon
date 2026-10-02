@@ -16,6 +16,7 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
 | BL-13 Parcours passager agrégé (NONMVP-2, AC7, AC22, AC40) | **fait (2026-10-02, worker t_ad0ed66b, commit a3f405e)** |
 | BL-12 Services au sol : carburant/maintenance/catering (AC21) | **fait (2026-10-02, worker t_851e0e2d)** |
 | BL-15 Économie profonde + déblocages utiles (NONMVP-4, AC6/AC9/AC23/AC26f) | **fait (2026-10-02, worker t_02c8531f, commit à venir)** |
+| BL-11 Porte MVP (MVP-10, AC27, AC28, EV-3/EV-5/EV-6) | **fait (2026-10-02, worker t_c605589e, run 228, commit b12968d)** — script QA CDP `qa/mvp-gate.mjs` porte le MVP par entrées réelles (clavier/souris CDP + reload, lecture seule de l'état) : construction → vols (auto-accept A) → conflits (réseau coupé) → finances → sauvegarde/reprise (RELOAD + R = LA PORTE) → R3/A7 (démolition taxiway isolé AVANT 1er tick, `sim._graph` null, null-guard d43b290 exercé, 0 exception) → rejeu. Réseau 100 % local, 0 exception/0 console.error. **18/18 PASS, code retour 0.** Fix R3/A7 : tol pan 120→12 px + clic au centre de la vue (le rectangle du taxiway est plus petit que la tol). Validateur `node --test tests/*.test.mjs` = 92/92. Preuves `evidence/mvp-gate/` (6 PNG + rapports + checkpoint + log). |
 | BL-03..BL-19 | en attente de leurs dépendances (BL-03 attend BL-02, BL-04/BL-05/BL-09 attendent BL-03, …) |
 
 ## Preuves obtenues
@@ -146,6 +147,27 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
     simulée ; satisfaction 50 %/0 % (recettes moitiées / bloquées, carburant
     toujours payé) ; indemnité exposée + nommée en cause.
   `node --test tests/*.test.mjs` → 91/91 pass.
+- **BL-11 (2026-10-02) : PORTE MVP validée** (MVP-10, AC27, AC28, EV-3/EV-5/EV-6)
+  — le script QA CDP `qa/mvp-gate.mjs` porte le MVP par des entrées RÉELLES
+  (clavier/souris via `Input.dispatch*` + `Page.reload`, observation en
+  LECTURE SEULE de `window.__game.state` — aucune méthode du jeu n'est appelée) :
+  construction → vols (auto-accept touche A, BL-16) → conflits (réseau coupé)
+  → finances → sauvegarde/reprise (RELOAD + touche R = LA PORTE) → **R3/A7**
+  (démolition du taxiway isolé AVANT le 1er tick, `sim._graph` null, null-guard
+  `rebuildGraph` d43b290 exercé, 0 exception) → rejeu. Réseau 100 % local
+  (EV-5), 0 exception de page + 0 `console.error` sur toute la session (EV-6).
+  **18/18 PASS, code retour 0.**
+  - **Fix R3/A7 à la racine** : la tolérance de pan de la phase 6 (120 px)
+    laissait le point visé jusqu'à 120 px du centre de VUE, donc HORS du
+    rectangle du taxiway (40 px de haut) → le clic tombait à côté (`hit`
+    undefined, rien ne se démolissait, timeout 10 s). Tol 12 px + clic au
+    CENTRE de la vue (le rectangle couvre ±20 px vertical / ±100 px horizontal)
+    → le clic est dedans. La ligne A de BL-16 est greffée sur la réécriture
+    `key()` de la run 226 (rawKeyDown+keyUp seul, sans keyDown « text » qui
+    doublait les keydowns sous Edge headless).
+  Validateur `node --test tests/*.test.mjs` → 92/92 pass. Preuves
+  `evidence/mvp-gate/` (6 PNG + `rapport.txt`/`rapport.json` + checkpoint + log).
+  Commit `b12968d`.
 
 ## Décision
 
