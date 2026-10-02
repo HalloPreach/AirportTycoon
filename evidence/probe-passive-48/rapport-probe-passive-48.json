@@ -1,0 +1,57 @@
+{
+  "runId": "probe-passive-48",
+  "seed": 42,
+  "scenario": "passive",
+  "policy": "auto-accept (tout est accepté, case auto-accept du jeu)",
+  "events": [],
+  "forced": [],
+  "hours": 48,
+  "simTimeEnd": 172800,
+  "stoppedEarly": false,
+  "money": {
+    "start": 12000,
+    "end": 4473176.249985562,
+    "min": 11571.199999999903,
+    "atMin": 134,
+    "debt": 0
+  },
+  "revenue": 5182569.249999999,
+  "opex": 552960.0000009291,
+  "opexPerHour": 11520.000000019356,
+  "fuel": 168433,
+  "compensation": 0,
+  "invest": 0,
+  "net": 4461176.24999907,
+  "bankruptcy": false,
+  "bankruptAt": null,
+  "passengers": {
+    "totalCarried": 336866,
+    "satisfaction": 100
+  },
+  "counts": {
+    "built": 0,
+    "flightIn": 3247,
+    "flightOut": 3244,
+    "flightCancelled": 0,
+    "unlocked": 5,
+    "bankrupt": 0,
+    "runwayClosed": 88,
+    "fuelOut": 123,
+    "surgeStart": 297,
+    "noFuel": 3246
+  },
+  "infra": {
+    "runways": 1,
+    "taxiways": 1,
+    "terminals": 1,
+    "gates": 2,
+    "services": []
+  },
+  "servicesOpexPerHour": 0,
+  "determinism": {
+    "note": "R09 : rejouer ce run (mêmes args) doit donner des fichiers IDENTIQUES en bytes.",
+    "rngSeed": 42,
+    "rngCounterEnd": 10756,
+    "rngCounterStart": 0
+  }
+}

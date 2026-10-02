@@ -1,0 +1,79 @@
+{
+  "runId": "probe-custom-6h",
+  "seed": 7,
+  "scenario": "custom",
+  "policy": "auto-accept (tout est accepté, case auto-accept du jeu)",
+  "events": [
+    {
+      "at": 7200,
+      "action": "forceRunway"
+    },
+    {
+      "at": 10800,
+      "action": "forceFuel"
+    },
+    {
+      "at": 14400,
+      "action": "autoRefuse"
+    }
+  ],
+  "forced": [
+    {
+      "at": 7200,
+      "action": "forceRunway"
+    },
+    {
+      "at": 10800,
+      "action": "forceFuel"
+    }
+  ],
+  "hours": 6,
+  "simTimeEnd": 21600,
+  "stoppedEarly": false,
+  "money": {
+    "start": 12000,
+    "end": 352018.4892498186,
+    "min": 11571.199999999903,
+    "atMin": 134,
+    "debt": 0
+  },
+  "revenue": 422852.98925,
+  "opex": 69119.99999997219,
+  "opexPerHour": 11519.999999995365,
+  "fuel": 13714.5,
+  "compensation": 0,
+  "invest": 0,
+  "net": 340018.4892500278,
+  "bankruptcy": false,
+  "bankruptAt": null,
+  "passengers": {
+    "totalCarried": 27429,
+    "satisfaction": 99.5
+  },
+  "counts": {
+    "built": 0,
+    "flightIn": 268,
+    "flightOut": 268,
+    "flightCancelled": 0,
+    "unlocked": 5,
+    "bankrupt": 0,
+    "runwayClosed": 13,
+    "fuelOut": 18,
+    "surgeStart": 38,
+    "noFuel": 268
+  },
+  "infra": {
+    "runways": 1,
+    "taxiways": 1,
+    "terminals": 1,
+    "gates": 2,
+    "services": []
+  },
+  "servicesOpexPerHour": 0,
+  "determinism": {
+    "note": "R09 : rejouer ce run (mêmes args) doit donner des fichiers IDENTIQUES en bytes.",
+    "rngSeed": 7,
+    "rngCounterEnd": 1343,
+    "rngCounterStart": 0
+  }
+}
