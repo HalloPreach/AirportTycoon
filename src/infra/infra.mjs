@@ -226,7 +226,9 @@ export function runwayFor(sim, minLen) {
 // Porte JOIGNABLE au réseau : son nœud de porte EXISTE (un segment la touche)
 // ET au moins UNE sortie de piste est atteignable — le MÊME critère que
 // flights.hasAccessiblePath (primitives pathfinding réutilisées, pas de 2e règle).
-function gateReachable(sim, gate) {
+// R18 : exporté — l'overlay réseau (ui/overlay.mjs) le réutilise tel quel :
+// le diagnostic écran = le MÊME graphe et la MÊME règle que la sim.
+export function gateReachable(sim, gate) {
   if (sim._graphDirty) { rebuildGraph(sim); sim._graphDirty = false; }
   if (!sim._graph) return false;
   const to = gateNodeOf(sim, gate.id);

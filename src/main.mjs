@@ -12,6 +12,7 @@ import { makeBuildTool } from './ui/build-tool.mjs';
 import { makeSavePanel } from './ui/save-panel.mjs';
 import { makePlanningPanel } from './ui/planning-panel.mjs';
 import { makePanels } from './ui/panels.mjs';
+import { drawNetworkOverlay } from './ui/overlay.mjs';
 import { clearSave } from './persistence/save.mjs';
 import { makeGameState } from './core/new-game.mjs';
 
@@ -26,7 +27,15 @@ export function boot(canvas) {
     viewSize: () => ({ width: canvas.width, height: canvas.height }),
     toast: toasts.toast,
   });
-  const renderer = makeRenderer(canvas, { overlays: [buildTool.drawGhost] });
+  const renderer = makeRenderer(canvas, {
+    overlays: [
+      buildTool.drawGhost,
+      // R18 : overlay réseau/capacités (touche O, préférence d'affichage
+      // `state.networkOverlay`, inactive par défaut) : LECTURE SEULE — le
+      // même graphe et la même règle que la sim (voir ui/overlay.mjs).
+      (ctx, cam, vs) => { if (state.networkOverlay && state.sim) drawNetworkOverlay(ctx, cam, vs, state.sim); },
+    ],
+  });
   makeInputHandlers(canvas, bus, camera, renderer.viewSize);
   // Panneaux de consultation (NONMVP-5) : inspection / bilan / stats / alertes
   // / diagnostic réseau — UI fine, lecture seule (aucune règle, aucune mutation).
@@ -158,6 +167,14 @@ export function boot(canvas) {
     else if (k === 'b') buildTool.toggleBuild();
     else if (k === 'x') buildTool.toggleDemolish();
     else if (k === 'a') setPlanningAuto(!state.planningAuto);
+    else if (k === 'o') {
+      // R18 : overlay réseau/capacités (O) — préférence d'affichage sur l'état
+      // (sérialisée : on rechargé, l'overlay reste tel qu'on l'avait laissé).
+      state.networkOverlay = !state.networkOverlay;
+      toasts.toast(state.networkOverlay
+        ? 'Overlay réseau ON (O pour couper) — segments occupés + portes coupées'
+        : 'Overlay réseau OFF', 'info');
+    }
     else if (k >= '1' && k <= '8') buildTool.setKind(KINDS[Number(k) - 1]);
   });
 

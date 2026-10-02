@@ -363,6 +363,44 @@ async function run() {
   check('EV-3.5 conflits de ressources (démolition → blocked/holding)', s4 === true,
     `taxiways=${s4d.taxiways} (base ${tBefore}) phases=${s4d.phases || 'aucun'} delayed=${s4d.delayed}`);
 
+  // (4b) R18 — OVERLAY RÉSEAU/CAPACITÉS : touche O (entrée réelle, toggle) +
+  //     rupture lisible SUR L'ÉCRAN. Le réseau est COUPÉ depuis (4) (taxiway
+  //     démoli) : l'overlay (ui/overlay.mjs) peint le MÊME graphe de la sim —
+  //     segments occupés + portes coupées (gateReachable : la MÊME règle que la
+  //     sim, prouvé tests r18). L'observation reste en LECTURE SEULE : le
+  //     toggle est la touche O réelle (état state.networkOverlay), le « lisible
+  //     sur l'écran » est mesuré en pixels du canvas (getImageData) — ON > OFF.
+  {
+    // Viser un avion bloqué (pan clavier réel) : la pastille de l'overlay est
+    // alors dans la vue (les pixels mesurés sont ceux de LA rupture).
+    const blockedPos = await evaluate(`(() => {
+      const a = window.__game.state.sim.aircraft.find((x) => x.phase === 'blocked' && x.x != null);
+      return a ? { x: a.x, y: a.y } : null;
+    })()`);
+    if (blockedPos) await panTo(blockedPos.x, blockedPos.y, 60, 40);
+    // Pixels « rouge overlay » (#ff5252 = 255,82,82) : le rouge de l'overlay est
+    // PLUS VIF que le rouge porte-occupée de la sim (#e53935 = 229,57,53) →
+    // le seuil r≥235 ne compte que l'overlay (pas la sim).
+    const countOverlayRed = `(() => {
+      const c = document.getElementById('game');
+      const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+      let n = 0;
+      for (let i = 0; i < d.length; i += 4) if (d[i] >= 235 && d[i + 1] >= 40 && d[i + 1] <= 110 && d[i + 2] >= 40 && d[i + 2] <= 110) n++;
+      return n;
+    })()`;
+    const pxOff = await evaluate(countOverlayRed); // overlay OFF (défaut)
+    await key('o');
+    await sleep(250); // une frame : l'overlay est peint au canvas
+    const r18on = await evaluate(`window.__game.state.networkOverlay === true`);
+    await shot('04c-overlay-reseau.png'); // preuve : le réseau coupé AVEC l'overlay
+    const pxOn = await evaluate(countOverlayRed);
+    check('R18 overlay réseau : touche O (entrée réelle, toggle de l\'état)', r18on === true, 'networkOverlay=true');
+    check('R18 overlay réseau : la rupture est lisible SUR L\'ÉCRAN (pixels canvas ON > OFF)',
+      pxOn > pxOff, `pixels rouges overlay OFF=${pxOff} → ON=${pxOn}${blockedPos ? '' : ' (aucun avion bloqué : mesure dégradée)'}`);
+    await key('o'); // OFF : la sauvegarde (5) suit le scénario de base
+    await sleep(150);
+  }
+
   // (5) SAUVEGARDE RÉELLE — S (toast, présent en localStorage), puis Q au menu
   //     (autosave silencieuse), rechargement navigateur (Page.reload),
   //     R = Reprendre (LA PORTE du MVP).
