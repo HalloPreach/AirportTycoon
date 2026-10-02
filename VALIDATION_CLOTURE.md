@@ -4,6 +4,16 @@ Carte : « Bloque la clôture si les critères du brief ne sont pas satisfaits �
 État validé : HEAD `c543f13` (rapport final BL-19), jeu à `debee4f`.
 Date : 2026-10-02. Réalisé **en contexte frais** (≠ implémenteur de BL-19).
 
+**Note de réactualisation (post-continuation `t_00a9af40`, 2026-10-02)** : après
+ce snapshot, AC24/NONMVP-5 (gap G1) a été **comblé par BL-20** (`8bd77f1` :
+5 panneaux de gestion dans `src/ui/panels.mjs` + wire `src/main.mjs`,
+`tests/panels.test.mjs` 10/10 + QA `qa/gestion-panel.mjs` 15/15), D1 corrigé
+(`7c84ff4`) et le gap G2 (`npm test` incomplet) **corrigé** (carte `t_b320d250` :
+script `test` → glob `tests/*.test.mjs`, 14 fichiers, exit code propagé).
+État de référence post-rapport : `7c84ff4`, suite `node --test tests/*.test.mjs`
+= **106/106**. Le verdict ci-dessous (PASS, RV-BL18 passée) reste valable ;
+les gaps G1 et G2 sont donc clos.
+
 Méthode : chaque critère du brief (AC1..AC40) est justifié par une preuve
 réelle (test, QA CDP, sim, ou dossier de probes) que j'ai **relancé ou relu
 aujourd'hui**, pas copié des cartes. Le verdict de clôture n'est pas « le MVP
@@ -112,21 +122,25 @@ artefacts du reviewer. Mon justification CDP tient sur :
 
 ## 4. Gaps restants (listés, non masqués — AC37)
 
-- **G1 — AC24 partiel (NONMVP-5)** : l'interface de **gestion complète**
-  (inspection avion/bâtiment, bilan financier détaillé, statistiques,
-  historique d'alertes, diagnostic réseau-coupé/saturation) n'existe pas dans
-  `src/ui/`. L'interface reste **pilotable** (le jeu est jouable : caméra,
+- **G1 — AC24 partiel (NONMVP-5) — COMBLÉ post-clôture** : l'interface de
+  **gestion complète** (inspection avion/bâtiment, bilan financier détaillé,
+  statistiques, historique d'alertes, diagnostic réseau-coupé/saturation)
+  n'existait pas dans `src/ui/` à ce snapshot ; **livrée par BL-20**
+  (`8bd77f1` : 5 panneaux dans `src/ui/panels.mjs` + wire `src/main.mjs`,
+  `tests/panels.test.mjs` 10/10 + QA `qa/gestion-panel.mjs` 15/15, état
+  `7c84ff4`). L'interface reste **pilotable** (le jeu est jouable : caméra,
   construction, planning, sauvegarde, toasts). C'est une exigence d'UI, classée
-  NONMVP-5 par le brief. Elle est **déclarée ici et dans RAPPORT_FINAL.md §8.1**,
-  pas glissée en « amélioration future ». **Ce gap ne bloque pas la clôture du
-  périmètre** : toutes les mécaniques de simulation (MVP + NONMVP-1..4,6..8) sont
-  complètes et prouvées ; le brief classe AC24 comme panneau d'interface.
-- **G2 — `npm test` incomplet (mineur)** : le script `test` de `package.json` ne
-  liste que 10 des 13 fichiers (omet `incidents`, `persistence-valid`,
-  `services` = 16 tests). Le valideur canonique reste le glob
-  `node --test tests/*.test.mjs` (95/95). **Correction triviale, non faite
-  volontairement** : la carte de validation interdit de modifier le code
-  (revue seule). À faire par une carte d'implémentation (1 ligne dans package.json).
+  NONMVP-5 par le brief. Elle était **déclarée ici et dans RAPPORT_FINAL.md
+  §8.1**, pas glissée en « amélioration future ». **Ce gap ne bloque pas la
+  clôture du périmètre** : toutes les mécaniques de simulation (MVP +
+  NONMVP-1..4,6..8) sont complètes et prouvées ; le brief classe AC24 comme
+  panneau d'interface.
+- **G2 — `npm test` incomplet (mineur) — CORRIGÉ (carte `t_b320d250`)** : le
+  script `test` de `package.json` ne listait que 10 des 13 fichiers (omettait
+  `incidents`, `persistence-valid`, `services` = 16 tests). Il est maintenant
+  `node --test tests/*.test.mjs` (glob résolu par le runner Node, 14 fichiers
+  post-BL-20, exit code propagé, CI-ready) ; la carte de validation l'avait
+  laissé volontairement à l'état « revue seule, non fait ».
 - **G3 — seuils documentés (ponytail, plafonds assumés)** : toasts max 4 / 4 s ;
   autosauvegarde 120 s ; session de rendu « assez longue » = 5 min (A-1, seuil de
   l'audit). Non étendus.

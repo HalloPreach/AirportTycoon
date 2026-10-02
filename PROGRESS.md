@@ -228,8 +228,18 @@ committées (état final `4cc2bbf`). Preuves finales réexécutées sur l'arbre 
 `node --test tests/*.test.mjs` = 105/105, `qa/bl17-sim48h.mjs` = 8/8,
 `qa/mvp-gate.mjs` = 18/18, `qa/bl17-cdp.mjs` = 10/10, `qa/gestion-panel.mjs` = 15/15.
 
+**Continuation `t_00a9af40` (post-clôture, 2026-10-02, en cours)** : audit
+`AUDIT_2026-10-02_POST_CONTINUATION.md` → carte `t_ad9d472b` (D1, faite, `7c84ff4`),
+D2 (embarquement avant parcours pax — carte soeur en cours, `qa/_d2-*.mjs`),
+completions services au sol (carte soeur en cours, `qa/_nonmvp5.mjs`),
+commande de tests (carte `t_b320d250` : script `npm test` corrigé → glob
+`tests/*.test.mjs`, suite complète 14 fichiers, exit code du runner Node) et
+rapports réactualisés (`RAPPORT_FINAL.md`, `VALIDATION_CLOTURE.md`).
+
 Reste hors périmètre (documenté `RAPPORT_FINAL.md` §8, non masqué) :
-- **G2** : le script `npm test` liste 10/13 fichiers — fix triviale (`package.json` → glob `tests/*.test.mjs`).
+- **G2 — CORRIGÉ (carte `t_b320d250`)** : le script `npm test` exécutait 10/13
+  fichiers → corrigé en glob `tests/*.test.mjs` (14 fichiers post-BL-20,
+  exit code propagé, CI-ready).
 - **G3** : seuils ponytail assumés (toasts 4/4 s, autosave 120 s, rendu 5 min).
 - **G4** : NONMVP-9 (fret/correspondances) optionnel, exclu par le brief.
 - **G5** : `main` en avant sur `origin/main` — push à faire par l'utilisateur.

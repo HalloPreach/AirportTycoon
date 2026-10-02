@@ -5,6 +5,15 @@ Date : 2026-10-02. État du jeu validé : `debee4f` (34 commits au-dessus de `or
 Ce rapport (BL-19) est le commit qui suit `debee4f`.
 Base de départ : `80a90ab` (M1–M5 intégrées, 36 tests verts).
 
+**Note de réactualisation (post-continuation, 2026-10-02)** : après ce snapshot,
+le périmètre a été étendu par les reworks NONMVP-5 (BL-20 : 5 panneaux de
+gestion, `8bd77f1`) et la correction D1 (`7c84ff4`). État de référence
+post-rapport : `7c84ff4` (39 commits au-dessus de `origin/main`), suite complète
+`node --test tests/*.test.mjs` = **106/106** (105 au snapshot + test D1). Les
+chiffres 95/95 ci-dessous restent exacts pour le snapshot `debee4f` ; la suite a
+grossi (10 tests BL-20 + 1 test D1) sans casser les anciens. Le script `npm test`
+a été corrigé pour exécuter la suite complète (§8.2, corrigé).
+
 ---
 
 ## 1. Statut global
@@ -23,10 +32,11 @@ Réexécuté **aujourd'hui, sur `debee4f`** (et non copié des rapports des cart
 | `node qa/mvp-gate.mjs` (QA CDP, 0 injection) | **18/18 PASS**, exit 0 | `evidence/bl-18/mvp-gate-rerun.log` |
 | `node qa/bl17-cdp.mjs` (rendu 5 min) | **10/10 PASS**, exit 0 | `evidence/bl-18/bl17-cdp-5min-rerun.log` |
 
-Bilan honnête (AC37) : une exigence est **partiellement** satisfaite (AC24, voir §8).
-Elle est documentée ici et **n'est pas masquée en « amélioration future »** pour
-justifier la clôture — c'est la seule exigence non complète, et elle est déclarée
-dans le brief comme panneau d'interface (le jeu reste pilotable, cf. §8).
+Bilan honnête (AC37) : à ce snapshot, une exigence est **partiellement**
+satisfaite (AC24, voir §8) — **comblée depuis** par BL-20 (5 panneaux de gestion,
+`8bd77f1` : `tests/panels.test.mjs` 10/10 + QA `qa/gestion-panel.mjs` 15/15),
+cf. note de tête. Elle n'est pas masquée en « amélioration future » pour
+justifier la clôture : c'est la seule exigence non complète du snapshot.
 
 ## 2. Interruptions et révisions (AC31, AC34, AC35)
 
@@ -48,8 +58,13 @@ par cartes, chaque carte = mission autonome + critères de fin + artefacts) :
 - **28 cartes** créées : `BL-00`..`BL-19` (20) + revues indépendantes
   `RV-BL03`, `RV-BL04`, `RV-BL04-2`, `RV-BL08`, `RV-BL11`, `RV-BL18` (6).
 - État à la date du rapport : **26/28 terminées**, 2 en cours — `BL-19` (ce
-  rapport) et `RV-BL18` (revue indépendante de la revalidation finale, `t_9aa0bdb9`).
+  rapport) et `RV-BL18` (revue indépendante de la revalidation finale, `t_9aa0bdb9`,
+  **devenue PASS** : tests 95/95 + sim 48 h 8/8 + PORTE 18/18 + CDP 5 min 10/10,
+  0 défaut bloquant, 1 note non-bloquante sur un flake de timing de la QA).
 - Toutes les cartes d'implémentation BL-00..BL-18 sont terminées et committées.
+- **Après ce snapshot** : `BL-20` (NONMVP-5 : 5 panneaux de gestion) + la
+  correction D1 (`7c84ff4`) — carte racine de continuation `t_00a9af40` (voir
+  `PROGRESS.md`).
 - `NONMVP-9` (fret/correspondances, AC39, D4) **exclu** conformément au backlog —
   optionnel, non imposé ; aucune carte créée dessus.
 
@@ -92,11 +107,11 @@ corriger au commit suivant, revalider (probes APRÈS + tests).
 ## 6. Commandes de test + résultats
 
 ```
-node --test tests/*.test.mjs   # valideur canonique : 13 fichiers, 95/95 PASS (réexécuté le 2026-10-02 sur debee4f)
+node --test tests/*.test.mjs   # valideur canonique : 13 fichiers, 95/95 PASS (réexécuté le 2026-10-02 sur debee4f) ; post-continuation : 14 fichiers, 106/106 sur 7c84ff4
 node qa/bl17-sim48h.mjs        # scénario 48 h seed 42 : 8/8 PASS
 node qa/mvp-gate.mjs          # PORTE MVP QA CDP : 18/18 PASS, exit 0
 node qa/bl17-cdp.mjs          # rendu 5 min CDP : 10/10 PASS, exit 0
-npm test                      # 79/79 PASS — mais le script ne liste QUE 10 des 13 fichiers (voir §8)
+npm test                      # CORRIGÉ : glob `tests/*.test.mjs` → la suite complète (14 fichiers, exit code propagé du runner node) — avant : 10 fichiers seulement
 npm run serve                 # serveur statique local (les QA CDP bootent leur propre port)
 ```
 
@@ -142,19 +157,22 @@ après reprise sans plantage, sauvegarde invalides refusées proprement
 
 **Limites connues / exigences incomplètes (AC31/AC37 — ne rien masquer)** :
 
-1. **AC24 partiel** : l'interface est pilotable (caméra/zoom/construction/démolition/
-   pause/vitesse, panneau planning avec accepter/refuser/auto-accept, panneau
-   sauvegarde, toasts d'alertes causes+action, files visibles au HUD), mais les
-   panneaux d'inspection avion/bâtiment, bilan financier détaillé, statistiques,
-   historique d'alertes et diagnostic réseau-coupé/saturation **n'existent pas**
-   dans `src/ui/` (vérifié : aucun module `stats`/`inspection`/`bilan`/`diagnostic`).
-   Ce n'est pas une exigence de simulation mais d'UI ; le brief la classait NONMVP-5.
-   Elle est déclarée ici, pas glissée en « amélioration future ».
-2. **`npm test` incomplet** : le script `test` de `package.json` ne liste que 10 des
-   13 fichiers de tests (manquent `incidents`, `persistence-valid`, `services` =
-   16 tests). Le valideur canonique reste le glob `node --test tests/*.test.mjs`
-   (95/95) utilisé par toutes les cartes et les revues. Corriger le script est trivial
-   et reste à faire.
+1. **AC24 partiel à ce snapshot — COMBLÉ (BL-20, `8bd77f1`)** : l'interface
+   pilotable (caméra/zoom/construction/démolition/pause/vitesse, panneau planning
+   avec accepter/refuser/auto-accept, panneau sauvegarde, toasts d'alertes
+   causes+action, files visibles au HUD) existait déjà ; les panneaux
+   d'inspection avion/bâtiment, bilan financier détaillé, statistiques,
+   historique d'alertes et diagnostic réseau-coupé/saturation **existent
+   maintenant** dans `src/ui/panels.mjs` (5 panneaux + wire `src/main.mjs`),
+   testés (`tests/panels.test.mjs` 10/10) et validés par QA CDP entrées réelles
+   (`qa/gestion-panel.mjs` 15/15). C'était la seule exigence non complète du
+   snapshot ; elle est déclarée ici, pas glissée en « amélioration future ».
+2. **`npm test` incomplet — CORRIGÉ** : le script `test` de `package.json` ne
+   listait que 10 des 13 fichiers de tests (manquaient `incidents`,
+   `persistence-valid`, `services`, et après BL-20 `panels`). Le script est
+   maintenant `node --test tests/*.test.mjs` (glob résolu par le runner de Node,
+   fonctionne dans cmd/PowerShell/bash, exit code propagé) → la suite complète,
+   et tout nouveau fichier `tests/*.test.mjs` est capturé automatiquement.
 3. **Seuils documentés** (ponytail, plafonds assumés) : toasts max 4 empilés / 4 s ;
    autosauvegarde intervalle fixe 120 s ; session de rendu « assez longue » = 5 min
    (A-1, seuil de l'audit) — non étendue à plusieurs heures.
