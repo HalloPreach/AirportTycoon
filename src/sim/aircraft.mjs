@@ -319,9 +319,13 @@ function doRefuel(sim, ac, dt, spec) {
   }
   const lances = fuelLances(sim);
   if (!lances || fuelOut(sim)) {
-    // Pas de station OU panne station (incident BL-14) → départ SÉC
-    // (non bloquant, expliqué) : billets moitié. La panne est temporaire —
-    // quand le service revient, les pleins reprennent (récupération mesurée).
+    // Pas de station OU panne station (incident BL-14) OU station DÉMOLIE
+    // (disparition du service) → départ SÉC (non bloquant, expliqué) :
+    // billets moitié. R08 (D2) : la lance est LIBÉRÉE IMMÉDIATEMENT si le
+    // plein était en cours (avant la fix, ac._refueling restait true → lance
+    // comptée occupée artificiellement par le comptage busy). La panne est
+    // temporaire — quand le service revient, les pleins reprennent.
+    releaseLance(ac);
     ac._dryDeparture = true;
     if (!ac._noFuelNotified) {
       ac._noFuelNotified = true;
@@ -330,22 +334,40 @@ function doRefuel(sim, ac, dt, spec) {
     ac.phase = 'disembark'; ac.timer = 0;
     return;
   }
-  if (!ac._refueling) {
-    // Une lance par station : si toutes sont prises, l'avion ATTEND ici
-    // (saturation mesurable → retard au sol, pas de débordement des lances).
-    const busy = sim.aircraft.filter((a) => a._refueling).length;
-    if (busy < lances) {
-      ac._refueling = true;
-      ac._refuelNeed = spec.refuel * REFUEL_TIME_S; // durée liée à la taille
-    }
-  }
+  acquireLance(sim, ac, spec, lances);
   if (ac._refueling) {
     ac._refuelNeed -= dt;
     if (ac._refuelNeed <= 0) {
-      ac._refueling = false; // libère sa lance
+      releaseLance(ac); // fin normale : libère sa lance
       ac.phase = 'disembark'; ac.timer = 0;
     }
   }
+}
+
+// R08 (t_dab62cfc) : l'acquisition/libération d'une LANCE est CENTRALISÉE —
+// UNE fonction d'acquisition (une lance par station ; si toutes sont prises,
+// l'avion attend — saturation mesurable, pas de débordement) et UNE de
+// libération. TOUTES les sorties du plein passent par releaseLance : fin
+// normale, panne station (D2 : libération IMMÉDIATE), disparition du service
+// (station démolie → !lances → même branch panne) ; l'annulation ne concerne
+// pas le refuel (un avion refuel n'est jamais annulé — la purge retire les
+// vols cancelled de sim.aircraft et leur lance ne compte plus). Le comptage
+// d'occupation ne compte QUE les pleins réellement actifs (a._refueling).
+function acquireLance(sim, ac, spec, lances) {
+  if (ac._refueling) return; // déjà en plein : pas de 2e lance
+  const busy = sim.aircraft.filter((a) => a._refueling).length;
+  if (busy < lances) {
+    ac._refueling = true;
+    ac._refuelNeed = spec.refuel * REFUEL_TIME_S; // durée liée à la taille
+  }
+}
+
+// Libération CENTRALE : le propriétaire (ac._refueling) ET le temps restant
+// (ac._refuelNeed) sont nettoyés ensemble — aucun chemin de sortie n'en oublie
+// un (le branch panne avant R08 n'en nettoyait aucun).
+function releaseLance(ac) {
+  ac._refueling = false;
+  ac._refuelNeed = 0;
 }
 
 // BL-12 : lances disponibles = stations carburant construites (une lance par
