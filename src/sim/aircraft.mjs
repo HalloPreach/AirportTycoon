@@ -12,7 +12,7 @@ import { AIRCRAFT, REFUEL_TIME_S, GATE_WEAR_PER_SEC, HANGAR_CLEAN_PER_SEC, GATE_
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 import { onGateArrived, onGateDeparted, onFlightCancelled } from '../economy/economy.mjs';
-import { arrivePassengers, countCarried, boardDelay } from './passengers.mjs';
+import { arrivePassengers, countCarried, boardDelay, groupComplete } from './passengers.mjs';
 import { runwayClosed, fuelOut } from './incidents.mjs';
 
 const V = { approach: 220, landing: 130, taxi: 60, pushback: 30, departure: 150 };
@@ -325,6 +325,12 @@ function doOps(sim, ac, dt) {
   if (ac.phase === 'board') {
     // Le retard (timer négatif) doit s'écouler avant le comptage.
     if (ac.timer < step) return;
+    // D2 : on ne compte/embarque QUE si le groupe du vol est COMPLET (tous ses
+    // pax ont franchi check-in + sécurité → en attente). Sinon le vol reste au
+    // sol (l'embarquement ne démarre pas avant la fin du parcours passager).
+    // groupComplete ne bloque PAS si le groupe n'existe plus (avion injecté à
+    // la main, groupe déjà purgé/compté) : parcours considéré terminé.
+    if (!groupComplete(sim, ac)) return;
     if (!ac.counted) {
       countCarried(sim, ac); // les passagers montent : comptés UNE fois
       ac.counted = true;     // le re-tick « board » ne recompte jamais (AC40)

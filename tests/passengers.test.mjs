@@ -13,7 +13,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newSimState } from '../src/core/sim-state.mjs';
-import { placeBuilding } from '../src/infra/infra.mjs';
+import { makeGameState } from '../src/core/new-game.mjs';
+import { placeBuilding, buildBuilding } from '../src/infra/infra.mjs';
 import { tickAircraft } from '../src/sim/aircraft.mjs';
 import { tickPassengers } from '../src/sim/passengers.mjs';
 
@@ -95,6 +96,59 @@ test('AC40 (pas de double comptage) : 4 × 144 pax → totalCarried = 576 EXACTE
   }
   assert.equal(sim.passengers.totalCarried, 576, '4 × 144 pax comptés UNE fois (pas 1152)');
   assert.equal(sim.passengers.groups.length, 0, 'plus aucun groupe en cours');
+});
+
+test('D2 (embarquement) : un groupe n\'est JAMAIS compté avant la fin du parcours', () => {
+  // Scénario de l'audit D2 (reproduction exacte) : 4 GROS vols de 350 pax,
+  // chacun à une porte L d'un terminal, lancés au début de leur traitement au
+  // sol. SANS la correction, les 4 vols passaient en pushback (et comptaient
+  // leurs 1400 pax) alors que ~676 pax restaient au check-in. AVEC la
+  // correction, tout groupe COMPTÉ est COMPLET (toutes ses pax ont franchi
+  // sécurité→attente) : le comptage attend la fin du parcours, jamais avant.
+  const state = makeGameState();
+  const sim = state.sim;
+  const base = (id, data = {}) => ({ id, airline: 'atlantique', acType: 'medium', pax: 160,
+    phase: 'approach', x: 800, y: -150, gateId: null, runwayId: null, delayed: 0,
+    timer: 0, path: null, pathPtr: 0, seg: null, heading: 'gate', ...data });
+  const positions = [[100, 100], [100, 350], [100, 600], [1100, 100]];
+  const gates = positions.map(([x, y]) => {
+    const t = buildBuilding(sim, 'terminal', x, y);
+    return sim.infra.gates.find((g) => g.terminalId === t.id && g.size === 'L');
+  });
+  sim.aircraft = gates.map((g, i) => {
+    g.acId = i + 1;
+    return base(i + 1, { acType: 'large', pax: 350, phase: 'gate',
+      gateId: g.id, runwayId: sim.infra.runways[0].id,
+      x: g.x + g.w / 2, y: g.y + g.h / 2 });
+  });
+  const FULL = 4 * 350;
+  // Invariant D2 tick par tick : un groupe DISPARU (compté ce tick) devait être
+  // COMPLET juste AVANT le tick qui le compte.
+  let counted = 0;
+  for (let i = 0; i < 4000; i++) {
+    const before = sim.passengers.totalCarried;
+    const prevGroups = sim.passengers.groups.map((g) => ({ ...g }));
+    tickAircraft(sim, 0.1);
+    tickPassengers(sim, 0.1);
+    if (sim.passengers.totalCarried > before) {
+      const now = new Set(sim.passengers.groups.map((g) => g.volId));
+      for (const g of prevGroups) {
+        if (!now.has(g.volId)) {
+          // groupe retiré = compté ce tick : ses pax avaient toutes dû finir AVANT
+          assert.ok((sim.passengers.securityDone || 0) >= (g.base || 0) + g.pax - 1e-9,
+            `D2 (tick ${i + 1}) : vol ${g.volId} compté avant la fin du parcours (securityDone ${(sim.passengers.securityDone || 0).toFixed(1)} < ${(g.base || 0) + g.pax})`);
+          counted++;
+        }
+      }
+    }
+    if (sim.passengers.totalCarried >= FULL && sim.passengers.groups.length === 0) break;
+  }
+  assert.equal(sim.passengers.totalCarried, FULL, '1400 pax comptés (une fois chacun)');
+  assert.ok(counted > 0, 'des groupes ont bien été comptés (le test est vivant)');
+  // Les files ne sont PAS une fausse preuve : au moment où tout est compté,
+  // les pax en files sont ceux qui n'avaient pas encore fini (0 ici : tous partis).
+  const q = sim.passengers.queue;
+  assert.ok(q.checkin < 1 && q.security < 1, 'aucune pax orpheline bloquée en files au comptage final');
 });
 
 test('orphelins : des vols partis en cours de parcours sont épurgés, files à 0, satisfaction remonte', () => {

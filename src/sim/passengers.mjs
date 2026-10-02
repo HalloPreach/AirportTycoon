@@ -46,26 +46,64 @@ export function ensurePassengers(sim) {
   p.queue = p.queue || { checkin: 0, security: 0, board: 0 };
   p.groups = p.groups || [];
   if (p.satisfaction === undefined) p.satisfaction = 100;
+  if (p.securityDone === undefined) p.securityDone = 0;   // D2 : flux monotone sécurité→attente
+  if (p.injectedTotal === undefined) p.injectedTotal = 0;  // D2 : pax cumulés injectés au check-in
   return p;
 }
 
 // Le vol commence le déchargement (appelé par le module avions à l'entrée de la
 // phase « disembark ») : le GROSSE du vol entre dans le check-in du terminal.
+// D2 : on enregistre `base` = position d'injection de ses pax dans le flux global
+// (pax injectés AVANT celui-ci) : c'est ce qui permet de savoir, plus tard,
+// quand TOUTES ses pax ont fini le parcours (groupComplete).
 export function arrivePassengers(sim, ac) {
   const p = ensurePassengers(sim);
   if (!ac.pax || ac.pax <= 0) return;
   const g = sim.infra.gates.find((x) => x.id === ac.gateId);
+  const base = p.injectedTotal || 0;
+  p.injectedTotal = base + ac.pax;
   p.groups.push({
     volId: ac.id, pax: ac.pax, terminalId: g ? g.terminalId : null,
+    base, // D2 : offset d'injection (pax injectés avant ce vol)
   });
 }
 
-// Le vol embarque ses passagers (appelé par le module avions à la fin du
-// « board ») : le groupe est TRANSPORTÉ — compté une fois, retiré du parcours.
+// Le vol embarque ses passagers : le groupe est TRANSPORTÉ — compté UNE fois,
+// retiré du parcours. D2 : appelé UNIQUEMENT quand le groupe du vol est COMPLET
+// (tous ses pax ont franchi check-in + sécurité → en attente, voir groupComplete)
+// : on ne compte JAMAIS « embarqué » avant la fin du parcours passager.
 export function countCarried(sim, ac) {
   const p = ensurePassengers(sim);
   p.totalCarried += ac.pax; // UNE SEULE fois, à l'embarquement (critère 7, AC40)
   p.groups = p.groups.filter((gr) => gr.volId !== ac.id);
+}
+
+// Le groupe du vol est-il COMPLET : toutes ses pax ont-elles atteint l'attente ?
+// (comptage D2 — on ne compte « embarqué » qu'une fois le parcours terminé.)
+// Principe : un compteur MONOTONE `p.securityDone` compte les pax qui ont
+// franchi sécurité → attente (cumul des débits security→board, incrémenté par
+// tickPassengers). Chaque groupe enregistre `base` = le nombre de pax qui l'ont
+// précédé dans le check-in (ordre d'injection). Le groupe EST complet ⇔
+// `securityDone >= base + pax` : tous les pax qui l'ont rejoint (les siens,
+// injectés après lui, et les siens) ont donc traversé la sécurité. Monotone et
+// sans état par groupe → pas de deadlock, pas de double crédit, tolère les pax
+// orphelins (vol annulé) qui ont traversé la sécurité sans groupe.
+// Garde : si le groupe n'existe plus (avion injecté à la main, groupe déjà
+// purgé/compté), on ne bloque PAS — on considère le parcours terminé.
+export function groupComplete(sim, ac) {
+  const p = ensurePassengers(sim);
+  const g = p.groups.find((gr) => gr.volId === ac.id);
+  if (!g) return true; // aucun groupe pour ce vol : non bloquant
+  const base = g.base || 0;
+  // Les pax du groupe occupent le segment [base, base+pax) du flux d'injection.
+  // Tous les pax injectés AVANT lui (base) l'ont suivi dans la sécurité ; il est
+  // complet quand le flux a dépassé la fin de son segment : base + pax.
+  // ponytail: epsilon 1e-9 — securityDone est une SOMME de valeurs flottantes
+  // (pass = min(q, cap, rate*dt), des fractions), jamais exactement un entier :
+  // 15 pax s'arrête à 14.999999999999996 et bloquerait l'embarquement pour un
+  // epsilon. 1e-9 négligeable face à des pax entiers ; upgrade si les pax
+  // deviennent fractionnaires (files par vol).
+  return (p.securityDone || 0) >= base + g.pax - 1e-9;
 }
 
 // Délai d'embarquement (AC22 : l'attente INFLUE SUR LE VOL) : si la file
@@ -123,6 +161,7 @@ export function tickPassengers(sim, dt) {
   for (const [stage, to] of [['checkin', 'security'], ['security', 'board']]) {
     const pass = Math.min(q[stage], caps[stage], rates[stage] * dt);
     q[stage] -= pass; q[to] += pass;
+    if (to === 'board') p.securityDone = (p.securityDone || 0) + pass; // D2 : compteur monotone sécurité→attente
   }
   // (2c) La salle d'attente se vide au débit d'embarquement — TOUJOURS (les pax
   //      attendent un avion : s'il arrive, ils montent ; s'il ne vient pas
