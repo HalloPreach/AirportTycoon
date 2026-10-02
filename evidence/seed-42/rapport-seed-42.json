@@ -16,22 +16,22 @@
   "stoppedEarly": false,
   "money": {
     "start": 12000,
-    "end": 93512.31250000621,
-    "min": 11571.199999999903,
-    "atMin": 134,
+    "end": 103272.79900000722,
+    "min": 11574.399999999903,
+    "atMin": 133,
     "debt": 0
   },
-  "revenue": 96110.8125,
+  "revenue": 106242.799,
   "opex": 11520.000000000427,
   "opexPerHour": 11520.000000000427,
-  "fuel": 3078.5,
+  "fuel": 3450,
   "compensation": 0,
   "invest": 0,
-  "net": 81512.31249999958,
+  "net": 91272.79899999958,
   "bankruptcy": false,
   "bankruptAt": null,
   "passengers": {
-    "totalCarried": 6157,
+    "totalCarried": 6900,
     "satisfaction": 100
   },
   "wait": {
@@ -57,15 +57,15 @@
   },
   "counts": {
     "built": 0,
-    "flightIn": 66,
-    "flightOut": 63,
+    "flightIn": 68,
+    "flightOut": 66,
     "flightCancelled": 0,
     "unlocked": 5,
     "bankrupt": 0,
-    "runwayClosed": 1,
-    "fuelOut": 4,
-    "surgeStart": 5,
-    "noFuel": 64
+    "runwayClosed": 2,
+    "fuelOut": 3,
+    "surgeStart": 7,
+    "noFuel": 67
   },
   "unlocked": [
     "fuel",
@@ -83,9 +83,9 @@
   },
   "servicesOpexPerHour": 0,
   "determinism": {
-    "note": "R09 : rejouer cette configuration (mêmes args, même commit) doit donner des fichiers IDENTIQUES en bytes. AVANT R09, --seed ne diversifie PAS les parties (le seed n'entre pas dans la suite mulberry32).",
+    "note": "R09 (livré) : rejouer cette configuration (mêmes args, même commit) donne des fichiers IDENTIQUES en bytes. Les seeds différents DONNENT DES PARTIES DIFFÉRENTES (le seed est mélangé dans mulberry32 — preuve : evidence/r09-seed-42 vs r09-seed-99). Rejouer une config d’AVANT R09 avec seed 0 reste bit-à-bit la suite d’origine (migration).",
     "rngSeed": 42,
-    "rngCounterEnd": 222,
+    "rngCounterEnd": 226,
     "rngCounterStart": 0
   }
 }

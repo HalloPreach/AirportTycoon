@@ -27,12 +27,12 @@
   "fuel": 0,
   "compensation": 0,
   "invest": 0,
-  "net": -13116.80000000079,
+  "net": -22091.11722236807,
   "bankruptcy": true,
   "bankruptAt": 4099,
   "passengers": {
     "totalCarried": 0,
-    "satisfaction": 100
+    "satisfaction": 99.5
   },
   "wait": {
     "queues": {
@@ -62,9 +62,9 @@
     "flightCancelled": 0,
     "unlocked": 0,
     "bankrupt": 1,
-    "runwayClosed": 1,
+    "runwayClosed": 2,
     "fuelOut": 3,
-    "surgeStart": 8,
+    "surgeStart": 6,
     "noFuel": 0
   },
   "unlocked": [],
@@ -77,9 +77,9 @@
   },
   "servicesOpexPerHour": 0,
   "determinism": {
-    "note": "R09 : rejouer cette configuration (mêmes args, même commit) doit donner des fichiers IDENTIQUES en bytes. AVANT R09, --seed ne diversifie PAS les parties (le seed n'entre pas dans la suite mulberry32).",
+    "note": "R09 (livré) : rejouer cette configuration (mêmes args, même commit) donne des fichiers IDENTIQUES en bytes. Les seeds différents DONNENT DES PARTIES DIFFÉRENTES (le seed est mélangé dans mulberry32 — preuve : evidence/r09-seed-42 vs r09-seed-99). Rejouer une config d’AVANT R09 avec seed 0 reste bit-à-bit la suite d’origine (migration).",
     "rngSeed": 0,
-    "rngCounterEnd": 35,
+    "rngCounterEnd": 96,
     "rngCounterStart": 0
   }
 }

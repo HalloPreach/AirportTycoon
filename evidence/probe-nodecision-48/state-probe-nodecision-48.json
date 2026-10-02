@@ -19301,46 +19301,46 @@
       "aircraft": [],
       "planning": [
         {
-          "id": 1,
+          "id": 21,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 122,
-          "planned": 120,
+          "pax": 120,
+          "planned": 3720,
           "status": "planned"
         },
         {
-          "id": 2,
+          "id": 22,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 106,
-          "planned": 180,
+          "pax": 67,
+          "planned": 3780,
           "status": "planned"
         },
         {
-          "id": 3,
+          "id": 23,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 80,
-          "planned": 240,
+          "pax": 67,
+          "planned": 3840,
           "status": "planned"
         },
         {
-          "id": 4,
+          "id": 24,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 87,
-          "planned": 300,
+          "pax": 82,
+          "planned": 3900,
           "status": "planned"
         }
       ],
-      "nextAcId": 5,
+      "nextAcId": 25,
       "passengers": {
         "totalCarried": 0,
-        "satisfaction": 100,
+        "satisfaction": 99.5,
         "queue": {
           "checkin": 0,
           "security": 0,
@@ -19366,19 +19366,19 @@
       "incidents": {
         "runway": {
           "closed": 0,
-          "acc": 379,
-          "last": 2700
+          "acc": 259,
+          "last": 3720
         },
         "fuel": {
           "out": 0,
           "acc": 229,
-          "last": 3060
+          "last": 2340
         },
         "surge": {
-          "active": false,
-          "remaining": 0,
-          "acc": 19,
-          "last": 3990
+          "active": true,
+          "remaining": 41,
+          "acc": 0,
+          "last": 4050
         }
       },
       "time": 4099,
@@ -19386,8 +19386,9 @@
       "_graph": null,
       "_graphDirty": true,
       "rngSeed": 0,
-      "rngCounter": 35,
+      "rngCounter": 96,
       "_unlocked": {}
-    }
+    },
+    "planningAuto": false
   }
 }

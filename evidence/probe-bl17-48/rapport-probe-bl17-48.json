@@ -26,7 +26,7 @@
   },
   "forced": [
     {
-      "at": 129660,
+      "at": 129659,
       "action": "forceRunwayOnApproach"
     }
   ],
@@ -34,22 +34,22 @@
   "stoppedEarly": false,
   "money": {
     "start": 12000,
-    "end": 3199868.8109855587,
-    "min": 11571.199999999903,
-    "atMin": 134,
+    "end": 3252075.4002353908,
+    "min": 11574.399999999903,
+    "atMin": 133,
     "debt": 0
   },
-  "revenue": 3866489.8109999998,
+  "revenue": 3920581.4002499995,
   "opex": 552960.0000009291,
   "opexPerHour": 11520.000000019356,
-  "fuel": 125661,
+  "fuel": 127546,
   "compensation": 0,
   "invest": 0,
-  "net": 3187868.8109990708,
+  "net": 3240075.4002490705,
   "bankruptcy": false,
   "bankruptAt": null,
   "passengers": {
-    "totalCarried": 251422,
+    "totalCarried": 255179,
     "satisfaction": 100
   },
   "wait": {
@@ -70,20 +70,20 @@
         "occ": 0
       }
     },
-    "holding": 0,
+    "holding": 1,
     "plannedPending": 1
   },
   "counts": {
     "built": 0,
-    "flightIn": 2420,
-    "flightOut": 2417,
+    "flightIn": 2452,
+    "flightOut": 2448,
     "flightCancelled": 0,
     "unlocked": 5,
     "bankrupt": 0,
-    "runwayClosed": 94,
+    "runwayClosed": 90,
     "fuelOut": 115,
-    "surgeStart": 302,
-    "noFuel": 2419
+    "surgeStart": 305,
+    "noFuel": 2450
   },
   "unlocked": [
     "fuel",
@@ -101,9 +101,9 @@
   },
   "servicesOpexPerHour": 0,
   "determinism": {
-    "note": "R09 : rejouer cette configuration (mêmes args, même commit) doit donner des fichiers IDENTIQUES en bytes. AVANT R09, --seed ne diversifie PAS les parties (le seed n'entre pas dans la suite mulberry32).",
+    "note": "R09 (livré) : rejouer cette configuration (mêmes args, même commit) donne des fichiers IDENTIQUES en bytes. Les seeds différents DONNENT DES PARTIES DIFFÉRENTES (le seed est mélangé dans mulberry32 — preuve : evidence/r09-seed-42 vs r09-seed-99). Rejouer une config d’AVANT R09 avec seed 0 reste bit-à-bit la suite d’origine (migration).",
     "rngSeed": 0,
-    "rngCounterEnd": 10802,
+    "rngCounterEnd": 10853,
     "rngCounterStart": 0
   }
 }

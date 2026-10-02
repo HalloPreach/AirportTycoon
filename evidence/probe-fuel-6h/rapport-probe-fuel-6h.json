@@ -16,30 +16,30 @@
   "stoppedEarly": false,
   "money": {
     "start": 12000,
-    "end": 650665.5657500541,
-    "min": 10669.599999999846,
-    "atMin": 212,
+    "end": 660250.4152500597,
+    "min": 10394.399999999758,
+    "atMin": 333,
     "debt": 0
   },
-  "revenue": 810790.0657500001,
-  "opex": 154724.00000000084,
-  "opexPerHour": 25787.333333333474,
-  "fuel": 15200.5,
-  "compensation": 1000,
+  "revenue": 820118.9152500001,
+  "opex": 154728.00000000084,
+  "opexPerHour": 25788.000000000142,
+  "fuel": 15440.5,
+  "compensation": 500,
   "invest": 1200,
-  "net": 638665.5657499993,
+  "net": 648250.4152499993,
   "bankruptcy": false,
   "bankruptAt": null,
   "passengers": {
-    "totalCarried": 30401,
+    "totalCarried": 30881,
     "satisfaction": 100
   },
   "wait": {
     "queues": {
       "checkin": {
-        "n": 0,
+        "n": 68,
         "cap": 120,
-        "occ": 0
+        "occ": 0.5666666666666667
       },
       "security": {
         "n": 0,
@@ -47,9 +47,9 @@
         "occ": 0
       },
       "board": {
-        "n": 0,
+        "n": 8,
         "cap": 160,
-        "occ": 0
+        "occ": 0.05
       }
     },
     "holding": 0,
@@ -58,14 +58,14 @@
   "counts": {
     "built": 0,
     "flightIn": 303,
-    "flightOut": 296,
-    "flightCancelled": 2,
+    "flightOut": 297,
+    "flightCancelled": 1,
     "unlocked": 5,
     "bankrupt": 0,
-    "runwayClosed": 11,
-    "fuelOut": 14,
-    "surgeStart": 43,
-    "noFuel": 30
+    "runwayClosed": 12,
+    "fuelOut": 15,
+    "surgeStart": 39,
+    "noFuel": 31
   },
   "unlocked": [
     "fuel",
@@ -85,9 +85,9 @@
   },
   "servicesOpexPerHour": 14400,
   "determinism": {
-    "note": "R09 : rejouer cette configuration (mêmes args, même commit) doit donner des fichiers IDENTIQUES en bytes. AVANT R09, --seed ne diversifie PAS les parties (le seed n'entre pas dans la suite mulberry32).",
+    "note": "R09 (livré) : rejouer cette configuration (mêmes args, même commit) donne des fichiers IDENTIQUES en bytes. Les seeds différents DONNENT DES PARTIES DIFFÉRENTES (le seed est mélangé dans mulberry32 — preuve : evidence/r09-seed-42 vs r09-seed-99). Rejouer une config d’AVANT R09 avec seed 0 reste bit-à-bit la suite d’origine (migration).",
     "rngSeed": 0,
-    "rngCounterEnd": 1035,
+    "rngCounterEnd": 1037,
     "rngCounterStart": 0
   }
 }

@@ -73,9 +73,9 @@
             "y": 1040,
             "w": 40,
             "h": 10,
-            "cleaning": 16,
-            "maintenance": 9.600000000000001,
-            "acId": null
+            "cleaning": 17,
+            "maintenance": 10.200000000000003,
+            "acId": 67
           },
           {
             "id": "3-g1",
@@ -85,9 +85,9 @@
             "y": 1040,
             "w": 40,
             "h": 10,
-            "cleaning": 16,
-            "maintenance": 9.600000000000001,
-            "acId": 64
+            "cleaning": 16.5,
+            "maintenance": 9.900000000000002,
+            "acId": null
           }
         ],
         "services": [],
@@ -19300,18 +19300,18 @@
       },
       "aircraft": [
         {
-          "id": 64,
+          "id": 67,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 80,
+          "pax": 79,
           "phase": "board",
-          "x": 640,
+          "x": 595,
           "y": 1045,
-          "gateId": "3-g1",
+          "gateId": "3-g0",
           "runwayId": 1,
           "delayed": 0,
-          "timer": -2.5600000000000005,
+          "timer": -0.7200000000000006,
           "path": [
             3,
             0
@@ -19319,36 +19319,21 @@
           "pathPtr": 1,
           "seg": null,
           "heading": "gate",
+          "_paxInjected": true,
+          "_refueling": false,
+          "_refuelNeed": 0,
           "_dryDeparture": true,
           "_noFuelNotified": true
         },
         {
-          "id": 65,
+          "id": 68,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 86,
+          "pax": 72,
           "phase": "approach",
-          "x": 265,
-          "y": 70,
-          "gateId": null,
-          "runwayId": 1,
-          "delayed": 0,
-          "timer": 0,
-          "path": null,
-          "pathPtr": 0,
-          "seg": null,
-          "heading": "gate"
-        },
-        {
-          "id": 66,
-          "airline": "atlantique",
-          "color": "#1e88e5",
-          "acType": "medium",
-          "pax": 65,
-          "phase": "approach",
-          "x": 266,
-          "y": 70,
+          "x": 268,
+          "y": 100,
           "gateId": null,
           "runwayId": 1,
           "delayed": 0,
@@ -19361,45 +19346,36 @@
       ],
       "planning": [
         {
-          "id": 64,
-          "airline": "atlantique",
-          "color": "#1e88e5",
-          "acType": "medium",
-          "pax": 80,
-          "planned": 3540,
-          "status": "in-flight"
-        },
-        {
-          "id": 65,
-          "airline": "atlantique",
-          "color": "#1e88e5",
-          "acType": "medium",
-          "pax": 86,
-          "planned": 3600,
-          "status": "in-flight"
-        },
-        {
-          "id": 66,
-          "airline": "atlantique",
-          "color": "#1e88e5",
-          "acType": "medium",
-          "pax": 65,
-          "planned": 3600,
-          "status": "in-flight"
-        },
-        {
           "id": 67,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 111,
+          "pax": 79,
+          "planned": 3540,
+          "status": "in-flight"
+        },
+        {
+          "id": 68,
+          "airline": "atlantique",
+          "color": "#1e88e5",
+          "acType": "medium",
+          "pax": 72,
+          "planned": 3600,
+          "status": "in-flight"
+        },
+        {
+          "id": 69,
+          "airline": "atlantique",
+          "color": "#1e88e5",
+          "acType": "medium",
+          "pax": 142,
           "planned": 3660,
           "status": "planned"
         }
       ],
-      "nextAcId": 68,
+      "nextAcId": 70,
       "passengers": {
-        "totalCarried": 6157,
+        "totalCarried": 6900,
         "satisfaction": 100,
         "queue": {
           "checkin": 0,
@@ -19408,64 +19384,47 @@
         },
         "groups": [
           {
-            "volId": 64,
-            "pax": 80,
+            "volId": 67,
+            "pax": 79,
             "terminalId": 3,
-            "base": 6157,
+            "base": 6900,
             "injected": true
           }
         ],
-        "securityDone": 6237,
-        "injectedTotal": 6237
+        "securityDone": 6979,
+        "injectedTotal": 6979
       },
       "economy": {
-        "money": 93512.31250000621,
+        "money": 103272.79900000722,
         "revenue": {
-          "landing": 12792,
-          "gate": 6396,
-          "pax": 76922.8125
+          "landing": 13391,
+          "gate": 6695.5,
+          "pax": 86156.299
         },
         "spent": {
           "opex": 11520.000000000427,
-          "fuel": 3078.5
+          "fuel": 3450
         },
         "debt": 0,
         "bankrupt": false
       },
-      "alerts": [
-        {
-          "kind": "flight-in",
-          "volId": 65,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 66,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "runway-closed",
-          "why": "fermeture piste (contrôle) — atterrissages en attente"
-        }
-      ],
+      "alerts": [],
       "incidents": {
         "runway": {
-          "closed": 120,
-          "acc": 0,
-          "last": 3600
+          "closed": 0,
+          "acc": 660,
+          "last": 1920
         },
         "fuel": {
           "out": 0,
-          "acc": 360,
-          "last": 3150
+          "acc": 450,
+          "last": 3060
         },
         "surge": {
           "active": false,
           "remaining": 0,
-          "acc": 30,
-          "last": 3480
+          "acc": 90,
+          "last": 3180
         }
       },
       "time": 3600,
@@ -19473,7 +19432,7 @@
       "_graph": null,
       "_graphDirty": true,
       "rngSeed": 42,
-      "rngCounter": 222,
+      "rngCounter": 226,
       "_unlocked": {
         "fuel": true,
         "catering": true,
@@ -19481,6 +19440,7 @@
         "baggage": true,
         "hangar": true
       }
-    }
+    },
+    "planningAuto": false
   }
 }
