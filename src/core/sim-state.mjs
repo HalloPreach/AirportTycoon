@@ -44,7 +44,14 @@ export function newSimState() {
     // étape (check-in/sécurité/embarquement) — voir src/sim/passengers.mjs.
     passengers: { totalCarried: 0, satisfaction: 100,
                   queue: { checkin: 0, security: 0, board: 0 }, groups: [] },
-    economy: { money: START_FUNDS, revenue: {}, spent: {}, debt: 0, bankrupt: false },
+    economy: { money: START_FUNDS, revenue: {}, spent: {}, debt: 0, bankrupt: false,
+      // R16 : périodes financières (5 min de jeu) — les 4 dernières closes
+      // (borné, comme R14) + l'accumulateur de clôture (_periodAcc, pattern
+      // _spawnAcc) + la base des comptes cumulés au dernier close (la 1re
+      // période mesure donc bien depuis t=0). Absent d'une sauvegarde
+      // ancienne → le 1er close mesure depuis la reprise (dégradation lisible).
+      periods: [], _periodAcc: 0, _periodBase: { revenue: 0, opex: 0, fuel: 0,
+        compensation: 0, construction: 0, debt: 0 } },
     alerts: [],      // événements lisibles pour l'UI (toasts/alertes)
     // Incidents opérationnels (BL-14, A-7) : 3 incidents limités (piste fermée,
     // panne carburant, pic de demande) — état propre, sérialisable seul, tirés

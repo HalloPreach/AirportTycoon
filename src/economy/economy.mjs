@@ -118,6 +118,15 @@ export function tickEconomy(sim, dt) {
     sim.economy.debt += interest;
     sim.economy.money -= interest;
   }
+  // R16 : clôture des périodes financières (5 min de jeu) — compteur
+  // accumulateur : `dt` = 0 (pause) ne clôt rien, un gros tick non plus.
+  if (dt > 0) {
+    sim.economy._periodAcc = (sim.economy._periodAcc ?? 0) + dt;
+    while (sim.economy._periodAcc >= PERIOD_S) {
+      closePeriod(sim);
+      sim.economy._periodAcc -= PERIOD_S;
+    }
+  }
   checkBankruptcy(sim);
 }
 
@@ -158,6 +167,60 @@ export function periodStatement(sim) {
     if (!causes.length) causes.push('solde dû aux remboursements de démolition');
   }
   return { revenue, opex, fuel, compensation, invest, net, money: e.money, debt: interest, causes };
+}
+
+// R16 (t_007f2297) : périodes financières stables + prévision simple.
+// PÉRIODE = 5 min de jeu (stable et mesurable, échelle R15). La clôture est un
+// COMPTEUR accumulateur (pattern _spawnAcc, flights.mjs) : un gros tick ne
+// duplique pas, 0 s de jeu (pause → tick à 0) ne clôt rien. Chaque PÉRIODE =
+// delta des comptes CUMULÉS depuis la clôture précédente (les composants
+// reconstituent le net — l'identité R12, dette comptée une fois) ; on garde
+// les 4 dernières (borné, comme R14) : prévision + lisible.
+export const PERIOD_S = 300;
+const MAX_PERIODS = 4;
+const sumObj = (o) => Object.values(o || {}).reduce((a, b) => a + (b || 0), 0);
+const baseSnapshot = (e) => ({ revenue: sumObj(e.revenue), opex: e.spent.opex ?? 0,
+  fuel: e.spent.fuel ?? 0, compensation: e.spent.compensation ?? 0,
+  construction: e.spent.construction ?? 0, debt: e.debt || 0 });
+
+// Clôt la période en cours : delta des comptes depuis la base, net par
+// l'identité R12 (recettes − dépenses − dette, comptée une fois).
+export function closePeriod(sim) {
+  const e = sim.economy;
+  if (!Array.isArray(e.periods)) e.periods = []; // sauvegarde ancienne sans le champ
+  const b = e._periodBase || baseSnapshot(e);
+  const p = {
+    at: sim.time ?? 0, // fin de période (s de jeu, lisible)
+    minutes: PERIOD_S / 60,
+    revenue: sumObj(e.revenue) - b.revenue,
+    opex: (e.spent.opex ?? 0) - b.opex,
+    fuel: (e.spent.fuel ?? 0) - b.fuel,
+    compensation: (e.spent.compensation ?? 0) - b.compensation,
+    invest: (e.spent.construction ?? 0) - b.construction,
+    debt: (e.debt || 0) - b.debt,
+  };
+  p.net = p.revenue - p.opex - p.fuel - p.compensation - p.invest - p.debt;
+  e.periods.push(p);
+  if (e.periods.length > MAX_PERIODS) e.periods.shift(); // borné (R14)
+  e._periodBase = baseSnapshot(e);
+  return p;
+}
+
+// Prévision simple (R16/G2) : TENDANCE LINÉAIRE depuis la DERNIÈRE période
+// close (net $/s de jeu, même échelle qu'OPEX_PER_SEC). SANS historique →
+// null : la prévision est INDETERMINÉE, jamais un faux chiffre. L'étiquette
+// « projection, pas une garantie » est rendue par l'UI (panneau financier).
+export function lastPeriod(sim) {
+  const p = sim.economy.periods; // peut être absent (sauvegarde ancienne, pas encore close)
+  return Array.isArray(p) && p.length ? p[p.length - 1] : null;
+}
+
+export function forecast(sim) {
+  const e = sim.economy;
+  const p = lastPeriod(sim);
+  if (!p) return null;
+  const rate = p.net / (p.minutes * 60);
+  return { rate, perHour: rate * 3600, horizon: 3600, projected: e.money + rate * 3600 };
 }
 
 // tickPassengers : ré-export (le parcours passagers vit dans sim/passengers.mjs).

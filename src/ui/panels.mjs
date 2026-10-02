@@ -8,7 +8,7 @@
 // fixe créé une fois, la zone de contenu se reconstruit seulement quand la
 // signature change (les éléments ne disparaissent pas sous la souris, les
 // clics ne partent pas).
-import { periodStatement } from '../economy/economy.mjs';
+import { periodStatement, lastPeriod, forecast } from '../economy/economy.mjs';
 import { findPath, runwayExitNode } from '../pathfinding/path.mjs';
 import { AIRCRAFT, AIRLINES, BUILDINGS, opexPerMin, opexPerHour } from '../data/catalog.mjs';
 
@@ -198,6 +198,17 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         line(body, 'Indemnités vols annulés', `−${money(s.compensation)}`);
         line(body, 'Investissements', `−${money(s.invest)}`);
         if (s.debt > 0) line(body, 'Dette (intérêts)', money(s.debt));
+        // R16 : période récente + prévision (cumuls ci-dessus = toute la partie,
+        // la période = les 5 dernières minutes de jeu ; les deux sont distincts).
+        const lp = lastPeriod(sim);
+        if (lp) {
+          line(body, `Période ${Math.round(lp.minutes)} min (net)`, money(lp.net), lp.net < 0 ? 'bad' : 'good');
+          const f = forecast(sim);
+          if (f) {
+            line(body, 'Prévision +1 h (projection, pas une garantie)',
+              `solde projeté ${money(f.projected)} à ${money(f.perHour)} $/h`, 'warn');
+          }
+        }
         if (s.money < 0) line(body, 'Causes du déficit', s.causes.join(' ; '), 'warn');
         if (sim.economy.bankrupt) line(body, 'État', 'FAILLITE', 'bad');
       },
