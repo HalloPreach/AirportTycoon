@@ -1,55 +1,37 @@
 {
   "tool": "qa/probe-scenario.mjs",
   "commit": "(non connu)",
-  "runId": "probe-bl17-48",
+  "runId": "dt-check-1h",
   "seed": 0,
-  "scenario": "bl17",
+  "scenario": "custom",
   "config": {
-    "policy": "fenêtres du gate : accept 0-24 h / refus 24-36 h / accept 36-48 h",
+    "policy": "accept",
     "services": "none",
-    "events": [
-      {
-        "at": 86400,
-        "action": "autoRefuse"
-      },
-      {
-        "at": 129600,
-        "action": "autoAccept"
-      },
-      {
-        "at": 129600,
-        "action": "forceRunwayOnApproach"
-      }
-    ],
-    "dt": 1,
-    "hours": 48
+    "events": [],
+    "dt": 2,
+    "hours": 1
   },
-  "forced": [
-    {
-      "at": 129660,
-      "action": "forceRunwayOnApproach"
-    }
-  ],
-  "simTimeEnd": 172800,
+  "forced": [],
+  "simTimeEnd": 3600,
   "stoppedEarly": false,
   "money": {
     "start": 12000,
-    "end": 3199868.8109855587,
-    "min": 11571.199999999903,
-    "atMin": 134,
+    "end": 93460.62500000175,
+    "min": 11564.800000000025,
+    "atMin": 136,
     "debt": 0
   },
-  "revenue": 3866489.8109999998,
-  "opex": 552960.0000009291,
-  "opexPerHour": 11520.000000019356,
-  "fuel": 125661,
+  "revenue": 96059.125,
+  "opex": 11519.99999999962,
+  "opexPerHour": 11519.99999999962,
+  "fuel": 3078.5,
   "compensation": 0,
   "invest": 0,
-  "net": 3187868.8109990708,
+  "net": 81460.62500000038,
   "bankruptcy": false,
   "bankruptAt": null,
   "passengers": {
-    "totalCarried": 251422,
+    "totalCarried": 6157,
     "satisfaction": 100
   },
   "wait": {
@@ -75,15 +57,15 @@
   },
   "counts": {
     "built": 0,
-    "flightIn": 2420,
-    "flightOut": 2417,
+    "flightIn": 66,
+    "flightOut": 63,
     "flightCancelled": 0,
     "unlocked": 5,
     "bankrupt": 0,
-    "runwayClosed": 94,
-    "fuelOut": 115,
-    "surgeStart": 302,
-    "noFuel": 2419
+    "runwayClosed": 1,
+    "fuelOut": 4,
+    "surgeStart": 5,
+    "noFuel": 64
   },
   "unlocked": [
     "fuel",
@@ -103,7 +85,7 @@
   "determinism": {
     "note": "R09 : rejouer cette configuration (mêmes args, même commit) doit donner des fichiers IDENTIQUES en bytes. AVANT R09, --seed ne diversifie PAS les parties (le seed n'entre pas dans la suite mulberry32).",
     "rngSeed": 0,
-    "rngCounterEnd": 10802,
+    "rngCounterEnd": 222,
     "rngCounterStart": 0
   }
 }

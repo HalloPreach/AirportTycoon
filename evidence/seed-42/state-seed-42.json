@@ -1,26 +1,13 @@
 {
-  "scenario": "bl17",
-  "seed": 0,
-  "runId": "probe-bl17-48",
+  "scenario": "custom",
+  "seed": 42,
+  "runId": "seed-42",
   "config": {
-    "policy": "fenêtres du gate : accept 0-24 h / refus 24-36 h / accept 36-48 h",
+    "policy": "accept",
     "services": "none",
-    "events": [
-      {
-        "at": 86400,
-        "action": "autoRefuse"
-      },
-      {
-        "at": 129600,
-        "action": "autoAccept"
-      },
-      {
-        "at": 129600,
-        "action": "forceRunwayOnApproach"
-      }
-    ],
+    "events": [],
     "dt": 1,
-    "hours": 48
+    "hours": 1
   },
   "state": {
     "screen": "game",
@@ -86,8 +73,8 @@
             "y": 1040,
             "w": 40,
             "h": 10,
-            "cleaning": 100,
-            "maintenance": 100,
+            "cleaning": 16,
+            "maintenance": 9.600000000000001,
             "acId": null
           },
           {
@@ -98,9 +85,9 @@
             "y": 1040,
             "w": 40,
             "h": 10,
-            "cleaning": 100,
-            "maintenance": 100,
-            "acId": 3262
+            "cleaning": 16,
+            "maintenance": 9.600000000000001,
+            "acId": 64
           }
         ],
         "services": [],
@@ -19313,44 +19300,18 @@
       },
       "aircraft": [
         {
-          "id": 3261,
+          "id": 64,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 100,
-          "phase": "taxi",
-          "x": 652.9505702340801,
-          "y": 1060.547713965241,
-          "gateId": "3-g0",
-          "runwayId": 1,
-          "delayed": 20,
-          "timer": 0,
-          "path": [
-            0,
-            3
-          ],
-          "pathPtr": 0,
-          "seg": 1,
-          "heading": "runway",
-          "_holdAcc": 0,
-          "_blockedAcc": 0,
-          "_dryDeparture": true,
-          "_noFuelNotified": true,
-          "counted": true
-        },
-        {
-          "id": 3262,
-          "airline": "atlantique",
-          "color": "#1e88e5",
-          "acType": "medium",
-          "pax": 106,
-          "phase": "disembark",
+          "pax": 80,
+          "phase": "board",
           "x": 640,
           "y": 1045,
           "gateId": "3-g1",
           "runwayId": 1,
-          "delayed": 20,
-          "timer": 19,
+          "delayed": 0,
+          "timer": -2.5600000000000005,
           "path": [
             3,
             0
@@ -19358,18 +19319,35 @@
           "pathPtr": 1,
           "seg": null,
           "heading": "gate",
-          "_blockedAcc": 0,
           "_dryDeparture": true,
           "_noFuelNotified": true
         },
         {
-          "id": 3263,
+          "id": 65,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 71,
+          "pax": 86,
           "phase": "approach",
-          "x": 1063,
+          "x": 265,
+          "y": 70,
+          "gateId": null,
+          "runwayId": 1,
+          "delayed": 0,
+          "timer": 0,
+          "path": null,
+          "pathPtr": 0,
+          "seg": null,
+          "heading": "gate"
+        },
+        {
+          "id": 66,
+          "airline": "atlantique",
+          "color": "#1e88e5",
+          "acType": "medium",
+          "pax": 65,
+          "phase": "approach",
+          "x": 266,
           "y": 70,
           "gateId": null,
           "runwayId": 1,
@@ -19383,45 +19361,45 @@
       ],
       "planning": [
         {
-          "id": 3261,
+          "id": 64,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 100,
-          "planned": 172680,
+          "pax": 80,
+          "planned": 3540,
           "status": "in-flight"
         },
         {
-          "id": 3262,
+          "id": 65,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 106,
-          "planned": 172740,
+          "pax": 86,
+          "planned": 3600,
           "status": "in-flight"
         },
         {
-          "id": 3263,
+          "id": 66,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 71,
-          "planned": 172800,
+          "pax": 65,
+          "planned": 3600,
           "status": "in-flight"
         },
         {
-          "id": 3264,
+          "id": 67,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 142,
-          "planned": 172860,
+          "pax": 111,
+          "planned": 3660,
           "status": "planned"
         }
       ],
-      "nextAcId": 3265,
+      "nextAcId": 68,
       "passengers": {
-        "totalCarried": 251422,
+        "totalCarried": 6157,
         "satisfaction": 100,
         "queue": {
           "checkin": 0,
@@ -19430,26 +19408,26 @@
         },
         "groups": [
           {
-            "volId": 3262,
-            "pax": 106,
+            "volId": 64,
+            "pax": 80,
             "terminalId": 3,
-            "base": 252244,
+            "base": 6157,
             "injected": true
           }
         ],
-        "securityDone": 252350,
-        "injectedTotal": 252350
+        "securityDone": 6237,
+        "injectedTotal": 6237
       },
       "economy": {
-        "money": 3199868.8109855587,
+        "money": 93512.31250000621,
         "revenue": {
-          "landing": 485220.8559999999,
-          "gate": 242610.42799999996,
-          "pax": 3138658.527
+          "landing": 12792,
+          "gate": 6396,
+          "pax": 76922.8125
         },
         "spent": {
-          "opex": 552960.0000009291,
-          "fuel": 125661
+          "opex": 11520.000000000427,
+          "fuel": 3078.5
         },
         "debt": 0,
         "bankrupt": false
@@ -19457,35 +19435,45 @@
       "alerts": [
         {
           "kind": "flight-in",
-          "volId": 3263,
+          "volId": 65,
           "airline": "Atlantique",
           "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 66,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "runway-closed",
+          "why": "fermeture piste (contrôle) — atterrissages en attente"
         }
       ],
       "incidents": {
         "runway": {
-          "closed": 0,
-          "acc": 300,
-          "last": 170580
+          "closed": 120,
+          "acc": 0,
+          "last": 3600
         },
         "fuel": {
           "out": 0,
-          "acc": 450,
-          "last": 171540
+          "acc": 360,
+          "last": 3150
         },
         "surge": {
           "active": false,
           "remaining": 0,
-          "acc": 180,
-          "last": 172290
+          "acc": 30,
+          "last": 3480
         }
       },
-      "time": 172800,
+      "time": 3600,
       "_spawnAcc": 0,
       "_graph": null,
       "_graphDirty": true,
-      "rngSeed": 0,
-      "rngCounter": 10802,
+      "rngSeed": 42,
+      "rngCounter": 222,
       "_unlocked": {
         "fuel": true,
         "catering": true,

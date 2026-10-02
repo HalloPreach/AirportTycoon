@@ -1,0 +1,85 @@
+{
+  "tool": "qa/probe-scenario.mjs",
+  "commit": "(non connu)",
+  "runId": "probe-nodecision-48",
+  "seed": 0,
+  "scenario": "custom",
+  "config": {
+    "policy": "nodecision",
+    "services": "none",
+    "events": [],
+    "dt": 1,
+    "hours": 48
+  },
+  "forced": [],
+  "simTimeEnd": 4099,
+  "stoppedEarly": true,
+  "money": {
+    "start": 12000,
+    "end": -10091.117222367813,
+    "min": -10091.117222367813,
+    "atMin": 4099,
+    "debt": 8974.317222367277
+  },
+  "revenue": 0,
+  "opex": 13116.80000000079,
+  "opexPerHour": 11520.000000000695,
+  "fuel": 0,
+  "compensation": 0,
+  "invest": 0,
+  "net": -13116.80000000079,
+  "bankruptcy": true,
+  "bankruptAt": 4099,
+  "passengers": {
+    "totalCarried": 0,
+    "satisfaction": 100
+  },
+  "wait": {
+    "queues": {
+      "checkin": {
+        "n": 0,
+        "cap": 120,
+        "occ": 0
+      },
+      "security": {
+        "n": 0,
+        "cap": 120,
+        "occ": 0
+      },
+      "board": {
+        "n": 0,
+        "cap": 160,
+        "occ": 0
+      }
+    },
+    "holding": 0,
+    "plannedPending": 4
+  },
+  "counts": {
+    "built": 0,
+    "flightIn": 0,
+    "flightOut": 0,
+    "flightCancelled": 0,
+    "unlocked": 0,
+    "bankrupt": 1,
+    "runwayClosed": 1,
+    "fuelOut": 3,
+    "surgeStart": 8,
+    "noFuel": 0
+  },
+  "unlocked": [],
+  "infra": {
+    "runways": 1,
+    "taxiways": 1,
+    "terminals": 1,
+    "gates": 2,
+    "services": []
+  },
+  "servicesOpexPerHour": 0,
+  "determinism": {
+    "note": "R09 : rejouer cette configuration (mêmes args, même commit) doit donner des fichiers IDENTIQUES en bytes. AVANT R09, --seed ne diversifie PAS les parties (le seed n'entre pas dans la suite mulberry32).",
+    "rngSeed": 0,
+    "rngCounterEnd": 35,
+    "rngCounterStart": 0
+  }
+}
