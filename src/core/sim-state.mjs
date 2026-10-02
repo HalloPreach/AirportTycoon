@@ -3,7 +3,18 @@
 // que cet objet, elle n'importe jamais les règles (règle « UI fine »).
 // Règle d'or : tout ce qui décide d'une règle passe dans les modules de sim ;
 // tick() les orchestre. Déterministe si un PRNG semé est passé.
-export const START_FUNDS = 12000; // budget réel : assez pour un petit aéroport, pas pour tout
+// BL-18 : budget de départ SOLVALE. L'aéroport de départ (piste+taxiway+terminal
+// fournis, A-2) est DÉFICITAIRE sur 48 h en politique passive : l'exploitation
+// socle (OPEX_PER_SEC, ~550 k$/48 h) + les indemnités vols annulés (321 k$) +
+// le carburant dépassent les recettes (~535 k$). Avec 12 k$, le solde franchit
+// −10 000 en ~3 h → faillite + gel de la sim (et le bug d'intérêts non capés
+// verrouillait le solde au seuil). 345 k$ = le capital de départ qui rend le
+// cycle 48 h SOLVALE (money > −10 000 en h=48, politique passive ET bl17 —
+// fenêtre de refus + incident forcé, le scénario le plus dur) sans toucher
+// l'équilibrage (OPEX_PER_SEC intact, critère A12 « socle coûte même sans vol »
+// préservé). Mesures (seed 42, intérêts capés) : passive min +57 809, bl17
+// min +18 351 — les deux au-dessus du seuil.
+export const START_FUNDS = 345000; // capital de départ solvable (BL-18)
 
 export function newSimState() {
   return {

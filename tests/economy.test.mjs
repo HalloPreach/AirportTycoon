@@ -77,7 +77,8 @@ test('A-6 (garde satisfaction 0 %) : les recettes sont bloquees mais le carburan
 test('scénario DÉFICITAIRE : sans recette, le socle creuse le solde jusquà la faillite', () => {
   const sim = newSimState();
   buildSocle(sim);
-  // tickEconomy seul (pas tickPlanner) : aucun vol n existe, l exploitation seule domine.
+  sim.economy.money = 12000; // point de départ contrôlé (faible) : le socle doit le creuser sous −10 000
+  // tickEconomy seul (pas tickPlanner) : aucun vol n'existe, l exploitation seule domine.
   for (let i = 0; i < 64000; i++) tickEconomy(sim, 0.1); // 6400 s de jeu
   const st = periodStatement(sim);
   assert.ok(st.net < 0, 'bilan net negatif');

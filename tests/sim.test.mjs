@@ -5,7 +5,7 @@
 // On utilise un PRNG semé → les résultats sont reproductibles.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { newSimState } from '../src/core/sim-state.mjs';
+import { newSimState, START_FUNDS } from '../src/core/sim-state.mjs';
 import { buildBuilding, demolishBuilding, gateFor, runwayFor, tickUnlocks } from '../src/infra/infra.mjs';
 import { spawnArrivals, tickPlanner } from '../src/flights/flights.mjs';
 import { tickAircraft } from '../src/sim/aircraft.mjs';
@@ -58,7 +58,7 @@ function runToDeparture(sim, id, maxTicks = 8000) {
 
 test('nouvelle sim démarre avec le budget réel et un terrain vide', () => {
   const sim = newSimState();
-  assert.equal(sim.economy.money, 12000);
+  assert.equal(sim.economy.money, START_FUNDS, 'le budget de départ est START_FUNDS');
   assert.equal(sim.infra.runways.length, 0);
   assert.equal(sim.aircraft.length, 0);
 });
@@ -282,7 +282,7 @@ test('sauvegarde/restauration cohérente (critères 10,11,13)', () => {
   assert.equal(restored.sim.aircraft[0].phase, 'approach');
   // après restauration, la sim repart normalement (critère 13)
   tick(restored, 1); // ne plante pas, avance l'état
-  assert.ok(restored.sim.economy.money <= 12000);
+  assert.ok(restored.sim.economy.money <= START_FUNDS, 'après restauration, le solde ne dépasse pas le budget de départ');
 });
 
 test('sauvegarde invalide / incompatible est rejetée (robustesse)', () => {
