@@ -106,9 +106,13 @@ export function tickEconomy(sim, dt) {
     // D5 (R11, t_eef3e9c8) : taux PARAMÉTRÉ (DEBT.ratePerSec) + cap = paramètre
     // DU taux (DEBT.baseCap) — une seule politique, remplace le 1 %/s capé en
     // dur de BL-18. Même valeurs par défaut (0,01 / 10 000) → le comportement de
-    // référence ne bouge pas (fixtures R12/R35). Le champ historique `debt`
-    // reste l'accumulateur d'intérêts ; sa réinterprétation (dépense dédiée,
-    // rapprochement du solde) est le travail de la carte ENFANT R12.
+    // référence ne bouge pas (fixtures R12/R35).
+    // R12 (t_25614b63) : `debt` est le COMPTE DÉDIÉ des intérêts (pas un
+    // principal d'emprunt, ne PAS le réinterpréter comme tel) : il CUMULE
+    // l'intérêt chargé, et le solde est chargé d'intérêts UNE fois (money -= i).
+    // L'identité trésorerie EV-9 (money = START + recettes − dépenses − debt)
+    // tient car la dette y est déjà comptée ; periodStatement la met dans net
+    // pour que le bilan se RAPPORCHE au solde.
     const base = Math.min(Math.abs(sim.economy.money), DEBT.baseCap);
     const interest = base * DEBT.ratePerSec * dt;
     sim.economy.debt += interest;
@@ -138,17 +142,22 @@ export function periodStatement(sim) {
   const fuel = e.spent.fuel ?? 0;
   const compensation = e.spent.compensation ?? 0;
   const invest = e.spent.construction ?? 0;
-  const net = revenue - opex - fuel - invest - compensation;
+  const interest = e.debt; // R12 : compte dédié des intérêts (ledger de l'identité EV-9)
+  // R12 (t_25614b63) : le net COMPTABILISE la dette (compte dédié) — le bilan se
+  // RAPPORCHE au solde : money (partant de 0) == net. L'intérêt est chargé UNE
+  // fois du solde (tickEconomy) et cumulé ici ; le −debt de l'identité EV-9
+  // couvre cette ligne.
+  const net = revenue - opex - fuel - invest - compensation - interest;
   const causes = [];
   if (net < 0) {
     if (opex > 0) causes.push(`exploitation ${Math.round(opex)} $ (socle + services)`);
     if (fuel > 0) causes.push(`carburant ${Math.round(fuel)} $`);
     if (compensation > 0) causes.push(`indemnités vols annulés ${Math.round(compensation)} $`);
     if (invest > 0) causes.push(`investissements ${Math.round(invest)} $`);
-    if (e.debt > 0) causes.push(`intérêts sur la dette ${Math.round(e.debt)} $`);
+    if (interest > 0) causes.push(`intérêts sur la dette ${Math.round(interest)} $`);
     if (!causes.length) causes.push('solde dû aux remboursements de démolition');
   }
-  return { revenue, opex, fuel, compensation, invest, net, money: e.money, debt: e.debt, causes };
+  return { revenue, opex, fuel, compensation, invest, net, money: e.money, debt: interest, causes };
 }
 
 // tickPassengers : ré-export (le parcours passagers vit dans sim/passengers.mjs).

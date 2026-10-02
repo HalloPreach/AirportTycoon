@@ -106,12 +106,14 @@ test('NONMVP-5 : le bilan lisible porte TOUT ce que periodStatement calcule (rec
   assert.equal(s.fuel, 300, 'carburant');
   assert.equal(s.compensation, 200, 'indemnités vols annulés');
   assert.equal(s.invest, 1500, 'investissements (construction)');
-  assert.equal(s.net, 2100 - 600 - 300 - 1500 - 200, 'résultat net');
-  assert.equal(s.debt, 50, 'dette');
-  assert.equal(s.net, -500, 'déficit → le panneau affiche les CAUSES');
+  assert.equal(s.debt, 50, 'dette (compte dédié des intérêts)');
+  // R12 : le net COMPTABILISE la dette (le bilan se rapproche du solde).
+  assert.equal(s.net, 2100 - 600 - 300 - 200 - 1500 - 50, 'résultat net (dette comprise)');
+  assert.equal(s.net, -550, 'déficit (500 + 50 de dette) → le panneau affiche les CAUSES');
   assert.ok(s.causes.length > 0, 'causes du déficit (liste lisible)');
   assert.ok(s.causes.some((c) => c.includes('investissement')), 'la cause investissement est nommée');
-  // La faillite est un CHAMP de l\'état, pas une règle du panneau.
+  assert.ok(s.causes.some((c) => c.includes('dette')), 'la cause dette/intérêts est nommée');
+  // La faillite est un CHAMP de l'état, pas une règle du panneau.
   assert.equal(sim.economy.bankrupt, false, 'état de faillite (lisible, non calculé)');
 });
 
