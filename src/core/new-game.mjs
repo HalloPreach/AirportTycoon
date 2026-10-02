@@ -18,9 +18,26 @@ const START_LAYOUT = Object.freeze([
   { type: 'terminal', x: 550, y: 900, w: 200, h: 150 },
 ]);
 
-export function makeGameState() {
+export function makeGameState(seed = undefined) {
   const state = newGame();
   state.sim = newSimState();
+  // R09 (D3, tranché) : le seed de la partie est généré à la FRONTIÈRE DE
+  // CRÉATION : entier 32 bits ALEATOIRE (31 bits + signe — Math.random × 2^31,
+  // borné aux entiers 32 bits → sérialise proprement en JSON) pour qu'aucune
+  // nouvelle partie ne soit jamais la même qu'une autre.
+  // SEED IMPOSÉE (scénarios/proofs, D3) : makeGameState(42) → la partie est
+  // reproductible EXACTEMENT (même seed + mêmes commandes → même suite).
+  // Les outillages (tests, qa/probe-scenario.mjs) imposent le seed après coup
+  // (sim.rngSeed = N) : effet IDENTIQUE (le champ vit sur la sim, il est
+  // sérialisé — EV-10), pas de second mécanisme.
+  // ponytail : Math.random pour l'UNIQUE seed (la suite de la sim reste 100 %
+  // déterministe — le seed EST sa graine) ; crypto si on veut des parties
+  // non-prévisibles adversariales (jamais besoin pour un jeu solo).
+  if (seed === undefined) {
+    state.sim.rngSeed = (Math.random() * 0x7FFFFFFF) | 0;
+  } else if (Number.isInteger(seed)) {
+    state.sim.rngSeed = seed; // seed imposée (scénarios) — l'outil borne déjà aux entiers
+  }
   // R06 (D1) : préférence auto-accept = FAUX à la nouvelle partie. C'est le
   // champ du STATE (sérialisé en entier dans la sauvegarde), réinitialisé ici
   // pour que « nouvelle partie » reparte d'une préférence propre (et pas de

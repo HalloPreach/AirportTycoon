@@ -11,10 +11,14 @@
 // Configuration (toutes CONSERVÉES dans le rapport, « les configurations
 // employées ») :
 //   --seed N         : seed du PRNG de la sim (rng.mjs, EV-10). AVANT R09,
-//                      le champ rngSeed n'est PAS mélangé dans la suite (le
-//                      générateur ne consomme que rngCounter, seed 0 par
-//                      défaut) → deux seeds DONNENT LA MÊME PARTIE ; R09 doit
-//                      corriger le générateur, pas cet outillage.
+//                      le champ rngSeed n'était PAS mélangé dans la suite (le
+//                      générateur ne consommait que rngCounter) → deux seeds
+//                      DONNAIENT LA MÊME PARTIE. CORRIGÉ PAR R09 : le seed est
+//                      mélangé dans mulberry32 (t0 = seed + constante) → les
+//                      seeds différents DONNENT DES PARTIES DIFFÉRENTES (le
+//                      proof R09 : probe-seed-42 ≠ probe-seed-99, état final
+//                      divergent ; les preuves sont dans evidence/r09-seed-42
+//                      et evidence/r09-seed-99). Seed 0 = la suite d'ORIGINE (migration).
 //   --hours H        : durée (heures sim). --dt P : pas de tick (s, défaut 1).
 //   --policy P       : POLITIQUE DU JOUEUR sur les vols planifiés, avant chaque
 //                      tick (comme la case auto-accept du jeu) :
@@ -103,9 +107,8 @@ function setup() {
   const state = makeGameState();
   state.screen = 'game';
   const sim = state.sim;
-  sim.rngSeed = SEED;          // champ de la sim (EV-10).
-  sim.rngCounter = 0;         // AVANT R09 : la suite ne dépend QUE du compteur
-  // (le seed n'entre PAS dans mulberry32 — la diversification seed attend R09).
+  sim.rngSeed = SEED;          // champ de la sim (EV-10) : le seed EST mélangé dans la suite (R09)
+  sim.rngCounter = 0;         // compteur de départ 0 (nouvelle partie) — la suite = f(seed, compteur)
   const evs = [];
   if (SCENARIO === 'bl17') { // le GATE, mot pour mot (fenêtres + forçage)
     evs.push({ at: 24 * 3600, action: 'autoRefuse' });
@@ -272,7 +275,7 @@ const report = {
   },
   servicesOpexPerHour: sim.infra.services.reduce((a, s) => a + (OPEX_PER_SEC[s.type] ?? 0) * 3600, 0),
   determinism: {
-    note: 'R09 : rejouer cette configuration (mêmes args, même commit) doit donner des fichiers IDENTIQUES en bytes. AVANT R09, --seed ne diversifie PAS les parties (le seed n\'entre pas dans la suite mulberry32).',
+    note: 'R09 (livré) : rejouer cette configuration (mêmes args, même commit) donne des fichiers IDENTIQUES en bytes. Les seeds différents DONNENT DES PARTIES DIFFÉRENTES (le seed est mélangé dans mulberry32 — preuve : evidence/r09-seed-42 vs r09-seed-99). Rejouer une config d’AVANT R09 avec seed 0 reste bit-à-bit la suite d’origine (migration).',
     rngSeed: sim.rngSeed,
     rngCounterEnd: sim.rngCounter,
     rngCounterStart: 0,

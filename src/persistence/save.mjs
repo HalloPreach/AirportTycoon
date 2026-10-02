@@ -126,7 +126,17 @@ export function deserialize(json) {
   const out = JSON.parse(JSON.stringify(s));
   // Le graphe pathfinding est un cache dérivé : il est RECONSTRUIT par la sim au
   // 1er tick, on ne le restaure pas (marqué sale pour forcer la reconstruction).
-  if (out.sim) { out.sim._graph = null; out.sim._graphDirty = true; }
+  if (out.sim) {
+    out.sim._graph = null; out.sim._graphDirty = true;
+    // R09 (migration, D3) : les anciennes sauvegardes n'avaient PAS de seed
+    // effectif — le générateur ne consommait que rngCounter (le champ rngSeed
+    // n'existait pas, ou valait 0 = la suite d'origine). Absent/illisible →
+    // migration seed 0 + compteur 0 : la suite redevient EXACTEMENT la suite
+    // pré-R09 (bit-à-bit, l'ancrage des fixtures de migration evidence/seed-*)
+    // ET la partie reste reproductible à la reprise.
+    if (!Number.isInteger(out.sim.rngSeed)) out.sim.rngSeed = 0;
+    if (!Number.isInteger(out.sim.rngCounter)) out.sim.rngCounter = 0;
+  }
   return out;
 }
 

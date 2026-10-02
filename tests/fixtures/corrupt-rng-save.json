@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "_fixture": "R09 (migration, D3) : une sauvegarde CORROMPUE — le champ rngSeed est PRÉSENT mais de mauvais type (null). La validation DOIT la refuser proprement (erreur lisible qui nomme le champ), jamais l'accepter silencieusement. Fixtures de migration conservées.",
+  "state": {
+    "screen": "game",
+    "time": 321,
+    "terrain": { "w": 1600, "h": 1200 },
+    "camera": { "x": 9, "y": 9, "zoom": 2 },
+    "sim": {
+      "rngSeed": null,
+      "rngCounter": 3
+    }
+  }
+}

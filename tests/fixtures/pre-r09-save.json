@@ -1,0 +1,13 @@
+{
+  "v": 1,
+  "_fixture": "R09 (migration, D3) : une sauvegarde pré-R09 TEL QUE LE JEU LA PRODUISAIT — le champ rngSeed n'EXISTAIT PAS (le générateur ne consommait que rngCounter). Conservée : corriger l'algorithme change la suite historique, la migration doit y ramener la suite pré-R09 bit-à-bit (seed 0). Ne PAS « réparer » cette fixture en ajoutant une seed.",
+  "state": {
+    "screen": "game",
+    "time": 321,
+    "terrain": { "w": 1600, "h": 1200 },
+    "camera": { "x": 9, "y": 9, "zoom": 2 },
+    "sim": {
+      "rngCounter": 3
+    }
+  }
+}
