@@ -67,8 +67,9 @@ function validateSim(sim) {
   }
   // Identifiants + références : chaque bâtiment/avion PRÉSENT a un id ; un avion qui
   // pointe vers une piste/porte doit viser un id EXISTANT (pas une référence périmée).
+  // BL-12 : « refuel » (remise à niveau carburant) rejoint la liste des phases.
   const PHASES = new Set(['approach', 'holding', 'landing', 'exit', 'taxi', 'docking',
-    'gate', 'disembark', 'ground', 'board', 'pushback', 'departure', 'blocked',
+    'gate', 'refuel', 'disembark', 'ground', 'board', 'pushback', 'departure', 'blocked',
     'departed', 'cancelled']);
   const lists = [];
   if (isObj(infra)) for (const k of ['runways', 'taxiways', 'terminals', 'gates', 'services']) {

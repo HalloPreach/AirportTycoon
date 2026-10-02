@@ -8,7 +8,7 @@
 // physiquement l'avion au CENTRE de la porte (le nœud de porte n'est pas le
 // centre).
 // Les ressources partagées (piste, segment, porte) provoquent conflits/retards.
-import { AIRCRAFT } from '../data/catalog.mjs';
+import { AIRCRAFT, REFUEL_TIME_S, GATE_WEAR_PER_SEC, HANGAR_CLEAN_PER_SEC, GATE_WEAR_DELAY_S } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 import { onGateArrived, onGateDeparted } from '../economy/economy.mjs';
@@ -18,6 +18,9 @@ const V = { approach: 220, landing: 130, taxi: 60, pushback: 30, departure: 150 
 const GATE_OPS_S = 60;   // débarquement+sol+embarquement : durée d'occupation porte
 const HOLDING_RETRY_S = 5; // réessayer de se placer toutes les 5 s si bloqué
 const BLOCKED_CANCEL_S = 600; // 10 min sim : blocage persistant → annulation (décision A-5)
+// BL-12 : stations carburant — UNE station = UNE LANCE (2e lance à partir de la
+// 2e station : la saturation devient mesurable, critère de fin).
+const FUEL_LANCES_PER_STATION = 1;
 
 // Piste occupée par un AUTRE avion (AC15, A4) : atterrissage/décollage/sortie
 // exclusifs sur une même piste. Deux demandes au même tick ne partagent pas la piste.
@@ -46,6 +49,7 @@ export function tickAircraft(sim, dt) {
       case 'taxi':      doTaxi(sim, ac, dt, occupied); break;
       case 'docking':   doDocking(sim, ac, dt); break;
       case 'gate':      doGate(sim, ac, dt); break;
+      case 'refuel':    doRefuel(sim, ac, dt, spec); break;
       case 'disembark': doOps(sim, ac, dt); break;
       case 'ground':    doOps(sim, ac, dt); break;
       case 'board':     doOps(sim, ac, dt); break;
@@ -221,12 +225,62 @@ function doDocking(sim, ac, dt) {
 }
 
 // GATE : l'avion est amarré à la porte (au CENTRE, vu doDocking). Opérations au sol :
-// débarquement → sol → embarquement. Chaque étape dure GATE_OPS_S/3.
+// carburant (BL-12) → débarquement → sol → embarquement. Chaque étape dure GATE_OPS_S/3.
 // On compte les passagers transportés à l'embarquement (critère 7).
 function doGate(sim, ac, dt) {
   arrivePassengers(sim, ac); // le vol commence le déchargement (passagers agrégés)
-  ac.phase = 'disembark';
+  ac.phase = 'refuel';
   ac.timer = 0;
+}
+
+// REFUEL (BL-12, AC21) : remise à niveau du carburant AVANT le déchargement.
+// Si une station existe, l'avion prend UNE LANCE (une station = une lance, 2e
+// lance à partir de la 2e station — l'occupation partagée = saturation mesurable)
+// et le plein dure spec.refuel * REFUEL_TIME_S (lié à la taille : le 747 prend
+// plus longtemps que le Cessna). SANS station : pas d'attente — départ SÉC,
+// expliqué par l'événement « no-fuel » : les billets ne sont que moitiés
+// (économiquement pénalisé, non bloquant — critère « non bloquants »).
+// L'usure porte (BL-12) s'accumule pendant toute la présence porte : une porte
+// sale rallonge les opérations au sol (délai ground, HANGAR la remet à zéro).
+function doRefuel(sim, ac, dt, spec) {
+  ac.timer += dt;
+  // BL-12 : usure de la porte pendant que l'avion est amarré (le hangar nettoie).
+  const g = sim.infra.gates.find((x) => x.id === ac.gateId);
+  if (g) g.cleaning = Math.min(100, g.cleaning + GATE_WEAR_PER_SEC * dt);
+  const lances = fuelLances(sim);
+  if (!lances) {
+    // Pas de station → départ SÉC (non bloquant, expliqué) : billets moitié.
+    ac._dryDeparture = true;
+    if (!ac._noFuelNotified) {
+      ac._noFuelNotified = true;
+      pushEvent(sim, { kind: 'no-fuel', airline: ac.airline, pax: ac.pax });
+    }
+    ac.phase = 'disembark'; ac.timer = 0;
+    return;
+  }
+  if (!ac._refueling) {
+    // Une lance par station : si toutes sont prises, l'avion ATTEND ici
+    // (saturation mesurable → retard au sol, pas de débordement des lances).
+    const busy = sim.aircraft.filter((a) => a._refueling).length;
+    if (busy < lances) {
+      ac._refueling = true;
+      ac._refuelNeed = spec.refuel * REFUEL_TIME_S; // durée liée à la taille
+    }
+  }
+  if (ac._refueling) {
+    ac._refuelNeed -= dt;
+    if (ac._refuelNeed <= 0) {
+      ac._refueling = false; // libère sa lance
+      ac.phase = 'disembark'; ac.timer = 0;
+    }
+  }
+}
+
+// BL-12 : lances disponibles = stations carburant construites (une lance par
+// station). La saturation est MESURABLE : 2 vols au sol, 1 lance → le 2e
+// attend (retard, critère de fin).
+function fuelLances(sim) {
+  return sim.infra.services.filter((s) => s.type === 'fuel').length * FUEL_LANCES_PER_STATION;
 }
 
 // OPÉRATIONS AU SOL : débarquement → sol → embarquement → pushback.
@@ -242,7 +296,14 @@ function doOps(sim, ac, dt) {
     return;
   }
   if (ac.phase === 'ground') {
-    const delay = boardDelay(sim, ac); // saturation files → embarquement retardé (AC22)
+    // BL-12 : la porte usée (g.cleaning, accumulé pendant le plein/refuel et le
+    // séjour sol) RALLONGE l'étape sol → le hangar (maintenance) est le SEUL
+    // service qui la nettoie (infra.mjs tickUnlocks → cleanGates) : un bâtiment
+    // qui coûte ET qui sert (critère de fin). Le retard est proportionnel à
+    // l'usure (0..100) : GATE_WEAR_DELAY_S par point d'usure.
+    const g = sim.infra.gates.find((x) => x.id === ac.gateId);
+    const wearDelay = (g ? g.cleaning : 0) * GATE_WEAR_DELAY_S;
+    const delay = boardDelay(sim, ac) + wearDelay; // saturation files + porte sale
     ac.phase = 'board';
     ac.timer = -delay; // l'étape embarquement démarre retardée (timer négatif)
     return;

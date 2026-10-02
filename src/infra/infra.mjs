@@ -3,7 +3,7 @@
 // Grille d'occupation 10×10 px : un segment de 200 px = 20 cellules, ça suffit
 // pour « est-ce que ça empiète sur autre chose ? » et « est-ce qu'un avion peut
 // poser/rouler ici ». ponytail : grille carrée simple, pas d'arborescence spatiale.
-import { BUILDINGS, UNLOCKS, TERMINAL_GATE_SIZES } from '../data/catalog.mjs';
+import { BUILDINGS, UNLOCKS, TERMINAL_GATE_SIZES, HANGAR_CLEAN_PER_SEC } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph } from '../pathfinding/path.mjs';
 
@@ -178,6 +178,21 @@ export function gateFor(sim, size, excludeAcId) {
   // préférer une porte dont le nettoyage/maintenance est à jour
   free.sort((a, b) => (a.cleaning + a.maintenance) - (b.cleaning + b.maintenance));
   return free[0];
+}
+
+// BL-12 : le hangar (maintenance) NETTOIE les portes : c'est l'unique service qui
+// ramène g.cleaning/g.maintenance vers 0 — sans lui les portes s'usent (délai
+// ground croissant) et le hangar serait un bâtiment coûtant SANS servir (critère).
+// Chaque hangar active HANGAR_CLEAN_PER_SEC de nettoyage/seconde sur TOUTES les
+// portes (ponytail : pas de zone d'effet, le hangar sert tout l'aéroport).
+export function cleanGates(sim, dt) {
+  const hangars = sim.infra.services.filter((s) => s.type === 'hangar').length;
+  if (!hangars) return;
+  const clean = HANGAR_CLEAN_PER_SEC * hangars * dt;
+  for (const g of sim.infra.gates) {
+    g.cleaning = Math.max(0, g.cleaning - clean);
+    g.maintenance = Math.max(0, g.maintenance - clean);
+  }
 }
 
 // Est-ce qu'un bâtiment de type `need` existe (débloqué + construit) ?

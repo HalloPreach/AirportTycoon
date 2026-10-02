@@ -14,6 +14,7 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
 | BL-04 R5 déplacement continu (A9) | **fait (2026-10-02, worker t_7a67c46d)** |
 | BL-14 Finances socle (A12, R8) | **fait (2026-10-02, worker t_f7d733b7, commits 6cb4064 + 4771ff3)** |
 | BL-13 Parcours passager agrégé (NONMVP-2, AC7, AC22, AC40) | **fait (2026-10-02, worker t_ad0ed66b, commit a3f405e)** |
+| BL-12 Services au sol : carburant/maintenance/catering (AC21) | **fait (2026-10-02, worker t_851e0e2d)** |
 | BL-03..BL-19 | en attente de leurs dépendances (BL-03 attend BL-02, BL-04/BL-05/BL-09 attendent BL-03, …) |
 
 ## Preuves obtenues
@@ -107,6 +108,23 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
   remonte), 4 × 144 pax → `totalCarried` = 576 exactement, orphelins (vols
   partis sans embarquer → 0 compté), repos (aucune perte fantôme).
   `node --test tests/*.test.mjs` → 83/83 pass.
+- **BL-12 (2026-10-02) : services au sol livrés** — 3 services que l'on
+  CONSTITUE (chaque coûte OPEX, chacun sert) :
+  - **Carburant** : nouvelle phase `refuel` entre `gate` et `disembark`
+    (`src/sim/aircraft.mjs`). Une station = UNE lance (`FUEL_LANCES_PER_STATION`
+    = 1) ; durée = `spec.refuel * REFUEL_TIME_S` (taille : 40/110/320 s).
+    SANS station → **départ SÉC** (non bloquant, expliqué) : événement
+    `no-fuel` + billets moitiés (12.5 $/pax vs 25, `onGateDeparted`).
+  - **Maintenance** : usure porte `g.cleaning` s'accumule pendant le plein ;
+    le `hangar` la REMET à zéro (`cleanGates` câblé dans `tick.mjs`) → une
+    porte sale rallonge les opérations au sol (délai ∝ usure). Le hangar
+    coûte ET sert (critère « aucun bâtiment coûtant sans servir »).
+  - **Catering** : `BUILDINGS.catering` + `UNLOCKS` (seuil 200 pax) +
+    `OPEX_PER_SEC` : la branche `comfortCatering` de `tickPassengers` (morte
+    tant qu'indisponible) est désormais CONSTRUCTIBLE et active.
+  3 tests dans `tests/services.test.mjs` : 2 lances → 2e plein immédiat (≈0 s),
+  1 lance → 2e attend le 1er (retard mesurable ≈55 s), 0 station → départ sec
+  (événement `no-fuel` + billets moitiés). `node --test tests/*.test.mjs` → 86/86 pass.
 
 ## Décision
 

@@ -168,12 +168,17 @@ test('progression : les services se débloquent par seuil de passagers (critère
   // Les bâtiments de base (piste/taxiway/terminal) restent toujours constructibles.
   assert.ok(buildBuilding(sim, 'taxiway', 100, 100));
   // tickUnlocks signale chaque service une seule fois.
+  // BL-12 : à 350 pax, TROIS services sont débloqués — fuel (100), catering
+  // (200, BL-12) et hangar (300) ; chacun est signalé UNE fois (pas de double
+  // toast même si tickUnlocks tourne 2×).
   const sim2 = newSimState();
   sim2.passengers.totalCarried = 350;
   tickUnlocks(sim2);
   tickUnlocks(sim2);
-  assert.equal(sim2.alerts.filter((a) => a.kind === 'unlocked').length, 2,
-    'deux services débloqués (fuel + hangar), chacun signalé une fois');
+  const unlocked = sim2.alerts.filter((a) => a.kind === 'unlocked');
+  assert.equal(unlocked.length, 3, 'trois services débloqués (fuel + catering + hangar), chacun signalé une fois');
+  assert.ok(unlocked.every((a) => ['fuel', 'catering', 'hangar'].includes(a.service)),
+    'les services débloqués sont bien fuel, catering et hangar');
 });
 
 test('retards si l\'aéroport est mal conçu (critère 6)', () => {

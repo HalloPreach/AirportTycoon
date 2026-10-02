@@ -8,6 +8,7 @@ export const BUILDINGS = Object.freeze({
   terminal: { name: 'Terminal', cost: 3000, w: 200, h: 150, sellRefund: 0.5 },
   fuel:     { name: 'Station carburant', cost: 1200, w: 120, h: 80, sellRefund: 0.5 },
   hangar:   { name: 'Hangar maintenance', cost: 1500, w: 160, h: 120, sellRefund: 0.5 },
+  catering: { name: 'Salle de restauration', cost: 1000, w: 100, h: 80, sellRefund: 0.5 },
 });
 
 // ponytail: coût horaire (le tick est en secondes de jeu) — 400/jour ≈ 16,7/h,
@@ -43,15 +44,31 @@ export const AIRLINES = Object.freeze([
 ]);
 
 // Progression : à partir de quel total de passagers transportés un service se débloque.
+// BL-12 : catering (200 pax) — le confort de salle devient CONSTRUCTIBLE :
+// la branche « comfortCatering » de tickPassengers cesse d'être morte.
 export const UNLOCKS = Object.freeze([
   { at: 0,   service: 'base',  name: 'Aéroport de base' },
   { at: 100, service: 'fuel',  name: 'Station carburant' },
+  { at: 200, service: 'catering', name: 'Salle de restauration' },
   { at: 300, service: 'hangar', name: 'Hangar maintenance' },
 ]);
 
 // Décomposition du cycle avion (ordre d'exécution, l'état est la donnée).
 // AC18 (A9) : « docking » = amarrage physique du nœud de porte au centre de la
 // porte (taxi → docking → gate).
+// BL-12 : « refuel » entre gate et disembark (remise à niveau, si station).
 export const PHASES = Object.freeze([
-  'approach', 'holding', 'landing', 'exit', 'taxi', 'docking', 'gate', 'disembark', 'ground', 'board', 'pushback', 'departure',
+  'approach', 'holding', 'landing', 'exit', 'taxi', 'docking', 'gate', 'refuel', 'disembark', 'ground', 'board', 'pushback', 'departure',
 ]);
+
+// BL-12 : temps de remplissage d'un avion de cette taille = spec.refuel * REFUEL_TIME_S
+// (le catalogue donne le niveau de carburant : 40/110/320) — un gros plein (747)
+// prend plus qu'un petit (Cessna).
+export const REFUEL_TIME_S = 0.5;
+// BL-12 : usure d'une porte occupée (par seconde de jeu) ; le hangar remet à zéro.
+export const GATE_WEAR_PER_SEC = 0.5;
+// BL-12 : délai d'opérations au sol (phase ground) par point d'usure de la porte
+// (une porte sale → embarquement retardé ; le hangar nettoie).
+export const GATE_WEAR_DELAY_S = 0.1;
+// BL-12 : vitesse de nettoyage des portes par le hangar (maintenance) — par seconde.
+export const HANGAR_CLEAN_PER_SEC = 1;

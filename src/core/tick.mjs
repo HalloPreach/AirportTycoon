@@ -9,7 +9,7 @@
 import { tickPlanner } from '../flights/flights.mjs';
 import { tickAircraft } from '../sim/aircraft.mjs';
 import { tickEconomy, tickPassengers } from '../economy/economy.mjs';
-import { tickUnlocks } from '../infra/infra.mjs';
+import { tickUnlocks, cleanGates } from '../infra/infra.mjs';
 import { makeSimRng } from './rng.mjs';
 
 export function tick(state, dt, rng) {
@@ -19,6 +19,7 @@ export function tick(state, dt, rng) {
   if (!rng) rng = makeSimRng(sim); // pas de Math.random à l'état : le générateur est SÉMÉ + sérialisé (EV-10)
   tickPlanner(sim, dt, rng); // horloge de la sim (sim.time) est pilotée PAR le planificateur
   tickAircraft(sim, dt);
+  cleanGates(sim, dt); // BL-12 : le hangar nettoie les portes (usure du refuel)
   tickEconomy(sim, dt);
   tickPassengers(sim, dt);
   tickUnlocks(sim);

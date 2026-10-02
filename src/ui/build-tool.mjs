@@ -1,11 +1,11 @@
-// Outil de construction UI : barre d'outils (B, touches 1-5), fantôme au survol
+// Outil de construction UI : barre d'outils (B, touches 1-6), fantôme au survol
 // (vert = posable, rouge = refus), clic = placer, X = démolir (clic sur un bâtiment).
 // La décision de pose/vraie démolition est la sim (infra.mjs) : l'UI ne fait que
 // le DOM, la souris et un aperçu « est-ce que ça tient ? » (grille + fonds).
 // Le fantôme est dessiné par le renderer via drawGhost(ctx, cam, view).
 import { BUILDINGS, UNLOCKS } from '../data/catalog.mjs';
 
-const KINDS = ['runway', 'taxiway', 'terminal', 'fuel', 'hangar'];
+const KINDS = ['runway', 'taxiway', 'terminal', 'fuel', 'hangar', 'catering'];
 
 export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced }) {
   const tool = { mode: false, kind: 'runway', demolishMode: false, ghost: null };
@@ -14,7 +14,7 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
   const bar = document.createElement('div');
   bar.className = 'toolbar';
   bar.setAttribute('role', 'toolbar');
-  bar.setAttribute('aria-label', 'Outils de construction (B activer, 1-5 choisir, X démolir)');
+  bar.setAttribute('aria-label', 'Outils de construction (B activer, 1-6 choisir, X démolir)');
   const buttons = {};
   for (let n = 0; n < KINDS.length; n++) {
     const k = KINDS[n];
@@ -36,7 +36,7 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
   bar.appendChild(demolishBtn);
   const hint = document.createElement('span');
   hint.className = 'toolbar-hint';
-  hint.textContent = 'B : construire · 1-5 : bâtiment · X : démolir · Échap : annuler';
+  hint.textContent = 'B : construire · 1-6 : bâtiment · X : démolir · Échap : annuler';
   bar.appendChild(hint);
   document.body.appendChild(bar);
 

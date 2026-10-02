@@ -40,8 +40,11 @@ export function onGateArrived(sim, ac) {
 // « recette négative » : l'ancien earn(-x, 'fuel-cost') contaminait revenue
 // (bilan « recettes » faux) et, sous la garde satisfaction 0 %, la dépense
 // carburant sautait silencieusement (elle passait aussi par earn).
+// BL-12 (AC21) : départ SÉC (pas de station carburant, ac._dryDeparture) →
+// billets MOITIÉS : l'absence du service a un coût ÉCONOMIQUE visible (et non
+// bloquant — le vol part, l'événement « no-fuel » l'explique).
 export function onGateDeparted(sim, ac) {
-  earn(sim, ac.pax * 25, 'pax');
+  earn(sim, ac.pax * (ac._dryDeparture ? 12.5 : 25), 'pax');
   charge(sim, ac.pax * FUEL_COST_PER_PAX, 'fuel');
 }
 
