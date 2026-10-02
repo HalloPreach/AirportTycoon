@@ -80,8 +80,15 @@ export function tickEconomy(sim, dt) {
     sim.economy.spent.opex = (sim.economy.spent.opex ?? 0) + opex;
   }
   // Déficit : si le solde est négatif, la dette s'aggrave (intérêts), puis faillite.
+  // BL-18 : l'assiette des intérêts est CAPÉE au seuil de faillite (BANKRUPT_LIMIT) —
+  // l'ancien code (Math.abs(money) * 0.01 * dt, assiette non bornée) créait une
+  // boule de neige : au-delà de −10 000 l'intérêt (1 %/s) dépassait n'importe quel
+  // flux et le solde restait VERROUILLÉ au seuil (la sim gelait, la partie perdait
+  // tout son sens après ~3 h). Capée, la dette reste lisible et la faillite reste
+  // ATTEIGNABLE (le solde peut toujours franchir −10 000 : la pente opex le fait).
   if (sim.economy.money < 0) {
-    const interest = Math.abs(sim.economy.money) * 0.01 * dt;
+    const base = Math.min(Math.abs(sim.economy.money), -BANKRUPT_LIMIT);
+    const interest = base * 0.01 * dt;
     sim.economy.debt += interest;
     sim.economy.money -= interest;
   }
