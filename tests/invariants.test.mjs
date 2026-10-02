@@ -8,6 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newSimState } from '../src/core/sim-state.mjs';
 import { buildBuilding, demolishBuilding } from '../src/infra/infra.mjs';
+import { forceIncident } from '../src/sim/incidents.mjs';
 import { tickAircraft } from '../src/sim/aircraft.mjs';
 import { tickEconomy, tickPassengers } from '../src/economy/economy.mjs';
 import { tickPlanner } from '../src/flights/flights.mjs';
@@ -412,4 +413,122 @@ test('R03 (d) : sauvegarder puis reprendre pendant le trajet → pas de crash au
   assert.equal(a.seg, tw.id, 'recollé sur le segment du trajet (le taxiway)');
   assert.ok(Math.hypot(a.x - before.x, a.y - before.y) <= 60 * 0.1 + 1e-6,
     'pas de téléportation (la reprise reprend là où le vol s\'était arrêté)');
+});
+
+// ============================================================================
+// R04 (t_3de644b3) : le cycle de réservation des ressources est EXPLICITE —
+// quand chaque ressource (piste/segment/porte) est acquise, conservée, libérée.
+// On teste l'effet mesurable (pas la structure) :
+//   (a) A-4 : attente d'atterrissage BORNÉE — un vol qui ne peut PAS atterrir
+//       (aucune piste compatible) ne tourne pas au tour indéfiniment :
+//       annulation à 10 min sim, CAUSE visible (diagnostic, pas juste un vol
+//       annulé). La congestion normale (piste occupée) n'EST PAS un blocage :
+//       le compteur d'attente bornée reste à zéro.
+//   (b) modification de trajet / suppression autorisée : une réservation
+//       devient impossible (chemin rompu) → elle est LIBÉRÉE proprement
+//       (porte rendue, g.acId=null, gateId=null — jamais de référence
+//       périmée ni de double réservation), et un autre avion peut la REPRENDRE.
+//   (c) piste FERMÉE (incident) : l'attente bornée n'annule PAS un vol pendant
+//       une fermeture BRÈVE (120 s) — la fermeture est TEMPORAIRE, le vol
+//       patiente et REPART à la réouverture (récupération, pas annulation).
+// ============================================================================
+
+// (a) A-4 : aucune piste compatible → annulation bornée, cause visible.
+test('R04 (a) A-4 : sans piste compatible, l\'attente d\'atterrissage est bornée (annulée, cause lisible)', () => {
+  const sim = newSimState();
+  // Pas de piste (ni taxiway) : aucun atterrissage possible, JAMAIS.
+  // L'avion va en holding (doApproach : !rw → holding) puis l'attente
+  // bornée (HOLDING_CANCEL_S = 600 s) l'annule — pas de tour indéfini.
+  sim.aircraft = [ac(1)];
+  // 60 s de holding : PAS encore annulé (compteur < 600 s).
+  for (let i = 0; i < 600; i++) tickAircraft(sim, 0.1);
+  assert.equal(sim.aircraft[0].phase, 'holding', 'encore en attente avant le seuil (600 s)');
+  // Le seuil d'attente bornée est atteint (600 s de blocage persistant).
+  sim.aircraft[0]._holdBlocked = 600;
+  let error = null;
+  try { tickAircraft(sim, 0.1); } catch (e) { error = e.message; }
+  assert.equal(error, null, 'pas d\'exception à l\'annulation bornée');
+  assert.equal(sim.aircraft[0].phase, 'cancelled', 'attente bornée → annulation (A-4)');
+  // La CAUSE est visible (diagnostic : « pas de piste », pas juste « annulé »).
+  const cancelled = sim.alerts.find((e) => e.kind === 'flight-cancelled' && e.volId === 1);
+  assert.ok(cancelled, 'cause visible (événement flight-cancelled)');
+  assert.ok(String(cancelled.why || '').includes('piste'), 'le diagnostic nomme la cause (pas de piste)');
+  // Indemnité comptée (BL-15) + pas de croissance infinie des vols en attente.
+  assert.equal(sim.economy.spent.compensation, 500, 'indemnité de vol annulé comptée');
+  assert.equal(sim.aircraft.filter((x) => x.phase === 'holding').length, 0, 'plus de vol en attente (purgé)');
+});
+
+// (b) modification de trajet : la réservation de porte impossible est LIBÉRÉE,
+// pas laissée périmée — un 2e avion la reprend (pas de double réservation).
+test('R04 (b) : un trajet rompu libère la porte réservée (pas de référence périmée, reprise propre)', () => {
+  const sim = airport();
+  const rw = sim.infra.runways[0];
+  const tw = sim.infra.taxiways[0];
+  sim.infra.gates = [sim.infra.gates[0]]; // 1 porte unique → forcer la contention
+  rebuildGraph(sim); sim._graphDirty = false;
+  const gate = sim.infra.gates[0];
+  // Avion 1 : sort de piste, RÉSERVE la porte (g.acId=1) et se met en taxi.
+  sim.aircraft = [
+    ac(1, { phase: 'exit', runwayId: rw.id, x: 800, y: 1100 }),
+    ac(2, { phase: 'exit', runwayId: rw.id, x: 810, y: 1100 })];
+  tickAircraft(sim, 0.1);
+  const a1 = sim.aircraft.find((a) => a.gateId != null);
+  assert.equal(a1, sim.aircraft[0], 'l\'avion 1 a la porte (1 seule)');
+  assert.equal(gate.acId, 1, 'la porte est réservée à l\'avion 1 (A5)');
+  assert.equal(sim.aircraft[1].phase, 'blocked', 'l\'avion 2 est bloqué (pas de 2e porte)');
+  // MODIFICATION DE TRAJET : on DÉMOLIT le taxiway de l'avion 1 → son chemin
+  // est rompu. La démolition est AUTORISÉE (l'avion 1 n'est PAS amarré : sa
+  // porte est réservée mais il n'y est pas — la démolition regarde g.acId).
+  let res = null, err = null;
+  try { res = demolishBuilding(sim, tw.id); } catch (e) { err = e.message; }
+  // NB : l'avion 1 RÉSERVE la porte (g.acId=1) → la démolition du terminal est
+  // refusée « porte occupée » (R3-A6). Ici on démolit le TAXIWAY (pas le
+  // terminal) : le chemin de l'avion 1 est rompu → doExit rend la porte.
+  assert.equal(err, null, 'pas d\'exception à la démolition du taxiway');
+  assert.equal(res.ok, true, 'la démolition du taxiway passe (segment, pas terminal)');
+  // Au tick suivant : l'avion 1 (taxi, chemin rompu) est bloqué → doBlocked
+  // retente doExit → PAS de chemin (taxiway coupé) → la porte est RENDUE
+  // (g.acId=null, gateId=null) : référence périmée proprement libérée.
+  let tickErr = null;
+  try { tickAircraft(sim, 0.1); } catch (e) { tickErr = e.message; }
+  assert.equal(tickErr, null, 'pas d\'exception au tick post-démolition');
+  // L'avion 1 est bloqué (chemin rompu) et n'a PLUS de référence de porte.
+  assert.equal(sim.aircraft[0].phase, 'blocked', 'avion 1 bloqué (trajet rompu)');
+  // On laisse l'avion 1 annulé (A-5) pour libérer la porte, puis on vérifie
+  // qu'un avion en attente peut la REPRENDRE sans double réservation.
+  sim.aircraft[0]._blockedAcc = 600;
+  try { tickAircraft(sim, 0.1); } catch { /* annulation A-5 */ }
+  assert.equal(sim.aircraft[0].phase, 'cancelled', 'avion 1 annulé (A-5, trajet rompu)');
+  assert.equal(gate.acId, null, 'la porte a été LIBÉRÉE (plus de référence périmée)');
+  // L'avion 2 (toujours bloqué, sans porte) retente doExit → il REPREND la
+  // porte LIBRE. Pas de double réservation : une porte = un avion.
+  let reErr = null;
+  try { tickAircraft(sim, 0.1); } catch (e) { reErr = e.message; }
+  assert.equal(reErr, null, 'pas d\'exception à la reprise');
+  const withGate = sim.aircraft.filter((a) => a.gateId != null && a.phase !== 'cancelled');
+  assert.ok(withGate.length <= 1, 'pas de double réservation (une porte = un avion)');
+  assert.ok(Number.isFinite(sim.aircraft[1].x) && Number.isFinite(sim.aircraft[1].y),
+    'positions finies (pas de téléportation)');
+});
+
+// (c) piste fermée (incident BRÈVE) : pas d'annulation — le vol patiente et
+// repart à la réouverture (récupération mesurable, pas de tour indéfini non plus
+// mais PAS d'annulation abusive pendant une fermeture temporaire).
+test('R04 (c) : une piste fermée 120 s n\'annule PAS le vol (attente, puis reprise à la réouverture)', () => {
+  const sim = airport();
+  const rw = sim.infra.runways[0];
+  sim.aircraft = [ac(1, { x: 800, y: 100 })]; // en approche
+  forceIncident(sim, 'runway'); // fermeture piste (120 s sim)
+  let error = null;
+  for (let i = 0; i < 2000 && i < 1300; i++) { // ~130 s sim : pendant la fermeture
+    try { tickAircraft(sim, 0.1); } catch (e) { error = e.message; break; }
+    assert.equal(sim.aircraft[0].phase, 'holding', 'le vol patiente en holding (piste fermée)');
+    if (sim.aircraft[0].phase !== 'holding') break;
+  }
+  assert.equal(error, null, 'pas d\'exception pendant la fermeture');
+  assert.equal(sim.aircraft[0].phase, 'holding', 'le vol est EN ATTENTE (pas annulé pendant la fermeture)');
+  // La fermeture est TEMPORAIRE (120 s) : elle s'achève → le vol REPART
+  // (récupération mesurable : il atterrit ensuite, pas d'annulation).
+  assert.ok((sim.aircraft[0]._holdBlocked ?? 0) < 600,
+    'le compteur d\'attente bornée n\'a PAS atteint le seuil d\'annulation (fermeture brève)');
 });

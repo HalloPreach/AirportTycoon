@@ -2,6 +2,23 @@
 // Ordre d'un vol entrant complet :
 //   approach → holding (si attente) → landing → exit → taxi → docking → gate →
 //   disembark → ground → board → pushback → taxi → holding → departure
+//
+// R04 (t_3de644b3) : cycle de réservation EXPLICITE — quand chaque ressource
+// est acquise, conservée, libérée (jamais de référence périmée ni de double
+// réservation) :
+//   PISTE : acquise = passage en landing/exit/departure sur runwayId (l'usage
+//     exclusif est DÉRIVÉ des phases — runwayBusy, jamais de champ dédié) ;
+//     conservée tant que l'avion en est ; libérée = changement de phase.
+//   SEGMENT : acquis = au 1er pas de chemin (doExit/doPushback : ac.seg +
+//     occupied.add) ; conservé = doTaxi (à chaque avancement) ; libéré =
+//     amarrage (doDocking), départ (doTaxi→departure), annulation (doBlocked),
+//     chemin impossible (doExit/demolition R03 : ac.seg = null).
+//   PORTE : acquise = à l'attribution (doExit : g.acId = ac.id, AVANT le taxi)
+//     ; conservée = jusqu'au pushback (jamais de double réservation : une
+//     porte réservée par un autre avion est sautée — A5) ; libérée = pushback,
+//     annulation (si g.acId === ac.id), chemin impossible (doExit rend la
+//     porte) ou suppression autorisée (démolition du terminal, refusée tant
+//     qu'une porte est occupée — A6).
 // Chaque avion est UN objet avec sa position monde (x,y) — visible, se déplace
 // le long du réseau, jamais de téléportation (règle du brief). AC18 (A9) :
 // landing converge vers l'axe de la piste sans saut, et « docking » amène
@@ -11,6 +28,7 @@
 import { AIRCRAFT, REFUEL_TIME_S, GATE_WEAR_PER_SEC, GATE_MAINT_PER_SEC, GATE_WEAR_DELAY_S } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
+import { gateFor } from '../infra/infra.mjs';
 import { onGateArrived, onGateDeparted, onFlightCancelled } from '../economy/economy.mjs';
 import { arrivePassengers, countCarried, boardDelay, groupComplete } from './passengers.mjs';
 import { runwayClosed, fuelOut } from './incidents.mjs';
@@ -19,6 +37,12 @@ const V = { approach: 220, landing: 130, taxi: 60, pushback: 30, departure: 150 
 const GATE_OPS_S = 60;   // débarquement+sol+embarquement : durée d'occupation porte
 const HOLDING_RETRY_S = 5; // réessayer de se placer toutes les 5 s si bloqué
 const BLOCKED_CANCEL_S = 600; // 10 min sim : blocage persistant → annulation (décision A-5)
+// R04 : attente en holding bornée (A-4) — la piste peut rester FERMÉE (incident
+// BL-14) ou AUCUNE piste/porte compatible : un vol qui ne peut PAS atterrir
+// ne tourne pas au tour indéfiniment (annulation bornée, comme le blocage
+// taxi A-5, mais la CAUSE est différente et visible : « piste fermée » ou
+// « pas de piste/porte compatible » — le diagnostic, pas juste un vol annulé).
+const HOLDING_CANCEL_S = 600; // 10 min sim : attente d'atterrissage bornée (R04, A-4)
 // BL-12 : stations carburant — UNE station = UNE LANCE (2e lance à partir de la
 // 2e station : la saturation devient mesurable, critère de fin).
 const FUEL_LANCES_PER_STATION = 1;
@@ -91,7 +115,25 @@ function doApproach(sim, ac, dt, spec) {
 function doHolding(sim, ac, dt, spec, occupied) {
   const rw = runwayFor(sim, spec.minRunway);
   ac.delayed += dt;
-  if (!rw) return; // pas de piste : le planificateur gère retard/annulation
+  // R04 (A-4) : BLOCAGE PERMANENT en holding = piste FERMÉE (incident) ou
+  // AUCUNE piste compatible. Il est DIAGNOSTIQUÉ (la cause est nommée dans
+  // l'événement d'annulation) et FINI par une règle bornée (HOLDING_CANCEL_S,
+  // comme A-5) : pas de tournées au tour indéfiniment. La CONGESTION normale
+  // (piste occupée par un autre avion) N'EST PAS un blocage : le compteur
+  // reste à zéro — une attente brève ne provoque jamais d'annulation abusive.
+  const holdWhy = !rw ? 'pas de piste assez longue' : (runwayClosed(sim) ? 'piste fermée' : null);
+  if (holdWhy) {
+    ac._holdBlocked = (ac._holdBlocked ?? 0) + dt;
+    if (ac._holdBlocked >= HOLDING_CANCEL_S) {
+      ac.phase = 'cancelled';
+      onFlightCancelled(sim);
+      pushEvent(sim, { kind: 'flight-cancelled', volId: ac.id, airline: ac.airline, why: `attente bornée — ${holdWhy}` });
+      return;
+    }
+  } else {
+    ac._holdBlocked = 0;
+  }
+  if (!rw) return; // pas de piste : le compteur d'attente bornée tourne ci-dessus
   const topY = rw.y;
   if (ac.y < topY) {
     ac.y = Math.min(topY, ac.y + V.approach * dt); // toujours en descente
@@ -140,11 +182,11 @@ function doLanding(sim, ac, dt, spec) {
 // reçoivent jamais la même porte avant leur arrivée ; la porte reste réservée
 // jusqu'au pushback (libération sûre).
 function doExit(sim, ac, dt, spec, occupied) {
-  // Réservation atomique : on cherche une porte libre ET on la réserve ICI, au
-  // même tick (g.acId = ac.id). Une porte réservée par UN AUTRE avion est sautée.
-  // Un avion qui a déjà sa porte (retry depuis blocked) peut la RÉUTILISER :
-  // g.acId === ac.id compte comme libre pour lui (pas de double réservation).
-  const gate = sim.infra.gates.find((g) => g.size === spec.gate && (!g.acId || g.acId === ac.id));
+  // R04 (A5) : porte réservée AVANT le taxi (gateFor : bonne taille + libre —
+  // une porte réservée par UN AUTRE avion est sautée). Si le chemin s'avère
+  // impossible, on rend la porte ICI (libération sûre) — jamais de référence
+  // périmée : g.acId n'existe que si le vol est toujours attaché à cette porte.
+  const gate = gateFor(sim, spec.gate, ac.id);
   if (!gate) { ac.phase = 'blocked'; ac.timer = 0; return; }
   gate.acId = ac.id; // A5 : porte réservée à cet avion jusqu'au pushback
   ac.gateId = gate.id;
