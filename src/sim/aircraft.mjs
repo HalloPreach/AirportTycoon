@@ -183,6 +183,12 @@ function doTaxi(sim, ac, dt, occupied) {
       const g = sim.infra.gates.find((g) => g.id === ac.gateId);
       if (g) g.acId = ac.id;
       onGateArrived(sim, ac);
+    } else if (runwayBusy(sim, ac.runwayId, ac.id)) {
+      // D1 (audit) : la piste est exclusive (A4) — un atterrissage/sortie en
+      // cours y est → on ATTEND au bout du chemin (retard mesurable), pas de
+      // décollage concurrent. (Le départ n'est PAS bloqué par une piste FERMÉE
+      // : la fermeture n'interdit que l'atterrissage, voir doApproach.)
+      ac.delayed += dt;
     } else {
       ac.phase = 'departure'; ac.seg = null; // prêt à décoller depuis le bas de la piste
     }

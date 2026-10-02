@@ -79,6 +79,43 @@ test('A4 : landing et departure ne partagent pas la même piste', () => {
     "l'avion 2 n'atterrit PAS pendant le décollage (A4 : il attend en holding)");
 });
 
+// D1 (AUDIT_2026-10-02_POST_CONTINUATION) : la correction A4 vérifiait la piste
+// à l'ENTRÉE (doApproach/doHolding) mais jamais au passage taxi→departure : un
+// taxi sortant entrait en « departure » (décollage) PENDANT qu'un autre avion
+// atterrissait sur la même piste → conflit ressource (cas D1 de la sonde
+// additional-probes.mjs : tick 43, avion 1 landing + avion 2 departure).
+// Setup identique à la sonde : avion 1 en landing (y=300), avion 2 en taxi
+// sortant (heading 'runway') au nœud avant la sortie de piste.
+test('D1 : un taxi sortant n\'entre pas en décollage pendant un atterrissage (A4)', () => {
+  const sim = airport();
+  const rw = sim.infra.runways[0];
+  const g = sim.infra.gates[0];
+  const path = findPath(sim, gateNodeOf(sim, g.id), runwayExitNode(sim, rw.id), new Set());
+  assert.ok(path && path.length >= 2, 'chemin porte → sortie de piste');
+  const node = sim._graph.nodes[path[path.length - 2]];
+  sim.aircraft = [
+    ac(1, { phase: 'landing', runwayId: rw.id, x: 800, y: 300 }),
+    ac(2, { phase: 'taxi', runwayId: rw.id, gateId: g.id, heading: 'runway',
+      path, pathPtr: path.length - 2, x: node.x, y: node.y, seg: node.seg })];
+  // Invariant APRÈS CHAQUE TICK (EV-9) : jamais un landing/exit et un
+  // departure EN MÊME TEMPS sur la même piste.
+  let waited = false;
+  for (let i = 0; i < 5000; i++) {
+    tickAircraft(sim, 0.1);
+    const onRw = sim.aircraft.filter((a) => a.runwayId === rw.id
+      && ['landing', 'exit', 'departure'].includes(a.phase));
+    assert.ok(onRw.length <= 1,
+      `jamais un décollage concurrent d'un atterrissage (D1, tick ${i + 1})`);
+    // L'avion 2 a patienté AU BOUT DE SON CHEMIN (attente, pas d'avance) :
+    // c'est la correction, pas un hasard géométrique.
+    if (sim.aircraft[1].phase === 'taxi' && sim.aircraft[0].phase === 'landing') waited = true;
+    if (sim.aircraft[1].phase === 'departed') break;
+  }
+  assert.ok(waited, "l'avion 2 a attendu sa sortie (la piste était prise par l'atterrissage)");
+  assert.equal(sim.aircraft[1].phase, 'departed', "l'avion 2 décolle APRÈS la libération de la piste");
+  assert.ok(sim.aircraft[1].delayed > 0, "l'attente est comptée en retard (mesurable)");
+});
+
 // A5 (AC15) : deux avions ne reçoivent jamais la même porte avant leur arrivée.
 // Setup identique à la sonde A5 : 1 seule porte, deux avions en exit.
 test('A5 : une porte est réservée à UN seul avion avant son arrivée', () => {
