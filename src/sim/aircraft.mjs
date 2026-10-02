@@ -25,7 +25,7 @@
 // physiquement l'avion au CENTRE de la porte (le nœud de porte n'est pas le
 // centre).
 // Les ressources partagées (piste, segment, porte) provoquent conflits/retards.
-import { AIRCRAFT, REFUEL_TIME_S, GATE_WEAR_PER_SEC, GATE_MAINT_PER_SEC, GATE_WEAR_DELAY_S } from '../data/catalog.mjs';
+import { AIRCRAFT, REFUEL_TIME_S, GATE_WEAR_PER_SEC, GATE_MAINT_PER_SEC, GATE_WEAR_DELAY_S, NOMINAL_TURNOVER_S } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 import { gateFor, pickRunway, runwayBusy, runwayFor } from '../infra/infra.mjs';
@@ -46,7 +46,126 @@ const HOLDING_CANCEL_S = 600; // 10 min sim : attente d'atterrissage bornée (R0
 // BL-12 : stations carburant — UNE station = UNE LANCE (2e lance à partir de la
 // 2e station : la saturation devient mesurable, critère de fin).
 const FUEL_LANCES_PER_STATION = 1;
+// R17 (t_fc0d1920) : fenêtre bornée de ponctualité — la statistique ne porte
+// QUE sur les N fins de vol les plus récentes (départs + annulations) : pas
+// d'historique sans fin (esprit R14 : borné à la racine, pas de 2e journal),
+// et la fenêtre glissante (DELAY_WINDOW_S) reste lisible sans recompte.
+const PUNCTUALITY_MAX = 50;
+export const DELAY_WINDOW_S = 1800; // 30 min de jeu : la fenêtre glissante
 
+// R17 : fenêtre bornée des fins de vol (sérialisable, bornée à la racine).
+// Chaque entrée = la FIN d'un vol (départ ou annulation) avec son retard
+// cumulé (ac.delayed, source unique de vérité — D7) et le dernier goulot
+// rencontré (ac._delayCause) : c'est la statistique sur fenêtre bornée.
+export function ensurePunctuality(sim) {
+  sim.punctuality = sim.punctuality || { recent: [] };
+  if (sim.punctuality.recent.length > PUNCTUALITY_MAX) {
+    sim.punctuality.recent.splice(0, sim.punctuality.recent.length - PUNCTUALITY_MAX);
+  }
+  return sim.punctuality;
+}
+// R17 : log de la FIN d'un vol (départ, doDeparture / annulation, doBlocked /
+// doHolding) — début/fin des phases utiles : le « début » est le déploiement
+// (sim.time du vol) et la FIN se log ici avec le retard cumulé + le goulot.
+export function logFlightEnd(sim, ac, cancelled) {
+  const p = ensurePunctuality(sim);
+  p.recent.push({
+    at: sim.time || 0, id: ac.id, acType: ac.acType,
+    delayed: ac.delayed || 0, cause: ac._delayCause || null, cancelled: !!cancelled,
+  });
+}
+// Durée de rotation NOMINALE d'une taille d'avion (catalog.mjs, explicite) :
+// opérations au sol (NOMINAL_TURNOVER_S) + avitaillement lié à la taille
+// (spec.refuel × REFUEL_TIME_S) — l'horaire de départ prévu d'un vol suivant
+// est espacé de cette durée. Un vol est PUNCTUEL si son retard cumulé (les
+// attentes de goulots) ne dépasse pas cette rotation nominale.
+export function nominalRotation(acType) {
+  const spec = AIRCRAFT[acType] || {};
+  return NOMINAL_TURNOVER_S + (spec.refuel || 0) * REFUEL_TIME_S;
+}
+// R17 : ponctualité à dénominateur CLAIR incluant les annulations —
+//   dénominateur = les fins de vol de la fenêtre (départs + annulations),
+//   numérateur = les départs à l'heure (retard ≤ rotation nominale).
+// Une annulation (blocage/attente bornée) compte « non ponctuel » : c'est la
+// conséquence mesurée d'un retard qu'on n'a pas absorbé. null = aucun vol
+// terminé dans la fenêtre (pas de faux chiffre — R16).
+export function punctualityStats(sim) {
+  const p = ensurePunctuality(sim);
+  const from = (sim.time || 0) - DELAY_WINDOW_S;
+  const list = p.recent.filter((f) => f.at >= from);
+  let onTime = 0, cancels = 0; const causes = {};
+  for (const f of list) {
+    if (f.cancelled) {
+      cancels++;
+      if (f.cause) causes[f.cause] = (causes[f.cause] || 0) + 1; // l'annulation EST le retard extrême : son goulot compte
+      continue;
+    }
+    if (f.delayed <= nominalRotation(f.acType)) onTime++;
+    else if (f.cause) causes[f.cause] = (causes[f.cause] || 0) + 1;
+  }
+  return { total: list.length, onTime, cancels,
+          rate: list.length ? onTime / list.length : null, causes };
+}
+// Cause lisible d'un retard (R17, D7) : LECTURE pure de l'état — aucune
+// mutation, aucun compteur parallèle (le retard est ac.delayed, la cause est
+// ac._delayCause posée PAR le module qui retarde, jamais recalculée ici).
+// La version LUE (par phase) est `causeAt` (ci-dessous) ; DELAY_CAUSE_FR la
+// traduit en français pour l'UI.
+export const DELAY_CAUSE_FR = Object.freeze({
+  piste: 'piste (fermée/occupée)', porte: 'porte (réservée/usure)',
+  segment: 'segment (taxi occupé)', carburant: 'carburant (lance/panne)',
+  passagers: 'passagers (file saturée)',
+});
+
+// R17 (t_fc0d1920, D7 tranchée) : la CAUSE DU RETARD vit en TÊTE de la sim —
+// les retards sont LECTURES d'état dérivé (aucun compteur dédié, aucune
+// duplication avec ac.delayed, la source unique de vérité du retard). Les
+// 5 goulots : piste (piste fermée/occupée — holding), porte (amarrage/ops au
+// sol, y compris files passagers), segment (taxi bloqué), carburant (lance
+// prise / panne station), passagers (file d'embarquement saturée). La cause
+// « courante » est mémorisée (ac._delayCause, champ VOLATIL : jamais
+// sérialisé — dérivée de l'état des sim au prochain tick) pour que le
+// dernier goulot rencontré soit lisible dans le panneau (ui/panels.mjs) et
+// les tests, sans recalc de règles côté UI.
+//   noteCause(ac, cause)  : « le retard courant vient de X » (le prochain
+//                            tick de retard le confirmera ou le remplacera) ;
+//   causeAt(sim, ac)      : la cause LUE de la phase courante (règle pure,
+//                            pas de mutation) — ce que le panneau affiche.
+// « Un avion arrêté ne cumule pas 2× le même retard dans plusieurs modules »
+// (D7) : chaque vol compte UN ac.delayed (seconde de jeu), et sa cause est
+// lue — jamais additionnée ni dupliquée par module.
+const CAUSES = Object.freeze({
+  piste: 'piste', porte: 'porte', segment: 'segment', carburant: 'carburant', passagers: 'passagers',
+});
+function noteCause(ac, cause) { ac._delayCause = CAUSES[cause]; }
+export function causeAt(sim, ac) {
+  if (ac.phase === 'holding') {
+    // doHolding (source de vérité) : attente de la PISTE — fermée (incident)
+    // ou occupée (congestion, R05) : les deux sont le goulot « piste ».
+    return 'piste';
+  }
+  if (ac.phase === 'blocked') {
+    // doBlocked (source de vérité) : le chemin est coupé/occupé.
+    // heading = 'gate' (arrivée) : on retente doExit — PORTE + chemin ;
+    // heading = 'runway' (départ) : on retente doPushback — SEGMENT vers la
+    // piste (le goulot reste le segment, la piste en visée n'est pas occupée
+    // ici : le pushback part même piste occupée, seul le chemin compte).
+    return ac.heading === 'gate' ? 'porte' : 'segment';
+  }
+  if (ac.phase === 'refuel') {
+    // doRefuel (source de vérité) : attente = LANCE prise (saturation) ou
+    // PANNÉ (incident) — les deux sont le goulot « carburant ».
+    return 'carburant';
+  }
+  if (ac.phase === 'taxi' && ac.heading === 'runway' && ac.path
+      && ac.pathPtr + 1 >= ac.path.length) {
+    // doTaxi (source de vérité) : arrivé au bout du chemin, la piste est
+    // occupée (A4) — on attend le décollage : le goulot est la PISTE.
+    return 'piste';
+  }
+  if (ac._delayCause) return ac._delayCause; // dernier goulot mémorisé
+  return null; // pas de retard actif (phase nominale ou retard inconnu)
+}
 // Le battement avions : avance chaque avion selon sa phase.
 // Réservations exclusives (BL-03, AC15) : une occupation par segment est construite
 // AVANT le tour des avions (snapshot) pour que deux avions n'entrent jamais dans le
@@ -113,6 +232,7 @@ function doHolding(sim, ac, dt, spec, occupied) {
   // piste compatible ET LIBRE (null si toutes occupées → attente, A4).
   const rw = pickRunway(sim, spec.minRunway, ac.id);
   ac.delayed += dt;
+  noteCause(ac, 'piste'); // R17 : le goulot est la PISTE (fermée ou occupée)
   // R04 (A-4) : BLOCAGE PERMANENT en holding = piste FERMÉE (incident) ou
   // AUCUNE piste compatible. Il est DIAGNOSTIQUÉ (la cause est nommée dans
   // l'événement d'annulation) et FINI par une règle bornée (HOLDING_CANCEL_S,
@@ -129,6 +249,7 @@ function doHolding(sim, ac, dt, spec, occupied) {
     if (ac._holdBlocked >= HOLDING_CANCEL_S) {
       ac.phase = 'cancelled';
       onFlightCancelled(sim);
+      logFlightEnd(sim, ac, true); // R17 : annulation = fin de vol dans la fenêtre (comptée)
       pushEvent(sim, { kind: 'flight-cancelled', volId: ac.id, airline: ac.airline, why: `attente bornée — ${holdWhy}` });
       return;
     }
@@ -233,6 +354,7 @@ function doTaxi(sim, ac, dt, occupied) {
       // décollage concurrent. (Le départ n'est PAS bloqué par une piste FERMÉE
       // : la fermeture n'interdit que l'atterrissage, voir doApproach.)
       ac.delayed += dt;
+      noteCause(ac, 'piste'); // R17 : l'attente est la PISTE (occupée, A4)
     } else {
       ac.phase = 'departure'; ac.seg = null; // prêt à décoller depuis le bas de la piste
     }
@@ -243,6 +365,7 @@ function doTaxi(sim, ac, dt, occupied) {
   // conflit : le segment d'arrivée est pris par un autre avion → on s'arrête (attente)
   if (occupied.has(nextSeg) && nextSeg !== ac.seg) {
     ac.delayed += dt;
+    noteCause(ac, 'segment'); // R17 : le goulot est le SEGMENT (taxi, A3)
     return;
   }
   // on avance vers le nœud suivant
@@ -335,6 +458,7 @@ function doRefuel(sim, ac, dt, spec) {
     return;
   }
   acquireLance(sim, ac, spec, lances);
+  if (!ac._refueling) noteCause(ac, 'carburant'); // R17 : lance(s) prise(s) — attente (saturation)
   if (ac._refueling) {
     ac._refuelNeed -= dt;
     if (ac._refuelNeed <= 0) {
@@ -404,13 +528,20 @@ function doOps(sim, ac, dt) {
   }
   if (ac.phase === 'board') {
     // Le retard (timer négatif) doit s'écouler avant le comptage.
-    if (ac.timer < step) return;
+    if (ac.timer < step) {
+      // R17 : la PARTIE au-delà du nominal (timer < 0) est l'attente files
+      // passagers / usure porte (portée par boardDelay + wearDelay, doOps
+      // ground→board) — le goulot est « passagers » (file saturée) ou
+      // « porte » (usure). La partie nominale (0..step) n'est pas un retard.
+      if (ac.timer < 0) noteCause(ac, boardDelay(sim, ac) > 0 ? 'passagers' : 'porte');
+      return;
+    }
     // D2 : on ne compte/embarque QUE si le groupe du vol est COMPLET (tous ses
     // pax ont franchi check-in + sécurité → en attente). Sinon le vol reste au
     // sol (l'embarquement ne démarre pas avant la fin du parcours passager).
     // groupComplete ne bloque PAS si le groupe n'existe plus (avion injecté à
     // la main, groupe déjà purgé/compté) : parcours considéré terminé.
-    if (!groupComplete(sim, ac)) return;
+    if (!groupComplete(sim, ac)) { noteCause(ac, 'passagers'); return; }
     if (!ac.counted) {
       countCarried(sim, ac); // les passagers montent : comptés UNE fois
       ac.counted = true;     // le re-tick « board » ne recompte jamais (AC40)
@@ -448,6 +579,7 @@ function doDeparture(sim, ac, dt) {
   ac.y -= V.departure * dt;
   if (ac.y < rw.y - 120) {
     onGateDeparted(sim, ac); // recettes passagers au décollage
+    logFlightEnd(sim, ac, false); // R17 : fin du vol (départ) dans la fenêtre de ponctualité
     ac.phase = 'departed';
     ac.seg = null;
     pushEvent(sim, { kind: 'flight-out', volId: ac.id, airline: ac.airline, pax: ac.pax });
@@ -460,6 +592,7 @@ function doDeparture(sim, ac, dt) {
 // La cause est visible (événement « flight-cancelled », toast dans l'UI).
 function doBlocked(sim, ac, dt, spec, occupied) {
   ac.delayed += dt;
+  noteCause(ac, ac.heading === 'gate' ? 'porte' : 'segment');
   ac.timer += dt;
   ac._blockedAcc = (ac._blockedAcc ?? 0) + dt;
   if (ac._blockedAcc >= BLOCKED_CANCEL_S) {
@@ -469,6 +602,7 @@ function doBlocked(sim, ac, dt, spec, occupied) {
     ac.seg = null;
     ac.phase = 'cancelled';
     onFlightCancelled(sim); // BL-15 (AC6) : l'incident a un coût (indemnité)
+    logFlightEnd(sim, ac, true); // R17 : annulation = fin de vol dans la fenêtre (comptée)
     pushEvent(sim, { kind: 'flight-cancelled', volId: ac.id, airline: ac.airline, why: 'blocage persistant' });
     return;
   }

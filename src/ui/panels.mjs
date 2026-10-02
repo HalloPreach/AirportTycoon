@@ -11,6 +11,10 @@
 import { periodStatement, lastPeriod, forecast } from '../economy/economy.mjs';
 import { findPath, runwayExitNode } from '../pathfinding/path.mjs';
 import { AIRCRAFT, AIRLINES, BUILDINGS, opexPerMin, opexPerHour } from '../data/catalog.mjs';
+// R17 (t_fc0d1920) : la cause du retard est LUE (causeAt, aircraft.mjs) — le
+// panneau ne recalcule rien, il traduit (DELAY_CAUSE_FR) ; la ponctualité
+// (fenêtre bornée, dénominateur clair) vient de punctualityStats (id.).
+import { causeAt, DELAY_CAUSE_FR, DELAY_WINDOW_S, punctualityStats } from '../sim/aircraft.mjs';
 
 const PHASES_FR = Object.freeze({
   approach: 'approche', holding: 'attente', landing: 'atterrissage', exit: 'sortie de piste',
@@ -103,7 +107,7 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         if (pick.kind === 'ac') {
           const ac = sim.aircraft.find((a) => a.id === pick.id);
           if (!ac) return 'none';
-          return [ac.phase, ac.pax, Math.round(ac.x), Math.round(ac.y), ac.gateId, ac.runwayId, Math.round(ac.delayed)].join('|');
+          return [ac.phase, ac.pax, Math.round(ac.x), Math.round(ac.y), ac.gateId, ac.runwayId, Math.round(ac.delayed), ac._delayCause || null].join('|');
         }
         const find = (arr) => (arr || []).find((b) => b.id === pick.id);
         const b = find(sim.infra.runways) || find(sim.infra.taxiways)
@@ -123,12 +127,16 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
           if (!ac) { line(body, `Avion #${pick.id}`, 'parti — plus en simulation'); return; }
           const spec = AIRCRAFT[ac.acType] || {};
           const airline = (AIRLINES.find((x) => x.id === ac.airline) || { name: ac.airline }).name;
-          // R07 : ressource attendue (porte du spec si l'avion en veut une, sinon la
-          // piste visée) + cause du retard LUE de la phase (pas de règle ici).
-          const cause = CAUSE_FR[ac.phase] || ac.phase;
+          // R17 : la CAUSE DU RETARD est LUE (causeAt) — quand l'avion est en
+          // retard, on affiche le GOUTOU qui le retient (piste/porte/segment/
+          // carburant/passagers) ; sinon la phase courante (R07).
+          const delayed = ac.delayed > 0;
+          const cause = delayed ? (DELAY_CAUSE_FR[causeAt(sim, ac)] || `goulot ${causeAt(sim, ac) || '?'}`)
+                               : (CAUSE_FR[ac.phase] || ac.phase);
           line(body, `Avion #${ac.id}`, `${airline} · ${spec.name || ac.acType}`);
-          line(body, 'Phase', `${PHASES_FR[ac.phase] || ac.phase}${ac.delayed > 0 ? ` (retard ${Math.round(ac.delayed)} s)` : ''}`);
-          line(body, 'Cause', cause);
+          line(body, 'Phase', `${PHASES_FR[ac.phase] || ac.phase}${delayed ? ` (retard ${Math.round(ac.delayed)} s)` : ''}`);
+          if (delayed) line(body, 'Cause du retard', cause, 'warn');
+          else line(body, 'État', cause);
           line(body, 'Passagers', `${ac.pax} pax`);
           if (ac.gateId) line(body, 'Porte', ac.gateId);
           if (ac.runwayId) line(body, 'Piste', ac.runwayId);
@@ -226,11 +234,15 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         // t_2179387d : le nombre de bâtiments par service au sol est VISIBLE
         // (ressources/capacités lisibles, critère 85) — la sim reste la source.
         const svcCount = (type) => sim.infra.services.filter((s) => s.type === type).length;
+        // R17 : la ponctualité (fenêtre bornée) fait partie de la signature —
+        // sinon le panneau ne se met pas à jour quand un vol se termine.
+        const pu = punctualityStats(sim);
         return [
           Math.floor(sim.time || 0), Math.round(p.satisfaction), p.totalCarried,
           p.queue.checkin, p.queue.security, p.queue.board,
           sim.aircraft.length, sim.planning.length,
           svcCount('fuel'), svcCount('hangar'), svcCount('cleaning'), svcCount('baggage'),
+          pu.rate == null ? 'no' : `${pu.total}|${pu.onTime}|${pu.cancels}`,
         ].join('|');
       },
       (body) => {
@@ -248,6 +260,21 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         const svcCount = (type) => sim.infra.services.filter((s) => s.type === type).length;
         line(body, 'Services au sol',
           `carburant ${svcCount('fuel')} · hangar ${svcCount('hangar')} · nettoyage ${svcCount('cleaning')} · bagages ${svcCount('baggage')}`);
+        // R17 : ponctualité sur fenêtre bornée (DELAY_WINDOW_S), dénominateur
+        // CLAIR = les fins de vol récentes (départs + annulations), numérateur
+        // = départs à l'heure (retard ≤ rotation nominale). null = aucun vol
+        // terminé dans la fenêtre → « pas encore de vol terminé » (pas de
+        // faux chiffre, R16).
+        const pu = punctualityStats(sim);
+        if (pu.rate == null) {
+          line(body, 'Ponctualité', `— aucun vol terminé sur les ${DELAY_WINDOW_S / 60} dernières min`, 'warn');
+        } else {
+          const pct = Math.round(pu.rate * 100);
+          const causes = Object.entries(pu.causes).map(([c, n]) => `${DELAY_CAUSE_FR[c] || c} ${n}`).join(' · ');
+          line(body, `Ponctualité (${DELAY_WINDOW_S / 60} min, ${pu.total} vols, ${pu.cancels} annulés)`,
+            `${pct} % à l'heure${causes ? ` — goulots : ${causes}` : ''}`,
+            pct < 70 ? 'bad' : 'good');
+        }
       },
     );
   }

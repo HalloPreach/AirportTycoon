@@ -49,19 +49,23 @@ export function tickPlanner(sim, dt, rng = Math.random) {
   for (const a of sim.aircraft) {
     if (a.phase !== 'approach' && a.phase !== 'holding') continue;
     const ac = AIRCRAFT[a.acType];
+    // R17 (D7, t_fc0d1920) : le planificateur NE CUMULE PLUS ac.delayed ici —
+    // doHolding (aircraft.mjs) est le SEUL compteur du retard d'atterrissage.
+    // Avant R17, les deux modules cumulaient le MÊME retard 2× (« un avion
+    // arrêté ne cumule pas 2× le même retard dans plusieurs modules ») ;
+    // la cause du retard reste LISIBLE (causeAt, aircraft.mjs) et l'état
+    // « retardé » du planning est maintenu ci-dessous (marquage lisible).
     // BL-14 : piste FERMÉE (incident) → les atterrissages patientent (retard
     // lisible dans le planning), la réouverture les relance.
     if (runwayClosed(sim)) {
-      a.delayed += dt;
-      markPlannedDelayed(sim, a.id);
+      markPlannedDelayed(sim, a.id, 'piste fermée — atterrissage en attente');
       continue;
     }
     // pas de piste assez longue ni de porte de taille : retard (critère 6).
     // R05 : le critère « piste compatible » est centralisé (infra.mjs).
     if (!runwayFor(sim, ac.minRunway) ||
         !sim.infra.gates.some((g) => g.size === ac.gate)) {
-      a.delayed += dt;
-      markPlannedDelayed(sim, a.id);
+      markPlannedDelayed(sim, a.id, 'pas de piste/porte compatible');
     }
   }
   purge(sim);
@@ -214,10 +218,13 @@ function makeAircraft(sim, e) {
 
 // Retard (critère 6, AC3) : la CAUSE du retard est portée par l'entrée de
 // planning du vol EN COURS (« in-flight » → « delayed » + why) → lisible dans
-// le planning (état + cause), pas seulement sur l'avion.
-function markPlannedDelayed(sim, volId) {
+// le planning (état + cause), pas seulement sur l'avion. R17 (t_fc0d1920) :
+// la cause est PASSEE en paramètre (chaque site donne sa propre cause —
+// « piste fermée » ou « pas de piste/porte compatible »), le retard est
+// accumulé PAR doHolding (aircraft.mjs, D7) — pas ici.
+function markPlannedDelayed(sim, volId, why) {
   const e = sim.planning.find((p) => p.id === volId);
-  if (e && e.status === 'in-flight') { e.status = 'delayed'; e.why = 'pas de piste/porte compatible'; }
+  if (e && e.status === 'in-flight') { e.status = 'delayed'; e.why = why || 'pas de piste/porte compatible'; }
 }
 
 // Purge les vols annulés/partis : on retire LEUR entrée de planning (le planning

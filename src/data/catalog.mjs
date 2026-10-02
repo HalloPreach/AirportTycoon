@@ -83,6 +83,16 @@ export const PHASES = Object.freeze([
 // (le catalogue donne le niveau de carburant : 40/110/320) — un gros plein (747)
 // prend plus qu'un petit (Cessna).
 export const REFUEL_TIME_S = 0.5;
+// R17 (t_fc0d1920, D7 tranchée) : durée de ROTATION nominale — le temps que
+// prend le cycle au sol d'un avion AMARRÉ (gate → décollage : avitaillement
+// si station, débarquement, sol, embarquement, poussée) SANS aucune attente :
+// l'avion qui a posé à l'heure prévue ne devrait rouvrir le slot que
+// NOMINAL_TURNOVER_S plus tard. C'est la base de la ponctualité (R17) :
+// un vol est PUNCTUEL si son retard cumulé (ac.delayed, unique source de
+// vérité — D7) ne dépasse pas cette rotation nominale. Constante (le cycle
+// au sol a une durée fixe par construction, catalog.mjs:37 GATE_OPS_S) ;
+// le RETARD des vols est mesuré dans les sim (aircraft.mjs / flights.mjs).
+export const NOMINAL_TURNOVER_S = 150; // 2 min 30 s : 60 s d'ops au sol + marge
 // BL-12 : usure d'une porte occupée (par seconde de jeu) ; le hangar remet à zéro.
 export const GATE_WEAR_PER_SEC = 0.5;
 // t_2179387d : DEUX usures distinctes, deux services distincts.
