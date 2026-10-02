@@ -13,15 +13,31 @@ const BANKRUPT_LIMIT = -10000;   // solde sous ce seuil = faillite
 // passagers (compte spent.compensation, pas une recette négative — même
 // discipline que le carburant, A-6) : l'incident a un coût financier lisible.
 const COMP_FEE_PER_CANCEL = 500;
+// D5 (R11, t_eef3e9c8) : taux d'intérêt PARAMÉTRÉ sur période — une SEULE
+// politique (remplace le 1 %/s capé en dur de BL-18). Le taux ET la cap sont
+// des paramètreS (pas de chiffres magiques dans le tick) : DEBT.ratePerSec =
+// le taux (/s), DEBT.baseCap = la borne de l'assiette (BL-18 la fixait à
+// −BANKRUPT_LIMIT). Même valeur par défaut → le comportement de référence ne
+// bouge pas (fixtures R12/R35), mais la politique est réglable sans toucher la
+// sim. La cap est le paramètre DU TAUX (pas un second mécanisme).
+export const DEBT = Object.freeze({
+  ratePerSec: 0.01,  // 1 %/s (BL-18) — paramètre D5
+  baseCap: 10000,    // borne de l'assiette (BL-18 : −BANKRUPT_LIMIT) — paramètre D5
+});
 
 export function canAfford(sim, cost) { return sim.economy.money >= cost; }
 
-// Débite le solde ; retourne false si fonds insuffisants (le coût n'est pas payé).
+// R11 (t_eef3e9c8) : une dépense dédiée EST payée MÊME EN DÉFICIT — le solde
+// baisse (dette réelle), jamais refusée silencieusement. L'ancien garde
+// « si fonds insuffisants → ne payer » faisait que le carburant / l'indemnité
+// sautaient quand la trésorerie était déjà creusée : l'incident n'avait alors
+// aucun coût (compte spent vierge) et le déficit réel restait invisible. La
+// garde est levée : `charge` débitte TOUJOURS (le solde peut devenir négatif),
+// le compte `spent[cat]` reste alimenté → le bilan lis la dépense, le solde
+// montre la dette. (La faillite, elle, vient de checkBankruptcy sous tickEconomy.)
 export function charge(sim, cost, cat) {
-  if (sim.economy.money < cost) return false;
   sim.economy.money -= cost;
   sim.economy.spent[cat] = (sim.economy.spent[cat] ?? 0) + cost;
-  return true;
 }
 
 // Encaisse une recette (catégorie pour les stats).
@@ -87,8 +103,14 @@ export function tickEconomy(sim, dt) {
   // tout son sens après ~3 h). Capée, la dette reste lisible et la faillite reste
   // ATTEIGNABLE (le solde peut toujours franchir −10 000 : la pente opex le fait).
   if (sim.economy.money < 0) {
-    const base = Math.min(Math.abs(sim.economy.money), -BANKRUPT_LIMIT);
-    const interest = base * 0.01 * dt;
+    // D5 (R11, t_eef3e9c8) : taux PARAMÉTRÉ (DEBT.ratePerSec) + cap = paramètre
+    // DU taux (DEBT.baseCap) — une seule politique, remplace le 1 %/s capé en
+    // dur de BL-18. Même valeurs par défaut (0,01 / 10 000) → le comportement de
+    // référence ne bouge pas (fixtures R12/R35). Le champ historique `debt`
+    // reste l'accumulateur d'intérêts ; sa réinterprétation (dépense dédiée,
+    // rapprochement du solde) est le travail de la carte ENFANT R12.
+    const base = Math.min(Math.abs(sim.economy.money), DEBT.baseCap);
+    const interest = base * DEBT.ratePerSec * dt;
     sim.economy.debt += interest;
     sim.economy.money -= interest;
   }
