@@ -14,6 +14,16 @@ script `test` → glob `tests/*.test.mjs`, 14 fichiers, exit code propagé).
 = **106/106**. Le verdict ci-dessous (PASS, RV-BL18 passée) reste valable ;
 les gaps G1 et G2 sont donc clos.
 
+**Note de réactualisation 2 (post-continuation `t_2179387d`, services au sol, 2026-10-02)** :
+la carte `t_2179387d` a ensuite livré quatre services au sol opérationnels
+distincts (carburant / nettoyage / bagages / maintenance — deux usures de porte
+distinctes, `tests/services.test.mjs` (a)/(b)/(c)) et corrigé D2 (`48abf79`) ;
+le panneau planning a quitté le HUD (plus de superposition, `index.html`).
+Suite complète = **110/110** (14 fichiers) ; le scénario 48 h reste **8/8 PASS**
+avec un capital final de **19340.61** (le `19641.74` ci-dessus datait du run
+d'avant services — écart = OPEX des deux nouveaux services, **aucun capital
+injecté**).
+
 Méthode : chaque critère du brief (AC1..AC40) est justifié par une preuve
 réelle (test, QA CDP, sim, ou dossier de probes) que j'ai **relancé ou relu
 aujourd'hui**, pas copié des cartes. Le verdict de clôture n'est pas « le MVP

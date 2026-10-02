@@ -1,5 +1,5 @@
 # BL-17 — rapport sim 48 h (node qa/bl17-sim48h.mjs)
-Date : 2026-10-02T04:56:50.503Z
+Date : 2026-10-02T08:50:27.673Z
 Seed PRNG : 42 (EV-10)
 Résultat : PASS (8/8)
 
@@ -8,14 +8,14 @@ PASS AC26b vols générés et transportés (auto-accept ON, 0-24 h) — carried=
 PASS AC26b décision joueur mesurable : refus de tout → transport nettement réduit — carried 0-24h=24782 vs 24-36h=126
 PASS AC26b incident forcé : conséquence mesurée (holding pendant la fermeture piste) — t=129660s maxHolding=4
 PASS AC26b incident forcé : récupération (transport repart après réouverture) — carried 44-48h=3486
-PASS EV-10 reproductibilité : 2 passes (seed 42) → état final identique — money=19641.74 carried=36608 rngCounter=6507
-PASS performance : 2 × 172 800 ticks exécutés — passe 1 = 0.179s, passe 2 = 0.156s
-PASS A-9 horloges distinctes : temps sim ≠ temps réel (facteur mesuré, jamais = 1) — sim=172801s réel=179ms facteur=965368.72×
+PASS EV-10 reproductibilité : 2 passes (seed 42) → état final identique — money=19340.61 carried=36608 rngCounter=6507
+PASS performance : 2 × 172 800 ticks exécutés — passe 1 = 0.186s, passe 2 = 0.162s
+PASS A-9 horloges distinctes : temps sim ≠ temps réel (facteur mesuré, jamais = 1) — sim=172801s réel=186ms facteur=929037.63×
 
-État final (passe 1) : carried=36608 money=19641.74 rngCounter=6507
-A-9 horloges (passe 1) : temps sim=172801s / temps réel=179ms → facteur 965368.72× (pas la même horloge)
-Recettes par catégorie : {"landing":71738,"gate":35869,"pax":457302}
-Phases observées (cumul ticks) : {"approach":1831,"landing":7984,"exit":998,"taxi":3822,"docking":404,"gate":359,"refuel":359,"disembark":7180,"ground":7180,"board":9495,"blocked":384289,"pushback":359,"departure":2848,"departed":356,"cancelled":638,"holding":7455}
+État final (passe 1) : carried=36608 money=19340.61 rngCounter=6507
+A-9 horloges (passe 1) : temps sim=172801s / temps réel=186ms → facteur 929037.63× (pas la même horloge)
+Recettes par catégorie : {"landing":71539,"gate":35770,"pax":457299}
+Phases observées (cumul ticks) : {"approach":1827,"landing":7984,"exit":998,"taxi":3826,"docking":403,"gate":358,"refuel":358,"disembark":7160,"ground":7160,"board":11033,"blocked":384284,"pushback":358,"departure":2848,"departed":356,"cancelled":638,"holding":7485}
 
 Série horaire (48 lignes) :
 h= 0 money=344997 carried=0 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
@@ -39,31 +39,31 @@ h=17 money=263420 carried=17672 sat=100 ac=4 planning=4 holding=0 runwayClosed=f
 h=18 money=252722 carried=18358 sat=99.5 ac=4 planning=5 holding=0 runwayClosed=false
 h=19 money=255908 carried=19944 sat=100 ac=3 planning=4 holding=0 runwayClosed=true
 h=20 money=245940 carried=20624 sat=100 ac=4 planning=5 holding=0 runwayClosed=false
-h=21 money=249588 carried=22197 sat=100 ac=3 planning=4 holding=0 runwayClosed=false
-h=22 money=241022 carried=22952 sat=100 ac=4 planning=4 holding=0 runwayClosed=false
-h=23 money=232855 carried=23865 sat=99.5 ac=3 planning=4 holding=0 runwayClosed=false
-h=24 money=226834 carried=24782 sat=99.5 ac=4 planning=4 holding=0 runwayClosed=true
-h=25 money=215318 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
-h=26 money=203798 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
-h=27 money=192278 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
-h=28 money=180758 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
-h=29 money=169238 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
-h=30 money=157718 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
-h=31 money=146198 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
-h=32 money=134678 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
-h=33 money=123158 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
-h=34 money=111638 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
-h=35 money=100118 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
-h=36 money=88598 carried=24908 sat=99.5 ac=0 planning=2 holding=0 runwayClosed=false
-h=37 money=88800 carried=26086 sat=100 ac=4 planning=4 holding=0 runwayClosed=false
-h=38 money=85176 carried=27303 sat=100 ac=3 planning=4 holding=0 runwayClosed=false
-h=39 money=81835 carried=28461 sat=100 ac=3 planning=4 holding=0 runwayClosed=false
-h=40 money=76529 carried=29438 sat=100 ac=4 planning=5 holding=0 runwayClosed=false
-h=41 money=69121 carried=30306 sat=99.5 ac=4 planning=5 holding=0 runwayClosed=false
-h=42 money=60114 carried=31050 sat=100 ac=4 planning=4 holding=0 runwayClosed=false
-h=43 money=57291 carried=32267 sat=100 ac=3 planning=4 holding=0 runwayClosed=false
-h=44 money=49725 carried=33122 sat=100 ac=3 planning=4 holding=0 runwayClosed=false
-h=45 money=41199 carried=33922 sat=100 ac=4 planning=4 holding=0 runwayClosed=false
-h=46 money=33518 carried=34785 sat=100 ac=4 planning=5 holding=0 runwayClosed=false
-h=47 money=26845 carried=35698 sat=100 ac=4 planning=4 holding=0 runwayClosed=false
-h=48 money=19642 carried=36608 sat=100 ac=4 planning=4 holding=0 runwayClosed=true
+h=21 money=249286 carried=22197 sat=100 ac=3 planning=4 holding=0 runwayClosed=false
+h=22 money=240721 carried=22952 sat=100 ac=4 planning=4 holding=0 runwayClosed=false
+h=23 money=232554 carried=23865 sat=99.5 ac=3 planning=4 holding=0 runwayClosed=false
+h=24 money=226533 carried=24782 sat=99.5 ac=4 planning=4 holding=0 runwayClosed=true
+h=25 money=215017 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
+h=26 money=203497 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
+h=27 money=191977 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
+h=28 money=180457 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
+h=29 money=168937 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
+h=30 money=157417 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
+h=31 money=145897 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
+h=32 money=134377 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
+h=33 money=122857 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
+h=34 money=111337 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
+h=35 money=99817 carried=24908 sat=100 ac=0 planning=0 holding=0 runwayClosed=false
+h=36 money=88297 carried=24908 sat=99.5 ac=0 planning=2 holding=0 runwayClosed=false
+h=37 money=88499 carried=26086 sat=100 ac=4 planning=4 holding=0 runwayClosed=false
+h=38 money=84874 carried=27303 sat=100 ac=3 planning=4 holding=0 runwayClosed=false
+h=39 money=81534 carried=28461 sat=100 ac=3 planning=4 holding=0 runwayClosed=false
+h=40 money=76228 carried=29438 sat=100 ac=4 planning=5 holding=0 runwayClosed=false
+h=41 money=68820 carried=30306 sat=99.5 ac=4 planning=5 holding=0 runwayClosed=false
+h=42 money=59813 carried=31050 sat=100 ac=4 planning=4 holding=0 runwayClosed=false
+h=43 money=56990 carried=32267 sat=100 ac=3 planning=4 holding=0 runwayClosed=false
+h=44 money=49424 carried=33122 sat=100 ac=3 planning=4 holding=0 runwayClosed=false
+h=45 money=40898 carried=33922 sat=100 ac=4 planning=4 holding=0 runwayClosed=false
+h=46 money=33216 carried=34785 sat=100 ac=4 planning=5 holding=0 runwayClosed=false
+h=47 money=26544 carried=35698 sat=100 ac=4 planning=4 holding=0 runwayClosed=false
+h=48 money=19341 carried=36608 sat=100 ac=4 planning=4 holding=0 runwayClosed=true

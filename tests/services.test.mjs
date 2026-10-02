@@ -14,10 +14,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newSimState } from '../src/core/sim-state.mjs';
-import { buildBuilding } from '../src/infra/infra.mjs';
+import { buildBuilding, cleanGates } from '../src/infra/infra.mjs';
 import { rebuildGraph } from '../src/pathfinding/path.mjs';
 import { tickAircraft } from '../src/sim/aircraft.mjs';
-import { tickEconomy, onGateDeparted } from '../src/economy/economy.mjs';
+import { tickEconomy, tickPassengers, onGateDeparted } from '../src/economy/economy.mjs';
 
 // Même plan « bien conçu » (piste + taxiway + terminal 4 portes S/M/M/L).
 function buildSocle(sim) {
@@ -113,4 +113,69 @@ test('BL-12/AC21 (3) : 0 station → départ SÉC, événement « no-fuel » ET 
   const dry = { pax: 100, _dryDeparture: true };
   onGateDeparted(sim, dry);
   assert.equal(sim.economy.revenue.pax, 1250, 'billets moitiés au départ sec (100 pax × 12.5 $)');
+});
+
+// ---- t_2179387d : 4 services au sol OPÉRATIONNELS DISTINCTS (audit gap #1) ---
+// Avant : le nettoyage n'était qu'un effet du hangar (cleanGates remis tout à 0)
+// et le bagage était assimilé au check-in. Désormais :
+//   - NETTOYAGE (bâtiment « cleaning ») nettoie l'usure « sale » (g.cleaning) ;
+//   - HANGAR (maintenance) nettoie l'usure « mécanique » (g.maintenance) ;
+//   - BAGAGES (bâtiment « baggage ») booste le débit check-in (dépôt bagages).
+// Chacun coûte (opex), sert (effet mesurable) et son absence cause un retard
+// mesurable (critère de fin : un bâtiment qui coûte ET qui sert).
+
+// (a) NETTOYAGE : l'usure « sale » (g.cleaning) NE DIMINUE PAS sans service,
+// et DIMINUE avec le service « cleaning » (un bâtiment = une équipe, débit 1/s).
+test('t_2179387d (a) : l usure sale ne baisse que si le service « cleaning » est construit', () => {
+  const sim = newSimState();
+  buildSocle(sim); unlock(sim);
+  const [g1] = M_GATES(sim);
+  g1.cleaning = 80; // porte sale
+  cleanGates(sim, 10); // 10 s SANS service nettoyage
+  assert.equal(g1.cleaning, 80, `sans service l usure sale ne diminue pas (stable à ${g1.cleaning})`);
+  // Avec UN bâtiment nettoyage (débit 1/s) : l usure sale BAISSE en 10 s.
+  buildBuilding(sim, 'cleaning', 100, 200);
+  cleanGates(sim, 10);
+  assert.ok(g1.cleaning < 71, `avec le service l usure sale diminue (80 → ${g1.cleaning.toFixed(1)})`);
+});
+
+// (b) MAINTENANCE DISTINCTE : le hangar baisse g.maintenance SANS toucher g.cleaning ;
+// le nettoyage baisse g.cleaning SANS toucher g.maintenance (deux services distincts).
+test('t_2179387d (b) : hangar et nettoyage touchent DES usures DIFFÉRENTES (2 services distincts)', () => {
+  // HANGAR seul : baisse g.maintenance, NE TOUCHE PAS g.cleaning.
+  const sim1 = newSimState(); buildSocle(sim1); unlock(sim1);
+  const [g1] = M_GATES(sim1);
+  g1.cleaning = 80; g1.maintenance = 80;
+  buildBuilding(sim1, 'hangar', 100, 200);
+  cleanGates(sim1, 10);
+  assert.ok(g1.maintenance < 71, `le hangar diminue l usure mécanique (80 → ${g1.maintenance.toFixed(1)})`);
+  assert.ok(g1.cleaning >= 80, `le hangar NE nettoie PAS l usure sale (stable ${g1.cleaning.toFixed(1)})`);
+  // NETTOYAGE seul : baisse g.cleaning, NE TOUCHE PAS g.maintenance.
+  const sim2 = newSimState(); buildSocle(sim2); unlock(sim2);
+  const [g2] = M_GATES(sim2);
+  g2.cleaning = 80; g2.maintenance = 80;
+  buildBuilding(sim2, 'cleaning', 100, 200);
+  cleanGates(sim2, 10);
+  assert.ok(g2.cleaning < 71, `le nettoyage diminue l usure sale (80 → ${g2.cleaning.toFixed(1)})`);
+  assert.ok(g2.maintenance >= 80, `le nettoyage NE TITCHE PAS la usure mécanique (stable ${g2.maintenance.toFixed(1)})`);
+});
+
+// (c) BAGAGES : sans service le check-in tourne au débit de base (lent), avec
+// le service bagages le débit est BOOSTÉ (la file se vide plus vite).
+test('t_2179387d (c) : avec le service bagages la file check-in se vide PLUS VITE', () => {
+  // 5 s (10 ticks × 0.5 s), file de 200 pax. Débit de base 12 pax/s ;
+  // avec UNE salle bagages : 12 + 8 = 20 pax/s → plus de pax traités.
+  const runCheckin = (sim) => {
+    for (let i = 0; i < 10; i++) tickPassengers(sim, 0.5);
+    return sim.passengers.queue.checkin;
+  };
+  const sim1 = newSimState(); buildSocle(sim1); unlock(sim1);
+  sim1.passengers.queue.checkin = 200;
+  const baseLeft = runCheckin(sim1);
+  const sim2 = newSimState(); buildSocle(sim2); unlock(sim2);
+  buildBuilding(sim2, 'baggage', 100, 200);
+  sim2.passengers.queue.checkin = 200;
+  const boostedLeft = runCheckin(sim2);
+  assert.ok(boostedLeft < baseLeft,
+    `avec bagages moins de pax en attente check-in (${boostedLeft} < ${baseLeft}) — service opérationnel`);
 });

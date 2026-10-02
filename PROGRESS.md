@@ -228,13 +228,17 @@ committées (état final `4cc2bbf`). Preuves finales réexécutées sur l'arbre 
 `node --test tests/*.test.mjs` = 105/105, `qa/bl17-sim48h.mjs` = 8/8,
 `qa/mvp-gate.mjs` = 18/18, `qa/bl17-cdp.mjs` = 10/10, `qa/gestion-panel.mjs` = 15/15.
 
-**Continuation `t_00a9af40` (post-clôture, 2026-10-02, en cours)** : audit
+**Continuation `t_00a9af40` (post-clôture, 2026-10-02, faite)** : audit
 `AUDIT_2026-10-02_POST_CONTINUATION.md` → carte `t_ad9d472b` (D1, faite, `7c84ff4`),
-D2 (embarquement avant parcours pax — carte soeur en cours, `qa/_d2-*.mjs`),
-completions services au sol (carte soeur en cours, `qa/_nonmvp5.mjs`),
-commande de tests (carte `t_b320d250` : script `npm test` corrigé → glob
+D2 (embarquement avant parcours pax — carte `t_27b92957`, faite, `48abf79`),
+services au sol COMPLETS (carte `t_2179387d`, faite : 4e service « nettoyage »
++ service « bagages » opérationnel, DEUX usures de porte distinctes, panneau
+planning hors HUD, `tests/services.test.mjs` (a)/(b)/(c) + `tests/sim.test.mjs`
+5 seuils, suite **110/110**, 48 h **8/8 PASS** money=19340.61, aucun capital
+injecté), commande de tests (carte `t_b320d250` : script `npm test` corrigé → glob
 `tests/*.test.mjs`, suite complète 14 fichiers, exit code du runner Node) et
-rapports réactualisés (`RAPPORT_FINAL.md`, `VALIDATION_CLOTURE.md`).
+rapports réactualisés (`RAPPORT_FINAL.md`, `VALIDATION_CLOTURE.md` + note du gap
+« services au sol » résolu dans l'audit).
 
 Reste hors périmètre (documenté `RAPPORT_FINAL.md` §8, non masqué) :
 - **G2 — CORRIGÉ (carte `t_b320d250`)** : le script `npm test` exécutait 10/13

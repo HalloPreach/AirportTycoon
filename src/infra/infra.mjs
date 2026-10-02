@@ -3,7 +3,7 @@
 // Grille d'occupation 10×10 px : un segment de 200 px = 20 cellules, ça suffit
 // pour « est-ce que ça empiète sur autre chose ? » et « est-ce qu'un avion peut
 // poser/rouler ici ». ponytail : grille carrée simple, pas d'arborescence spatiale.
-import { BUILDINGS, UNLOCKS, TERMINAL_GATE_SIZES, HANGAR_CLEAN_PER_SEC } from '../data/catalog.mjs';
+import { BUILDINGS, UNLOCKS, TERMINAL_GATE_SIZES, HANGAR_CLEAN_PER_SEC, CLEANING_RATE_PER_SEC } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph } from '../pathfinding/path.mjs';
 
@@ -183,18 +183,19 @@ export function gateFor(sim, size, excludeAcId) {
   return free[0];
 }
 
-// BL-12 : le hangar (maintenance) NETTOIE les portes : c'est l'unique service qui
-// ramène g.cleaning/g.maintenance vers 0 — sans lui les portes s'usent (délai
-// ground croissant) et le hangar serait un bâtiment coûtant SANS servir (critère).
-// Chaque hangar active HANGAR_CLEAN_PER_SEC de nettoyage/seconde sur TOUTES les
-// portes (ponytail : pas de zone d'effet, le hangar sert tout l'aéroport).
+// t_2179387d : DEUX usures de porte, DEUX services qui les nettoient (critère 85) —
+//   - g.cleaning (« sale ») : nettoyée par l'ÉQUIPE NETTOYAGE (bâtiment « cleaning ») ;
+//   - g.maintenance (« mécanique ») : nettoyée par le HANGAR (bâtiment « hangar »).
+// Sans le bon service la porte reste usée (délai ground croissant) → chaque
+// bâtiment coûte (opex) ET sert (effet mesurable). Ponytail : pas de zone d'effet,
+// chaque bâtiment sert tout l'aéroport (débit = taux × nb bâtiments × dt).
 export function cleanGates(sim, dt) {
   const hangars = sim.infra.services.filter((s) => s.type === 'hangar').length;
-  if (!hangars) return;
-  const clean = HANGAR_CLEAN_PER_SEC * hangars * dt;
+  const cleanings = sim.infra.services.filter((s) => s.type === 'cleaning').length;
+  if (!hangars && !cleanings) return;
   for (const g of sim.infra.gates) {
-    g.cleaning = Math.max(0, g.cleaning - clean);
-    g.maintenance = Math.max(0, g.maintenance - clean);
+    if (cleanings) g.cleaning = Math.max(0, g.cleaning - CLEANING_RATE_PER_SEC * cleanings * dt);
+    if (hangars) g.maintenance = Math.max(0, g.maintenance - HANGAR_CLEAN_PER_SEC * hangars * dt);
   }
 }
 

@@ -9,6 +9,8 @@ export const BUILDINGS = Object.freeze({
   fuel:     { name: 'Station carburant', cost: 1200, w: 120, h: 80, sellRefund: 0.5 },
   hangar:   { name: 'Hangar maintenance', cost: 1500, w: 160, h: 120, sellRefund: 0.5 },
   catering: { name: 'Salle de restauration', cost: 1000, w: 100, h: 80, sellRefund: 0.5 },
+  cleaning: { name: 'Équipe nettoyage', cost: 900, w: 100, h: 80, sellRefund: 0.5 },
+  baggage:  { name: 'Salle bagages', cost: 900, w: 100, h: 80, sellRefund: 0.5 },
 });
 
 // ponytail: coût horaire (le tick est en secondes de jeu) — 400/jour ≈ 16,7/h,
@@ -21,6 +23,8 @@ export const OPEX_PER_SEC = Object.freeze({
   hangar: 2,
   maintenance: 1.5,
   catering: 2.5,
+  cleaning: 2,
+  baggage: 2,
 });
 
 // Catégories d'avions : ce qui contraint l'infra (piste assez longue, porte de la bonne taille).
@@ -50,6 +54,8 @@ export const UNLOCKS = Object.freeze([
   { at: 0,   service: 'base',  name: 'Aéroport de base' },
   { at: 100, service: 'fuel',  name: 'Station carburant' },
   { at: 200, service: 'catering', name: 'Salle de restauration' },
+  { at: 200, service: 'cleaning', name: 'Équipe nettoyage' },
+  { at: 250, service: 'baggage', name: 'Salle bagages' },
   { at: 300, service: 'hangar', name: 'Hangar maintenance' },
 ]);
 
@@ -67,8 +73,17 @@ export const PHASES = Object.freeze([
 export const REFUEL_TIME_S = 0.5;
 // BL-12 : usure d'une porte occupée (par seconde de jeu) ; le hangar remet à zéro.
 export const GATE_WEAR_PER_SEC = 0.5;
+// t_2179387d : DEUX usures distinctes, deux services distincts.
+//  - g.cleaning  (usure « sale ») croît, l'équipe NETTOYAGE la remet à 0.
+//  - g.maintenance (usure « mécanique ») croît pendant le plein, le HANGAR la remet à 0.
+// Les deux retardent l'embarquement (GATE_WEAR_DELAY_S par point) → deux services
+// qui coûtent ET qui servent (critère de fin, non deux bâtiments décoratifs).
+export const GATE_MAINT_PER_SEC = 0.3;
 // BL-12 : délai d'opérations au sol (phase ground) par point d'usure de la porte
 // (une porte sale → embarquement retardé ; le hangar nettoie).
 export const GATE_WEAR_DELAY_S = 0.1;
 // BL-12 : vitesse de nettoyage des portes par le hangar (maintenance) — par seconde.
 export const HANGAR_CLEAN_PER_SEC = 1;
+// t_2179387d : vitesse de nettoyage de l'usure « sale » (g.cleaning) par
+// bâtiment « cleaning » — par seconde. Distinct du hangar (g.maintenance).
+export const CLEANING_RATE_PER_SEC = 1;

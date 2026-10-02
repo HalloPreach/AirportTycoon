@@ -14,6 +14,20 @@ chiffres 95/95 ci-dessous restent exacts pour le snapshot `debee4f` ; la suite a
 grossi (10 tests BL-20 + 1 test D1) sans casser les anciens. Le script `npm test`
 a été corrigé pour exécuter la suite complète (§8.2, corrigé).
 
+**Note de réactualisation 2 (post-continuation `t_2179387d`, services au sol, 2026-10-02)** :
+après `7c84ff4`, la carte `t_2179387d` a livré (i) quatre services au sol
+opérationnels distincts — carburant (BL-12), **nettoyage** et **bagages**
+(nouveaux bâtiments `cleaning`/`baggage`, seuils 200/250 pax), maintenance
+(hangar) — avec DEUX usures de porte distinctes (`g.cleaning` « sale » /
+`g.maintenance` « mécanique », chacune nettoyée par son service), (ii) la
+correction D2 (embarquement compté après la fin du parcours passager, `48abf79`)
+et (iii) la fin de la superposition du panneau planning avec le HUD (panneau
+passé en haut à droite, `index.html`). Suite complète `node --test
+tests/*.test.mjs` = **110/110** (14 fichiers) ; le scénario 48 h reste **8/8
+PASS** — le capital final y est désormais **19340.61** (vs 19641.74 avant) :
+écart légitime = 2 nouveaux services × 2 $/s d'OPEX + retours sol légèrement
+plus longs, **aucun capital initial n'a été augmenté**.
+
 ---
 
 ## 1. Statut global

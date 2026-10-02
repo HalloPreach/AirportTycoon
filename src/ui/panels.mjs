@@ -163,10 +163,14 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         const sim = state.sim;
         if (!sim) return 'none';
         const p = sim.passengers;
+        // t_2179387d : le nombre de bâtiments par service au sol est VISIBLE
+        // (ressources/capacités lisibles, critère 85) — la sim reste la source.
+        const svcCount = (type) => sim.infra.services.filter((s) => s.type === type).length;
         return [
           Math.floor(sim.time || 0), Math.round(p.satisfaction), p.totalCarried,
           p.queue.checkin, p.queue.security, p.queue.board,
           sim.aircraft.length, sim.planning.length,
+          svcCount('fuel'), svcCount('hangar'), svcCount('cleaning'), svcCount('baggage'),
         ].join('|');
       },
       (body) => {
@@ -181,6 +185,9 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         const inFlight = sim.aircraft.filter((a) => ['approach', 'holding', 'landing', 'blocked'].includes(a.phase)).length;
         line(body, 'Avions', `${sim.aircraft.length} (${inFlight} en vol/attente · ${sim.aircraft.length - inFlight} au sol)`);
         line(body, 'Vols planifiés', `${sim.planning.length}`);
+        const svcCount = (type) => sim.infra.services.filter((s) => s.type === type).length;
+        line(body, 'Services au sol',
+          `carburant ${svcCount('fuel')} · hangar ${svcCount('hangar')} · nettoyage ${svcCount('cleaning')} · bagages ${svcCount('baggage')}`);
       },
     );
   }

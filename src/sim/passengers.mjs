@@ -13,9 +13,11 @@
 // groupes vivent pendant le vol au sol puis disparaissent au départ :
 // totalCarried (cumul transportés) est monotone et les files ne comptent
 // QUE les passagers EN COURS → pas de double comptage (invariant testé).
-// Bagages (AC22) : ponytail — le dépôt bagages est dans le check-in (débit
-// checkin), pas une étape séparée ; add quand un service bagages devient
-// constructible.
+// Bagages (AC22) : service dédié — la salle bagages (bâtiment « baggage »)
+// BOOSTE le débit check-in (dépôt bagages) : sans elle le check-in tourne au
+// débit de base PAX.checkinRate (12 pax/s), avec N salles + N*baggageBoostPer.
+// Sans service bagages : le goulou check-in est plus lent → file + retard
+// mesurables, attente EXPLIQUÉE (un service qui coûte ET qui sert).
 // Logique pure (testable Node) : mutue sim.passengers (sérialisable seul).
 // L'état de la sim (sim-state.mjs) reste la source ; l'UI ne lit que cet objet.
 import { pushEvent } from '../core/sim-state.mjs';
@@ -28,7 +30,8 @@ const PAX = Object.freeze({
   checkinCapPerTerminal: 120, // check-in : confortable pour un A320 seul
   securityCapPerTerminal: 120, // sécurité : idem
   waitCapPerGate: 80,         // salle d'attente : 80 par porte
-  checkinRate: 12,          // pax/s : guéridon check-in (+bagages)
+  checkinRate: 12,          // pax/s : guéridon check-in (débit de BASE, sans service bagages)
+  baggageBoostPer: 8,       // pax/s ADDITIONNEL par salle bagages (service AC22)
   securityRate: 16,         // pax/s : filière sécurité
   boardRate: 10,           // pax/s : porte d'embarquement
   satLossPerWait10: 0.02,   // %/s : par 10 pax en file AU-DESSUS de la capacité
@@ -157,7 +160,13 @@ export function tickPassengers(sim, dt) {
   //     par la capacité de l'étape courante — ponytail : approximation simple,
   //     upgrade : files par vol / par porte).
   const caps = { checkin: checkinCap(sim), security: securityCap(sim), board: waitCap(sim) };
-  const rates = { checkin: PAX.checkinRate, security: PAX.securityRate, board: PAX.boardRate };
+  // t_2179387d : le service BAGAGES booste le débit check-in (dépôt bagages) —
+  // N salles bagages = +N * PAX.baggageBoostPer pax/s. Sans service : débit de
+  // base (goulou plus lent → file + retard mesurables). Le service coûte (opex)
+  // ET sert (débit) : un service au sol opérationnel distinct (AC22).
+  const baggageCount = sim.infra.services.filter((s) => s.type === 'baggage').length;
+  const checkinRate = PAX.checkinRate + baggageCount * PAX.baggageBoostPer;
+  const rates = { checkin: checkinRate, security: PAX.securityRate, board: PAX.boardRate };
   for (const [stage, to] of [['checkin', 'security'], ['security', 'board']]) {
     const pass = Math.min(q[stage], caps[stage], rates[stage] * dt);
     q[stage] -= pass; q[to] += pass;

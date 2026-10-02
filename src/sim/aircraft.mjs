@@ -8,7 +8,7 @@
 // physiquement l'avion au CENTRE de la porte (le nœud de porte n'est pas le
 // centre).
 // Les ressources partagées (piste, segment, porte) provoquent conflits/retards.
-import { AIRCRAFT, REFUEL_TIME_S, GATE_WEAR_PER_SEC, HANGAR_CLEAN_PER_SEC, GATE_WEAR_DELAY_S } from '../data/catalog.mjs';
+import { AIRCRAFT, REFUEL_TIME_S, GATE_WEAR_PER_SEC, GATE_MAINT_PER_SEC, GATE_WEAR_DELAY_S } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 import { onGateArrived, onGateDeparted, onFlightCancelled } from '../economy/economy.mjs';
@@ -256,9 +256,15 @@ function doGate(sim, ac, dt) {
 // sale rallonge les opérations au sol (délai ground, HANGAR la remet à zéro).
 function doRefuel(sim, ac, dt, spec) {
   ac.timer += dt;
-  // BL-12 : usure de la porte pendant que l'avion est amarré (le hangar nettoie).
+  // BL-12 + t_2179387d : usure de la porte pendant que l'avion est amarré.
+  // DEUX usures distinctes : g.cleaning (« sale ») + g.maintenance (« mécanique »
+  // pendant le plein). Chacune est nettoyée par un service DIFFÉRENT (nettoyage
+  // vs hangar) → deux services distincts qui coûtent et qui servent.
   const g = sim.infra.gates.find((x) => x.id === ac.gateId);
-  if (g) g.cleaning = Math.min(100, g.cleaning + GATE_WEAR_PER_SEC * dt);
+  if (g) {
+    g.cleaning = Math.min(100, g.cleaning + GATE_WEAR_PER_SEC * dt);
+    g.maintenance = Math.min(100, g.maintenance + GATE_MAINT_PER_SEC * dt);
+  }
   const lances = fuelLances(sim);
   if (!lances || fuelOut(sim)) {
     // Pas de station OU panne station (incident BL-14) → départ SÉC
@@ -310,13 +316,13 @@ function doOps(sim, ac, dt) {
     return;
   }
   if (ac.phase === 'ground') {
-    // BL-12 : la porte usée (g.cleaning, accumulé pendant le plein/refuel et le
-    // séjour sol) RALLONGE l'étape sol → le hangar (maintenance) est le SEUL
-    // service qui la nettoie (infra.mjs tickUnlocks → cleanGates) : un bâtiment
-    // qui coûte ET qui sert (critère de fin). Le retard est proportionnel à
-    // l'usure (0..100) : GATE_WEAR_DELAY_S par point d'usure.
+    // BL-12 + t_2179387d : la porte usée (g.cleaning « sale » + g.maintenance
+    // « mécanique ») RALLONGE l'étape sol. CHAQUE usure est nettoyée par un
+    // service DISTINCT : le nettoyage (g.cleaning) et le hangar (g.maintenance).
+    // Le retard est proportionnel à l'usure totale (0..200) : GATE_WEAR_DELAY_S
+    // par point — deux services qui coûtent ET qui servent (critère de fin).
     const g = sim.infra.gates.find((x) => x.id === ac.gateId);
-    const wearDelay = (g ? g.cleaning : 0) * GATE_WEAR_DELAY_S;
+    const wearDelay = (g ? g.cleaning + g.maintenance : 0) * GATE_WEAR_DELAY_S;
     const delay = boardDelay(sim, ac) + wearDelay; // saturation files + porte sale
     ac.phase = 'board';
     ac.timer = -delay; // l'étape embarquement démarre retardée (timer négatif)

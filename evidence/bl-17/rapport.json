@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-02T04:56:50.504Z",
+  "date": "2026-10-02T08:50:27.674Z",
   "seed": 42,
   "result": "PASS",
   "results": [
@@ -31,46 +31,46 @@
     {
       "name": "EV-10 reproductibilité : 2 passes (seed 42) → état final identique",
       "ok": true,
-      "detail": "money=19641.74 carried=36608 rngCounter=6507"
+      "detail": "money=19340.61 carried=36608 rngCounter=6507"
     },
     {
       "name": "performance : 2 × 172 800 ticks exécutés",
       "ok": true,
-      "detail": "passe 1 = 0.179s, passe 2 = 0.156s"
+      "detail": "passe 1 = 0.186s, passe 2 = 0.162s"
     },
     {
       "name": "A-9 horloges distinctes : temps sim ≠ temps réel (facteur mesuré, jamais = 1)",
       "ok": true,
-      "detail": "sim=172801s réel=179ms facteur=965368.72×"
+      "detail": "sim=172801s réel=186ms facteur=929037.63×"
     }
   ],
   "final": {
     "carried": 36608,
-    "money": 19641.74,
+    "money": 19340.61,
     "revenue": {
-      "landing": 71738,
-      "gate": 35869,
-      "pax": 457302
+      "landing": 71539,
+      "gate": 35770,
+      "pax": 457299
     },
     "aircraft": "1828:blocked,1830:blocked,1832:blocked,1833:blocked",
     "rngCounter": 6507,
     "phaseCounts": {
-      "approach": 1831,
+      "approach": 1827,
       "landing": 7984,
       "exit": 998,
-      "taxi": 3822,
-      "docking": 404,
-      "gate": 359,
-      "refuel": 359,
-      "disembark": 7180,
-      "ground": 7180,
-      "board": 9495,
-      "blocked": 384289,
-      "pushback": 359,
+      "taxi": 3826,
+      "docking": 403,
+      "gate": 358,
+      "refuel": 358,
+      "disembark": 7160,
+      "ground": 7160,
+      "board": 11033,
+      "blocked": 384284,
+      "pushback": 358,
       "departure": 2848,
       "departed": 356,
       "cancelled": 638,
-      "holding": 7455
+      "holding": 7485
     }
   },
   "reproducible": true,
@@ -287,7 +287,7 @@
     },
     {
       "h": 21,
-      "money": 249588,
+      "money": 249286,
       "carried": 22197,
       "sat": 100,
       "ac": 3,
@@ -297,7 +297,7 @@
     },
     {
       "h": 22,
-      "money": 241022,
+      "money": 240721,
       "carried": 22952,
       "sat": 100,
       "ac": 4,
@@ -307,7 +307,7 @@
     },
     {
       "h": 23,
-      "money": 232855,
+      "money": 232554,
       "carried": 23865,
       "sat": 99.5,
       "ac": 3,
@@ -317,7 +317,7 @@
     },
     {
       "h": 24,
-      "money": 226834,
+      "money": 226533,
       "carried": 24782,
       "sat": 99.5,
       "ac": 4,
@@ -327,7 +327,7 @@
     },
     {
       "h": 25,
-      "money": 215318,
+      "money": 215017,
       "carried": 24908,
       "sat": 100,
       "ac": 0,
@@ -337,7 +337,7 @@
     },
     {
       "h": 26,
-      "money": 203798,
+      "money": 203497,
       "carried": 24908,
       "sat": 100,
       "ac": 0,
@@ -347,7 +347,7 @@
     },
     {
       "h": 27,
-      "money": 192278,
+      "money": 191977,
       "carried": 24908,
       "sat": 100,
       "ac": 0,
@@ -357,7 +357,7 @@
     },
     {
       "h": 28,
-      "money": 180758,
+      "money": 180457,
       "carried": 24908,
       "sat": 100,
       "ac": 0,
@@ -367,7 +367,7 @@
     },
     {
       "h": 29,
-      "money": 169238,
+      "money": 168937,
       "carried": 24908,
       "sat": 100,
       "ac": 0,
@@ -377,7 +377,7 @@
     },
     {
       "h": 30,
-      "money": 157718,
+      "money": 157417,
       "carried": 24908,
       "sat": 100,
       "ac": 0,
@@ -387,7 +387,7 @@
     },
     {
       "h": 31,
-      "money": 146198,
+      "money": 145897,
       "carried": 24908,
       "sat": 100,
       "ac": 0,
@@ -397,7 +397,7 @@
     },
     {
       "h": 32,
-      "money": 134678,
+      "money": 134377,
       "carried": 24908,
       "sat": 100,
       "ac": 0,
@@ -407,7 +407,7 @@
     },
     {
       "h": 33,
-      "money": 123158,
+      "money": 122857,
       "carried": 24908,
       "sat": 100,
       "ac": 0,
@@ -417,7 +417,7 @@
     },
     {
       "h": 34,
-      "money": 111638,
+      "money": 111337,
       "carried": 24908,
       "sat": 100,
       "ac": 0,
@@ -427,7 +427,7 @@
     },
     {
       "h": 35,
-      "money": 100118,
+      "money": 99817,
       "carried": 24908,
       "sat": 100,
       "ac": 0,
@@ -437,7 +437,7 @@
     },
     {
       "h": 36,
-      "money": 88598,
+      "money": 88297,
       "carried": 24908,
       "sat": 99.5,
       "ac": 0,
@@ -447,7 +447,7 @@
     },
     {
       "h": 37,
-      "money": 88800,
+      "money": 88499,
       "carried": 26086,
       "sat": 100,
       "ac": 4,
@@ -457,7 +457,7 @@
     },
     {
       "h": 38,
-      "money": 85176,
+      "money": 84874,
       "carried": 27303,
       "sat": 100,
       "ac": 3,
@@ -467,7 +467,7 @@
     },
     {
       "h": 39,
-      "money": 81835,
+      "money": 81534,
       "carried": 28461,
       "sat": 100,
       "ac": 3,
@@ -477,7 +477,7 @@
     },
     {
       "h": 40,
-      "money": 76529,
+      "money": 76228,
       "carried": 29438,
       "sat": 100,
       "ac": 4,
@@ -487,7 +487,7 @@
     },
     {
       "h": 41,
-      "money": 69121,
+      "money": 68820,
       "carried": 30306,
       "sat": 99.5,
       "ac": 4,
@@ -497,7 +497,7 @@
     },
     {
       "h": 42,
-      "money": 60114,
+      "money": 59813,
       "carried": 31050,
       "sat": 100,
       "ac": 4,
@@ -507,7 +507,7 @@
     },
     {
       "h": 43,
-      "money": 57291,
+      "money": 56990,
       "carried": 32267,
       "sat": 100,
       "ac": 3,
@@ -517,7 +517,7 @@
     },
     {
       "h": 44,
-      "money": 49725,
+      "money": 49424,
       "carried": 33122,
       "sat": 100,
       "ac": 3,
@@ -527,7 +527,7 @@
     },
     {
       "h": 45,
-      "money": 41199,
+      "money": 40898,
       "carried": 33922,
       "sat": 100,
       "ac": 4,
@@ -537,7 +537,7 @@
     },
     {
       "h": 46,
-      "money": 33518,
+      "money": 33216,
       "carried": 34785,
       "sat": 100,
       "ac": 4,
@@ -547,7 +547,7 @@
     },
     {
       "h": 47,
-      "money": 26845,
+      "money": 26544,
       "carried": 35698,
       "sat": 100,
       "ac": 4,
@@ -557,7 +557,7 @@
     },
     {
       "h": 48,
-      "money": 19642,
+      "money": 19341,
       "carried": 36608,
       "sat": 100,
       "ac": 4,
@@ -568,7 +568,7 @@
   ],
   "a9": {
     "simTimeSec": 172801,
-    "realElapsedMs": 179,
-    "timeFactor": 965368.72
+    "realElapsedMs": 186,
+    "timeFactor": 929037.63
   }
 }

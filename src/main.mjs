@@ -113,7 +113,7 @@ export function boot(canvas) {
 
   // Clavier global : les touches de déplacement restent dans input.mjs ;
   // ici les commandes UI (construire, sauvegarder, vitesse).
-  const KINDS = ['runway', 'taxiway', 'terminal', 'fuel', 'hangar', 'catering'];
+  const KINDS = ['runway', 'taxiway', 'terminal', 'fuel', 'hangar', 'catering', 'cleaning', 'baggage'];
   window.addEventListener('keydown', (e) => {
     const k = e.key.toLowerCase();
     if (k === 'n') { if (state.screen === SCREENS.MENU) startNewGame(); }
@@ -124,7 +124,7 @@ export function boot(canvas) {
     else if (k === 'b') buildTool.toggleBuild();
     else if (k === 'x') buildTool.toggleDemolish();
     else if (k === 'a') setPlanningAuto(!state.planningAuto);
-    else if (k >= '1' && k <= '6') buildTool.setKind(KINDS[Number(k) - 1]);
+    else if (k >= '1' && k <= '8') buildTool.setKind(KINDS[Number(k) - 1]);
   });
 
   // Sauvegarde AUTOMATIQUE raisonnable (brief) : en quittant la page et toutes

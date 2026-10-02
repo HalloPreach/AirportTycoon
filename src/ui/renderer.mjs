@@ -45,7 +45,8 @@ export function makeRenderer(canvas, { overlays = [] } = {}) {
   // Bâtiments posés (lecture seule de state.sim.infra). Couleurs par type.
   const BLD_COLOR = {
     runway: '#455a64', taxiway: '#78909c', terminal: '#1e88e5',
-    fuel: '#fdd835', hangar: '#ef6c00',
+    fuel: '#fdd835', hangar: '#ef6c00', catering: '#9c27b0',
+    cleaning: '#26c6da', baggage: '#7cb342',
   };
   function drawInfra(state, cam) {
     const sim = state.sim;
