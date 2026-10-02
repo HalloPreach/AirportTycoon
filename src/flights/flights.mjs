@@ -18,18 +18,34 @@ import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfindi
 import { isSurge, runwayClosed } from '../sim/incidents.mjs';
 
 const SPAWN_EVERY_S = 60;  // cadence d'une fenêtre (x4 raisonnable)
-const MAX_PENDING = 4;     // au-delà, on n'en fait plus arriver (aérogare saturée)
+export const MAX_PENDING = 4; // plafond UNIQUE d'arrivées (A-5) : au-delà, on n'en fait plus arriver
+// Politique explicite (A-5, cohérent avec l'annulation bloquée à 10 min d'aircraft.mjs) :
+// une OFFRE jamais décidée (état « planned ») expire 10 min sim après son heure prévue →
+// refusé (événement lisible), sa place se libère, le planificateur repart. En attendant,
+// elle reste décisionnable : l'acceptation tardive déploie dès la capacité libre (pas
+// d'attente d'une fenêtre). Un vol « planned » ne se déploie JAMAIS seul (BL-16).
+export const OFFER_DECISION_S = 600; // 10 min sim : délai de décision d'une offre
 
 // Le planificateur : horloge + planification (fin du générateur invisible)
 // + déploiement + retards + purge.
-// Ordre : horloge → fenêtre (planifier + déployer) → retards → purge.
+// R13 : la CRÉATION des offres (fenêtre, 1 par SPAWN_EVERY_S) est séparée de
+// la VÉRIFICATION des vols acceptés arrivés à échéance (deployDue, À CHAQUE
+// TICK) : un vol accepté en retard n'attend pas une fenêtre si la capacité
+// est libre. Ordre par tick : horloge → fenêtre (créer les offres) → vols dus
+// → offres expirées → retards → purge.
 export function tickPlanner(sim, dt, rng = Math.random) {
   sim.time = (sim.time ?? 0) + dt; // horloge de la sim (pilotée par le planificateur)
+  // Plusieurs fenêtres franchies sur le même pas (dt gros, ou jeu ralenti puis repris) :
+  // on boucle SANS duplication (le déploiement passe par l'état « in-flight », idempotent)
+  // et on PRÉSERVE le reste de l'accumulateur (pas = 90 s → 1 fenêtre + 30 s conservées).
   sim._spawnAcc = (sim._spawnAcc ?? 0) + dt;
-  if (sim._spawnAcc >= SPAWN_EVERY_S) {
-    sim._spawnAcc = 0;
-    windowClose(sim, rng); // une fenêtre : déployer le vol dû + planifier le suivant
+  const windows = Math.floor(sim._spawnAcc / SPAWN_EVERY_S);
+  if (windows > 0) {
+    sim._spawnAcc -= windows * SPAWN_EVERY_S; // reste conservé
+    for (let w = 0; w < windows; w++) windowClose(sim, rng); // création des offres
   }
+  deployDue(sim);   // vols acceptés arrivés à échéance (chaque tick)
+  expireOffers(sim); // offres jamais décidées → refusées (chaque tick)
   for (const a of sim.aircraft) {
     if (a.phase !== 'approach' && a.phase !== 'holding') continue;
     const ac = AIRCRAFT[a.acType];
@@ -51,15 +67,18 @@ export function tickPlanner(sim, dt, rng = Math.random) {
   purge(sim);
 }
 
-// Fermeture d'une fenêtre : 1) déployer les vols dont l'heure est arrivée,
-// 2) si la file (avions en attente + vols planifiés) est sous le plafond et
-// qu'il y a au moins une piste, planifier le vol suivant (visible ~60 s avant).
-// Le plafond (A-5) compte les bloqués : saturés, plus de planification ; les
-// vols bloqués sont annulés après 10 min → la file se vide, on repart.
+// Fermeture d'une fenêtre : CRÉATION des offres uniquement (R13 — le
+// déploiement des vols dus et l'expiration des offres se font chaque tick,
+// voir tickPlanner). Si la file (avions en attente + offres planifiées/
+// acceptées) est sous le plafond et qu'il y a au moins une piste, on planifie
+// le vol suivant (visible ~60 s avant).
+// Le plafond (A-5) compte la file ENTIÈRE (R13) : les avions DÉPLOYÉS sont
+// déjà dans pendingCount — on ne les compte PAS une seconde fois via leurs
+// entrées de planning (elles passent en « in-flight » au déploiement, donc
+// plus jamais comptées dans le second terme : aucun double comptage).
 // BL-14 : en pic de demande (surge), la cadence est DOUBLÉE (2 vols par
 // fenêtre) — le pic se mesure au nombre de vols planifiés.
 function windowClose(sim, rng) {
-  deployDue(sim);
   if (sim.infra.runways.length) {
     const n = isSurge(sim) ? 2 : 1; // pic de demande (BL-14) : cadence doublée
     for (let k = 0; k < n; k++) {
@@ -77,17 +96,37 @@ function windowClose(sim, rng) {
 // Tolerance de 1 s : sim.time est une somme de dt flottants (dérive de ~1e-14),
 // l'heure prévue (un multiple de 60 s) ne doit pas rester éternellement
 // « pas encore à l'heure » à cause de l'arrondi binaire.
+// R13 : PAS de double comptage — l'avion poussé à l'instant est DÉJÀ dans
+// pendingCount (phase « approach ») : le plafond se vérifie sur pendingCount
+// seul, qui inclut ce qui vient d'être déployé au cours de cette passe.
+// Appelé à CHAQUE tick (pas seulement aux fenêtres) : un vol accepté dont
+// l'heure est arrivée ne patiente PAS une minute s'il y a une place libre.
+// Idempotent : une fois déployé, l'entrée passe en « in-flight » et n'est
+// jamais re-déployée (pas de duplication au pas gros ou aux arrondis).
 function deployDue(sim) {
   if (!sim.infra.runways.length) return; // rien à poser → pas de vols
-  let deployed = 0;
   for (const e of sim.planning) {
-    if (e.status !== 'accepted') continue; // planned = en attente de décision JOUEUR
+    if (e.status !== 'accepted') continue; // planned = en attente de décision JOUEUR (ou expiration)
     if (e.planned > sim.time + 1) continue; // pas encore son heure (tolérance 1 s)
-    if (pendingCount(sim) + deployed >= MAX_PENDING) break; // plafond (A-5)
+    if (pendingCount(sim) >= MAX_PENDING) break; // plafond (A-5) : compte les avions déjà poussés ici
     sim.aircraft.push(makeAircraft(sim, e));
     pushEvent(sim, { kind: 'flight-in', volId: e.id, airline: airlineName(e.airline), acType: e.acType });
-    deployed++;
   }
+}
+
+// R13 : politique EXPLICITE pour les offres jamais décidées (A-5, cohérente
+// avec l'annulation des avions bloqués après 10 min d'aircraft.mjs).
+// Une offre « planned » dont l'heure prévue est dépassée de plus de
+// OFFER_DECISION_S (10 min sim) est REFUSÉE : retirée du planning + événement
+// lisible — sa place (comptée dans le plafond A-5) se libère et le
+// planificateur repart. Tant que l'offre est vivante, elle reste décisionnable
+// (acceptation tardive → déploiement immédiat si capacité libre, voir deployDue).
+function expireOffers(sim) {
+  const expired = sim.planning.filter((e) => e.status === 'planned' && e.planned + OFFER_DECISION_S <= sim.time);
+  if (!expired.length) return;
+  const ids = new Set(expired.map((e) => e.id));
+  sim.planning = sim.planning.filter((e) => !ids.has(e.id));
+  for (const e of expired) pushEvent(sim, { kind: 'flight-offer-expired', volId: e.id, airline: airlineName(e.airline), why: 'offre jamais décidée (10 min)' });
 }
 
 // Rétrocompat : un appel DIRECT de spawnArrivals (tests historiques, sans
@@ -95,8 +134,9 @@ function deployDue(sim) {
 // tickPlanner qui fait le travail (le planning reste consultable avant arrivée).
 export function spawnArrivals(sim, dt, rng = Math.random) {
   sim._spawnAcc = (sim._spawnAcc ?? 0) + dt;
-  if (sim._spawnAcc < SPAWN_EVERY_S) return;
-  sim._spawnAcc = 0;
+  const windows = Math.floor(sim._spawnAcc / SPAWN_EVERY_S);
+  if (windows < 1) return;
+  sim._spawnAcc -= windows * SPAWN_EVERY_S; // R13 : reste conservé (comme tickPlanner)
   if (!sim.infra.runways.length) return;
   if (pendingCount(sim) >= MAX_PENDING) return; // plafond (A-5) : on n'en fait plus
   // Planning vide (aucun vol à déployer) → on en planifie UN, d'arrivée immédiate,
