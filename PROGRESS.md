@@ -10,6 +10,7 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
 | BL-01 Nouvelle partie aéroport fourni | **fait (commits c815180 + 382defd)** |
 | BL-02 Connectivité physique (R1) | **fait (2026-10-02, worker t_fe23a99e)** |
 | BL-05 R3 démolition (A6/A7) | **fait (2026-10-02, worker t_e207fa79)** |
+| BL-04 R3 démolition après rechargement (A8) | **fait (2026-10-02, worker t_2f0ec04f, commit d43b290)** |
 | BL-04 R5 déplacement continu (A9) | **fait (2026-10-02, worker t_7a67c46d)** |
 | BL-14 Finances socle (A12, R8) | **fait (2026-10-02, worker t_f7d733b7, commits 6cb4064 + 4771ff3)** |
 | BL-03..BL-19 | en attente de leurs dépendances (BL-03 attend BL-02, BL-04/BL-05/BL-09 attendent BL-03, …) |
