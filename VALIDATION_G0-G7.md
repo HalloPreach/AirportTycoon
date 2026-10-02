@@ -1,6 +1,8 @@
 # Validation G0-G7 — Rapport final (carte t_67d0ef24)
 
 Date : 2026-10-02. Commit testé : `e3dc3fc` (HEAD, 15 commits au-dessus de `origin/main`).
+Mise à jour t_8d22ad76 (root, 2026-10-02) : statut live 13 done (G0, R01-R09, R11, R12,
+R13 `115eb69`) / R10 running (run 278) / R12b ready / R14 + G2-G7 todo.
 Cartes du jalon : 51 (43 R + 8 G), graphe 186 arêtes, acyclique, 0 doublon
 (`qa/_final-check.cjs` : 186/186 présentes, 0 manquantes, acyclique OUI, doublons aucun).
 Suite complète : `npm test` = **147/147 PASS, 0 fail** (relancé aujourd'hui sur `e3dc3fc`).
@@ -14,7 +16,7 @@ lu en lecture seule (`qa/_g-status.cjs`, `qa/_r08-lock.cjs`).
 | Gate | Jalon | Statut | Justification |
 |------|-------|--------|---------------|
 | G0 | Référence (J0) | **VALIDÉ** | 4 critères (a)-(d) relancés et passés sur `e3dc3fc` (§ G0) |
-| G1 | Fiabilité (J1) | **BLOQUÉ** | R10, R13, R14 non livrées (R08 livrée après coupure ; critère a non satisfait) (§ G1) |
+| G1 | Fiabilité (J1) | **BLOQUÉ** | R10 (running) + R14 (todo) non livrées ; R13 livrée `115eb69`, R08 `21b7ad7` (critère a non satisfait) (§ G1) |
 | G2 | Compréhension (J2) | **BLOQUÉ** | cascade : R15-R20 en todo (amont J1 non validé) (§ G2-G7) |
 | G3 | Progression (J3) | **BLOQUÉ** | cascade : R21-R26 en todo (amont J1+J2 non validés) |
 | G4 | Exploitation (J4) | **BLOQUÉ** | cascade : R27-R31 en todo (amont J3 non validé) |
@@ -27,10 +29,13 @@ mais les preuves des cartes + le scénario intégré du jalon. Sur prérequis no
 le G reste ouvert, jamais `done` — d'où le statut BLOQUÉ (justifié) et non VALIDÉ pour
 G1-G7. Aucune carte G n'est passée en `done` sans prérequis.
 
-État Kanban vérifié (live, `qa/_g-status.cjs`, à la coupure) : 12 done (R01-R12, G0),
-R10 running, R13 ready, R14 + le reste todo. Le board reflète l'état réel ; les statuts
-n'ont pas été modifiés (tous cohérents), la justification des blocages est portée ici +
-en commentaire sur G1 (comment_ids 163/164).
+État Kanban vérifié (live, à la coupure) : 12 done (R01-R12, G0), R10 running, R13 ready,
+R14 + le reste todo. Mise à jour t_8d22ad76 (live, `qa/_root-check.mjs`) : **13 done**
+(R01-R09, R11, R12, R13, G0), R10 running (run 278, heartbeat ~1 min), R12b ready
+(re-baseline fixtures probe), R14 + G1-G7 todo. Le board reflète l'état réel ; les statuts
+n'ont pas été modifiés (tous cohérents, 52 cartes / 190 arêtes intra-famille / acyclique
+/ 0 orphelin), la justification des blocages est portée ici + en commentaire sur G1
+(comment_ids 163/164).
 
 ## G0 — Référence (J0) : VALIDÉ sur `e3dc3fc`
 
@@ -84,16 +89,20 @@ Critère (a) : « chaque R03-R14 fermée avec preuve test/sim ». État des 12 p
 | **R10 rejets lisibles + migration** | **running** ✗ | run en cours (pris dans la file après R08) ; prérequis R03-R09 tous done |
 | R11 coûts obligatoires | done t_eef3e9c8 ✓ | débit même en déficit, achat facultatif seul refusé |
 | R12 réconciliation | done `92ef251` ✓ | dette 1×, EV-9 tient, dette en ligne du bilan |
-| **R13** | **ready** ✗ | en file, non exécutée |
+| **R13** | done `115eb69` ✓ (après coupure) | plafond sur `pendingCount` seul (4/4 → 4, 2 → 2, 0 → 0), déploiement à chaque tick, offre expirée 10 min, `MAX_PENDING` exporté ; preuve `tests/r13-deployment.test.mjs` 5/5, suite 158/158 |
 | **R14** | **todo** ✗ | verrouillée derrière R10/R13 (prérequis R03-R13) |
 
-Justification du BLOQUÉ : 3/12 prérequis non livrés (R10 running, R13 ready, R14 todo)
+Justification du BLOQUÉ (état t_8d22ad76) : 2/12 prérequis non livrés (R10 running,
 R14 todo) → critères (a) et (b) (partie intégrée) inaccessibles. Les preuves partielles
 déjà présentes sont notées pour accélérer la validation : R09 (2 seeds → 2 suites ✓),
 R11/R12 (déficit réel + identité trésorerie, tests R12 dans la suite 147/147 ✓),
-R05 (test piste occupée ✓), avant/après D1/D2 (commits `7c84ff4`, `48abf79`).
-À relancer : G1 dès que R08 + R10 + R13 + R14 sont done (le worker R08 est actif —
-non perturbé, protocole checkout partagé).
+R05 (test piste occupée ✓), R13 (`115eb69`, plafond + déploiement, 158/158 ✓),
+avant/après D1/D2 (commits `7c84ff4`, `48abf79`).
+À relancer : G1 dès que R10 + R14 sont done (R08 `21b7ad7` et R13 `115eb69` déjà livrées)
+— le worker R10 est actif, non perturbé (protocole checkout partagé). La re-baseline
+fixtures probe (R12b, ready) doit précéder la partie intégrée : elle re-baseline
+`evidence/` sur la sim courante post-R12/R13 (invariant : les captures d'anciens commits
+ne valident pas les changements courants).
 
 ## G2-G7 — BLOQUÉS en cascade
 
@@ -131,7 +140,9 @@ l'amont validé (règle des G : « amont non validé » = statut À FAIRE/BLOQU�
 
 ## Suites
 
-1. Laisser R08 terminer (worker actif) ; dispatcher relâche R13 (ready), puis R10, puis R14.
-2. Dès R08+R10+R13+R14 done → relancer la validation G1 (partie intégrée + critères a-d) ;
+1. Laisser R10 terminer (worker actif, run 278) ; dispatcher relâche R12b (ready) puis
+   R14 (promu en ready dès R10 done).
+2. R12b re-baseline les fixtures probe sur la sim courante (post-R12/R13) ; dès
+   R10+R12b+R14 done → relancer la validation G1 (partie intégrée + critères a-d) ;
    sur succès G1 → débloquer la vague J2 (R15-R20) puis G2, etc.
 3. G7 produira le rapport de livraison régénéré au commit final (pas de réutilisation de BL-19).
