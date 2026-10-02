@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newSimState } from '../src/core/sim-state.mjs';
 import { buildBuilding } from '../src/infra/infra.mjs';
-import { tickPlanner } from '../src/flights/flights.mjs';
+import { tickPlanner, decideFlight } from '../src/flights/flights.mjs';
 import { tickAircraft } from '../src/sim/aircraft.mjs';
 import { tickEconomy, tickPassengers, onGateDeparted, periodStatement } from '../src/economy/economy.mjs';
 import { rebuildGraph } from '../src/pathfinding/path.mjs';
@@ -32,10 +32,14 @@ function buildSocle(sim) {
 }
 
 // Un tick de jeu sans l'UI : avions + économie + passagers + planificateur.
+// BL-16 (AC20) : le JEU décide — auto-accept (politique joueur) : les vols
+// planifiés s'acceptent seuls, comme la case du panneau ; la sim ne déploie
+// que les vols « accepted ».
 function step(sim, dt, random) {
   tickAircraft(sim, dt);
   tickEconomy(sim, dt);
   tickPassengers(sim, dt);
+  for (const e of sim.planning) if (e.status === 'planned') decideFlight(sim, e.id, true);
   tickPlanner(sim, dt, random);
 }
 

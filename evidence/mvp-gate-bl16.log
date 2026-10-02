@@ -1,0 +1,12 @@
+PASS serveur statique local démarré (serve.mjs) — port=8372
+PASS EV-3.1 nouvelle partie (touche N réelle, menu → jeu)
+PASS EV-3.2a conversion écran (lecture seule caméra, dans le canvas) — {"sx":1040,"sy":150,"cw":1280,"ch":900}
+PASS EV-3.2b construction réelle (B + 2 + clic souris) — taxiways 1 → 2
+PASS EV-3.3 vols exécutés — passagers transportés (AC7) — carried=122 t=203s phases=blocked
+PASS EV-3.4 finances : recettes générées — {"landing":200,"gate":100,"pax":1525}
+PASS EV-3.5 conflits de ressources (démolition → blocked/holding) — taxiways=1 (base 2) phases=blocked delayed=1
+PASS EV-3.6 sauvegarde réelle (touche S, présent en localStorage) — argent=12668
+PASS EV-3.7 RELOAD + touche R : reprise de la sauvegarde (la PORTE)
+PASS EV-3.8 reprise : l’état est restauré (passagers/argent conservés) — carried=122 taxiways=1 (attendu 1) money=12668 graph=null
+PASS R3/A6a le taxiway isolé est visible (pan réel en pause) — {"sx":725.7199999999893,"sy":349.3199999999891,"cw":1280,"ch":900}
+ÉCHEC session : timeout attente : démolition du taxiway isolé (R3/A7)

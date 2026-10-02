@@ -33,6 +33,23 @@
     .toast--ok { border-left-color: #43a047; }
     .toast--err { border-left-color: #e53935; }
     .toast--out { opacity: 0; }
+    /* Panneau planning (BL-16) : liste consultable des vols + accepter/refuser. */
+    .planning {
+      position: fixed; left: 12px; top: 12px; z-index: 10; max-width: 360px;
+      background: rgba(0,0,0,0.55); border-radius: 8px; padding: 8px;
+      font: 12px system-ui, sans-serif; color: #fff;
+    }
+    .planning h4 { margin: 0 0 4px; color: #b0bec5; font-size: 12px; }
+    .planning-row { display: flex; gap: 6px; align-items: center; padding: 2px 0; }
+    .planning-row span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .planning-row button {
+      background: #37474f; color: #fff; border: 1px solid #546e7a;
+      border-radius: 6px; padding: 2px 8px; cursor: pointer; font: 11px system-ui;
+      white-space: nowrap;
+    }
+    .planning-row button:last-of-type { border-color: #8d6e63; background: #4e342e; }
+    .planning-empty { color: #90a4ae; font-style: italic; margin: 2px 0; }
+    .planning-auto { display: flex; gap: 4px; align-items: center; color: #b0bec5; margin-top: 4px; }
   </style>
 </head>
 <body>

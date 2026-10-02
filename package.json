@@ -6,7 +6,7 @@
   "description": "Jeu de gestion d'aéroport 2D, local et hors ligne (Canvas 2D vanilla, 0 dépendance).",
   "scripts": {
     "serve": "node serve.mjs",
-    "test": "node --test tests/game.test.mjs tests/build-save.test.mjs tests/sim.test.mjs tests/new-game.test.mjs tests/invariants.test.mjs tests/passengers.test.mjs tests/finance-bl15.test.mjs",
+    "test": "node --test tests/game.test.mjs tests/build-save.test.mjs tests/sim.test.mjs tests/new-game.test.mjs tests/invariants.test.mjs tests/passengers.test.mjs tests/finance-bl15.test.mjs tests/planning.test.mjs tests/economy.test.mjs tests/compatibility.test.mjs",
     "qa": "node qa/cdp-boot.mjs"
   }
 }

@@ -36,7 +36,7 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
   bar.appendChild(demolishBtn);
   const hint = document.createElement('span');
   hint.className = 'toolbar-hint';
-  hint.textContent = 'B : construire · 1-6 : bâtiment · X : démolir · Échap : annuler';
+  hint.textContent = 'B : construire · 1-6 : bâtiment · X : démolir · A : auto-accept vols · Échap : annuler';
   bar.appendChild(hint);
   document.body.appendChild(bar);
 

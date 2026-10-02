@@ -6,7 +6,7 @@
 // est préservée par loadFromStorage (DIAG_KEY) et l'original reste en place.
 import { saveToStorage, loadFromStorage, hasSave } from '../persistence/save.mjs';
 
-export function makeSavePanel(state, { toast }) {
+export function makeSavePanel(state, { toast, syncPlanningPanel }) {
   // Enregistre l'état courant (manuel, touche S). Uniquement en jeu : sauvegarder
   // au menu écraserait la partie avec un état de menu inutilisable.
   function saveNow() {
@@ -50,6 +50,10 @@ export function makeSavePanel(state, { toast }) {
     state.sim = restored.sim || null;
     state.paused = false;
     state._alertSeen = 0; // les alertes restaurées sont déjà connues du joueur
+    // La préférence auto-accept (BL-16) est sur le state restauré : le DOM du
+    // panneau suit (le callback est fourni par main.mjs — la UI fine n'a pas
+    // l'objet du panneau, elle en émet la commande via l'hook).
+    syncPlanningPanel?.(); // la case auto-accept (BL-16) suit le state restauré
     toast('Jeu restauré', 'ok');
     return true;
   }

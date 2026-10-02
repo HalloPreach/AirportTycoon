@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { newSimState } from '../src/core/sim-state.mjs';
 import { buildBuilding } from '../src/infra/infra.mjs';
 import { rebuildGraph } from '../src/pathfinding/path.mjs';
-import { spawnArrivals } from '../src/flights/flights.mjs';
+import { spawnArrivals, decideFlight } from '../src/flights/flights.mjs';
 import { makeGameState } from '../src/core/new-game.mjs';
 import { tick } from '../src/core/tick.mjs';
 import { earn } from '../src/economy/economy.mjs';
@@ -69,7 +69,12 @@ test('AC17 / seed 42 : aéroport connecté — blocages finis, satisfaction ≠ 
   const random = rng(42);
   // 60 min simulées : les vols L arrivent et sont servis, la satisfaction
   // se stabilise loin de 0 (A13 d'origine : 0 % avec 10 avions bloqués).
-  for (let i = 0; i < 36000; i++) tick(state, 0.1, random);
+  // BL-16 (AC20) : le JEU décide — auto-accept chaque tick (case du panneau),
+  // la sim ne déploie que les vols « accepted ».
+  for (let i = 0; i < 36000; i++) {
+    for (const e of state.sim.planning) if (e.status === 'planned') decideFlight(state.sim, e.id, true);
+    tick(state, 0.1, random);
+  }
   const sim = state.sim;
   const blocked = sim.aircraft.filter((a) => a.phase === 'blocked').length;
   assert.equal(blocked, 0, `aucun avion bloqué en fin (seed 42) — trouvé ${blocked}`);

@@ -84,6 +84,26 @@ test('AC20 : un vol ACCEPTÉ arrive à son heure (planning → vol réel)', () =
   assert.equal(e.status, 'in-flight', 'le planning suit le vol en vol');
 });
 
+// BL-16 (AC20) : un vol JAMAIS ACCEPTÉ n'arrive jamais — même largement après
+// son horaire prévu, il reste dans le planning « planned » et ne produit AUCUN
+// avion. La décision est celle du JOUEUR (boutons du panneau / auto-accept) ;
+// le planificateur ne déploie que les vols « accepted ».
+test('AC20 (BL-16) : un vol JAMAIS accepté n\'arrive jamais (planned ≠ auto-déploiement)', () => {
+  const sim = connectedAirport();
+  const e = firstPlanned(sim, rng(7));
+  // Jamais de décision : on passe LARGEMENT l'heure prévue du vol.
+  for (let i = 0; i < 900; i++) tickPlanner(sim, 0.1, rng(7)); // + 90 s
+  assert.ok(!sim.aircraft.some((a) => a.id === e.id), 'aucun avion né du vol non décidé');
+  // Le vol reste CONSULTABLE (état « planned »), en attente de la décision joueur.
+  assert.ok(sim.planning.some((x) => x.id === e.id && x.status === 'planned'),
+    'le vol reste en liste, en attente de décision (pas purgé, pas déployé)');
+  // La décision JOUEUR change tout : l'acceptation déploie immédiatement
+  // (heure prévue déjà dépassée → avion né à la fenêtre suivante).
+  assert.equal(decideFlight(sim, e.id, true), true, 'acceptation tardive possible');
+  for (let i = 0; i < 610; i++) tickPlanner(sim, 0.1, rng(7));
+  assert.ok(sim.aircraft.some((a) => a.id === e.id), 'l\'avion EXISTE après acceptation');
+});
+
 test('AC20 : décision sur un vol inconnu → refus propre, pas de crash', () => {
   const sim = connectedAirport();
   assert.equal(decideFlight(sim, 999999, true), false, 'inexistant → aucun effet');

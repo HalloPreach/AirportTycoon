@@ -10,6 +10,7 @@ import { startLoop } from './core/loop.mjs';
 import { makeToasts } from './ui/toast.mjs';
 import { makeBuildTool } from './ui/build-tool.mjs';
 import { makeSavePanel } from './ui/save-panel.mjs';
+import { makePlanningPanel } from './ui/planning-panel.mjs';
 import { clearSave } from './persistence/save.mjs';
 import { makeGameState } from './core/new-game.mjs';
 
@@ -45,8 +46,25 @@ export function boot(canvas) {
     toasts.toast('Nouvelle partie — aéroport fourni, étends-le (B)', 'ok');
   }
 
+  // Panneau planning (BL-16, AC20) : liste consultable des vols + accepter/refuser
+  // + case auto-accept (politique JOUEUR — la décision sim reste decideFlight).
+  // (créé AVANT savePanel : le load synchronise la case sur state.planningAuto).
+  const planningPanel = makePlanningPanel({ state, toast: toasts.toast });
+  state.planningAuto = false; // la préférence est sur le STATE (sérialisé en entier)
+  // Touch A (et la case du panneau) basculent l'auto-accept ; le deux restent syncs.
+  function setPlanningAuto(on) {
+    state.planningAuto = on;
+    planningPanel.setAuto(on); // la case suit la touche (et inversement)
+    toasts.toast(on ? 'Auto-accept ON (touche A)' : 'Auto-accept OFF (touche A)', 'info');
+  }
+
   // Panneau sauvegarde (S sauvegarder, L charger).
-  const savePanel = makeSavePanel(state, { toast: toasts.toast });
+  const savePanel = makeSavePanel(state, {
+    toast: toasts.toast,
+    // Après un load : la préférence auto-accept est sur le state restauré —
+    // la case du panneau doit suivre (sinon le DOM et la logique se désynchronisent).
+    syncPlanningPanel: () => planningPanel.setAuto(!!state.planningAuto),
+  });
 
   // Alertes de la sim → toasts lisibles (on consomme les NOUVELLES seulement).
   // Les événements de la sim ont la forme { kind, why?, ... } (voir sim-state).
@@ -72,6 +90,14 @@ export function boot(canvas) {
     state._alertSeen = sim.alerts.length;
   });
 
+  // Planificateur : la case « auto-accept » (politique joueur, BL-16) s'applique
+  // avant le tick — les vols acceptés ici sont DÉPLOIÉS par la sim au prochain
+  // passage de son horaire (la sim ne décide jamais elle-même).
+  bus.on('frame', () => {
+    if (state.planningAuto) planningPanel.tickAuto();
+    planningPanel.refresh(); // reconstruction des lignes seulement si le planning a changé
+  });
+
   // Clavier global : les touches de déplacement restent dans input.mjs ;
   // ici les commandes UI (construire, sauvegarder, vitesse).
   const KINDS = ['runway', 'taxiway', 'terminal', 'fuel', 'hangar', 'catering'];
@@ -84,6 +110,7 @@ export function boot(canvas) {
     else if (k === 'l') savePanel.loadNow();
     else if (k === 'b') buildTool.toggleBuild();
     else if (k === 'x') buildTool.toggleDemolish();
+    else if (k === 'a') setPlanningAuto(!state.planningAuto);
     else if (k >= '1' && k <= '6') buildTool.setKind(KINDS[Number(k) - 1]);
   });
 

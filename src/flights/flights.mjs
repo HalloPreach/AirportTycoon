@@ -54,7 +54,10 @@ function windowClose(sim, rng) {
   }
 }
 
-// Déploie les vols planifiés / pré-acceptés dont l'heure prévue est atteinte.
+// Déploie les vols PRÉ-ACCEPTÉS dont l'heure prévue est atteinte.
+// BL-16 (AC20) : seuls les vols « accepted » se déploient — un vol resté
+// « planned » (jamais accepté) N'ARRIVE JAMAIS : le générateur invisible est
+// fini, c'est le JOUEUR qui décide (boutons du panneau ou case auto-accept).
 // Tolerance de 1 s : sim.time est une somme de dt flottants (dérive de ~1e-14),
 // l'heure prévue (un multiple de 60 s) ne doit pas rester éternellement
 // « pas encore à l'heure » à cause de l'arrondi binaire.
@@ -62,7 +65,7 @@ function deployDue(sim) {
   if (!sim.infra.runways.length) return; // rien à poser → pas de vols
   let deployed = 0;
   for (const e of sim.planning) {
-    if (e.status !== 'planned' && e.status !== 'accepted') continue; // in-flight/delayed = déjà avion
+    if (e.status !== 'accepted') continue; // planned = en attente de décision JOUEUR
     if (e.planned > sim.time + 1) continue; // pas encore son heure (tolérance 1 s)
     if (pendingCount(sim) + deployed >= MAX_PENDING) break; // plafond (A-5)
     sim.aircraft.push(makeAircraft(sim, e));
@@ -86,6 +89,7 @@ export function spawnArrivals(sim, dt, rng = Math.random) {
   if (!due) {
     const e = planOneFlight(sim, rng); // planOneFlight pousse dans sim.planning
     e.planned = sim.time ?? 0; // immédiat (pas d'attente de fenêtre)
+    e.status = 'accepted'; // spawn FORCÉ = pré-accepté (la décision joueur ne concerne que le flux planning/panneau)
   }
   deployDue(sim);
 }
