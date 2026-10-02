@@ -141,6 +141,11 @@ export function makeRenderer(canvas, { overlays = [] } = {}) {
     }
     if (sim && sim.passengers) {
       lines.push(`Passagers : ${sim.passengers.totalCarried} · ${Math.round(sim.passengers.satisfaction)} %`);
+      // BL-13 (AC22) : les files du parcours passagers sont VISIBLES (occupation
+      // lisible par étape) ; les capacités détaillées iront dans l'interface
+      // de gestion (BL-16).
+      const q = sim.passengers.queue;
+      if (q) lines.push(`Files : check-in ${Math.round(q.checkin)} · sécurité ${Math.round(q.security)} · attente ${Math.round(q.board)}`);
     }
     if (state.paused) lines.push('PAUSE (P pour reprendre)');
     const w = 240;

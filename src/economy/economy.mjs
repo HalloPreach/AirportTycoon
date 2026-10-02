@@ -1,5 +1,8 @@
 // Économie : revenus (vols + passagers), coûts (construction + exploitation),
-// déficit/faillite, satisfaction passagers. Logique pure, mutue sim.economy + sim.passengers.
+// déficit/faillite. Logique pure, mutue sim.economy.
+// La satisfaction + le parcours passagers ont déménagé dans src/sim/passengers.mjs
+// (BL-13, AC22/AC40) : `tickPassengers` est ré-exporté ici pour compatibilité
+// (tick.mjs et les tests l'importaient d'ici).
 // Recettes : atterrissage/porte au SOL, billets au DÉCOLLAGE.
 import { pushEvent } from '../core/sim-state.mjs';
 import { OPEX_PER_SEC } from '../data/catalog.mjs';
@@ -97,18 +100,5 @@ export function periodStatement(sim) {
   return { revenue, opex, fuel, invest, net, money: e.money, debt: e.debt, causes };
 }
 
-// Satisfaction : les services de confort la soutiennent, les retards la dégradent.
-// Mutue sim.passengers.satisfaction (0..100).
-export function tickPassengers(sim, dt) {
-  const p = sim.passengers;
-  // Les services de confort font remonter la satisfaction (max 100).
-  const comfort = (sim.infra.services.some((s) => s.type === 'catering') ? 0.2 : 0)
-                + (sim.infra.services.some((s) => s.type === 'maintenance') ? 0.1 : 0);
-  if (comfort) p.satisfaction = Math.min(100, p.satisfaction + comfort * dt);
-  // Retards ACTUELS (en holding / bloqués) → insatisfaction.
-  // BL-05 (A13) : on ne compte PAS `a.delayed > 0` — ce compteur cumulé n'est
-  // jamais remis à zéro, donc UN retard ancien condamnerait la satisfaction à
-  // 0 % définitivement (le spec exige une satisfaction évolutive).
-  const delayed = sim.aircraft.filter((a) => a.phase === 'holding' || a.phase === 'blocked').length;
-  if (delayed) p.satisfaction = Math.max(0, p.satisfaction - 0.2 * delayed * dt);
-}
+// tickPassengers : ré-export (le parcours passagers vit dans sim/passengers.mjs).
+export { tickPassengers } from '../sim/passengers.mjs';

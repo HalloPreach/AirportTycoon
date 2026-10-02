@@ -12,6 +12,7 @@ import { AIRCRAFT } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 import { onGateArrived, onGateDeparted } from '../economy/economy.mjs';
+import { arrivePassengers, countCarried, boardDelay } from './passengers.mjs';
 
 const V = { approach: 220, landing: 130, taxi: 60, pushback: 30, departure: 150 };
 const GATE_OPS_S = 60;   // débarquement+sol+embarquement : durée d'occupation porte
@@ -223,22 +224,39 @@ function doDocking(sim, ac, dt) {
 // débarquement → sol → embarquement. Chaque étape dure GATE_OPS_S/3.
 // On compte les passagers transportés à l'embarquement (critère 7).
 function doGate(sim, ac, dt) {
+  arrivePassengers(sim, ac); // le vol commence le déchargement (passagers agrégés)
   ac.phase = 'disembark';
   ac.timer = 0;
 }
 
 // OPÉRATIONS AU SOL : débarquement → sol → embarquement → pushback.
+// Le comptage des passagers (UNE fois, critère 7) se fait à la fin de
+// l'étape « board », à travers le module passagers (countCarried).
 function doOps(sim, ac, dt) {
   ac.timer += dt;
   const step = GATE_OPS_S / 3;
   if (ac.timer < step) return; // l'étape en cours dure GATE_OPS_S/3
-  if (ac.phase === 'disembark') { ac.phase = 'ground'; ac.timer = 0; }
-  else if (ac.phase === 'ground') { ac.phase = 'board'; ac.timer = 0; }
-  else if (ac.phase === 'board') {
-    sim.passengers.totalCarried += ac.pax; // les passagers montent
-    ac.phase = 'pushback';
+  if (ac.phase === 'disembark') {
+    ac.phase = 'ground';
     ac.timer = 0;
+    return;
   }
+  if (ac.phase === 'ground') {
+    const delay = boardDelay(sim, ac); // saturation files → embarquement retardé (AC22)
+    ac.phase = 'board';
+    ac.timer = -delay; // l'étape embarquement démarre retardée (timer négatif)
+    return;
+  }
+  if (ac.phase === 'board') {
+    // Le retard (timer négatif) doit s'écouler avant le comptage.
+    if (ac.timer < step) return;
+    if (!ac.counted) {
+      countCarried(sim, ac); // les passagers montent : comptés UNE fois
+      ac.counted = true;     // le re-tick « board » ne recompte jamais (AC40)
+    }
+  }
+  ac.phase = 'pushback';
+  ac.timer = 0;
 }
 
 // PUSHBACK : on sort de la porte (chemin inverse : porte → nœud de piste).

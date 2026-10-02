@@ -19,7 +19,11 @@ export function newSimState() {
     aircraft: [],    // un vol en cours de cycle (voir sim/aircraft.mjs)
     planning: [],    // vols planifiés (pas encore arrivés) : {id, airline, acType, pax, planned, status}
     nextAcId: 1,
-    passengers: { totalCarried: 0, satisfaction: 100 },
+    // Passagers agrégés (BL-13, AC22/AC40) : total transporté (compté UNE fois
+    // à l'embarquement), satisfaction évolutive, groupes en cours + files par
+    // étape (check-in/sécurité/embarquement) — voir src/sim/passengers.mjs.
+    passengers: { totalCarried: 0, satisfaction: 100,
+                  queue: { checkin: 0, security: 0, board: 0 }, groups: [] },
     economy: { money: START_FUNDS, revenue: {}, spent: {}, debt: 0, bankrupt: false },
     alerts: [],      // événements lisibles pour l'UI (toasts/alertes)
     time: 0,         // horloge de la sim (pilotée par le planificateur : sim.time += dt)
