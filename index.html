@@ -50,6 +50,15 @@
     .planning-row button:last-of-type { border-color: #8d6e63; background: #4e342e; }
     .planning-empty { color: #90a4ae; font-style: italic; margin: 2px 0; }
     .planning-auto { display: flex; gap: 4px; align-items: center; color: #b0bec5; margin-top: 4px; }
+    /* R19 — sections « à décider / en cours » + note de décision + filtres. */
+    .planning-sec { margin: 4px 0 2px; color: #90a4ae; font-size: 11px; font-weight: 600; }
+    .planning-note { color: #b0bec5; font-style: italic; }
+    .planning-filters { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+    .planning-filter {
+      background: #263238; color: #b0bec5; border: 1px solid #455a64;
+      border-radius: 6px; padding: 1px 6px; cursor: pointer; font: 10px system-ui;
+    }
+    .planning-filter.on { background: #455a64; color: #fff; border-color: #90a4ae; }
     /* Panneaux NONMVP-5 (inspection, bilan, stats, alertes, diagnostic réseau) :
        colonne en bas à droite, sous les toasts ; défile si trop haute. */
     .panels {

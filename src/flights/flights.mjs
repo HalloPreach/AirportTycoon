@@ -15,7 +15,8 @@ import { AIRLINES, AIRCRAFT } from '../data/catalog.mjs';
 import { runwayFor } from '../infra/infra.mjs'; // R05 : critère de compatibilité piste = UNE seule fonction (infra.mjs)
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
-import { isSurge, runwayClosed } from '../sim/incidents.mjs';
+import { isSurge, runwayClosed, fuelOut } from '../sim/incidents.mjs';
+import { PAX_REVENUE, PAX_REVENUE_DRY, LANDING_FEE, GATE_FEE, FUEL_COST_PER_PAX } from '../economy/economy.mjs';
 
 const SPAWN_EVERY_S = 60;  // cadence d'une fenêtre (x4 raisonnable)
 export const MAX_PENDING = 4; // plafond UNIQUE d'arrivées (A-5) : au-delà, on n'en fait plus arriver
@@ -282,6 +283,62 @@ export function attributeFlight(sim, acType) {
   else if (!accessible) cause = 'réseau coupé : le taxiway ne relie pas piste et porte';
   else if (!available) cause = 'aérogare saturée (plafond d’arrivées)';
   return { acType, compatible, available, accessible, alternatives, cause };
+}
+
+// R19 (t_f69dd9c9) — note de DÉCISION d'une offre du planning (offre « planned »)
+// : les chiffres (taille/pax/revenu estimé) et les OBSTACLES/RISQUES, pour que
+// le panneau planning soit un outil de décision, pas une liste muette.
+// Règle de sim (exportée), l'UI (planning-panel.mjs) la rend seulement :
+//   - compatibilité = le MÊME critère unique que attributeFlight (piste assez
+//     longue + porte de la bonne taille, infra.mjs) — pas de 2e règle ;
+//   - revenu estimé = hypothèse LISIBLE, jamais une promesse :
+//     billets (pax × PAX_REVENUE, onGateDeparted, MOITIÉS sans station
+//     carburant — ac._dryDeparture) + droits atterrissage/porte (onGateArrived)
+//     carburant (FUEL_COST_PER_PAX, onGateDeparted) — les 4 montants viennent
+//     de economy.mjs (source unique, pas de chiffres copiés ici) ;
+//     le préfixe « estimé » + la satisfaction qui multiplie earn() (economy.mjs)
+//     rappellent que c'est une estimation, pas un chiffre garanti ;
+//   - risques : ce qui peut DETERIORER le vol une fois accepté (file d'arrivées
+//     au plafond MAX_PENDING, station carburant en panne → billets moitiés).
+//     « Risque » ≠ « obstacle » : l'obstacle rend l'offre impossible (la sim
+//     l'explique via le cause d'attributeFlight) ; le risque ne bloque pas,
+//     il a un coût (pas de promesse de rentabilité certaine — critère R19).
+// C'est une FONCTION PURE de lecture (pas de mutation de sim) — l'UI peut
+// l'appeler à chaque rendu sans effet de bord.
+export function planNote(sim, e) {
+  const ac = AIRCRAFT[e.acType] || {};
+  if (!ac.name) {
+    // Type d'avion inconnu (entrée corrompue) : obstacle explicite, pas de
+    // crash — attributeFlight lirait un spec absent.
+    return { compatible: false, obstacles: [`avion inconnu (${e.acType})`], risks: [], revenue: 0, spec: {} };
+  }
+  const attr = attributeFlight(sim, e.acType); // MÊME critère que la sim (R05)
+  const obstacles = [];
+  if (!attr.compatible) {
+    // L'offre est IMPOSSIBLE : l'obstacle est EXPLIQUÉ (cause lisible) —
+    // critère R19 « une offre impossible explique son obstacle ».
+    obstacles.push(attr.cause);
+  }
+  // Risque 1 : saturation des arrivées (plafond A-5) — le vol sera en attente
+  // (holding), retard. Le plafond est le MÊME MAX_PENDING que le déploiement.
+  const pending = sim.aircraft.filter((a) => ['approach', 'holding', 'landing', 'blocked'].includes(a.phase)).length;
+  const risks = [];
+  if (pending >= MAX_PENDING) risks.push(`file d'arrivées saturée (${pending}/${MAX_PENDING}) : retard probable`);
+  // Risque 2 : station carburant ABSENTE ou EN PANE → départ sec, billets
+  // moitiés (la pénalité existe, elle est lisible AVANT la décision).
+  const hasFuelStation = sim.infra.services.some((s) => s.type === 'fuel');
+  if (!hasFuelStation) risks.push('pas de station carburant : départ sec (billets moitiés)');
+  else if (fuelOut(sim)) risks.push('panne station carburant en cours : départ sec probable (billets moitiés)');
+  // Revenu estimé (hypothèse, non garantie) — montants de economy.mjs.
+  const revenue = (e.pax ?? 0) * (hasFuelStation ? PAX_REVENUE : PAX_REVENUE_DRY)
+    + LANDING_FEE + GATE_FEE - (e.pax ?? 0) * FUEL_COST_PER_PAX;
+  return {
+    compatible: attr.compatible,
+    obstacles,   // [] si servable ; sinon le motif (piste/porte/réseau)
+    risks,       // [] si rien ; sinon les risques sans promesse de rentabilité
+    revenue,     // estimé (hypothèse) — le préfixe « estimé » est à l'UI
+    spec: ac,    // taille/charge (seats) pour l'affichage
+  };
 }
 
 // Le réseau relie-t-il la sortie de piste à UNE porte de la bonne taille ?

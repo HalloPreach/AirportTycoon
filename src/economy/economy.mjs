@@ -7,7 +7,16 @@
 import { pushEvent } from '../core/sim-state.mjs';
 import { OPEX_PER_SEC } from '../data/catalog.mjs';
 
-const FUEL_COST_PER_PAX = 0.5;   // carburant : coûté au départ (critère carburant)
+export const FUEL_COST_PER_PAX = 0.5;   // carburant : coûté au départ (critère carburant)
+// R19 : les montants UNITAIRES du cycle avion (billets, droits, carburant) sont
+// exportés : planNote (flights.mjs) les réutilise pour le « revenu estimé »
+// (hypothèse lisible de l'offre planning) — UNE seule source, pas de chiffres
+// copiés dans l'UI. PAX_REVENUE : billets pleins ; sans station carburant le
+// départ est SEC (ac._dryDeparture) → billets MOITIÉS (PAX_REVENUE_DRY).
+export const PAX_REVENUE = 25;
+export const PAX_REVENUE_DRY = 12.5;  // billets moitiés (départ sec, BL-12)
+export const LANDING_FEE = 200;       // droits d'atterrissage (onGateArrived)
+export const GATE_FEE = 100;          // redevance porte (onGateArrived)
 const BANKRUPT_LIMIT = -10000;   // solde sous ce seuil = faillite
 // BL-15 (AC6) : un vol ANNULLÉ (blocage persistant, A-5) coûte une indemnité
 // passagers (compte spent.compensation, pas une recette négative — même
@@ -54,10 +63,10 @@ export function earn(sim, amount, cat) {
   sim.economy.revenue[cat] = (sim.economy.revenue[cat] ?? 0) + m;
 }
 
-// Atterri au sol : droits d'atterrissage + redevance porte.
+// Atterri au sol : droits d'atterrissage + redevance porte (constantes R19).
 export function onGateArrived(sim, ac) {
-  earn(sim, 200, 'landing');
-  earn(sim, 100, 'gate');
+  earn(sim, LANDING_FEE, 'landing');
+  earn(sim, GATE_FEE, 'gate');
 }
 
 // Départ : recettes passagers (billets), puis carburant en DÉPENSE dédiée.
