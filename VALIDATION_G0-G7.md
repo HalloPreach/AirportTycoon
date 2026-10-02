@@ -3,6 +3,9 @@
 Date : 2026-10-02. Commit testé : `e3dc3fc` (HEAD, 15 commits au-dessus de `origin/main`).
 Mise à jour t_8d22ad76 (root, 2026-10-02) : statut live 13 done (G0, R01-R09, R11, R12,
 R13 `115eb69`) / R10 running (run 278) / R12b ready / R14 + G2-G7 todo.
+Mise à jour t_6929c5cf (G1, 2026-10-02) : **G1 VALIDÉ** sur `2369c67` (suite 174/174,
+partie intégrée `qa/g1-integrated.mjs` 15/15, porte CDP mvp-gate 18/18) ; la vague J2
+(R15-R20) est libérée, G2 (t_93b886f9) attend R15-R20.
 Cartes du jalon : 51 (43 R + 8 G), graphe 186 arêtes, acyclique, 0 doublon
 (`qa/_final-check.cjs` : 186/186 présentes, 0 manquantes, acyclique OUI, doublons aucun).
 Suite complète : `npm test` = **147/147 PASS, 0 fail** (relancé aujourd'hui sur `e3dc3fc`).
@@ -16,8 +19,8 @@ lu en lecture seule (`qa/_g-status.cjs`, `qa/_r08-lock.cjs`).
 | Gate | Jalon | Statut | Justification |
 |------|-------|--------|---------------|
 | G0 | Référence (J0) | **VALIDÉ** | 4 critères (a)-(d) relancés et passés sur `e3dc3fc` (§ G0) |
-| G1 | Fiabilité (J1) | **BLOQUÉ** | R10 (running) + R14 (todo) non livrées ; R13 livrée `115eb69`, R08 `21b7ad7` (critère a non satisfait) (§ G1) |
-| G2 | Compréhension (J2) | **BLOQUÉ** | cascade : R15-R20 en todo (amont J1 non validé) (§ G2-G7) |
+| G1 | Fiabilité (J1) | **VALIDÉ** | `2369c67` : 12 prérequis R03-R14 clos avec preuve (suite 174/174) + partie intégrée `qa/g1-integrated.mjs` 15/15 + porte CDP 18/18 (§ G1) |
+| G2 | Compréhension (J2) | **BLOQUÉ** | cascade : R15-R20 en todo (amont J1 VALIDÉ, à exécuter) (§ G2-G7) |
 | G3 | Progression (J3) | **BLOQUÉ** | cascade : R21-R26 en todo (amont J1+J2 non validés) |
 | G4 | Exploitation (J4) | **BLOQUÉ** | cascade : R27-R31 en todo (amont J3 non validé) |
 | G5 | Risque (J5) | **BLOQUÉ** | cascade : R32-R35 en todo (amont J4 non validé) |
@@ -73,43 +76,64 @@ Critères de la carte (t_1263a756) : (a) référence au commit réellement exami
   (runway 84 / fuel 119 / surge 306), faillite non → **PASS** (`evidence/g0-bl17-recheck/`).
 - **G0 = done** sur le Kanban (t_1263a756), cohérent avec le présent résultat.
 
-## G1 — Fiabilité (J1) : BLOQUÉ (t_6929c5cf)
+## G1 — Fiabilité (J1) : VALIDÉ sur `2369c67` (t_6929c5cf)
 
-Critère (a) : « chaque R03-R14 fermée avec preuve test/sim ». État des 12 prérequis :
+Critère (a) : « chaque R03-R14 fermée avec preuve test/sim ». Les 12 prérequis sont
+tous livrés et leur preuve est dans la suite (relancée aujourd'hui, **174/174 PASS**) :
 
-| R | Statut | Note |
-|---|--------|------|
-| R03 chemins après rebuild | done `843dd65` ✓ | inval+recalcul depuis position actuelle |
-| R04 réservation explicite | done t_3de644b3 ✓ | piste/segment/porte explicites |
-| R05 critères piste/port | done `e3dc3fc` ✓ | centralisés, sondage gain 2e piste |
-| R06 auto-accept unifiée | done t_c932707c ✓ | `state.planningAuto` source unique |
-| R07 inspection vivante | done t_232419f6 ✓ | signature état objet suivi |
-| **R08 lances en panne** | done ✓ (après coupure) | livrée `21b7ad7` : acquisition/libération lance CENTRALISÉE (acquireLance/releaseLance), test `tests/r08-lances.test.mjs` (suite 147→**153/153**) ; au moment de la coupe R08 était running, R10 a repris la file |
-| R09 PRNG | done `356e15b` ✓ | seed mélangé dans mulberry32, 2 seeds → 2 suites |
-| **R10 rejets lisibles + migration** | **running** ✗ | run en cours (pris dans la file après R08) ; prérequis R03-R09 tous done |
-| R11 coûts obligatoires | done t_eef3e9c8 ✓ | débit même en déficit, achat facultatif seul refusé |
-| R12 réconciliation | done `92ef251` ✓ | dette 1×, EV-9 tient, dette en ligne du bilan |
-| **R13** | done `115eb69` ✓ (après coupure) | plafond sur `pendingCount` seul (4/4 → 4, 2 → 2, 0 → 0), déploiement à chaque tick, offre expirée 10 min, `MAX_PENDING` exporté ; preuve `tests/r13-deployment.test.mjs` 5/5, suite 158/158 |
-| **R14** | **todo** ✗ | verrouillée derrière R10/R13 (prérequis R03-R13) |
+| R | Preuve (tests) |
+|---|----------------|
+| R03 chemins après rebuild | `tests/invariants.test.mjs` (A7/A8 + 4 scénarios R03) |
+| R04 réservation explicite | `tests/invariants.test.mjs` (3 tests R04 : annulation bornée, porte libérée, piste fermée) |
+| R05 critères piste/port | `tests/r05-runway.test.mjs` (7 tests, centralisation `infra.mjs`) |
+| R06 auto-accept unifiée | `tests/new-game.test.mjs` + `tests/planning-panel.test.mjs` (7 tests R06) |
+| R07 inspection vivante | `tests/panels.test.mjs` (2 tests R07 : le panneau suit l'objet suivi, pick invalidé) |
+| R08 lances en panne | `tests/r08-lances.test.mjs` (acquisition/libération centralisée `acquireLance/releaseLance`) |
+| R09 PRNG | rejeux seeds 42/99 divergents (`evidence/r09-seed-42/99/`) + test dans la suite |
+| R10 rejets lisibles | `tests/r10-save-validation.test.mjs` (version stricte, ids doublés, type inconnu, réservations des deux côtés, chemin, files) |
+| R11 coûts obligatoires | test « débit même en déficit, achat facultatif seul refusé » (scénario R11 de la suite) |
+| R12 réconciliation | `tests/r12-reconciliation.test.mjs` (EV-9 : `money = START + rec − dep − debt`) |
+| R13 déploiement/plafond | `tests/r13-deployment.test.mjs` (5 tests : 4/4→4, 2→2, 0→0, expiration 10 min) |
+| R14 erreurs/volume | `tests/r14-history.test.mjs` (journal borné 500, tick injectable) |
 
-Justification du BLOQUÉ (état t_8d22ad76) : 2/12 prérequis non livrés (R10 running,
-R14 todo) → critères (a) et (b) (partie intégrée) inaccessibles. Les preuves partielles
-déjà présentes sont notées pour accélérer la validation : R09 (2 seeds → 2 suites ✓),
-R11/R12 (déficit réel + identité trésorerie, tests R12 dans la suite 147/147 ✓),
-R05 (test piste occupée ✓), R13 (`115eb69`, plafond + déploiement, 158/158 ✓),
-avant/après D1/D2 (commits `7c84ff4`, `48abf79`).
-À relancer : G1 dès que R10 + R14 sont done (R08 `21b7ad7` et R13 `115eb69` déjà livrées)
-— le worker R10 est actif, non perturbé (protocole checkout partagé). La re-baseline
-fixtures probe (R12b, ready) doit précéder la partie intégrée : elle re-baseline
-`evidence/` sur la sim courante post-R12/R13 (invariant : les captures d'anciens commits
-ne valident pas les changements courants).
+Critère (b) : « le scénario intégré du jalon est exercé au niveau sim, non seulement
+les tests unitaires » — **`qa/g1-integrated.mjs`** (harnais unique, cœur de production
+`tick.mjs` + PRNG semé, zéro fixture) relancé aujourd'hui sur `2369c67` : **15/15**
+(`evidence/g1-integrated/rapport-g1-integrated.json`) :
+
+- sans crash : 172 800 ticks (48 h, seed 42, dt 1 s) avec invariants par tick
+  (money/pax/positions finies, phases connues) — aucun échec ;
+- construction de la 2e piste (chargée en invest), démolition d'un service (refund
+  lisible), panne carburant forcée (événement `fuel-out`), indemnité R11 débitée en
+  déficit (`-1000 → -1500`, comp 500), journal R14 borné (max=500) ;
+- save → load → reprise : état restauré (argent/horloge/avions), préférence R06
+  restaurée, **PRNG restauré** (seed 42, counter 9259 → reproductible), graphe dérivé
+  reconstruit (`_graph=null + dirty`), 2e tick post-load sans plantage, **zéro
+  réservation fantôme des deux côtés**, aucune lance occupée après panne ;
+- issue saine : money 12 000 → 3 124 942.66 $ (dette 0), net 3 112 942.66,
+  pax 240 707, faillite non ;
+- état exporté (`state-g1-integrated.json`) ; rapport `rapport-g1-integrated.json`.
+
+Limite UI du jalon (consignée, spec G1) : la partie intégrée exerce le CŒUR au niveau
+sim. La preuve navigateur de la PORTE (nouvelle partie, construction, vols, démolition,
+sauvegarde + RELOAD + reprise) est le CDP **mvp-gate relancé aujourd'hui : 18/18**
+(`evidence/mvp-gate/` : `rapport.txt`/`rapport.json` + 6 captures), zéro exception page,
+toutes requêtes locales. Les goulots UI de J2+ (unités lisibles, overlay réseau,
+planning décisionnel) sont hors périmètre G1 et attendus par R15-R20 → G2.
+
+Statut final : **G1 VALIDÉ** sur `2369c67` — les 12 prérequis R03-R14 sont clos avec
+preuve, la partie intégrée est saine (critère a+b), la limite UI est consignée ci-dessus.
+La vague J2 (R15-R20) est libérée ; G2 (t_93b886f9) reste en todo tant que R15-R20 ne
+sont pas livrées (règle : un G ne se valide pas sur le seul nombre de cartes).
 
 ## G2-G7 — BLOQUÉS en cascade
 
 Aucune carte R15-R43 n'est exécutée (toutes `todo`, aucun run) et chaque jalon exige
 l'amont validé (règle des G : « amont non validé » = statut À FAIRE/BLOQUÉ, pas VALIDÉ) :
 
-- **G2** ← R15-R20 (todo, gated J1) — 1er cycle navigateur : non exécutable, amont J1 bloqué.
+- **G2** ← R15-R20 (todo, LIBÉRÉES par G1 — amont J1 validé `2369c67`) : le 1er cycle
+  navigateur (unités, overlay, planning) sera exercé dès R15-R20 livrées ; G2 (t_93b886f9)
+  reste en todo tant que les 6 cartes ne sont pas closes.
 - **G3** ← R21-R26 (todo, gated J1+J2) — progression/contrats : non exécutable.
 - **G4** ← R27-R31 (todo, gated J3) — 2 terminaux/exploitation : non exécutable.
 - **G5** ← R32-R35 (todo, gated J4 ; note fixtures D5) — risque/déficit : non exécutable.
@@ -140,9 +164,8 @@ l'amont validé (règle des G : « amont non validé » = statut À FAIRE/BLOQU�
 
 ## Suites
 
-1. Laisser R10 terminer (worker actif, run 278) ; dispatcher relâche R12b (ready) puis
-   R14 (promu en ready dès R10 done).
-2. R12b re-baseline les fixtures probe sur la sim courante (post-R12/R13) ; dès
-   R10+R12b+R14 done → relancer la validation G1 (partie intégrée + critères a-d) ;
-   sur succès G1 → débloquer la vague J2 (R15-R20) puis G2, etc.
+1. G1 VALIDÉ (`2369c67`) : la vague J2 est libérée — dispatcher relâche R15-R20
+   (parents = G1 + les R de J1) puis G2 (t_93b886f9) dès R15-R20 done.
+2. G2 exercera le 1er cycle navigateur (unités R15, finances périodiques R16, goulots
+   R17, overlay réseau R18, planning décisionnel R19, intro R20) ; G3-G7 en cascade.
 3. G7 produira le rapport de livraison régénéré au commit final (pas de réutilisation de BL-19).
