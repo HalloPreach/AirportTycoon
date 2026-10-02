@@ -27,10 +27,10 @@ mais les preuves des cartes + le scénario intégré du jalon. Sur prérequis no
 le G reste ouvert, jamais `done` — d'où le statut BLOQUÉ (justifié) et non VALIDÉ pour
 G1-G7. Aucune carte G n'est passée en `done` sans prérequis.
 
-État Kanban vérifié (live, `qa/_g-status.cjs`, à la coupure) : 12 done (R01, R02, G0,
-R03-R12), R10 running (pris dans la file), R13 ready, R14 + le reste todo. Le board
-reflète l'état réel ; les statuts n'ont pas été modifiés (tous cohérents), la
-justification des blocages est portée ici + en commentaire sur G1.
+État Kanban vérifié (live, `qa/_g-status.cjs`, à la coupure) : 12 done (R01-R12, G0),
+R10 running, R13 ready, R14 + le reste todo. Le board reflète l'état réel ; les statuts
+n'ont pas été modifiés (tous cohérents), la justification des blocages est portée ici +
+en commentaire sur G1 (comment_ids 163/164).
 
 ## G0 — Référence (J0) : VALIDÉ sur `e3dc3fc`
 
