@@ -10,7 +10,7 @@
 // clics ne partent pas).
 import { periodStatement } from '../economy/economy.mjs';
 import { findPath, runwayExitNode } from '../pathfinding/path.mjs';
-import { AIRCRAFT, AIRLINES, BUILDINGS } from '../data/catalog.mjs';
+import { AIRCRAFT, AIRLINES, BUILDINGS, opexPerMin, opexPerHour } from '../data/catalog.mjs';
 
 const PHASES_FR = Object.freeze({
   approach: 'approche', holding: 'attente', landing: 'atterrissage', exit: 'sortie de piste',
@@ -143,6 +143,11 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
           line(body, `${def.name} #${b.id}`, `${b.w}×${b.h} px`);
           line(body, 'Coût d’origine', money(b.cost));
           line(body, 'Remboursement démolition', money((b.cost || 0) * def.sellRefund));
+          // R15 : l'exploitation est nommée en $/min ET $/h — le /min affiché
+          // EST le débit constaté sur 60 s de jeu (la sim débite opexPerMin sur
+          // 60 s de jeu ; les chiffres viennent d'OPEX_PER_SEC via les accès).
+          const pm = opexPerMin(b.type), ph = opexPerHour(b.type);
+          if (pm > 0) line(body, 'Exploitation', `${money(pm)} /min · ${money(ph)} /h`);
           if (b.type === 'runway') line(body, 'Longueur', `${b.len} px`);
           if (b.type === 'terminal') {
             const gates = (sim.infra.gates || []).filter((g) => g.terminalId === b.id);

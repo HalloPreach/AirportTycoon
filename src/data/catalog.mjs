@@ -13,19 +13,31 @@ export const BUILDINGS = Object.freeze({
   baggage:  { name: 'Salle bagages', cost: 900, w: 100, h: 80, sellRefund: 0.5 },
 });
 
-// ponytail: coût horaire (le tick est en secondes de jeu) — 400/jour ≈ 16,7/h,
-// réparti socle (A12 : l'argent diminue MÊME sans vol) + services construits.
+// Exploitation (A12 : l'argent diminue MÊME sans vol) + services construits.
+// R15 : l'unité interne unique est la SECONDE DE JEU — OPEX_PER_SEC donne le
+// débit en $ par seconde de JEU (source de vérité, pas de 2e unité). Un tick
+// avance de `dt` secondes de jeu et débite OPEX_PER_SEC[type] * dt ; à vitesse
+// x4 la sim consomme 4× de s de jeu par seconde réelle, donc 4× de débit.
+// Le socle (piste + taxiway + terminal) fait 3,2 $/s ≈ 11 520 $/h
+// (≈ 276 k$/jour, ≈ 553 k$/48 h — cf. la note « ~550 k$/48 h » de sim-state).
 export const OPEX_PER_SEC = Object.freeze({
-  runway: 1.2,     // piste : 230,4 $/jour
-  taxiway: 0.2,    // 4,8 $/jour
-  terminal: 1.8,   // 43,2 $/jour
-  fuel: 4,
-  hangar: 2,
+  runway: 1.2,     // piste : 72 $/min, 4 320 $/h
+  taxiway: 0.2,    // 12 $/min, 720 $/h
+  terminal: 1.8,   // 108 $/min, 6 480 $/h
+  fuel: 4,         // 240 $/min, 14 400 $/h
+  hangar: 2,       // 120 $/min, 7 200 $/h
   maintenance: 1.5,
-  catering: 2.5,
-  cleaning: 2,
-  baggage: 2,
+  catering: 2.5,   // 150 $/min, 9 000 $/h
+  cleaning: 2,     // 120 $/min, 7 200 $/h
+  baggage: 2,      // 120 $/min, 7 200 $/h
 });
+// R15 : unités LISIBLES dérivées d'OPEX_PER_SEC (pas d'état parallèle) — le
+// « coût affiché par minute » d'un bâtiment = opexPerMin(type) = le débit
+// effectivement constaté sur 60 s de jeu (la sim débite opexPerMin sur 60 s).
+// Les sondes (qa/probe-scenario.mjs) importent ces accès pour comparer
+// affiché vs débit constaté. perMin = /s × 60, perH = /s × 3600.
+export const opexPerMin = (type) => (OPEX_PER_SEC[type] ?? 0) * 60;
+export const opexPerHour = (type) => (OPEX_PER_SEC[type] ?? 0) * 3600;
 
 // Catégories d'avions : ce qui contraint l'infra (piste assez longue, porte de la bonne taille).
 export const AIRCRAFT = Object.freeze({

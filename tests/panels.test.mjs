@@ -17,6 +17,7 @@ import { newSimState } from '../src/core/sim-state.mjs';
 import { buildBuilding } from '../src/infra/infra.mjs';
 import { rebuildGraph, findPath, runwayExitNode } from '../src/pathfinding/path.mjs';
 import { periodStatement } from '../src/economy/economy.mjs';
+import { opexPerMin, opexPerHour } from '../src/data/catalog.mjs';
 import { makePanels } from '../src/ui/panels.mjs';
 
 // Aéroport CONNECTÉ (plan des tests, BL-02) : piste + taxiway + terminal qui
@@ -325,4 +326,26 @@ test('R07 : invalidate() à la nouvelle partie vide le pick (pas d\'avion fantô
   assert.ok(!panelText.includes('Avion #42'), 'le panneau ne montre plus l\'avion de l\'ancienne partie');
   assert.ok(panelText.includes('Cliquez sur un avion') || panelText.includes('aucun'),
     'le panneau retourne à l\'état par défaut (pas un « parti » stale)');
+});
+
+// --- R15 : l'unité financière lisible du panneau ---------------------------
+// Le panneau d'inspection d'un bâtiment affiche l'exploitation en $/min ET $/h.
+// Les chiffres viennent de OPEX_PER_SEC via opexPerMin/opexPerHour (la MÊME
+// source que les règles) → ce qui est AFFICHÉ par minute = le débit constaté
+// sur 60 s de jeu (prouvé dans tests/r15-units.test.mjs). Ici on prouve que le
+// PANNEAU lit bien ces valeurs (contrat UI) et les affiche correctement.
+test('R15 : l\'inspection d\'un bâtiment affiche l\'exploitation en $/min · $/h (données des règles)', () => {
+  const state = { screen: 'game', sim: connectedAirport() };
+  const { panels, canvas } = wireR07Panels(state);
+  const rw = state.sim.infra.runways[0];
+  // Le dummy camera (screenToWorld = identité) → offsetX/Y = coordonnées MONDE :
+  // un clic à l'intérieur de la piste la sélectionne (l'outil de construction est inactif).
+  canvas.fire('click', { offsetX: rw.x + 10, offsetY: rw.y + 10 });
+  panels.refresh(); // le pick est actif → le panneau d'inspection peint la piste
+  const money = (v) => `${Math.round(v).toLocaleString('fr-FR')} $`;
+  const expected = `${money(opexPerMin('runway'))} /min · ${money(opexPerHour('runway'))} /h`;
+  const panelText = JSON.stringify(panels.col.children);
+  assert.ok(panelText.includes('Exploitation'), 'la ligne Exploitation existe');
+  assert.ok(panelText.includes(expected),
+    `le /min·/h affiché = le dérivé des règles (${expected})`);
 });

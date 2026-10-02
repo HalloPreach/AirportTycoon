@@ -67,7 +67,7 @@ import { decideFlight } from '../src/flights/flights.mjs';
 import { forceIncident } from '../src/sim/incidents.mjs';
 import { buildBuilding, hasService } from '../src/infra/infra.mjs';
 import { passengerSummary } from '../src/sim/passengers.mjs';
-import { UNLOCKS, OPEX_PER_SEC } from '../src/data/catalog.mjs';
+import { UNLOCKS, opexPerHour } from '../src/data/catalog.mjs';
 import { START_FUNDS } from '../src/core/sim-state.mjs';
 import { periodStatement } from '../src/economy/economy.mjs';
 
@@ -273,7 +273,7 @@ const report = {
     gates: sim.infra.gates.length,
     services: sim.infra.services.map((s) => s.type),
   },
-  servicesOpexPerHour: sim.infra.services.reduce((a, s) => a + (OPEX_PER_SEC[s.type] ?? 0) * 3600, 0),
+  servicesOpexPerHour: sim.infra.services.reduce((a, s) => a + opexPerHour(s.type), 0),
   determinism: {
     note: 'R09 (livré) : rejouer cette configuration (mêmes args, même commit) donne des fichiers IDENTIQUES en bytes. Les seeds différents DONNENT DES PARTIES DIFFÉRENTES (le seed est mélangé dans mulberry32 — preuve : evidence/r09-seed-42 vs r09-seed-99). Rejouer une config d’AVANT R09 avec seed 0 reste bit-à-bit la suite d’origine (migration).',
     rngSeed: sim.rngSeed,
