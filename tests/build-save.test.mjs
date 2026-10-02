@@ -54,13 +54,15 @@ test('une sauvegarde vide est refusée', () => {
 });
 
 // --- Construction via la sim (surface de l'UI) -----------------------------
-// Ces tests n'exécutent que si la sim est présente (autre milestone). La sim
-// importe des modules qui doivent exister ; sinon on saute proprement.
+// La sim (src/core/sim.mjs) est le pont UI ; les modules de sim importés ici
+// EXISTENT : si le pont est cassé, le test DOIT ÉCHOUER (pas de retour
+// silencieux — A14/R7 : un test qui « saute » quand la sim manque était un
+// faux positif).
 
 test('construire puis démolir un bâtiment (sim) — remboursement partiel', async () => {
   const m = await import('../src/core/sim.mjs').catch(() => null);
   const sim = m ? await m.freshSimState() : null;
-  if (!sim) { console.log('SKIP : sim pas encore prête'); return; }
+  assert.ok(sim, 'la sim doit être chargée — sinon ce test est muet (faux positif A14/R7)');
   const { buildBuilding, demolishBuilding } = await import('../src/infra/infra.mjs');
   const b = buildBuilding(sim, 'runway', 200, 200);
   assert.ok(b, 'une piste se pose sur un aéroport vierge');
@@ -75,7 +77,7 @@ test('construire puis démolir un bâtiment (sim) — remboursement partiel', as
 test('construire au-dessus d’un bâtiment existant est refusé (sim)', async () => {
   const m = await import('../src/core/sim.mjs').catch(() => null);
   const sim = m ? await m.freshSimState() : null;
-  if (!sim) { console.log('SKIP : sim pas encore prête'); return; }
+  assert.ok(sim, 'la sim doit être chargée — sinon ce test est muet (faux positif A14/R7)');
   const { buildBuilding } = await import('../src/infra/infra.mjs');
   buildBuilding(sim, 'runway', 200, 200); // 400×80 à (200,200)
   const blocked = buildBuilding(sim, 'taxiway', 250, 220); // chevauche
@@ -86,7 +88,7 @@ test('construire au-dessus d’un bâtiment existant est refusé (sim)', async (
 test('construire sans assez de fonds est refusé (sim)', async () => {
   const m = await import('../src/core/sim.mjs').catch(() => null);
   const sim = m ? await m.freshSimState() : null;
-  if (!sim) { console.log('SKIP : sim pas encore prête'); return; }
+  assert.ok(sim, 'la sim doit être chargée — sinon ce test est muet (faux positif A14/R7)');
   const { buildBuilding } = await import('../src/infra/infra.mjs');
   sim.economy.money = 0; // faillite partielle
   const b = buildBuilding(sim, 'terminal', 300, 300);

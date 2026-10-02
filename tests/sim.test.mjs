@@ -129,7 +129,7 @@ test('recettes et dépenses effectives (critère 8)', () => {
 test('plusieurs vols simultanés (critère 5) : 3 arrivées → 3 départs', () => {
   const sim = newSimState();
   buildAirport(sim);
-  // 3 vols d\'une même taille (small → porte S + piste courte, compatible)
+  // 3 vols d'une même taille (small → porte S + piste courte, compatible)
   const mk = (n) => sim.aircraft.push({
     id: sim.nextAcId++, airline: 'solaire', color: '#f0a', acType: 'small', pax: 5,
     phase: 'approach', x: 200 + n * 100, y: -150, gateId: null, runwayId: null,
@@ -137,16 +137,20 @@ test('plusieurs vols simultanés (critère 5) : 3 arrivées → 3 départs', () 
   });
   mk(1); mk(2); mk(3);
   const seen = new Set();
-  let departures = 0;
+  const departed = new Set(); // A14 : on compte par IDENTIFIANT distinct, pas par tick.
+  // L'ancien compteur `if (a.phase === 'departed') departures++` incrémentait à
+  // CHAQUE tick où un avion restait « departed » (purge absente de cette boucle) :
+  // il valait 3 alors qu'un seul avion était réellement parti (faux positif A14,
+  // audit). Un Set par id ne monte qu'à 3 si les 3 vols sont vraiment partis.
   for (let i = 0; i < 8000; i++) {
     tickAircraft(sim, 0.1); tickEconomy(sim, 0.1); tickPassengers(sim, 0.1);
     for (const a of sim.aircraft) {
-      if (a.phase === 'departed') departures++;
+      if (a.phase === 'departed') departed.add(a.id);
       seen.add(a.phase);
     }
-    if (departures >= 3) break;
+    if (departed.size >= 3) break;
   }
-  assert.ok(departures >= 2, `au moins 2 vols doivent partir simultanément (vues : ${[...seen]})`);
+  assert.equal(departed.size, 3, `les 3 vols (ids ${[...departed].join(',')} vus) sont partis — assertion exacte`);
 });
 
 test('progression : les services se débloquent par seuil de passagers (critère 9)', () => {

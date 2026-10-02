@@ -12,6 +12,7 @@ import { tickAircraft } from '../src/sim/aircraft.mjs';
 import { tickEconomy, tickPassengers } from '../src/economy/economy.mjs';
 import { tickPlanner } from '../src/flights/flights.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../src/pathfinding/path.mjs';
+import { START_FUNDS } from '../src/core/sim-state.mjs';
 
 // Même helper que les sondes de l'audit (probes.mjs) : un avion de test.
 function ac(id, overrides = {}) {
@@ -135,6 +136,8 @@ test('AC15 : invariants de réservation tenus sur un cycle multi-vols', () => {
   // double réservation réelle — voir dbg.mjs, tick 690 avant la correction).
   sim.nextAcId = 4;
   const departed = new Set();
+  let lastCarried = 0;            // EV-9 : comptage passagers (monotone, jamais décroissant)
+  const sum = (o) => Object.values(o).reduce((a, b) => a + b, 0);
   for (let i = 0; i < 20000; i++) {
     tickAircraft(sim, 0.1);
     // On compte les départs AVANT le planificateur : sa purge retire les vols
@@ -148,9 +151,28 @@ test('AC15 : invariants de réservation tenus sur un cycle multi-vols', () => {
     const gateOwners = {};
     for (const g of sim.infra.gates) if (g.acId != null) gateOwners[g.acId] = (gateOwners[g.acId] ?? 0) + 1;
     for (const c of Object.values(gateOwners)) assert.equal(c, 1, 'une porte = un seul avion');
+    // (2) comptes passagers : le comptage total transporté ne décroît JAMAIS
+    //     (un passager compté ne disparaît pas d'un tick à l'autre).
+    assert.ok(sim.passengers.totalCarried >= lastCarried,
+      `comptage passagers décroît (${lastCarried} → ${sim.passengers.totalCarried})`);
+    lastCarried = sim.passengers.totalCarried;
+    // (3) trésorerie (EV-9) : money = budget initial + recettes − dépenses − dette.
+    //     Chaque mutation de money (charge/earn/opex/dette/construction/remboursement)
+    //     a son pendant exact en revenue/spent/debt ; l'identité tient à chaque tick.
+    //     Tolérance 1e-6 : l'horloge est une somme de dt flottants (dérive ~1e-14).
+    const money = sim.economy.money;
+    const expected = START_FUNDS + sum(sim.economy.revenue) - sum(sim.economy.spent) - sim.economy.debt;
+    assert.ok(Math.abs(money - expected) < 1e-6,
+      `trésorerie incohérente (tick ${i}) : money=${money} attendu=${expected}`);
+    // (4) position : un avion en vol a des coordonnées FINIES (jamais NaN/Infinity).
+    for (const a of sim.aircraft) if (a.phase !== 'departed') {
+      assert.ok(Number.isFinite(a.x) && Number.isFinite(a.y),
+        `position non finie (${a.phase}) avion ${a.id}`);
+    }
     if (departed.size >= 3) break;
   }
   assert.ok(departed.size >= 1, 'au moins un vol complet sans double réservation');
+  assert.ok(departed.size >= 3, 'les 3 vols forçés sont tous partis');
 });
 
 // R3 (A6) : démolition d'un terminal multi-portes dont UNE porte est occupée.
