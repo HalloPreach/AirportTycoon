@@ -19,6 +19,28 @@ const PHASES_FR = Object.freeze({
   pushback: 'poussée', departure: 'décollage', blocked: 'bloqué',
   departed: 'parti', cancelled: 'annulé',
 });
+// R07 : la CAUSE lisible d'un retard, lue de la phase (pas de règle de sim ici —
+// le panneau ne recalcule rien, il traduit). holding = la piste qu'il visait
+// est occupée (conflit de ressource, A4) ; blocked = aucun chemin (taxiway coupé
+// ou porte indisponible, A-5) ; les autres phases n'ont pas de retard actif.
+const CAUSE_FR = Object.freeze({
+  approach: 'descente vers la piste',
+  holding: 'piste occupée ou fermée — attente (conflit de ressource)',
+  landing: 'roulage sur la piste',
+  exit: 'sortie de piste vers une porte',
+  taxi: 'taxi (segment occupé en avant)',
+  docking: 'amarrage à la porte',
+  gate: 'au sol (pas de retard actif)',
+  refuel: 'avitaillement',
+  disembark: 'désbarquement',
+  ground: 'au sol (pas de retard actif)',
+  board: 'embarquement',
+  pushback: 'poussée (piste ou segment occupé)',
+  departure: 'décollage',
+  blocked: 'bloqué — taxiway coupé ou porte indisponible (retry, annulation A-5 à 10 min)',
+  departed: 'parti',
+  cancelled: 'annulé',
+});
 // Plafond de file d'arrivées (MAX_PENDING de flights.mjs) : le diagnostic de
 // saturation le compare. ponytail: constante dupliquée ici, à synchroniser si
 // MAX_PENDING bouge.
@@ -71,7 +93,24 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   let pick = null; // { kind: 'ac' | 'bldg', id } — rendu live (l'objet peut partir)
   function refreshInspect() {
     inspect.refresh(
-      () => (pick ? `${pick.kind}:${pick.id}` : 'none'),
+      // R07 : la signature EST l'état de l'objet suivi (phase, pax, position
+      // arrondie, porte, piste, retard). Chaque tick, si quelque chose bouge la
+      // signature change → le DOM du panneau est reconstruit avec les valeurs
+      // fraîches. Objet disparu → signature 'none' (rendu « parti/démoli »).
+      () => {
+        if (!pick || !state.sim) return 'none';
+        const sim = state.sim;
+        if (pick.kind === 'ac') {
+          const ac = sim.aircraft.find((a) => a.id === pick.id);
+          if (!ac) return 'none';
+          return [ac.phase, ac.pax, Math.round(ac.x), Math.round(ac.y), ac.gateId, ac.runwayId, Math.round(ac.delayed)].join('|');
+        }
+        const find = (arr) => (arr || []).find((b) => b.id === pick.id);
+        const b = find(sim.infra.runways) || find(sim.infra.taxiways)
+          || find(sim.infra.terminals) || find(sim.infra.services);
+        if (!b) return 'none';
+        return `bldg:${pick.id}`; // les bâtiments ne bougent pas : une seule valeur
+      },
       (body) => {
         body.replaceChildren();
         const sim = state.sim;
@@ -84,11 +123,16 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
           if (!ac) { line(body, `Avion #${pick.id}`, 'parti — plus en simulation'); return; }
           const spec = AIRCRAFT[ac.acType] || {};
           const airline = (AIRLINES.find((x) => x.id === ac.airline) || { name: ac.airline }).name;
+          // R07 : ressource attendue (porte du spec si l'avion en veut une, sinon la
+          // piste visée) + cause du retard LUE de la phase (pas de règle ici).
+          const cause = CAUSE_FR[ac.phase] || ac.phase;
           line(body, `Avion #${ac.id}`, `${airline} · ${spec.name || ac.acType}`);
-          line(body, 'Phase', `${PHASES_FR[ac.phase] || ac.phase}` + (ac.delayed > 0 ? ` (retard ${Math.round(ac.delayed)} s)` : ''));
+          line(body, 'Phase', `${PHASES_FR[ac.phase] || ac.phase}${ac.delayed > 0 ? ` (retard ${Math.round(ac.delayed)} s)` : ''}`);
+          line(body, 'Cause', cause);
           line(body, 'Passagers', `${ac.pax} pax`);
           if (ac.gateId) line(body, 'Porte', ac.gateId);
           if (ac.runwayId) line(body, 'Piste', ac.runwayId);
+          line(body, 'Ressource attendue', spec.gate ? `porte ${spec.gate}` : (ac.runwayId ? `piste ${ac.runwayId}` : '—'));
           line(body, 'Position', `${Math.round(ac.x)}, ${Math.round(ac.y)}`);
         } else {
           const find = (arr) => (arr || []).find((b) => b.id === pick.id);
@@ -275,6 +319,11 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
     // Appel à chaque frame (bus 'frame') : chaque panneau ne reconstruit son DOM
     // que si sa signature a changé — coût négligeable sinon (pattern planning).
     refresh: () => { refreshInspect(); refreshFin(); refreshStats(); refreshHist(); refreshNet(); },
+    // R07 : une sauvegarde rechargée ou une nouvelle partie change tout l'état —
+    // la sélection inspecte un OBJET QUI N'EXISTE PLUS. invalidate() vide le pick
+    // ; la prochaine refreshInspect rend l'état par défaut (pas un « parti »
+    // stale). Câblé par save-panel (onLoad) et startNewGame dans main.mjs.
+    invalidate: () => { pick = null; },
     col,
   };
 }

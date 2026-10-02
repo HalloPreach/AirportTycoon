@@ -6,7 +6,7 @@
 // est préservée par loadFromStorage (DIAG_KEY) et l'original reste en place.
 import { saveToStorage, loadFromStorage, hasSave } from '../persistence/save.mjs';
 
-export function makeSavePanel(state, { toast, syncPlanningPanel }) {
+export function makeSavePanel(state, { toast, syncPlanningPanel, onLoad }) {
   // Enregistre l'état courant (manuel, touche S). Uniquement en jeu : sauvegarder
   // au menu écraserait la partie avec un état de menu inutilisable.
   function saveNow() {
@@ -57,6 +57,9 @@ export function makeSavePanel(state, { toast, syncPlanningPanel }) {
     // (avant R06, la préférence était un flag local du panneau : le load la
     // perdait. Maintenant elle est sur le state = sérialisée = rechargée.)
     syncPlanningPanel?.(); // la case auto-accept (BL-16 / R06) suit le state restauré
+    onLoad?.(); // R07 : la sélection d'inspection (pick) pointe vers l'ANCIENNE sim
+                 // (objet disparu) — elle est invalidée par le hook câblé dans main.mjs
+                 // (panels.invalidate), pour ne pas afficher un avion fantôme.
     toast('Jeu restauré', 'ok');
     return true;
   }

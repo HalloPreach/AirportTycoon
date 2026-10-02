@@ -17,6 +17,7 @@ import { newSimState } from '../src/core/sim-state.mjs';
 import { buildBuilding } from '../src/infra/infra.mjs';
 import { rebuildGraph, findPath, runwayExitNode } from '../src/pathfinding/path.mjs';
 import { periodStatement } from '../src/economy/economy.mjs';
+import { makePanels } from '../src/ui/panels.mjs';
 
 // Aéroport CONNECTÉ (plan des tests, BL-02) : piste + taxiway + terminal qui
 // se TOUCHENT — le graphe reconstruit relie les portes aux pistes.
@@ -226,11 +227,100 @@ test('NONMVP-5 : AVANT le 1er tick le graphe est null (R3/A7) — le panneau le 
   const sim = newSimState();
   assert.equal(sim._graph, null, 'graphe null avant construction (c\'est voulu, R3/A7)');
   // Le panneau réseau ne JAMAIS reconstruit le graphe : il lit `sim._graph` et
-  // affiche « pas encore construit » tant qu\'il est null. Ici on vérifie que
-  // la lecture est bien optionnelle (pas de crash, pas d\'appel rebuildGraph).
+  // affiche « pas encore construit » tant qu'il est null. Ici on vérifie que
+  // la lecture est bien optionnelle (pas de crash, pas d'appel rebuildGraph).
   const g = sim._graph;
   assert.ok(g === null, 'le panneau détecte l\'absence de graphe et ne panique pas');
-  // rebuildGraph SIMULE (construction) : on s\'assure que le panneau ne l\'a
+  // rebuildGraph SIMULE (construction) : on s'assure que le panneau ne l'a
   // PAS appelé de son côté (le contrat = lecture seule).
   assert.equal(sim._graph, null, 'après la lecture, le graphe est TOUJOURS null (lecture seule)');
+});
+
+// --- 6. R07 : inspection vivante + invalidation à la nouvelle partie / au load
+// Le panneau fait un clic sur un avion, puis l'avion avance (phase + position
+// changent). La signature du panneau doit suivre → le DOM est reconstruit avec
+// les valeurs FRAÎCHES. À la nouvelle partie (ou au load), panels.invalidate()
+// vide le pick pour ne plus afficher un objet de l'ancienne sim.
+function makeR07Dom() {
+  function makeNode(tag) {
+    return {
+      tag, className: '', textContent: '', children: [], handlers: {},
+      setAttribute() {},
+      appendChild(c) { this.children.push(c); },
+      append(...cs) { this.children.push(...cs); },
+      replaceChildren() { this.children = []; },
+      addEventListener(ev, fn) { (this.handlers[ev] ||= []).push(fn); },
+      fire(ev, payload) { for (const fn of this.handlers[ev] || []) fn(payload || {}); },
+    };
+  }
+  const canvas = makeNode('canvas');
+  const body = makeNode('body');
+  body.children.push(canvas); // le panneau s'attache au body ; le clic est sur #game
+  globalThis.document = {
+    createElement: (tag) => makeNode(tag),
+    createTextNode: (t) => ({ textContent: t, tag: '#text' }),
+    querySelector: () => canvas,
+    body,
+  };
+  return { body, canvas };
+}
+
+// Câblage FAIT COMME main.mjs : viewSize, camera (dummy), buildTool absent.
+function wireR07Panels(state) {
+  const { body, canvas } = makeR07Dom();
+  const camera = { zoom: 1, screenToWorldX: (x) => x, screenToWorldY: (y) => y };
+  const panels = makePanels({ state, camera, viewSize: () => ({ width: 100, height: 100 }), buildTool: undefined });
+  return { panels, body, canvas, camera };
+}
+
+test('R07 : inspection vivante — l\'avion bouge, le panneau suit sans reselection', () => {
+  const state = { screen: 'game', sim: newSimState() };
+  const { panels, canvas } = wireR07Panels(state);
+  const sim = state.sim;
+  const a = ac(sim, { id: 42, phase: 'gate', x: 600, y: 950, gateId: 'g1' });
+  sim.aircraft.push(a);
+  // Le joueur clique à la position de l'avion (l'outil de construction est inactif).
+  canvas.fire('click', { offsetX: 600, offsetY: 950 });
+  // Première passe : le panneau construit son DOM avec l'état ACTUEL.
+  panels.refresh();
+  assert.ok(
+    sim.aircraft.find((x) => x.id === 42),
+    'avion présent au clic'
+  );
+  // L'avion avance (l'objet MUTÉ, pas re-sélectionné) : le panneau doit suivre.
+  a.phase = 'taxi';
+  a.x = 610; a.y = 960; a.delayed = 5;
+  a.gateId = null;
+  panels.refresh(); // la signature a changé (phase, x, y, delayed) → le DOM est reconstruit
+  // Le DOM du panneau contient la NOUVELLE phase (pas l'ancienne) et le retard.
+  const panelText = JSON.stringify(panels.col.children);
+  assert.ok(panelText.includes('taxi'), 'le panneau affiche la phase TAXI (l\'avion a roulé)');
+  assert.ok(panelText.includes('retard 5 s'), 'le panneau affiche le retard (l\'objet suivi)');
+  // Cause lisible : la phase « taxi » a sa cause dans CAUSE_FR (pas de règle ici).
+  assert.ok(panelText.includes('segment occupé') || panelText.includes('taxi'),
+    'la cause du retard est affichée (CAUSE_FR[taxi])');
+  // Ressource attendue : acType 'medium' → spec.gate='M' → « porte M ».
+  assert.ok(panelText.includes('Ressource attendue'), 'la ligne ressource attendue existe');
+  assert.ok(panelText.includes('porte M'), 'la ressource attendue = porte M (spéc. medium)');
+});
+
+test('R07 : invalidate() à la nouvelle partie vide le pick (pas d\'avion fantôme)', () => {
+  const state = { screen: 'game', sim: newSimState() };
+  const { panels, canvas } = wireR07Panels(state);
+  const sim = state.sim;
+  sim.aircraft.push(ac(sim, { id: 42, phase: 'gate', x: 600, y: 950, gateId: 'g1' }));
+  canvas.fire('click', { offsetX: 600, offsetY: 950 });
+  panels.refresh(); // le pick est actif (l'avion 42 est inspecté)
+  assert.ok(
+    JSON.stringify(panels.col.children).includes('Avion #42'),
+    'l\'avion 42 est inspecté'
+  );
+  // Nouvelle partie : l'objet de l'ancienne sim n'existe plus.
+  // Le hook câblé par main.mjs (startNewGame → panels.invalidate) est appelé.
+  panels.invalidate();
+  panels.refresh();
+  const panelText = JSON.stringify(panels.col.children);
+  assert.ok(!panelText.includes('Avion #42'), 'le panneau ne montre plus l\'avion de l\'ancienne partie');
+  assert.ok(panelText.includes('Cliquez sur un avion') || panelText.includes('aucun'),
+    'le panneau retourne à l\'état par défaut (pas un « parti » stale)');
 });

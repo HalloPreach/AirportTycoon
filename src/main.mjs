@@ -48,6 +48,10 @@ export function boot(canvas) {
   function startNewGame() {
     const fresh = makeGameState();
     Object.assign(state, fresh); // mêmes références (state.sim = fresh.sim)
+    // R07 : la sélection d'inspection (pick) pointe vers les objets de l'ANCIENNE
+    // sim — elle doit disparaître à la nouvelle partie (sinon le panneau « inspection »
+    // montre un avion fantôme de la partie précédente).
+    panels.invalidate();
     // R06 (D1) : makeGameState() réinitialise planningAuto à false (champ du
     // state, sérialisé) → l'Object.assign ci-dessus PORTE le reset (source
     // unique dans la factory). On ne fait que resynchroniser le miroir DOM
@@ -81,6 +85,11 @@ export function boot(canvas) {
     // Après un load : la préférence auto-accept est sur le state restauré —
     // la case du panneau doit suivre (sinon le DOM et la logique se désynchronisent).
     syncPlanningPanel: () => planningPanel.setAuto(!!state.planningAuto),
+    // R07 : la sélection d'inspection (pick) pointe vers un OBJET DE L'ANCIENNE
+    // SIM (disparu après le load) — panels.invalidate() le vide pour qu'elle
+    // n'affiche plus un avion fantôme (sinon le DOM du panneau restait « parti
+    // — plus en simulation » de la partie précédente).
+    onLoad: () => panels.invalidate(),
   });
 
   // Alertes de la sim → toasts lisibles (on consomme les NOUVELLES seulement).
