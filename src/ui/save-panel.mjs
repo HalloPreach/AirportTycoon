@@ -2,7 +2,9 @@
 // affiche le résultat en toast (succès ou échec lisible).
 // Règle : la LOGIQUE (sérialiser, valider) est dans src/persistence/save.mjs ;
 // ici on ne fait que relier la UI à ces fonctions et rendre les erreurs lisibles.
-import { saveToStorage, loadFromStorage, clearSave, hasSave } from '../persistence/save.mjs';
+// A10 : une sauvegarde invalide n'est JAMAIS supprimée ici — la copie diagnostic
+// est préservée par loadFromStorage (DIAG_KEY) et l'original reste en place.
+import { saveToStorage, loadFromStorage, hasSave } from '../persistence/save.mjs';
 
 export function makeSavePanel(state, { toast }) {
   // Enregistre l'état courant (manuel, touche S). Uniquement en jeu : sauvegarder
@@ -25,13 +27,15 @@ export function makeSavePanel(state, { toast }) {
   function canResume() { return hasSave(); }
 
   // Restaure la sauvegarde ; si elle est absente ou invalide, signale en clair.
+  // A10 : sur invalide, la sauvegarde est PRÉSERVÉE (copie diagnostic, voir
+  // loadFromStorage) — on ne la supprime JAMAIS ; l'incompatibilité est annoncée
+  // (toast) sans crash et sans perte de la sauvegarde d'origine.
   function loadNow() {
     let restored;
     try {
       restored = loadFromStorage();
     } catch (e) {
-      toast(e.message || 'Sauvegarde illisible', 'err');
-      clearSave(); // on ne laisse pas une sauvegarde corrompue bloquer le jeu
+      toast(e.message || 'Sauvegarde illisible', 'err'); // annoncée ; la copie diag est en place
       return false;
     }
     if (!restored) {

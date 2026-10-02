@@ -17,13 +17,17 @@ export function newSimState() {
       grid: { w: 160, h: 120, cells: new Uint8Array(160 * 120) },
     },
     aircraft: [],    // un vol en cours de cycle (voir sim/aircraft.mjs)
+    planning: [],    // vols planifiés (pas encore arrivés) : {id, airline, acType, pax, planned, status}
     nextAcId: 1,
     passengers: { totalCarried: 0, satisfaction: 100 },
     economy: { money: START_FUNDS, revenue: {}, spent: {}, debt: 0, bankrupt: false },
     alerts: [],      // événements lisibles pour l'UI (toasts/alertes)
+    time: 0,         // horloge de la sim (pilotée par le planificateur : sim.time += dt)
     _spawnAcc: 0,
     _graph: null,     // graphe pathfinding (reconstruit, pas sérialisé)
     _graphDirty: true,
+    rngSeed: 0,       // état du PRNG (EV-10) : seed + compteur CONSERVÉS dans la
+    rngCounter: 0,    // sauvegarde → la reprise après fermeture est reproductible
   };
 }
 
