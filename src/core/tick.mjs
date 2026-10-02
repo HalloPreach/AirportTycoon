@@ -10,6 +10,7 @@ import { tickPlanner } from '../flights/flights.mjs';
 import { tickAircraft } from '../sim/aircraft.mjs';
 import { tickEconomy, tickPassengers } from '../economy/economy.mjs';
 import { tickUnlocks, cleanGates } from '../infra/infra.mjs';
+import { tickIncidents } from '../sim/incidents.mjs';
 import { makeSimRng } from './rng.mjs';
 
 export function tick(state, dt, rng) {
@@ -22,5 +23,6 @@ export function tick(state, dt, rng) {
   cleanGates(sim, dt); // BL-12 : le hangar nettoie les portes (usure du refuel)
   tickEconomy(sim, dt);
   tickPassengers(sim, dt);
+  tickIncidents(sim, dt, rng); // BL-14 : incidents opérationnels limités (après la passe)
   tickUnlocks(sim);
 }

@@ -13,6 +13,7 @@ import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 import { onGateArrived, onGateDeparted, onFlightCancelled } from '../economy/economy.mjs';
 import { arrivePassengers, countCarried, boardDelay } from './passengers.mjs';
+import { runwayClosed, fuelOut } from './incidents.mjs';
 
 const V = { approach: 220, landing: 130, taxi: 60, pushback: 30, departure: 150 };
 const GATE_OPS_S = 60;   // débarquement+sol+embarquement : durée d'occupation porte
@@ -65,6 +66,10 @@ export function tickAircraft(sim, dt) {
 // compatible OU si la piste est occupée, il passe en holding (attente) — jamais de
 // deux avions sur la même piste en même temps (conflit de ressource).
 function doApproach(sim, ac, dt, spec) {
+  // BL-14 : piste FERMÉE (incident) → aucun atterrissage (le départ, lui,
+  // continue) : l'avion patiente en holding, son retard s'accumule (la
+  // conséquence est MESURABLE, la récupération = réouverture).
+  if (runwayClosed(sim)) { ac.phase = 'holding'; ac.timer = 0; return; }
   const rw = runwayFor(sim, spec.minRunway);
   if (!rw) { ac.phase = 'holding'; ac.timer = 0; return; }
   // Piste occupée par un autre avion → attente (A4 : landing/départ exclusifs).
@@ -97,8 +102,9 @@ function doHolding(sim, ac, dt, spec, occupied) {
   if (ac._holdAcc >= HOLDING_RETRY_S) {
     ac._holdAcc = 0;
     // La piste est exclusive (A4) : on n'y entre que si personne d'autre
-    // n'y atterrit, n'en sort, ou n'en décolle.
-    if (!runwayBusy(sim, rw.id, ac.id) && ac.y >= topY) {
+    // n'y atterrit, n'en sort, ou n'en décolle. Piste fermée (incident) :
+    // on patiente aussi (la réouverture relance la tentative).
+    if (!runwayBusy(sim, rw.id, ac.id) && !runwayClosed(sim) && ac.y >= topY) {
       ac.runwayId = rw.id;
       ac.phase = 'landing';
       ac.timer = 0;
@@ -248,8 +254,10 @@ function doRefuel(sim, ac, dt, spec) {
   const g = sim.infra.gates.find((x) => x.id === ac.gateId);
   if (g) g.cleaning = Math.min(100, g.cleaning + GATE_WEAR_PER_SEC * dt);
   const lances = fuelLances(sim);
-  if (!lances) {
-    // Pas de station → départ SÉC (non bloquant, expliqué) : billets moitié.
+  if (!lances || fuelOut(sim)) {
+    // Pas de station OU panne station (incident BL-14) → départ SÉC
+    // (non bloquant, expliqué) : billets moitié. La panne est temporaire —
+    // quand le service revient, les pleins reprennent (récupération mesurée).
     ac._dryDeparture = true;
     if (!ac._noFuelNotified) {
       ac._noFuelNotified = true;

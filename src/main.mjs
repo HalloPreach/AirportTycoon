@@ -73,6 +73,10 @@ export function boot(canvas) {
     'flight-out': (e) => `Départ ${e.airline || ''}`,
     'flight-cancelled': (e) => `Vol annulé — ${e.why || 'attente trop longue'}`,
     'ac-blocked': (e) => `Avion bloqué — ${e.why || 'taxiway'}`,
+    // BL-14 : incidents opérationnels (perturbation → conséquence → récupération).
+    'runway-closed': (e) => `Incident — ${e.why || 'fermeture piste'}`,
+    'fuel-out': (e) => `Incident — ${e.why || 'panne station carburant'}`,
+    'surge-start': (e) => `Pic de demande — ${e.why || 'plus de vols planifiés'}`,
     'unlocked': (e) => `${e.name} débloqué(e) (construction possible)`,
     'locked': (e) => `${e.name} : ${e.need} passagers transportés requis`,
     'bankrupt': () => 'FAILLITE — les caisses sont vides',

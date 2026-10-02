@@ -16,6 +16,7 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
 | BL-13 Parcours passager agrégé (NONMVP-2, AC7, AC22, AC40) | **fait (2026-10-02, worker t_ad0ed66b, commit a3f405e)** |
 | BL-12 Services au sol : carburant/maintenance/catering (AC21) | **fait (2026-10-02, worker t_851e0e2d)** |
 | BL-15 Économie profonde + déblocages utiles (NONMVP-4, AC6/AC9/AC23/AC26f) | **fait (2026-10-02, worker t_02c8531f, commit à venir)** |
+| BL-14 Incidents limités mais réels (NONMVP-3, AC20, A-7) | **fait (2026-10-02, worker t_4ae09699)** — 3 incidents limités (pas une collection de pannes) : fermeture piste (120 s), panne stations carburant (90 s), pic de demande (90 s) — chacun = perturbation → conséquence MESURABLE → récupération. Module `src/sim/incidents.mjs` (état sérialisable `sim.incidents`, rng semé → reproductible), toasts UI, effets cibles dans `aircraft.mjs`/`flights.mjs`. Test `tests/incidents.test.mjs` (3/3) ; validateur `node --test` 95/95. |
 | BL-11 Porte MVP (MVP-10, AC27, AC28, EV-3/EV-5/EV-6) | **fait (2026-10-02, worker t_c605589e, run 228, commit b12968d)** — script QA CDP `qa/mvp-gate.mjs` porte le MVP par entrées réelles (clavier/souris CDP + reload, lecture seule de l'état) : construction → vols (auto-accept A) → conflits (réseau coupé) → finances → sauvegarde/reprise (RELOAD + R = LA PORTE) → R3/A7 (démolition taxiway isolé AVANT 1er tick, `sim._graph` null, null-guard d43b290 exercé, 0 exception) → rejeu. Réseau 100 % local, 0 exception/0 console.error. **18/18 PASS, code retour 0.** Fix R3/A7 : tol pan 120→12 px + clic au centre de la vue (le rectangle du taxiway est plus petit que la tol). Validateur `node --test tests/*.test.mjs` = 92/92. Preuves `evidence/mvp-gate/` (6 PNG + rapports + checkpoint + log). |
 | BL-03..BL-19 | en attente de leurs dépendances (BL-03 attend BL-02, BL-04/BL-05/BL-09 attendent BL-03, …) |
 
@@ -168,6 +169,27 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
   Validateur `node --test tests/*.test.mjs` → 92/92 pass. Preuves
   `evidence/mvp-gate/` (6 PNG + `rapport.txt`/`rapport.json` + checkpoint + log).
   Commit `b12968d`.
+- **BL-14 Incidents (2026-10-02) : 3 incidents limités livrés** (NONMVP-3,
+  AC20, A-7) — perturbation → conséquence mesurable → récupération, SANS
+  collection de pannes (ordre A-7 : après BL-11/BL-12) :
+  - **Fermeture piste (120 s sim)** : `runwayClosed` — aucun atterrissage
+    (les avions patientent en holding, leur retard s'accumule et est LISIBLE
+    dans le planning via `markPlannedDelayed`) ; la réouverture relance
+    l'atterrissage. Le départ continue (la piste ferme les ARRIVÉES).
+  - **Panne stations carburant (90 s sim)** : `fuelOut` — les pleins
+    deviennent DÉPARTS SECS (billets moitiés, événement `no-fuel`, NON
+    bloquant — discipline A-5) ; le service revenu → le plein se fait VRAIMENT
+    à nouveau (récupération mesurée).
+  - **Pic de demande (90 s sim)** : `isSurge` — le planificateur DOUBLE sa
+    cadence (2 vols planifiés par fenêtre au lieu de 1) ; le pic se mesure au
+    NOMBRE de vols planifiés (critère NONMVP-3) ; fin du pic → cadence
+    normale (1 vol).
+  - Module dédié `src/sim/incidents.mjs` : état `sim.incidents` (sérialisable,
+    reproductible à la reprise via le rng semé), tirages aléatoires par fenêtre
+    + `forceIncident` pour les tests. Intégré dans le tick (`tick.mjs`) et
+    câblé en toasts UI (`main.mjs` : `runway-closed`/`fuel-out`/`surge-start`).
+  - 3 tests dans `tests/incidents.test.mjs` (piste / carburant / pic) —
+    `node --test tests/*.test.mjs` → 95/95 pass (92 hérités + 3 incidents).
 
 ## Décision
 

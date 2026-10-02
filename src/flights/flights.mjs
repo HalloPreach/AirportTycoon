@@ -14,6 +14,7 @@
 import { AIRLINES, AIRCRAFT } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
+import { isSurge, runwayClosed } from '../sim/incidents.mjs';
 
 const SPAWN_EVERY_S = 60;  // cadence d'une fenêtre (x4 raisonnable)
 const MAX_PENDING = 4;     // au-delà, on n'en fait plus arriver (aérogare saturée)
@@ -31,6 +32,13 @@ export function tickPlanner(sim, dt, rng = Math.random) {
   for (const a of sim.aircraft) {
     if (a.phase !== 'approach' && a.phase !== 'holding') continue;
     const ac = AIRCRAFT[a.acType];
+    // BL-14 : piste FERMÉE (incident) → les atterrissages patientent (retard
+    // lisible dans le planning), la réouverture les relance.
+    if (runwayClosed(sim)) {
+      a.delayed += dt;
+      markPlannedDelayed(sim, a.id);
+      continue;
+    }
     // pas de piste assez longue ni de porte de taille : retard (critère 6).
     if (!sim.infra.runways.some((r) => r.len >= ac.minRunway) ||
         !sim.infra.gates.some((g) => g.size === ac.gate)) {
@@ -46,11 +54,17 @@ export function tickPlanner(sim, dt, rng = Math.random) {
 // qu'il y a au moins une piste, planifier le vol suivant (visible ~60 s avant).
 // Le plafond (A-5) compte les bloqués : saturés, plus de planification ; les
 // vols bloqués sont annulés après 10 min → la file se vide, on repart.
+// BL-14 : en pic de demande (surge), la cadence est DOUBLÉE (2 vols par
+// fenêtre) — le pic se mesure au nombre de vols planifiés.
 function windowClose(sim, rng) {
   deployDue(sim);
-  const planned = sim.planning.filter((e) => e.status === 'planned' || e.status === 'accepted').length;
-  if (sim.infra.runways.length && pendingCount(sim) + planned < MAX_PENDING) {
-    planOneFlight(sim, rng);
+  if (sim.infra.runways.length) {
+    const n = isSurge(sim) ? 2 : 1; // pic de demande (BL-14) : cadence doublée
+    for (let k = 0; k < n; k++) {
+      const pending = pendingCount(sim) + sim.planning.filter((e) => e.status === 'planned' || e.status === 'accepted').length;
+      if (pending >= MAX_PENDING) break;
+      planOneFlight(sim, rng);
+    }
   }
 }
 

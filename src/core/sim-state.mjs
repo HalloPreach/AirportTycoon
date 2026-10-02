@@ -26,6 +26,12 @@ export function newSimState() {
                   queue: { checkin: 0, security: 0, board: 0 }, groups: [] },
     economy: { money: START_FUNDS, revenue: {}, spent: {}, debt: 0, bankrupt: false },
     alerts: [],      // événements lisibles pour l'UI (toasts/alertes)
+    // Incidents opérationnels (BL-14, A-7) : 3 incidents limités (piste fermée,
+    // panne carburant, pic de demande) — état propre, sérialisable seul, tirés
+    // par le rng semé (reproductible à la reprise). Voir src/sim/incidents.mjs.
+    incidents: { runway: { closed: 0, acc: 0, last: 0 },
+                fuel: { out: 0, acc: 0, last: 0 },
+                surge: { active: false, remaining: 0, acc: 0, last: 0 } },
     time: 0,         // horloge de la sim (pilotée par le planificateur : sim.time += dt)
     _spawnAcc: 0,
     _graph: null,     // graphe pathfinding (reconstruit, pas sérialisé)
