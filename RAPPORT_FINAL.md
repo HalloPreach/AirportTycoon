@@ -28,6 +28,21 @@ PASS** — le capital final y est désormais **19340.61** (vs 19641.74 avant) :
 écart légitime = 2 nouveaux services × 2 $/s d'OPEX + retours sol légèrement
 plus longs, **aucun capital initial n'a été augmenté**.
 
+**Note de réactualisation 3 (post-continuation `t_00ecae73`, équilibrage sans
+capital artificiel, 2026-10-02)** : la carte `t_00ecae73` a corrigé
+l'équilibrage À LA RACINE (pas le capital). Le planificateur
+`planOneFlight` (`src/flights/flights.mjs`) ne planifie désormais QUE les
+appareils SERVABLES par l'infra existante (piste assez longue + porte de la
+bonne taille). Avant, l'aéroport de base (2 portes M, piste 1000 m) planifiait
+des vols small (porte S) et large (porte L) qu'il ne pouvait PAS servir →
+bloqués 10 min → annulés → ~319 k$ d'indemnités (≈ 6× l'opex total), ce qui
+le rendait DÉFICITAIRE PAR CONSTRUCTION : le capital BL-18 (12 000 → 345 000)
+n'était qu'un contournement de ce bug. `START_FUNDS` retourne au capital
+légitime **12 000** (`src/core/sim-state.mjs`, plus de 345 000). Suite =
+**110/110** ; le scénario 48 h reste **8/8 PASS** — l'aéroport de base est
+désormais SOLVALE et rentable à 12 000 (fin 48 h ≈ +3,2 M$, **0 vol annulé,
+0 indemnité** ; aucun capital initial n'a été augmenté).
+
 ---
 
 ## 1. Statut global

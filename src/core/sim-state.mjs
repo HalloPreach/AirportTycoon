@@ -14,7 +14,16 @@
 // l'équilibrage (OPEX_PER_SEC intact, critère A12 « socle coûte même sans vol »
 // préservé). Mesures (seed 42, intérêts capés) : passive min +57 809, bl17
 // min +18 351 — les deux au-dessus du seuil.
-export const START_FUNDS = 345000; // capital de départ solvable (BL-18)
+// t_00ecae73 : LE CAPITAL RESTE LE VRAI (12 000), pas gonflé. Le déficit 48 h
+// venait d'une cause racine LOGIQUE : le planificateur planifiait des vols que
+// l'aéroport ne pouvait pas servir (portes S/L inexistantes à la base) → 638
+// annulations → 319 k$ d'indemnités (6× l'opex). Corrigée (planOneFlight ne
+// planifie que les types SERVABLES — une piste assez longue + une porte de la
+// taille), l'aéroport de base est de nouveau solvable avec 12 000 : l'opex
+// (~550 k$/48 h) est couvert par les recettes (vol médium servable). On ne
+// gonfle PAS le capital pour faire passer le scénario — on corrige l'équilibrage
+// à la racine.
+export const START_FUNDS = 12000; // capital légitime (pas gonflé, t_00ecae73)
 
 export function newSimState() {
   return {

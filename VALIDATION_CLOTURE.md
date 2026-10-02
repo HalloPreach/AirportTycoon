@@ -24,6 +24,18 @@ avec un capital final de **19340.61** (le `19641.74` ci-dessus datait du run
 d'avant services — écart = OPEX des deux nouveaux services, **aucun capital
 injecté**).
 
+**Note de réactualisation 3 (post-continuation `t_00ecae73`, équilibrage sans
+capital artificiel, 2026-10-02)** : `START_FUNDS` retourne au capital légitime
+**12 000** (plus de 345 000) — le déficit 48 h venait d'un bug LOGIQUE, pas
+d'un besoin de capital : le planificateur `planOneFlight`
+(`src/flights/flights.mjs`) ne planifie QUE les appareils SERVABLES par
+l'infra (piste + porte), alors qu'avant il planifiait des vols small/large
+qu'un aéroport de base (2 portes M, piste 1000 m) ne pouvait pas servir →
+annulations en cascade → ~319 k$ d'indemnités (≈ 6× l'opex). Corrigé,
+l'aéroport de base est SOLVALE à 12 000 : le scénario 48 h reste **8/8 PASS**
+et la suite **110/110** (fin 48 h ≈ +3,2 M$, **0 vol annulé, 0 indemnité**).
+Aucun capital artificiel ; le verdict de clôture reste **PASS**.
+
 Méthode : chaque critère du brief (AC1..AC40) est justifié par une preuve
 réelle (test, QA CDP, sim, ou dossier de probes) que j'ai **relancé ou relu
 aujourd'hui**, pas copié des cartes. Le verdict de clôture n'est pas « le MVP

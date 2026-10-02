@@ -240,6 +240,19 @@ injecté), commande de tests (carte `t_b320d250` : script `npm test` corrigé �
 rapports réactualisés (`RAPPORT_FINAL.md`, `VALIDATION_CLOTURE.md` + note du gap
 « services au sol » résolu dans l'audit).
 
+**Continuation `t_00ecae73` (post-continuation, 2026-10-02, faite)** :
+équilibrage SANS capital artificiel — `START_FUNDS` de retour à **12 000**
+(le 345 000 BL-18 était un contournement, pas un équilibrage). Cause racine :
+le planificateur `planOneFlight` (`src/flights/flights.mjs`) planifiait des
+vols que l'aéroport de base (2 portes M, piste 1000 m) ne pouvait PAS servir
+(small/large sans porte S/L) → 638 annulations → ~319 k$ d'indemnités (≈ 6×
+l'opex total). Correction : `planOneFlight` ne planifie QUE les appareils
+SERVABLES (piste + porte de la bonne taille, même règle qu'`attributeFlight`).
+Avec 12 000 : suite **110/110**, 48 h **8/8 PASS**, aéroport de base
+SOLVALE/rentable (fin ≈ +3,2 M$, **0 vol annulé, 0 indemnité**), **aucun
+capital artificiel**. Rapports réactualisés (`RAPPORT_FINAL.md`,
+`VALIDATION_CLOTURE.md` + note du gap « équilibrage » résolu dans l'audit).
+
 Reste hors périmètre (documenté `RAPPORT_FINAL.md` §8, non masqué) :
 - **G2 — CORRIGÉ (carte `t_b320d250`)** : le script `npm test` exécutait 10/13
   fichiers → corrigé en glob `tests/*.test.mjs` (14 fichiers post-BL-20,

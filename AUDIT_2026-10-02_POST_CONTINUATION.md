@@ -63,6 +63,23 @@ Correction attendue : suivre l'avancement par groupe/vol, conserver les effectif
 
 > **Résolu (carte `t_2179387d`, 2026-10-02, post-audit).** Quatre services au sol opérationnels distincts, chacun coûte (OPEX) et sert (effet mesuré) : **carburant** (lances partagées, durées par taille — BL-12, inchangé), **nettoyage** (nouveau bâtiment `cleaning`, ramène l'usure « sale » `g.cleaning` à zéro), **bagages** (nouveau bâtiment `baggage`, booste le débit check-in — AC22), **maintenance** (hangar, ramène l'usure « mécanique » `g.maintenance` à zéro). Les deux usures de porte sont distinctes (`cleanGates` `src/infra/infra.mjs`), les seuils de déblocage 200/250 pax (`src/data/catalog.mjs`) et le retard d'opérations au sol est proportionnel à l'usure totale. Tests dédiés `tests/services.test.mjs` (a)/(b)/(c) : sans service l'usure sale est stable, hangar ≠ nettoyage (chacun touche sa seule usure), bagages = file check-in qui se vide plus vite. Suite `node --test tests/*.test.mjs` = **110/110**, scénario 48 h `qa/bl17-sim48h.mjs` = **8/8 PASS** (money=19340.61, carried=36608, seed 42 — l'écart avec le run précédent, 19641.74, vient des 4 $/s d'OPEX des deux nouveaux services + retours sol légèrement plus longs : écart économique légitime, aucun capital injecté). Le départ SÉC sans station est un mécanisme EXPLIQUÉ (événement `no-fuel` + billets moitiés), pas un contournement : le service carburant reste la seule source de plein.
 2. **Équilibrage adapté au scénario de test.** Le capital initial est passé de 12 000 à **345 000**, soit ×28,75. Le commentaire de `src/core/sim-state.mjs:7` explique que cette somme a été choisie pour survivre au scénario de 48 heures. Le scénario relancé termine à 19 641,74, soit une baisse de 325 358,26 par rapport au capital initial. Il prouve la stabilité et la survie financière de ce scénario, pas la rentabilité ni une progression équilibrée. Il faut valider une amélioration rentable réellement réalisable par le joueur.
+
+> **Résolu (carte `t_00ecae73`, 2026-10-02, post-audit).** `START_FUNDS`
+> retourne au capital légitime **12 000** (plus de 345 000). Le déficit 48 h
+> n'était pas économique : c'était un bug LOGIQUE. Le planificateur
+> `planOneFlight` (`src/flights/flights.mjs`) planifiait des vols
+> small/large que l'aéroport de base (2 portes M, piste 1000 m) ne pouvait
+> PAS servir (ni porte S ni porte L) → bloqués 10 min → annulés → ~319 k$
+> d'indemnités (≈ 6× l'opex total, la cause dominante du déficit). Le capital
+> 345 000 n'était qu'un contournement de ce bug, pas un équilibrage. La
+> correction : le planificateur ne planifie QUE les appareils SERVABLES
+> (piste assez longue + porte de la bonne taille), la même règle que
+> `attributeFlight` — conforme au brief (« aucune grosse catégorie
+> d'avion ne doit arriver sans qu'une porte le serve »). Avec 12 000 :
+> le scénario 48 h passe **8/8**, l'aéroport de base est SOLVALE et
+> rentable (fin ≈ +3,2 M$, **0 vol annulé, 0 indemnité**), la suite =
+> **110/110**. Aucun capital artificiel ; l'assumption fausse a été
+> corrigée à la racine.
 3. **Commande de test incomplète.** Le script `npm test` liste dix des quatorze fichiers. Il omet `incidents.test.mjs` (3 tests), `panels.test.mjs` (10), `persistence-valid.test.mjs` (10), `services.test.mjs` (3) : **26 tests exclus**. Le glob canonique exécuté par l'audit couvre bien les 105 tests.
 4. **Documents de clôture périmés.** `RAPPORT_FINAL.md` et `VALIDATION_CLOTURE.md` parlent encore de 95 tests, de panneaux absents et d'une revue en cours ; les panneaux existent maintenant et la suite compte 105 tests. Le point de reprise et la synthèse de clôture sont plus récents, mais le rapport final devrait décrire le livrable final.
 5. **Interface et hygiène du dépôt.** La capture fraîche montre une superposition du panneau planning et du HUD en haut à gauche. Plusieurs scripts de diagnostic, logs et dossiers temporaires de QA restent non suivis. Aucun nettoyage n'a été effectué par cet audit.

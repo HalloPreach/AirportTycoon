@@ -102,8 +102,10 @@ export function spawnArrivals(sim, dt, rng = Math.random) {
   const due = sim.planning.some((e) => ['planned', 'accepted'].includes(e.status) && e.planned <= (sim.time ?? 0));
   if (!due) {
     const e = planOneFlight(sim, rng); // planOneFlight pousse dans sim.planning
-    e.planned = sim.time ?? 0; // immédiat (pas d'attente de fenêtre)
-    e.status = 'accepted'; // spawn FORCÉ = pré-accepté (la décision joueur ne concerne que le flux planning/panneau)
+    if (e) { // null = aucune infra servable (t_00ecae73) → pas de spawn forcé
+      e.planned = sim.time ?? 0; // immédiat (pas d'attente de fenêtre)
+      e.status = 'accepted'; // spawn FORCÉ = pré-accepté (la décision joueur ne concerne que le flux planning/panneau)
+    }
   }
   deployDue(sim);
 }
@@ -113,9 +115,31 @@ export function spawnArrivals(sim, dt, rng = Math.random) {
 // (sim.time + SPAWN_EVERY_S), lisible dans le planning (AC3 « horaires prévus »).
 // Retourne l'entrée créée (le planificateur la relocalise si besoin, ex. spawn
 // forcé immédiat : e.planned = maintenant).
+// t_00ecae73 : le planificateur ne planifie QUE des appareils SERVIBLES par
+// l'infra existante (une piste assez longue ET une porte de la bonne taille).
+// Avant : pick(rng, AIRLINES) tirait au hasard → l'aéroport de base (2 portes M
+// seulement) planifiait des vols small (porte S) et large (porte L) qu'il ne
+// pouvait PAS servir → bloqués 10 min → annulés → 319 k$ d'indemnités (6×
+// l'opex total) → l'aéroport DÉFICITAIRE PAR CONSTRUCTION. C'était la cause
+// racine qui forçait le capital artificiel (BL-18, 12 k → 345 k). La règle
+// « servable » est la même que attributeFlight : piste ≥ minRunway + porte de
+// la taille. Si l'infra ne sert AUCUN type → pas de vol planifié (on ne fait
+// pas arriver un avion que l'aéroport ne pourrait jamais desservir).
+function servableTypes(sim) {
+  return Object.keys(AIRCRAFT).filter((k) => {
+    const spec = AIRCRAFT[k];
+    return sim.infra.runways.some((r) => r.len >= spec.minRunway)
+      && sim.infra.gates.some((g) => g.size === spec.gate);
+  });
+}
+
 function planOneFlight(sim, rng) {
-  const airline = pick(rng, AIRLINES);
-  const acType = pick(rng, airline.types);
+  const servable = servableTypes(sim);
+  if (!servable.length) return null; // aucune infra servable → pas de vol
+  // Tirer d'abord un type SERVABLE, puis une compagnie qui l'opère : chaque
+  // type du catalogue est opéré par au moins une compagnie.
+  const acType = pick(rng, servable);
+  const airline = pick(rng, AIRLINES.filter((a) => a.types.includes(acType)));
   const ac = AIRCRAFT[acType];
   const e = {
     id: sim.nextAcId++,
