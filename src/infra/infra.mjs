@@ -139,20 +139,8 @@ export function demolishBuilding(sim, id) {
   }
   // (R3, A7) Un avion dont le chemin PASSE PAR (ou EST SUR) le segment détruit
   // aurait un chemin périmé (indices dans l'ancien graphe, nœuds supprimés) →
-  // exception au prochain tick. On remet à zéro AVANT le rebuild (il faut
-  // l'ancien graphe pour repérer les nœuds du segment détruit) : au prochain
-  // tick l'avion passe en « blocked » et retente un nouveau chemin (retry
-  // équitable, annulation si blocage persistant) — plus d'exception.
-  if (b.type === 'taxiway' || b.type === 'runway') {
-    // (R3, A8) Après un rechargement, le graphe (cache dérivé) est null tant
-    // que le 1er tick n'a pas fait le rebuild : on le reconstruit ici avant de
-    // lire les nœuds — sinon `sim._graph.nodes` crashait (reading 'nodes').
-    if (!sim._graph) rebuildGraph(sim);
-    const onDead = (i) => sim._graph.nodes[i] && sim._graph.nodes[i].seg === id;
-    for (const ac of sim.aircraft) {
-      if (ac.path && ac.path.some(onDead)) { ac.path = null; ac.seg = null; }
-    }
-  }
+  // exception au prochain tick. On remet son chemin à zéro (voir plus bas : le
+  // rebuild éager le recalcule, ou le bloque proprement).
   const refund = Math.round(b.cost * BUILDINGS[b.type].sellRefund);
   sim.economy.money += refund;
   sim.economy.revenue[b.type] = (sim.economy.revenue[b.type] ?? 0) + refund;
@@ -161,7 +149,15 @@ export function demolishBuilding(sim, id) {
   sim.infra.terminals = sim.infra.terminals.filter((x) => x.id !== id);
   sim.infra.services = sim.infra.services.filter((x) => x.id !== id);
   buildGrid(sim);
-  sim._graphDirty = true;
+  // R03 (t_9dab76f4) : une démolition qui touche le graphe (segment/terminal)
+  // DÉCALE les indices des nœuds — les chemins en cours pointent dans l'ANCIEN
+  // graphe. On reconstruit le graphe MAINTENANT (éager, pas en différé) : le
+  // recalcul (ou le blocage propre) des chemins se fait dans rebuildGraph
+  // (path.mjs) → plus de chemin périmé persisté ni d'exception au prochain tick.
+  if (b.type === 'taxiway' || b.type === 'runway' || b.type === 'terminal') {
+    rebuildGraph(sim);
+    sim._graphDirty = false;
+  }
   pushEvent(sim, { kind: 'demolished', type: b.type, id, refund });
   return { ok: true, refund };
 }

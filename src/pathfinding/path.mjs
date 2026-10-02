@@ -88,6 +88,43 @@ export function rebuildGraph(sim) {
     if (best >= 0) gateNode.set(g.id, best);
   }
   sim._graph = { nodes, edges, gateNode };
+  // R03 : le rebuild change les indices des nœuds — les chemins EN COURS
+  // (ac.path) pointent dans l'ANCIEN graphe. On les recalcule tous depuis la
+  // position ACTUELLE de chaque avion (nœud le plus proche), en gardant sa
+  // destination (heading 'gate' → sa porte, sinon → la sortie de piste) :
+  // jamais d'exception ni de téléportation. Pas de chemin possible → « blocked »
+  // (retry borné + annulation A-5 à 10 min sim). Le segment où l'avion EST ne
+  // compte PAS comme occupé pour LUI (il l'a réservé via ac.seg) : l'occupation
+  // sert à ne pas ENTRER dans le segment d'UN AUTRE avion.
+  const occupied = new Set();
+  for (const a of sim.aircraft) if (a.seg != null) occupied.add(a.seg);
+  // Segments qui EXISTENT encore dans le graphe neuf : un avion dont le segment
+  // actuel vient d'être DÉMOLI (A7) est en dehors du réseau — on ne peut PAS le
+  // re-ancrer (ce serait une téléportation sur un autre nœud) : on le bloque
+  // sur place. Un avion dont le segment existe (scénarios R03 a/b/d) est
+  // recollé au nœud le plus proche et son chemin recalculé.
+  const liveSegs = new Set(nodes.map((n) => n.seg));
+  for (const ac of sim.aircraft) {
+    if (!ac.path) continue;
+    // Segment actuel démolit → avion en dehors du réseau : blocage propre.
+    if (ac.seg == null || !liveSegs.has(ac.seg)) {
+      ac.path = null; ac.seg = null; ac.phase = 'blocked'; ac.timer = 0;
+      continue;
+    }
+    const from = nearestNode(sim, ac.x, ac.y);
+    const to = ac.heading === 'gate' ? gateNodeOf(sim, ac.gateId) : runwayExitNode(sim, ac.runwayId);
+    const occ = new Set([...occupied].filter((s) => s !== ac.seg));
+    const path = from == null || to == null ? null : findPath(sim, from, to, occ);
+    // from === to (l'avion est DÉJÀ au nœud de destination) : chemin d'un nœud
+    // → doTaxi aboutit immédiatement (docking/départ), ce n'est PAS un blocage.
+    if (path == null || (path.length < 2 && from !== to)) {
+      ac.path = null; ac.seg = null; ac.phase = 'blocked'; ac.timer = 0;
+      continue;
+    }
+    ac.path = path; ac.pathPtr = 0;
+    ac.seg = nodes[path[0]].seg;
+    if (ac.seg != null) occupied.add(ac.seg);
+  }
 }
 
 // Chemin entre deux nœuds, évitant les segments occupés (occupied = Set d'ids de segments).
@@ -135,6 +172,20 @@ function h(sim, a, b) {
 // Nœud de porte (ou undefined si la porte est hors réseau : aucun segment ne la touche).
 export function gateNodeOf(sim, gateId) {
   return sim._graph ? sim._graph.gateNode.get(gateId) : undefined;
+}
+
+// Nœud le plus proche d'une position monde (x, y) — R03 : sert de point de
+// départ « recollé au réseau » quand un graphe est reconstruit pendant qu'un
+// avion roule (sa position monde est la vérité, pas l'ancien chemin).
+// ponytail : scan linéaire des nœuds (graphe minuscule, cf. A* ci-dessus).
+export function nearestNode(sim, x, y) {
+  if (!sim._graph || !sim._graph.nodes.length) return null;
+  let best = -1, bd = Infinity;
+  sim._graph.nodes.forEach((n, i) => {
+    const d = Math.hypot(n.x - x, n.y - y);
+    if (d < bd) { bd = d; best = i; }
+  });
+  return best >= 0 ? best : null;
 }
 
 // Nœud de départ d'un taxi : l'extrémité de piste du côté de l'aviation (bas de la piste).

@@ -294,3 +294,122 @@ test('R3-A8 : démolir un taxiway occupé après rechargement ne lève pas d\'ex
   assert.equal(error, null, "pas d'exception au tick suivant la démolition");
   assert.equal(back.sim.aircraft[0].phase, 'blocked', "l'avion est bloqué (attente, réessai)");
 });
+
+// R03 (t_9dab76f4) : les 4 scénarios d'audit du rapport — les chemins EN COURS
+// pointent dans l'ANCIEN graphe après UN REBUILD (indices décalés) :
+// (a) ajout d'un segment ÉLOIGNÉ pendant un taxi (trajet intact, indices décalés),
+// (b) suppression d'un segment ÉLOIGNÉ créé AVANT les autres,
+// (c) suppression d'un segment DU TRAJET, (d) sauvegarder puis reprendre
+// pendant le trajet (rebuild différé au 1er tick). Aucune exception, référence
+// périmée, réservation abandonnée ni téléportation hors de la limite de
+// mouvement normale (V.taxi*dt). Si aucun chemin n'existe : blocage expliqué
+// (retry borné) puis annulation bornée (A-5, 10 min sim, cause lisible).
+// Correction (rebuildGraph, path.mjs) : le graphe est reconstruit PUIS TOUS les
+// chemins en cours sont recalculés depuis la position ACTUELLE de chaque avion
+// (nœud le plus proche), en conservant sa destination (sens arrivée/départ).
+// ponytail : l'anchor repart du nœud le plus proche = le DÉBUT du segment —
+// si l'avion est au milieu d'un segment, il recolle au début (≲ demi-segment,
+// borné, pas de téléportation) ; nœud exact si l'avion est sur un nœud.
+//
+// Setup commun : avion en taxi EN ROUTE vers sa porte, position = nœud de
+// sortie de piste (milieu du trajet, segment piste).
+function r03Setup() {
+  const sim = airport();
+  const rw = sim.infra.runways[0];
+  const tw = sim.infra.taxiways[0];
+  const g = sim.infra.gates[0];
+  // Chemin réel de sortie de piste → porte (2 nœuds : [piste, taxiway]).
+  const path = findPath(sim, runwayExitNode(sim, rw.id), gateNodeOf(sim, g.id), new Set());
+  assert.ok(path && path.length >= 2, 'chemin initial valide (piste → porte)');
+  // L'avion est AU nœud de sortie de piste (path[0], seg = piste) : milieu du
+  // trajet, pathPtr=0 — il roule encore vers le nœud de porte (path[1]).
+  const node = sim._graph.nodes[path[0]]; // nœud de sortie de piste (path[1]=nœud de porte)
+  assert.equal(node.seg, rw.id, "l'avion est au nœud de sortie de piste (milieu du trajet)");
+  sim.aircraft = [ac(1, { phase: 'taxi', gateId: g.id, runwayId: rw.id,
+    path, pathPtr: 0, x: node.x, y: node.y, seg: rw.id, heading: 'gate' })];
+  return { sim, rw, tw, g, path };
+}
+
+function r03Tick(sim, msg) {
+  let error = null;
+  try { tickAircraft(sim, 0.1); } catch (e) { error = e.message; }
+  assert.equal(error, null, msg);
+  const a = sim.aircraft[0];
+  assert.ok(Number.isFinite(a.x) && Number.isFinite(a.y), 'position finie (jamais NaN)');
+  return a;
+}
+
+test('R03 (a) : ajout d\'un segment éloigné pendant un taxi → recalcul, pas d\'exception ni téléportation', () => {
+  const { sim } = r03Setup();
+  const before = { x: sim.aircraft[0].x, y: sim.aircraft[0].y };
+  // (a) un segment ÉLOIGNÉ, ajouté PENDANT le taxi : ne touche ni le trajet
+  // ni la porte, mais le rebuild DÉCALE toutes les indices des nœuds.
+  assert.ok(buildBuilding(sim, 'taxiway', 1200, 500), 'construction du segment éloigné');
+  const a = r03Tick(sim, 'pas d\'exception après ajout (rebuild, indices décalés)');
+  // Le trajet (piste→taxiway→porte) est INTACT : l'avion CONTINUE de rouler
+  // vers sa porte, recollé au nœud le plus proche (SON nœud, pas de téléport).
+  assert.equal(a.phase, 'taxi', 'l\'avion continue de rouler (chemin recalculé sur le graphe neuf)');
+  assert.ok(a.path && a.path.length >= 2, 'chemin recalculé (indices du NOUVEAU graphe)');
+  const step = 60 * 0.1; // V.taxi * dt : la limite de mouvement normale
+  assert.ok(Math.hypot(a.x - before.x, a.y - before.y) <= step + 1e-6,
+    'pas de téléportation (déplacement ≤ V.taxi*dt)');
+});
+
+test('R03 (b) : suppression d\'un segment éloigné créé AVANT les autres → recalcul, pas d\'exception', () => {
+  const { sim } = r03Setup();
+  // (b) un segment ÉLOIGNÉ est d'abord CONSTRUIT (créé avant les autres),
+  // puis SUPPRIMÉ pendant le trajet : le rebuild de la démolition décale à
+  // nouveau les indices.
+  assert.ok(buildBuilding(sim, 'taxiway', 1200, 500), 'construction du segment éloigné (créé en 1er)');
+  const far = sim.infra.taxiways[sim.infra.taxiways.length - 1];
+  assert.ok(demolishBuilding(sim, far.id), 'démolition du segment éloigné (rebuild, indices décalés)');
+  const before = { x: sim.aircraft[0].x, y: sim.aircraft[0].y };
+  const a = r03Tick(sim, 'pas d\'exception après suppression du segment éloigné');
+  // Le trajet est INTACT : l'avion CONTINUE vers sa porte (chemin recalculé),
+  // recollé au nœud le plus proche, déplacement borné.
+  assert.equal(a.phase, 'taxi', 'l\'avion continue de rouler (chemin recalculé)');
+  assert.ok(a.path && a.path.length >= 2, 'chemin recalculé sur le graphe neuf');
+  assert.ok(Math.hypot(a.x - before.x, a.y - before.y) <= 60 * 0.1 + 1e-6,
+    'pas de téléportation (déplacement ≤ V.taxi*dt)');
+});
+
+test('R03 (c) : suppression d\'un segment DU TRAJET → blocage expliqué puis annulation bornée (A-5)', () => {
+  const { sim, tw } = r03Setup();
+  assert.ok(demolishBuilding(sim, tw.id), 'démolition du segment du trajet (l\'unique lien piste↔porte)');
+  const a = r03Tick(sim, 'pas d\'exception après suppression du segment du trajet');
+  // Le taxiway est coupé → plus de chemin : l'avion est bloqué (attente),
+  // chemin/segment remis à zéro, position CONSERVÉE (pas de téléportation).
+  assert.equal(a.phase, 'blocked', 'chemin impossible → attente (retry borné)');
+  assert.equal(a.path, null, 'chemin périmé remis à zéro');
+  assert.equal(a.seg, null, 'segment remis à zéro (réservation abandonnée proprement)');
+  assert.ok(Number.isFinite(a.x) && Number.isFinite(a.y), 'position conservée (pas de téléportation)');
+  // Annulation BORNÉE (A-5, BLOCKED_CANCEL_S = 10 min sim) : le compteur
+  // _blockedAcc franchit 600 s → vol annulé, porte libérée, indemnité, cause
+  // visible (événement « flight-cancelled »).
+  for (let i = 0; i < 600; i++) tickAircraft(sim, 0.1); // 60 s sim : pas encore annulé
+  assert.equal(sim.aircraft[0].phase, 'blocked', 'encore bloqué avant le seuil (600 s)');
+  sim.aircraft[0]._blockedAcc = 600; // (simulation) le blocage persistant atteint le seuil
+  r03Tick(sim, 'pas d\'exception à l\'annulation bornée');
+  assert.equal(sim.aircraft[0].phase, 'cancelled', 'vol bloqué ANNULÉ (annulation bornée A-5)');
+  assert.equal(sim.economy.spent.compensation, 500, 'indemnité de vol annulé comptée');
+  assert.ok(sim.alerts.some((e) => e.kind === 'flight-cancelled'), 'cause visible (événement flight-cancelled)');
+});
+
+test('R03 (d) : sauvegarder puis reprendre pendant le trajet → pas de crash au 1er tick (rebuild différé)', () => {
+  const { sim, tw } = r03Setup();
+  const before = { x: sim.aircraft[0].x, y: sim.aircraft[0].y };
+  // (d) le cycle save/load : le graphe (cache dérivé) est remis à null, le
+  // chemin (indices de l'ANCIEN graphe) est persisté tel quel, la position
+  // MONDE est conservée.
+  const back = deserialize(serialize({ screen: 'game', time: 1, terrain: { w: 1600, h: 1200 },
+    camera: { x: 0, y: 0, zoom: 1 }, sim }));
+  assert.equal(back.sim._graph, null, 'après rechargement, graphe null (rebuild différé au 1er tick)');
+  const a = r03Tick(back.sim, 'pas d\'exception au 1er tick APRÈS rechargement (rebuild différé)');
+  // Le réseau est INTACT : l'avion est recollé au nœud le plus proche (son
+  // nœud de sortie de piste) et CONTINUE son trajet vers la porte.
+  assert.equal(a.phase, 'taxi', 'reprise mid-taxi : l\'avion continue de rouler');
+  assert.ok(a.path && a.path.length >= 2, 'chemin recalculé sur le graphe neuf');
+  assert.equal(a.seg, tw.id, 'recollé sur le segment du trajet (le taxiway)');
+  assert.ok(Math.hypot(a.x - before.x, a.y - before.y) <= 60 * 0.1 + 1e-6,
+    'pas de téléportation (la reprise reprend là où le vol s\'était arrêté)');
+});
