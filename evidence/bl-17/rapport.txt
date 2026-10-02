@@ -1,5 +1,5 @@
 # BL-17 — rapport sim 48 h (node qa/bl17-sim48h.mjs)
-Date : 2026-10-02T04:18:21.365Z
+Date : 2026-10-02T04:25:41.863Z
 Seed PRNG : 42 (EV-10)
 Résultat : PASS (8/8)
 
@@ -9,7 +9,7 @@ PASS AC26b décision joueur mesurable : refus de tout → transport nettement r�
 PASS AC26b incident forcé : conséquence mesurée (holding pendant la fermeture piste) — t=129660s maxHolding=4
 PASS AC26b incident forcé : récupération (transport repart après réouverture) — carried 44-48h=3486
 PASS EV-10 reproductibilité : 2 passes (seed 42) → état final identique — money=19641.74 carried=36608 rngCounter=6507
-PASS performance : 2 × 172 800 ticks exécutés — passe 1 = 0.178s, passe 2 = 0.156s
+PASS performance : 2 × 172 800 ticks exécutés — passe 1 = 0.178s, passe 2 = 0.155s
 PASS A-9 horloges distinctes : temps sim ≠ temps réel (facteur mesuré, jamais = 1) — sim=172801s réel=178ms facteur=970792.13×
 
 État final (passe 1) : carried=36608 money=19641.74 rngCounter=6507

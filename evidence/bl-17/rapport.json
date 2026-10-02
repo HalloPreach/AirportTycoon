@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-02T04:18:21.366Z",
+  "date": "2026-10-02T04:25:41.864Z",
   "seed": 42,
   "result": "PASS",
   "results": [
@@ -36,7 +36,7 @@
     {
       "name": "performance : 2 × 172 800 ticks exécutés",
       "ok": true,
-      "detail": "passe 1 = 0.178s, passe 2 = 0.156s"
+      "detail": "passe 1 = 0.178s, passe 2 = 0.155s"
     },
     {
       "name": "A-9 horloges distinctes : temps sim ≠ temps réel (facteur mesuré, jamais = 1)",

@@ -1,0 +1,48 @@
+# BL-18 — Revalidation finale, états réels (worker t_1a37355b)
+Date : 2026-10-02 (reprise après BL-17)
+État revalidé : HEAD 24bb938 + économie BL-18 (commits e305aa3/8fec8f3/4a0840a)
+Mission : couverture finale AC26c/h + relance COMPLÈTE QA CDP BL-11 sur l'état final (EV-3 final, 0 injection).
+
+=== RÉSULTAT GLOBAL : PASS — 0 échec ===
+
+1) Suite de tests (validateur)
+   node --test tests/*.test.mjs → 95/95 PASS, 0 fail, 0 cancelled (exit 0).
+   Sortie complète : evidence/bl-18/test-output.log
+   AC26c (identifiants distincts / pas de multi-comptage) : tests/sim.test.mjs
+   « plusieurs vols simultanés » (comptage par Set d'identifiants, assertion
+   exacte =3) + tests/invariants.test.mjs « AC15 invariants multi-vols »
+   (compte par g.acId unique + totalCarried monotone + identité trésorerie
+   par tick). AC26h (pause/vitesses/stabilité) : tests/game.test.mjs
+   (pause ne fait pas avancer le temps, vitesses x1/x2/x4, temps figé au
+   menu) + stabilité prolongée prouvée par la session CDP 5 min (point 4).
+
+2) Scénario 48 h (revalidation)
+   node qa/bl17-sim48h.mjs (seed 42) → 8/8 PASS.
+   Log : evidence/bl-18/bl17-sim48h-rerun.log
+   48 h NON gelées (invariants AC26a/tick), carried=36608, décision joueur
+   mesurable (refus 24-36 h : 126 vs 24782), incident forcé (maxHolding=4,
+   récupération 3486), EV-10 (2 passes état final identique), A-9 horloges
+   distinctes (172801 s sim ≠ 178 ms réel).
+
+3) PORTE MVP BL-11 relancée sur l'état final (EV-3 final, 0 injection)
+   node qa/mvp-gate.mjs → 18/18 PASS, exit 0.
+   Log : evidence/bl-18/mvp-gate-rerun.log
+   Entrées 100 % réelles (clavier/souris CDP + reload), observation en
+   lecture seule. Construction → vols (auto-accept) → conflits (réseau coupé)
+   → finances → sauvegarde/reprise (RELOAD + R = la PORTE) → R3/A7 (démolition
+   taxiway isolé AVANT 1er tick, graphe null, null-guard exercé, 0 exception)
+   → rejeu. Réseau 100 % local (EV-5, 53 reqs), 0 exception / 0 console.error
+   (EV-6). Captures : evidence/mvp-gate/*.png (actualisées par cette relance).
+
+4) Stabilité de rendu 5 min (AC26h) sur l'état final
+   node qa/bl17-cdp.mjs → 10/10 PASS, exit 0.
+   Log : evidence/bl-18/bl17-cdp-5min-rerun.log
+   300 s wall clock, FPS médiane 58 img/s (min 7, max 64 ; ≥ 30 exigé),
+   A-9 CDP (1211 s sim ≠ 302,8 s réel, facteur 4×), money/carried FINIS
+   (carried=444, money=346250), jeu JAMAIS en pause, 7 captures PNG lisibles
+   (evidence/bl-17/cdp-5min/*.png), 0 exception / 0 console.error.
+
+CONCLUSION : revalidation finale PASS, 0 échec `node --test`, captures
+actualisées. L'état final tient AC26c (pas de multi-comptage), AC26h
+(pause/vitesses/stabilité, 5 min sans blocage ni accumulation inexpliquée),
+AC27/EV-3 (parcours complet via entrées réelles, 0 injection).

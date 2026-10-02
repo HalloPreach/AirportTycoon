@@ -1,7 +1,3 @@
-# BL-17 — rapport CDP 5 minutes (node qa/bl17-cdp.mjs)
-Date : 2026-10-02T04:34:43.982Z
-Résultat : PASS (10/10)
-
 PASS serveur statique local démarré (serve.mjs) — port=8205
 PASS nouvelle partie (touche N réelle, aéroport fourni) — screen=game t=0s
 PASS vitesse maximale x4 (touche F réelle × 2) + auto-accept ON (A) — speed=x4 paused=false
@@ -13,13 +9,4 @@ PASS captures d'état lisibles (7 PNG : start, 5 min, fin) — 00-start.png=3490
 PASS zéro exception de page sur 5 min — exceptions=0
 PASS zéro console.error sur 5 min — errors=0
 
-FPS : médiane=58 (min=7 max=64, 300 échantillons/s)
-
-États par minute (t réel, x4) :
-min=1 t=239s money=346000 carried=122 ac=1 paused=false phases=blocked
-min=2 t=481s money=348513 carried=346 ac=4 paused=false phases=blocked,blocked,blocked,approach
-min=3 t=723s money=347737 carried=346 ac=4 paused=false phases=blocked,blocked,blocked,blocked
-min=4 t=965s money=345963 carried=346 ac=4 paused=false phases=blocked,blocked,holding,holding
-min=5 t=1207s money=345965 carried=444 ac=3 paused=false phases=blocked,board,landing
-
-A-9 horloges : temps sim=1211s / temps réel=302.8s → facteur 4× (vitesse x4 du jeu, jamais la même horloge)
+=== PASS — 10/10 (evidence: evidence/bl-17/cdp-5min) ===

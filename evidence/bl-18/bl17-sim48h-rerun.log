@@ -1,0 +1,10 @@
+PASS AC26a 48 h stables : 172 800 ticks sans état incohérent (invariants par tick)
+PASS AC26b vols générés et transportés (auto-accept ON, 0-24 h) — carried=36608
+PASS AC26b décision joueur mesurable : refus de tout → transport nettement réduit — carried 0-24h=24782 vs 24-36h=126
+PASS AC26b incident forcé : conséquence mesurée (holding pendant la fermeture piste) — t=129660s maxHolding=4
+PASS AC26b incident forcé : récupération (transport repart après réouverture) — carried 44-48h=3486
+PASS EV-10 reproductibilité : 2 passes (seed 42) → état final identique — money=19641.74 carried=36608 rngCounter=6507
+PASS performance : 2 × 172 800 ticks exécutés — passe 1 = 0.178s, passe 2 = 0.155s
+PASS A-9 horloges distinctes : temps sim ≠ temps réel (facteur mesuré, jamais = 1) — sim=172801s réel=178ms facteur=970792.13×
+
+=== PASS — 8/8 (evidence: evidence/bl-17) ===
