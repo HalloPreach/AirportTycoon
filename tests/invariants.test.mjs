@@ -13,6 +13,7 @@ import { tickEconomy, tickPassengers } from '../src/economy/economy.mjs';
 import { tickPlanner } from '../src/flights/flights.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../src/pathfinding/path.mjs';
 import { START_FUNDS } from '../src/core/sim-state.mjs';
+import { serialize, deserialize } from '../src/persistence/save.mjs';
 
 // Même helper que les sondes de l'audit (probes.mjs) : un avion de test.
 function ac(id, overrides = {}) {
@@ -218,4 +219,41 @@ test('R3-A7 : démolir un taxiway occupé ne lève pas d\'exception', () => {
   try { tickAircraft(sim, 0.1); } catch (e) { error = e.message; }
   assert.equal(error, null, "pas d'exception au tick suivant la démolition");
   assert.equal(sim.aircraft[0].phase, 'blocked', "l'avion est bloqué (chemin invalide → attente, réessai)");
+});
+
+// R3 (A8) — BL-04 : le même scénario APRÈS une sauvegarde/rechargement.
+// deserialize() remet `sim._graph = null` (cache dérivé, reconstruit au 1er
+// tick) — la garde A7 lisait `sim._graph.nodes` et crashait alors :
+// « Cannot read properties of null (reading 'nodes') ». La démolition d'un
+// taxiway occupé après rechargement doit rester SANS exception : les chemins
+// périmés (indices dans l'ANCIEN graphe, jamais persistés) sont remis à zéro,
+// l'avion passe en « blocked » et retente après le rebuild au 1er tick.
+test('R3-A8 : démolir un taxiway occupé après rechargement ne lève pas d\'exception', () => {
+  const sim = airport();
+  const rw = sim.infra.runways[0];
+  const tw = sim.infra.taxiways[0];
+  const g = sim.infra.gates[0];
+  const path = findPath(sim, gateNodeOf(sim, g.id), runwayExitNode(sim, rw.id), new Set());
+  const node = sim._graph.nodes[path[0]];
+  sim.aircraft = [ac(1, { phase: 'taxi', gateId: g.id, runwayId: rw.id,
+    path, pathPtr: 0, x: node.x, y: node.y, seg: node.seg, heading: 'gate' })];
+  // Cycle save/load : le graphe (cache dérivé) est remis à null, dirty = true.
+  const back = deserialize(serialize({ screen: 'game', time: 1, terrain: { w: 1600, h: 1200 },
+    camera: { x: 0, y: 0, zoom: 1 }, sim }));
+  assert.equal(back.sim._graph, null, "après rechargement, le graphe est null (rebuild différé)");
+  assert.deepEqual(back.sim.aircraft[0].path, path, "le chemin (indices) est persisté tel quel");
+  // (GREEN) la démolition doit passer SANS exception — avant la correction :
+  // « Cannot read properties of null (reading 'nodes') ».
+  let error = null;
+  let result = null;
+  try { result = demolishBuilding(back.sim, tw.id); } catch (e) { error = e.message; }
+  assert.equal(error, null, "pas d'exception à la démolition après rechargement");
+  assert.equal(result.ok, true, 'la démolition passe');
+  assert.equal(back.sim.aircraft[0].path, null, "le chemin périmé est remis à zéro");
+  assert.equal(back.sim.aircraft[0].seg, null, "le segment occupé est remis à zéro");
+  // Au tick suivant (rebuild du graphe) : pas de crash, avion en attente.
+  error = null;
+  try { tickAircraft(back.sim, 0.1); } catch (e) { error = e.message; }
+  assert.equal(error, null, "pas d'exception au tick suivant la démolition");
+  assert.equal(back.sim.aircraft[0].phase, 'blocked', "l'avion est bloqué (attente, réessai)");
 });

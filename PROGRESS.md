@@ -64,6 +64,19 @@ Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à j
     `SUMMARY.json` : R5 confirmée (comportement corrigé).
   - 2 tests de régression AC18 ajoutés dans `tests/sim.test.mjs` (échouaient
     sur le code d'avant) ; `npm test` → 54/54 pass sur `788ecb6`.
+- **BL-04 A8 (2026-10-02) : R3 après rechargement plus reproduisible.** Correction
+  dans `src/infra/infra.mjs` (`demolishBuilding`) : après `deserialize`, le graphe
+  pathfinding (cache dérivé) est remis à `null` et le 1er tick fait le rebuild —
+  la garde A7 (invalidation des chemins périmés à la démolition) lisait
+  `sim._graph.nodes` et crashait (`Cannot read properties of null (reading 'nodes')`)
+  quand on démolissait un taxiway occupé SANS tick entre le rechargement et la
+  démolition. Correction : `rebuildGraph` avant la lecture si `sim._graph` est null
+  (chemin périmé = indices de l'ANCIEN graphe, jamais persistés : remis à zéro,
+  avion → `blocked` + retry au tick suivant). Test de régression `R3-A8` dans
+  `tests/invariants.test.mjs` (échouait AVANT la correction, RED vérifié) + sonde
+  racine `probe-a8.mjs` (repro : `deserialize → demolish taxiway occupé` sans
+  exception, avion en attente). `npm test` → 51/51 ; `node --test tests/*.test.mjs`
+  → 78/78 pass.
 - **BL-14 (2026-10-02) : R8/A12 plus reproduisibles.** Correction sur le commit
   `6cb4064` (preuve : `evidence/audit-6cb4064/A12.json`) :
   - Cause racine : `tickEconomy` ne comptait que les services construits

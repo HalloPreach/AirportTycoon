@@ -5,6 +5,7 @@
 // poser/rouler ici ». ponytail : grille carrée simple, pas d'arborescence spatiale.
 import { BUILDINGS, UNLOCKS, TERMINAL_GATE_SIZES } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
+import { rebuildGraph } from '../pathfinding/path.mjs';
 
 const CELL = 10;
 
@@ -140,6 +141,10 @@ export function demolishBuilding(sim, id) {
   // tick l'avion passe en « blocked » et retente un nouveau chemin (retry
   // équitable, annulation si blocage persistant) — plus d'exception.
   if (b.type === 'taxiway' || b.type === 'runway') {
+    // (R3, A8) Après un rechargement, le graphe (cache dérivé) est null tant
+    // que le 1er tick n'a pas fait le rebuild : on le reconstruit ici avant de
+    // lire les nœuds — sinon `sim._graph.nodes` crashait (reading 'nodes').
+    if (!sim._graph) rebuildGraph(sim);
     const onDead = (i) => sim._graph.nodes[i] && sim._graph.nodes[i].seg === id;
     for (const ac of sim.aircraft) {
       if (ac.path && ac.path.some(onDead)) { ac.path = null; ac.seg = null; }
