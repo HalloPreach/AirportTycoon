@@ -1,6 +1,6 @@
 # PROGRESS — Airport Tycoon (point de reprise, AC30 / EV-7)
 
-Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à jour : 2026-10-02 (fin BL-19, HEAD `debee4f`).
+Base : `80a90ab` (80a90abf4d8000650135442018a263035b2cc1b8). Dernière mise à jour : 2026-10-02 (fin BL-20, HEAD `4cc2bbf` — projet clôturé).
 
 ## État du backlog (BACKLOG.md, 20 cartes BL-00..BL-19)
 
@@ -222,6 +222,14 @@ BL-01 devra committer son travail (`src/core/new-game.mjs`, `src/infra/infra.mjs
 
 ## Prochaine tâche bornée
 
-**BL-01** — Nouvelle partie avec aéroport fourni (MVP-1, AC1, AC38, A-2) :
-`src/core/new-game.mjs` = 1 piste + terminal 2 portes + taxiway connectés ; fin = 1 vol
-complet sans construction préalable + test `node --test`.
+Aucune — projet clôturé (racine `t_ee6cc437`, 2026-10-02). Backlog complet :
+BL-00..BL-20 + revues indépendantes RV-BL03/04/04-2/08/11/18, toutes terminées et
+committées (état final `4cc2bbf`). Preuves finales réexécutées sur l'arbre final :
+`node --test tests/*.test.mjs` = 105/105, `qa/bl17-sim48h.mjs` = 8/8,
+`qa/mvp-gate.mjs` = 18/18, `qa/bl17-cdp.mjs` = 10/10, `qa/gestion-panel.mjs` = 15/15.
+
+Reste hors périmètre (documenté `RAPPORT_FINAL.md` §8, non masqué) :
+- **G2** : le script `npm test` liste 10/13 fichiers — fix triviale (`package.json` → glob `tests/*.test.mjs`).
+- **G3** : seuils ponytail assumés (toasts 4/4 s, autosave 120 s, rendu 5 min).
+- **G4** : NONMVP-9 (fret/correspondances) optionnel, exclu par le brief.
+- **G5** : `main` en avant sur `origin/main` — push à faire par l'utilisateur.
