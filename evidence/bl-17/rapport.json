@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-02T09:17:35.785Z",
+  "date": "2026-10-02T09:19:08.946Z",
   "seed": 42,
   "result": "PASS",
   "results": [
@@ -36,12 +36,12 @@
     {
       "name": "performance : 2 × 172 800 ticks exécutés",
       "ok": true,
-      "detail": "passe 1 = 0.198s, passe 2 = 0.169s"
+      "detail": "passe 1 = 0.194s, passe 2 = 0.169s"
     },
     {
       "name": "A-9 horloges distinctes : temps sim ≠ temps réel (facteur mesuré, jamais = 1)",
       "ok": true,
-      "detail": "sim=172801s réel=198ms facteur=872732.32×"
+      "detail": "sim=172801s réel=194ms facteur=890726.8×"
     }
   ],
   "final": {
@@ -567,7 +567,7 @@
   ],
   "a9": {
     "simTimeSec": 172801,
-    "realElapsedMs": 198,
-    "timeFactor": 872732.32
+    "realElapsedMs": 194,
+    "timeFactor": 890726.8
   }
 }
