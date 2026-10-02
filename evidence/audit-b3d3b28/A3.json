@@ -1,0 +1,20 @@
+{
+  "commitGit": "b3d3b282cf82f311c8dc87d2548743d1d8e78bec",
+  "runAt": "2026-10-02T00:29:57.797Z",
+  "name": "A3 — deux avions entrent dans un même segment libre au même tick",
+  "confirmed": false,
+  "planes": [
+    {
+      "id": 1,
+      "seg": 30,
+      "x": 6,
+      "delayed": 0
+    },
+    {
+      "id": 2,
+      "seg": 20,
+      "x": 60,
+      "delayed": 0.1
+    }
+  ]
+}

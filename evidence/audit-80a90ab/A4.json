@@ -1,0 +1,18 @@
+{
+  "commitGit": "80a90abf4d8000650135442018a263035b2cc1b8",
+  "runAt": "2026-10-01T22:20:32.001Z",
+  "name": "A4 — atterrissage autorisé pendant le décollage sur la même piste",
+  "confirmed": true,
+  "planes": [
+    {
+      "id": 1,
+      "phase": "departure",
+      "runwayId": 1
+    },
+    {
+      "id": 2,
+      "phase": "landing",
+      "runwayId": 1
+    }
+  ]
+}

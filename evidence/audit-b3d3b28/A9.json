@@ -1,0 +1,17 @@
+{
+  "commitGit": "b3d3b282cf82f311c8dc87d2548743d1d8e78bec",
+  "runAt": "2026-10-02T00:29:57.799Z",
+  "name": "A9 — position de l’avion à la porte et saut horizontal à l’atterrissage",
+  "confirmed": true,
+  "distanceToGateCenter": 0,
+  "largestHorizontalStepAtDt01": 6,
+  "plane": {
+    "x": 595,
+    "y": 1045
+  },
+  "gateCenter": {
+    "x": 595,
+    "y": 1045
+  },
+  "runwayId": 1
+}

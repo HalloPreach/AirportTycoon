@@ -1,0 +1,48 @@
+{
+  "commitGit": "80a90abf4d8000650135442018a263035b2cc1b8",
+  "runAt": "2026-10-01T22:20:32.003Z",
+  "name": "A13 — fonctionnement prolongé sur le plan utilisé par les tests",
+  "confirmed": true,
+  "snapshots": [
+    {
+      "minutes": 30,
+      "active": 14,
+      "blocked": 12,
+      "largeBlocked": 12,
+      "carried": 681,
+      "satisfaction": 0,
+      "money": 27885,
+      "alerts": 51
+    },
+    {
+      "minutes": 60,
+      "active": 24,
+      "blocked": 23,
+      "largeBlocked": 23,
+      "carried": 1640,
+      "satisfaction": 0,
+      "money": 57080,
+      "alerts": 101
+    },
+    {
+      "minutes": 90,
+      "active": 28,
+      "blocked": 27,
+      "largeBlocked": 27,
+      "carried": 3563,
+      "satisfaction": 0,
+      "money": 111994,
+      "alerts": 157
+    },
+    {
+      "minutes": 120,
+      "active": 37,
+      "blocked": 35,
+      "largeBlocked": 35,
+      "carried": 4657,
+      "satisfaction": 0,
+      "money": 145397,
+      "alerts": 208
+    }
+  ]
+}

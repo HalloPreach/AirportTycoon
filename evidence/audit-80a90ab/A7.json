@@ -1,0 +1,16 @@
+{
+  "commitGit": "80a90abf4d8000650135442018a263035b2cc1b8",
+  "runAt": "2026-10-01T22:20:32.002Z",
+  "name": "A7 — démolir un taxiway occupé invalide le chemin et provoque une exception",
+  "confirmed": true,
+  "result": {
+    "ok": true,
+    "refund": 200
+  },
+  "pathBefore": [
+    0,
+    1,
+    3
+  ],
+  "error": "Cannot read properties of undefined (reading 'seg')"
+}

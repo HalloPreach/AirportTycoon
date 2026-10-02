@@ -1,0 +1,8 @@
+{
+  "commitGit": "80a90abf4d8000650135442018a263035b2cc1b8",
+  "runAt": "2026-10-01T22:20:32.003Z",
+  "name": "A11 — sérialiser modifie le graphe de la partie en cours",
+  "confirmed": true,
+  "graphCleared": true,
+  "graphDirty": true
+}
