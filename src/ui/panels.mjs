@@ -31,6 +31,11 @@ import { unlockView } from '../infra/unlocks.mjs';
 // source) + COMMANDE (setAssignment : le joueur change l'affectation, la règle
 // est dans la sim, le panneau émet l'intention).
 import { assignmentView, setAssignment } from '../infra/assignments.mjs';
+// R33 (t_11a4e241) : DEUX réponses opérationnelles par incident — LECTURE
+// (incidentResponse : les 2 réponses + conséquences AVANT décision) + COMMANDE
+// (respondIncident : la sim règle le coût/l'effet, l'UI émet l'intention).
+// UI FINE, même pattern que setAssignment/buyUpgrade (panneau ne décide pas).
+import { incidentResponse, respondIncident } from '../sim/incidents.mjs';
 // R30 (t_1623523e) : les files passagers sont PAR TERMINAL (sim.passengers.queues)
 // — le panneau l'affiche via queueTotals (somme des terminaux, lecture seule).
 import { queueTotals } from '../sim/passengers.mjs';
@@ -85,6 +90,33 @@ function line(parent, label, value, kind) {
   l.textContent = label;
   d.append(l, document.createTextNode(value));
   parent.appendChild(d);
+}
+// R33 : les DEUX réponses d'un incident + leurs CONSÉQUENCES (lues AVANT
+// décision par incidentResponse, lecture pure) + un bouton par réponse
+// (l'action émet l'intention — respondIncident règle le coût/l'effet, pas l'UI).
+// Après l'action, le record est terminé → la signature du panneau change → la
+// zone est reconstruite au prochain frame (plus de boutons = l'action n'est
+// JAMAIS répétable en UI) ; l'événement (pushEvent côté sim) se lit dans
+// l'historique d'alertes.
+function addResponses(body, sim, which) {
+  const view = incidentResponse(sim, which);
+  if (!view.ok) return; // motif lisible (incident terminé / cible ambiguë)
+  for (const r of view.responses) {
+    const row = document.createElement('div');
+    row.className = 'pline';
+    const b = document.createElement('button');
+    b.className = 'resp';
+    b.textContent = r.cost ? `${r.name} — ${r.cost} $` : r.name;
+    b.addEventListener('click', () => {
+      // Intention vers la sim — la règle (coût, effet, non-répétition) est
+      // dans respondIncident (la UI ne tranche rien, pattern buyUpgrade).
+      respondIncident(sim, which, r.id);
+    });
+    const t = document.createElement('span');
+    t.textContent = ` — ${r.effect}`; // la CONSÉQUENCE est affichée AVANT la décision
+    row.append(b, t);
+    body.appendChild(row);
+  }
 }
 
 // Section : titre + zone. refresh(sigOf, paint) reconstruit la zone UNIQUEMENT
@@ -543,11 +575,12 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         const q = qualityView(sim); // R26 : palier qualité (mix d'offres) + mesure sous-jacente
         const nClosedRw = Object.values(i.runways || {}).filter((r) => r && r.remaining > 0).length;
         const nOutSt = Object.values(i.fuels || {}).filter((f) => f && f.remaining > 0).length;
+        const nPlanned = (sim.planning || []).filter((e) => e.status === 'planned').length; // R33 : la conséquence « allègement » (nombre de vols à refuser) suit la décision
         return [
           sim._graph ? sim._graph.nodes.length : null, sim._graphDirty ? 1 : 0,
           sim.infra.runways.length, sim.infra.gates.length,
           pending, pendingCap(sim), nClosedRw, nOutSt, i.surge?.active ? 1 : 0,
-          q.tier, q.q.toFixed(2),
+          q.tier, q.q.toFixed(2), nPlanned,
         ].join('|');
       },
       (body) => {
@@ -568,16 +601,27 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
           q.tier === 2 ? 'good' : '');
         // R32 : les incidents sont PAR ACTIF (attachés) — on liste ceux en
         // cours (l'actif est lisible : laquelle piste / quelle station).
+        // R33 : pour chaque incident, les DEUX réponses (passive vs coûteuse/
+        // allègement) + leurs CONSÉQUENCES (incidentResponse, lecture pure)
+        // sont affichées AVANT décision ; le bouton émet l'intention
+        // (respondIncident règle — la sim, pas l'UI).
         for (const r of Object.values(i.runways || {})) {
           if (r && r.remaining > 0) {
             const rw = (sim.infra.runways || []).find((x) => x.id === r.asset);
             line(body, `Piste ${r.asset}`, `FERMÉE (${Math.ceil(r.remaining)} s restants)${rw ? ` — ${rw.id}` : ''}`, 'bad');
+            addResponses(body, sim, `runway:${r.asset}`);
           }
         }
         for (const f of Object.values(i.fuels || {})) {
-          if (f && f.remaining > 0) line(body, `Station ${f.asset}`, `panne carburant (${Math.ceil(f.remaining)} s)`, 'bad');
+          if (f && f.remaining > 0) {
+            line(body, `Station ${f.asset}`, `panne carburant (${Math.ceil(f.remaining)} s)`, 'bad');
+            addResponses(body, sim, `fuel:${f.asset}`);
+          }
         }
-        if (i.surge?.active) line(body, 'Demande', 'pic actif (cadence doublée)', 'warn');
+        if (i.surge?.active) {
+          line(body, 'Demande', `pic actif (cadence doublée, ${Math.ceil(i.surge.remaining)} s restants)`, 'warn');
+          addResponses(body, sim, 'surge');
+        }
         // COUPÉ : lecture SEULE du graphe — JAMAIS de rebuildGraph ici (avant le
         // 1er tick le graphe est null et c'est voulu : on l'affiche, on ne le
         // fabrique pas, R3/A7).

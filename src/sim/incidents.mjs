@@ -28,6 +28,7 @@
 // (pas de référence orpheline). Upgrade : table de gravité par type si le jeu
 // veut des incidents plus variés.
 import { pushEvent } from '../core/sim-state.mjs';
+import { charge } from '../economy/economy.mjs'; // R33 : l'intervention PAYANTE débite le solde (catégorie spent.intervention)
 
 const INCID = Object.freeze({
   RUNWAY_EVERY_S: 900,   // tirage « fermeture piste » toutes les ~15 min sim
@@ -41,6 +42,12 @@ const INCID = Object.freeze({
   // cleaning+maintenance, R29), plus un incident d'actif s'y déclenche vite
   // (le 1er tirage reste borné : il n'arrive QU'APRÈS la 1re fenêtre).
   WEAR_BIAS: 0.5,        // p = P0 × (1 + usure/100 × WEAR_BIAS) (borne ≤ P0×3)
+  // R33 : l'intervention PAYANTE termine l'incident IMMÉDIATEMENT (vs la
+  // réponse passive « attendre », gratuite mais les effets continuent jusqu'à
+  // la fin naturelle). Montants bornés : ~1 indemnité de vol annulé (500 $),
+  // pas un goulot financier (START_FUNDS 12 000 inchangé).
+  INTERVENE_RUNWAY_COST: 600, // réouverture immédiate d'une piste fermée
+  INTERVENE_FUEL_COST: 450,   // remise en service immédiate d'une station
 });
 
 // État des incidents sur la sim (sérialisable seul — sans état dérivé) :
@@ -286,4 +293,125 @@ export function forceIncident(sim, which) {
   } else {
     throw new Error(`incident inconnu : ${which}`);
   }
+}
+
+// R33 (t_11a4e241) : DEUX réponses opérationnelles par incident —
+//   passive   : gratuite, aucun effet jusqu'à la fin NATURELLE de l'incident
+//               (le joueur attend, les effets continuent — c'est le choix).
+//   coûteuse  : débite un coût (intervention) OU consomme une ressource
+//               (allègement du planning : les vols planifiés sont refusés,
+//               leur revenu est perdu) — l'effet est IMMÉDIAT.
+// Les CONSÉQUENCES sont lues AVANT décision (incidentResponse, lecture pure
+// — l'UI les affiche dans le panneau diagnostic, pas de mutation). L'action
+// NE PEUT PAS ÊTRE RÉPÉTÉE pour cumuler artificiellement les effets : une
+// intervention FINIT le record (2e appel → motif, aucune mutation) ; un
+// allègement refuse TOUS les vols planifiés (2e appel → plus rien à
+// refuser). Aucune 3e option : les deux réponses offrent déjà un vrai
+// arbitrage (argent vs temps, revenu vs files) — une 3e serait un faux choix.
+// which : 'runway:<pisteId>' | 'fuel:<stationId>' | 'surge' (sans id : l'actif
+// unique en incident est dérivé ; plusieurs actifs touchés → id explicite).
+
+function resolveIncident(sim, which) {
+  const i = ensureIncidents(sim);
+  const m = typeof which === 'string' && which.includes(':');
+  const type = m ? which.slice(0, which.indexOf(':')) : which;
+  const assetKey = m ? which.slice(which.indexOf(':') + 1) : null;
+  if (type === 'runway') {
+    const actives = Object.keys(i.runways).filter((k) => i.runways[k] && i.runways[k].remaining > 0);
+    const key = assetKey ?? (actives.length === 1 ? actives[0] : null);
+    if (!key || !i.runways[key] || i.runways[key].remaining <= 0)
+      return { ok: false, reason: actives.length > 1 ? 'plusieurs pistes fermées — préciser la cible (runway:<id>)' : 'aucune piste en fermeture' };
+    return { ok: true, type, key };
+  }
+  if (type === 'fuel') {
+    const actives = Object.keys(i.fuels).filter((k) => i.fuels[k] && i.fuels[k].remaining > 0);
+    const key = assetKey ?? (actives.length === 1 ? actives[0] : null);
+    if (!key || !i.fuels[key] || i.fuels[key].remaining <= 0)
+      return { ok: false, reason: actives.length > 1 ? 'plusieurs stations en panne — préciser la cible (fuel:<id>)' : 'aucune station en panne' };
+    return { ok: true, type, key };
+  }
+  if (type === 'surge') {
+    if (!i.surge.active || i.surge.remaining <= 0) return { ok: false, reason: 'aucun pic de demande' };
+    return { ok: true, type: 'surge' };
+  }
+  return { ok: false, reason: `incident inconnu : ${which}` };
+}
+
+// LECTURE (UI) : les deux réponses + leurs CONSÉQUENCES, avant décision.
+// Aucune mutation — le panneau peut l'appeler à chaque rendu.
+export function incidentResponse(sim, which) {
+  const t = resolveIncident(sim, which);
+  if (!t.ok) return { ok: false, reason: t.reason };
+  const i = ensureIncidents(sim);
+  if (t.type === 'runway') {
+    const rec = i.runways[t.key];
+    return {
+      ok: true, type: 'runway', asset: Number(t.key), remaining: Math.ceil(rec.remaining),
+      responses: [
+        { id: 'wait', name: 'Attendre (gratuit)', cost: 0,
+          effect: `les atterrissages patientent ${Math.ceil(rec.remaining)} s jusqu'à la réouverture naturelle` },
+        { id: 'intervene', name: "Intervention d'urgence", cost: INCID.INTERVENE_RUNWAY_COST,
+          effect: `réouverture IMMÉDIATE de la piste — plus d'attente (coût ${INCID.INTERVENE_RUNWAY_COST} $)` },
+      ],
+    };
+  }
+  if (t.type === 'fuel') {
+    const rec = i.fuels[t.key];
+    return {
+      ok: true, type: 'fuel', asset: Number(t.key), remaining: Math.ceil(rec.remaining),
+      responses: [
+        { id: 'wait', name: 'Attendre (gratuit)', cost: 0,
+          effect: `départs secs (billets moitiés) pendant ${Math.ceil(rec.remaining)} s jusqu'au retour du service` },
+        { id: 'intervene', name: "Intervention d'urgence", cost: INCID.INTERVENE_FUEL_COST,
+          effect: `station de nouveau ACTIVE immédiatement — pleins normaux (coût ${INCID.INTERVENE_FUEL_COST} $)` },
+      ],
+    };
+  }
+  const n = (sim.planning || []).filter((e) => e.status === 'planned').length;
+  return {
+    ok: true, type: 'surge', remaining: Math.ceil(i.surge.remaining),
+    responses: [
+      { id: 'absorb', name: 'Absorber le pic (gratuit)', cost: 0,
+        effect: `le pic continue ${Math.ceil(i.surge.remaining)} s — la cadence reste doublée, le confort baisse (${INCID.SURGE_SAT_LOSS} %/s)` },
+      { id: 'relief', name: 'Allègement du planning', cost: 0,
+        effect: `refuser les ${n} vol(s) planifié(s) (leur revenu est perdu) — les files d'arrivée se vident` },
+    ],
+  };
+}
+
+// COMMANDE (la sim règle, l'UI émet l'intention) : appliquer la réponse.
+// Motif lisible si l'action est impossible — PAS de mutation partielle
+// (la résolution ET la vérification précèdent TOUTE écriture).
+export function respondIncident(sim, which, response) {
+  const t = resolveIncident(sim, which);
+  if (!t.ok) return { ok: false, reason: t.reason };
+  const i = ensureIncidents(sim);
+  if (t.type === 'runway') {
+    if (response === 'wait') return { ok: true, effect: 'attente — réouverture naturelle (aucun coût)' };
+    if (response !== 'intervene') return { ok: false, reason: `réponse inconnue : ${response}` };
+    charge(sim, INCID.INTERVENE_RUNWAY_COST, 'intervention');
+    delete i.runways[t.key]; // la fin NORMALE (tickIncidents) ne se rejoue pas — l'incident EST terminé
+    pushEvent(sim, { kind: 'runway-reopen', runway: Number(t.key), why: `intervention — réouverture immédiate (payante, ${INCID.INTERVENE_RUNWAY_COST} $)` });
+    return { ok: true, effect: `piste ${t.key} réouverte immédiatement (coût ${INCID.INTERVENE_RUNWAY_COST} $)` };
+  }
+  if (t.type === 'fuel') {
+    if (response === 'wait') return { ok: true, effect: 'attente — retour du service (aucun coût)' };
+    if (response !== 'intervene') return { ok: false, reason: `réponse inconnue : ${response}` };
+    charge(sim, INCID.INTERVENE_FUEL_COST, 'intervention');
+    const svc = (sim.infra.services || []).find((s) => String(s.id) === t.key && s.type === 'fuel');
+    if (svc) svc.fuelOut = false; // la station repart (la fin normale le ferait au compte à rebours)
+    delete i.fuels[t.key];
+    pushEvent(sim, { kind: 'fuel-back', station: t.key, why: `intervention — station de nouveau en service (payante, ${INCID.INTERVENE_FUEL_COST} $)` });
+    return { ok: true, effect: `station ${t.key} de nouveau active (coût ${INCID.INTERVENE_FUEL_COST} $)` };
+  }
+  // surge : allègement du planning = refuser TOUS les vols planifiés (la
+  // ressource consommée est leur revenu — l'action ne se répète PAS : après,
+  // il ne reste plus de vol « planned » à refuser).
+  if (response === 'absorb') return { ok: true, effect: 'pic absorbé (aucune action)' };
+  if (response !== 'relief') return { ok: false, reason: `réponse inconnue : ${response}` };
+  const refused = (sim.planning || []).filter((e) => e.status === 'planned');
+  if (!refused.length) return { ok: false, reason: 'plus de vol à refuser — le planning est déjà allégé (action non répétable)' };
+  sim.planning = sim.planning.filter((e) => e.status !== 'planned');
+  pushEvent(sim, { kind: 'planning-relief', count: refused.length, why: `allègement du planning — ${refused.length} vol(s) planifié(s) refusé(s) (revenu perdu)` });
+  return { ok: true, effect: `${refused.length} vol(s) planifié(s) refusé(s) — files d'arrivée allégées` };
 }
