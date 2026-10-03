@@ -1,0 +1,108 @@
+{
+  "tool": "qa/probe-scenario.mjs",
+  "commit": "2ecc93cfa5406613ecabc56e149fc0bcc04d3c6d",
+  "runId": "r36m-s99999-refus-temp-dt1",
+  "seed": 99999,
+  "scenario": "custom",
+  "config": {
+    "policy": "accept",
+    "services": "none",
+    "events": [
+      {
+        "at": 10800,
+        "action": "autoRefuse"
+      },
+      {
+        "at": 32400,
+        "action": "autoAccept"
+      }
+    ],
+    "dt": 1,
+    "hours": 24
+  },
+  "strategy": {
+    "upgradesBought": 0,
+    "upgradesRefused": 0,
+    "contractsAccepted": 0,
+    "contractsRefused": 0
+  },
+  "forced": [],
+  "simTimeEnd": 86400,
+  "stoppedEarly": false,
+  "money": {
+    "start": 12000,
+    "end": 2174751.51225214,
+    "min": 11574.399999999903,
+    "atMin": 133,
+    "debt": 0
+  },
+  "revenue": 2521181.01225,
+  "opex": 276480.0000004448,
+  "opexPerHour": 11520.000000018534,
+  "fuel": 81949.5,
+  "compensation": 0,
+  "invest": 0,
+  "net": 2162751.5122495554,
+  "bankruptcy": false,
+  "bankruptAt": null,
+  "passengers": {
+    "totalCarried": 163979,
+    "satisfaction": 100
+  },
+  "wait": {
+    "queues": {
+      "checkin": {
+        "n": 0,
+        "cap": 120,
+        "occ": 0
+      },
+      "security": {
+        "n": 0,
+        "cap": 120,
+        "occ": 0
+      },
+      "board": {
+        "n": 0,
+        "cap": 160,
+        "occ": 0
+      }
+    },
+    "holding": 0,
+    "plannedPending": 1
+  },
+  "counts": {
+    "built": 0,
+    "flightIn": 1571,
+    "flightOut": 1567,
+    "flightCancelled": 0,
+    "unlocked": 5,
+    "bankrupt": 0,
+    "runwayClosed": 46,
+    "fuelOut": 0,
+    "surgeStart": 159,
+    "noFuel": 1569,
+    "contractStarted": 0,
+    "upgraded": 0
+  },
+  "unlocked": [
+    "fuel",
+    "catering",
+    "baggage",
+    "cleaning",
+    "hangar"
+  ],
+  "infra": {
+    "runways": 1,
+    "taxiways": 1,
+    "terminals": 1,
+    "gates": 2,
+    "services": []
+  },
+  "servicesOpexPerHour": 0,
+  "determinism": {
+    "note": "R09 (livré) : rejouer cette configuration (mêmes args, même commit) donne des fichiers IDENTIQUES en bytes. Les seeds différents DONNENT DES PARTIES DIFFÉRENTES (le seed est mélangé dans mulberry32 — preuve : evidence/r09-seed-42 vs r09-seed-99). Rejouer une config d’AVANT R09 avec seed 0 reste bit-à-bit la suite d’origine (migration).",
+    "rngSeed": 99999,
+    "rngCounterEnd": 5225,
+    "rngCounterStart": 0
+  }
+}

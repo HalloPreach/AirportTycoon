@@ -26,6 +26,18 @@
 //                      refuse                   : tout est refusé (aucun nouveau vol)
 //                      nodecision               : AUCUNE décision (file « planned »
 //                                                 stagnée — vols qui n'arrivent jamais)
+//                      prudent  (R36)  : acceptation seulement si capacité libre
+//                                         (aucun avion en holding)
+//                      expansion (R36) : acceptation + amélioration « terminal »
+//                                         (capacité, R31) + s'associe à
+//                                         --services all (croissance viable)
+//                      greedy    (R36) : ACCEPTATION EXCESSIVE — tous les vols
+//                                         + tous les contrats (R21/R26)
+//                      badinvest (R36) : investissement INADAPTÉ — équipement
+//                                         d'équipes (R31 : mauvais achat)
+//   --no-state       : pas de snapshot de state (la matrice R36 n'a besoin que
+//                      du RAPPORT — le state final ne sert qu'aux paires
+//                      de determinisme du runner).
 //   --services S     : CONSTRUCTION des services, chacun dès que la sim le
 //                      permet (R23 : unlockState, conditions mesurables) :
 //                      none (défaut) | fuel (carburant seul) | all (TOUTS :
@@ -49,6 +61,7 @@
 //   node qa/probe-scenario.mjs --hours 6 --services fuel        (carburant seul)
 //   node qa/probe-scenario.mjs --hours 6 --services all         (tous services)
 //   node qa/probe-scenario.mjs --hours 48 --scenario bl17
+//   node qa/probe-scenario.mjs --hours 24 --policy greedy --no-state (matrice R36)
 //
 // ponytail : 1 harness + le PRNG DE LA SIM (pas de 2e générateur) ; pas de
 // framework, pas de fixtures. Le temps RÉEL (Date.now) ne va JAMAIS dans le
@@ -64,6 +77,8 @@ import { makeGameState } from '../src/core/new-game.mjs';
 import { tick } from '../src/core/tick.mjs';
 import { makeSimRng } from '../src/core/rng.mjs';
 import { decideFlight } from '../src/flights/flights.mjs';
+import { decideContract } from '../src/flights/contracts.mjs'; // R36 : l'engagement maximal (greedy)
+import { buyUpgrade, upgradeView } from '../src/infra/upgrades.mjs'; // R36 : l'investissement (bon/mauvais goulot, R31)
 import { forceIncident } from '../src/sim/incidents.mjs';
 import { buildBuilding, hasService } from '../src/infra/infra.mjs';
 import { passengerSummary } from '../src/sim/passengers.mjs';
@@ -89,8 +104,24 @@ const RUN_ID = (arg('--run-id') ?? `probe-${SCENARIO}-${String(HOURS)}h`);
 if (!Number.isInteger(SEED) || SEED < 0) { console.error(`--seed : entier >= 0 attendu (got ${arg('--seed')})`); process.exit(2); }
 if (!Number.isFinite(HOURS) || HOURS <= 0) { console.error(`--hours : nombre > 0 attendu (got ${arg('--hours')})`); process.exit(2); }
 if (!Number.isFinite(DT) || DT <= 0) { console.error(`--dt : nombre > 0 attendu (got ${arg('--dt')})`); process.exit(2); }
-if (!['accept', 'refuse', 'nodecision'].includes(POLICY)) { console.error(`--policy : accept|refuse|nodecision attendu (got ${POLICY})`); process.exit(2); }
+// R36 : politiques de la MATRICE (compositions des commandes publiques —
+// decideFlight / buyUpgrade / decideContract — la sim n'est jamais touchée) :
+//   prudent   : acceptation PRUDENTE — on n'accepte un vol que si la capacité
+//               est libre (aucun avion en holding) ; sinon l'offre attend.
+//   expansion : acceptation + MEILLEURE amélioration quand le goulot est les
+//               FILES (buyUpgrade 'terminal', la bonne cible — R31) ; s'associe
+//               à --services all (la stratégie de croissance viable).
+//   greedy    : ACCEPTATION EXCESSIVE — tous les vols + TOUS les contrats
+//               (decideContract accept) : l'engagement maximal (R21/R26).
+//   badinvest : investissement INADAPTE — l'achat documenté « mauvais achat »
+//               (R31 : buyUpgrade 'teams' (équipe nettoyage ×2) quand le
+//               goulot affiché est les FILES = zéro effet sur la mesure qui
+//               compte : les files ne se vident PAS) ; essai toutes les
+//               15 min, plafond + refus restant dans la commande publique.
+const POLICIES = ['accept', 'refuse', 'nodecision', 'prudent', 'expansion', 'greedy', 'badinvest'];
+if (!POLICIES.includes(POLICY)) { console.error(`--policy : ${POLICIES.join('|')} attendu (got ${POLICY})`); process.exit(2); }
 if (!['none', 'fuel', 'all'].includes(SERVICES)) { console.error(`--services : none|fuel|all attendu (got ${SERVICES})`); process.exit(2); }
+const NO_STATE = args.includes('--no-state'); // R36 matrice : le RAPPORT suffit (le state final ne sert qu'aux paires de determinisme)
 
 // ---------- services : placement FIXE (coin haut-gauche, hors du plan de
 // départ A-2 qui occupe x>=550) — construction CHARGÉE (buildBuilding débite
@@ -177,17 +208,60 @@ const r = setup();
 const { state, sim } = r;
 const rng = makeSimRng(sim); // le PRNG DE LA SIM (rng.mjs) : état sur la sim (EV-10)
 const TOTAL = Math.ceil((HOURS * 3600) / DT);
-const counts = { built: 0, flightIn: 0, flightOut: 0, flightCancelled: 0, unlocked: 0, bankrupt: 0, runwayClosed: 0, fuelOut: 0, surgeStart: 0, noFuel: 0 };
+const counts = { built: 0, flightIn: 0, flightOut: 0, flightCancelled: 0, unlocked: 0, bankrupt: 0, runwayClosed: 0, fuelOut: 0, surgeStart: 0, noFuel: 0, contractStarted: 0, upgraded: 0 };
 const minMoney = { t: 0, money: sim.economy.money };
 const prev = { carried: 0 }; // invariants par tick (un état incohérent = ABORT)
 const PHASES = new Set(['approach', 'holding', 'landing', 'exit', 'taxi', 'docking', 'gate', 'refuel', 'disembark', 'ground', 'board', 'pushback', 'departure', 'blocked', 'cancelled', 'departed']);
+// R36 : état local des stratégies (investissements périodiques) — aucune
+// règle de sim, seulement le CADRANT des essais (toutes les règles — coût,
+// niveau max, fonds, goulot — restent dans les commandes publiques).
+let lastInvest = -1; // le dernier marquage de 15 min franchi (t sim)
+let upgradesBought = 0, upgradesRefused = 0, contractsAccepted = 0, contractsRefused = 0;
+const tryInvest = (kind) => { // l'essai : la commande décide (refus lisible, pas de mutation)
+  const term = sim.infra.terminals[0];
+  if (!term) return;
+  const res = buyUpgrade(sim, term.id, kind);
+  if (res.ok) upgradesBought++; else upgradesRefused++;
+};
 let step = 0;
 while (step < TOTAL) {
   applyDueEvents(r);
   // Politique JOUEUR sur la file de planning (porte unique : decideFlight),
   // avant le tick — comme la case auto-accept du jeu (main.mjs).
   if (r.policy !== 'nodecision') {
-    for (const e of sim.planning) if (e.status === 'planned') decideFlight(sim, e.id, r.policy === 'accept');
+    // R36 : 'prudent' = on n'accepte que si la capacité est LIBRE (aucun
+    // avion en holding) — l'offre expire elle-même si on ne décide pas (10
+    // min, OFFER_DECISION_S) ; les autres politiques acceptent toutes.
+    const holding = sim.aircraft.some((a) => a.phase === 'holding');
+    const acceptNow = POLICY !== 'prudent' || !holding;
+    for (const e of sim.planning) if (e.status === 'planned') decideFlight(sim, e.id, acceptNow);
+  }
+  // R36 : stratégies d'engagement (compositions des commandes publiques —
+  // l'UI du jeu fait exactement ça avec ses boutons ; les règles restent ici).
+  if (POLICY === 'greedy' && sim.contracts) {
+    // ACCEPTATION EXCESSIVE : chaque offre de contrat est acceptée (R21/R26 :
+    // un contrat actif augmente la demande — l'engagement maximal).
+    if (sim.contracts.offered) {
+      if (decideContract(sim, sim.contracts.offered.id, true)) contractsAccepted++;
+      else contractsRefused++; // refusé par la sim (offre déjà consommée / contrat actif)
+    }
+  }
+  // R36 : essais d'investissement périodiques (toutes les 15 min sim ; le
+  // plafonnement maxLevel + le refus restent dans la COMMANDE publique).
+  // Le GOUTLE vient de la MÊME règle que l'UI (upgradeView, R31) :
+  //   expansion   : acheter la CAPACITÉ ('terminal' +60 % check-in/sécurité)
+  //                 — la bonne cible quand les files saturent.
+  //   badinvest   : acheter l'ÉQUIPEMENT D'ÉQUIPE ('teams' ×2 nettoyage)
+  //                 quand le goulot est les FILES — l'investissement INADAPTÉ
+  //                 documenté (R31 : l'argent dépensé ne dévide AUCUNE file).
+  // On n'essaie QUE quand l'UI le verrait : un goulot existe sur ce terminal.
+  if (POLICY === 'expansion' || POLICY === 'badinvest') {
+    const mark = Math.floor(sim.time / 900); // le créneau de 15 min courant
+    if (mark > lastInvest) {
+      lastInvest = mark;
+      const view = upgradeView(sim, sim.infra.terminals[0]?.id);
+      if (view) tryInvest(POLICY === 'expansion' ? 'terminal' : 'teams');
+    }
   }
   buildWantedServices(sim); // services voulus, dès leur seuil (progression du jeu)
   sim.alerts.length = 0;
@@ -220,6 +294,8 @@ while (step < TOTAL) {
     else if (k === 'fuel-out') counts.fuelOut++;
     else if (k === 'surge-start') counts.surgeStart++;
     else if (k === 'no-fuel') counts.noFuel++;
+    else if (k === 'contract-started') counts.contractStarted++;
+    else if (k === 'upgraded') counts.upgraded++;
   }
   const m = sim.economy.money;
   if (m < minMoney.money) { minMoney.money = m; minMoney.t = sim.time; }
@@ -240,11 +316,19 @@ const report = {
   seed: SEED,
   scenario: SCENARIO,
   config: { // les configurations employées (toutes, comme exigé)
-    policy: SCENARIO === 'bl17' ? 'fenêtres du gate : accept 0-24 h / refus 24-36 h / accept 36-48 h' : POLICY,
+    policy: SCENARIO === 'bl17' ? 'fenêtres du gate : accept 0-24 h / refus 24-36 h / accept 36-48 h'
+      : POLICY === 'prudent' ? 'prudent (acceptation seulement si capacité libre : aucun avion en holding)'
+      : POLICY === 'expansion' ? 'expansion (acceptation + amélioration "terminal" quand le goulot est les files ; s associe a --services all)'
+      : POLICY === 'greedy' ? 'greedy (acceptation EXCESSIVE : tous les vols + tous les contrats actifs)'
+      : POLICY === 'badinvest' ? 'badinvest (investissement INADAPTE : equipment equipes quand le goulot est les files - argent non converti)'
+      : POLICY,
     services: SERVICES,
     events: r.events.map((e) => ({ at: e.at, action: e.action })),
     dt: DT,
     hours: HOURS,
+  },
+  strategy: { // R36 : les COMPTAGES DES COMMANDES JOUEUR (ce que la politique a réellement fait)
+    upgradesBought, upgradesRefused, contractsAccepted, contractsRefused,
   },
   forced: r.forced, // incidents forcés EFFECTIVEMENT (t réel du forçage, s)
   simTimeEnd: simEnd,
@@ -293,6 +377,9 @@ console.log(`revenue ${fs2(report.revenue)} | opex ${fs2(report.opex)} (${fs2(re
 console.log(`pax : ${report.passengers.totalCarried} transportes (sat ${report.passengers.satisfaction}%) | vols : in ${counts.flightIn} / out ${counts.flightOut} / annules ${counts.flightCancelled} | incidents : runway ${counts.runwayClosed} / fuel ${counts.fuelOut} / surge ${counts.surgeStart} | faillite ${report.bankruptcy ? 'OUI' : 'non'}`);
 console.log(`attente fin : checkin ${report.wait.queues.checkin.n}/${report.wait.queues.checkin.cap} | securite ${report.wait.queues.security.n}/${report.wait.queues.security.cap} | embarquement ${report.wait.queues.board.n}/${report.wait.queues.board.cap} | holding ${report.wait.holding} | pending ${report.wait.plannedPending}`);
 console.log(`infra : ${report.infra.runways} pistes / ${report.infra.taxiways} taxiways / ${report.infra.terminals} terminaux / ${report.infra.gates} portes ; services : ${report.infra.services.join(', ') || '(aucun)'} ; debloques : ${report.unlocked.join(', ') || '(aucun)'}`);
+if (POLICY === 'greedy' || POLICY === 'expansion' || POLICY === 'badinvest') {
+  console.log(`stratégie : achats ${upgradesBought} / refusés ${upgradesRefused}${POLICY === 'greedy' ? ` | contrats acceptés ${contractsAccepted} / refusés ${contractsRefused}` : ''}`);
+}
 
 // ---------- snapshot du state de FIN (déterminisme R09) ----------
 // On recalcule les champs VOLATILS (pas sérialisés, reconstruits par la sim)
@@ -305,9 +392,12 @@ const snapshot = { scenario: SCENARIO, seed: SEED, runId: RUN_ID, config: report
 const outDir = path.join(process.cwd(), 'evidence', RUN_ID);
 fs.mkdirSync(outDir, { recursive: true });
 const repPath = path.join(outDir, `rapport-${RUN_ID}.json`);
-const snapPath = path.join(outDir, `state-${RUN_ID}.json`);
 fs.writeFileSync(repPath, JSON.stringify(report, null, 2));
-fs.writeFileSync(snapPath, JSON.stringify(snapshot, null, 2));
+let snapPath = null;
+if (!NO_STATE) {
+  snapPath = path.join(outDir, `state-${RUN_ID}.json`);
+  fs.writeFileSync(snapPath, JSON.stringify(snapshot, null, 2));
+}
 console.log(`preuve : ${repPath}`);
-console.log(`preuve : ${snapPath}`);
+if (snapPath) console.log(`preuve : ${snapPath}`);
 console.log(`temps : ${Math.round(elapsedMs / 1000)} s (${step} ticks)`);

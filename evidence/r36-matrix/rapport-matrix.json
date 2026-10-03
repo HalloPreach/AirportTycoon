@@ -1,0 +1,4378 @@
+{
+  "tool": "qa/r36-matrix.mjs",
+  "commit": "2ecc93cfa5406613ecabc56e149fc0bcc04d3c6d",
+  "generated": "2026-10-03T23:29:44.279Z",
+  "grid": {
+    "seeds": [
+      1,
+      7,
+      42,
+      99,
+      123,
+      256,
+      512,
+      1000,
+      2024,
+      4096,
+      8192,
+      99999
+    ],
+    "hours": 24,
+    "dts": [
+      1,
+      0.4
+    ],
+    "policies": [
+      "prudent",
+      "expansion",
+      "greedy",
+      "refus-temp",
+      "badinvest"
+    ]
+  },
+  "policyNotes": {
+    "prudent": "acceptation seulement si capacité libre (aucun avion en holding)",
+    "expansion": "acceptation + amélioration terminal (capacité) + tous les services (R23)",
+    "greedy": "acceptation excessive : tous les vols + tous les contrats",
+    "refus-temp": "refus temporaire : fenêtre 3-9 h sans décision (les offres expirent), reprise ensuite",
+    "badinvest": "investissement inadapté : équipement équipes quand le goulot est les files (R31)"
+  },
+  "cells": [
+    {
+      "seed": 1,
+      "policy": "prudent",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s1-prudent-dt1",
+          "failed": false,
+          "wallMs": 381,
+          "msPerTick": 0.004,
+          "moneyEnd": 1941304.2727528103,
+          "pax": 147862,
+          "satisfaction": 100,
+          "holding": 1,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1433,
+          "flightsOut": 1430,
+          "annulated": 0,
+          "incidents": {
+            "runway": 46,
+            "fuel": 0,
+            "surge": 159
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s1-prudent-dt0_4",
+          "failed": false,
+          "wallMs": 758,
+          "msPerTick": 0.004,
+          "moneyEnd": 2043047.077454696,
+          "pax": 154924,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1488,
+          "flightsOut": 1484,
+          "annulated": 0,
+          "incidents": {
+            "runway": 46,
+            "fuel": 0,
+            "surge": 153
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 1,
+      "policy": "expansion",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s1-expansion-dt1",
+          "failed": false,
+          "wallMs": 491,
+          "msPerTick": 0.006,
+          "moneyEnd": 1703289.0000026298,
+          "pax": 119750,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1152,
+          "flightsOut": 1145,
+          "annulated": 2,
+          "incidents": {
+            "runway": 45,
+            "fuel": 58,
+            "surge": 150
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s1-expansion-dt0_4",
+          "failed": false,
+          "wallMs": 1044,
+          "msPerTick": 0.005,
+          "moneyEnd": 1781853.6999949215,
+          "pax": 123088,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1198,
+          "flightsOut": 1182,
+          "annulated": 11,
+          "incidents": {
+            "runway": 48,
+            "fuel": 56,
+            "surge": 153
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 1,
+      "policy": "greedy",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s1-greedy-dt1",
+          "failed": false,
+          "wallMs": 420,
+          "msPerTick": 0.005,
+          "moneyEnd": 2512845.4744996945,
+          "pax": 187850,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 2,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1813,
+          "flightsOut": 1805,
+          "annulated": 4,
+          "incidents": {
+            "runway": 47,
+            "fuel": 0,
+            "surge": 167
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s1-greedy-dt0_4",
+          "failed": false,
+          "wallMs": 850,
+          "msPerTick": 0.004,
+          "moneyEnd": 2756295.0519672553,
+          "pax": 204546,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1979,
+          "flightsOut": 1974,
+          "annulated": 0,
+          "incidents": {
+            "runway": 47,
+            "fuel": 0,
+            "surge": 150
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 1,
+      "policy": "refus-temp",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s1-refus-temp-dt1",
+          "failed": false,
+          "wallMs": 360,
+          "msPerTick": 0.004,
+          "moneyEnd": 2176356.63200212,
+          "pax": 163722,
+          "satisfaction": 100,
+          "holding": 1,
+          "plannedPending": 2,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1582,
+          "flightsOut": 1579,
+          "annulated": 0,
+          "incidents": {
+            "runway": 42,
+            "fuel": 0,
+            "surge": 158
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s1-refus-temp-dt0_4",
+          "failed": false,
+          "wallMs": 722,
+          "msPerTick": 0.003,
+          "moneyEnd": 2161092.8351162383,
+          "pax": 162911,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1562,
+          "flightsOut": 1558,
+          "annulated": 0,
+          "incidents": {
+            "runway": 46,
+            "fuel": 0,
+            "surge": 153
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 1,
+      "policy": "badinvest",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s1-badinvest-dt1",
+          "failed": false,
+          "wallMs": 491,
+          "msPerTick": 0.006,
+          "moneyEnd": 1705356.4657526445,
+          "pax": 119750,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1152,
+          "flightsOut": 1145,
+          "annulated": 2,
+          "incidents": {
+            "runway": 45,
+            "fuel": 58,
+            "surge": 150
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s1-badinvest-dt0_4",
+          "failed": false,
+          "wallMs": 1075,
+          "msPerTick": 0.005,
+          "moneyEnd": 1783934.8185949107,
+          "pax": 123088,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1198,
+          "flightsOut": 1182,
+          "annulated": 11,
+          "incidents": {
+            "runway": 48,
+            "fuel": 56,
+            "surge": 153
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 7,
+      "policy": "prudent",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s7-prudent-dt1",
+          "failed": false,
+          "wallMs": 344,
+          "msPerTick": 0.004,
+          "moneyEnd": 1911959.515752789,
+          "pax": 145998,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1411,
+          "flightsOut": 1408,
+          "annulated": 0,
+          "incidents": {
+            "runway": 39,
+            "fuel": 0,
+            "surge": 151
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s7-prudent-dt0_4",
+          "failed": false,
+          "wallMs": 696,
+          "msPerTick": 0.003,
+          "moneyEnd": 2067284.7865347126,
+          "pax": 156643,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1503,
+          "flightsOut": 1501,
+          "annulated": 0,
+          "incidents": {
+            "runway": 43,
+            "fuel": 0,
+            "surge": 151
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 7,
+      "policy": "expansion",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s7-expansion-dt1",
+          "failed": false,
+          "wallMs": 498,
+          "msPerTick": 0.006,
+          "moneyEnd": 1725436.000002471,
+          "pax": 120885,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1162,
+          "flightsOut": 1156,
+          "annulated": 1,
+          "incidents": {
+            "runway": 45,
+            "fuel": 59,
+            "surge": 148
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s7-expansion-dt0_4",
+          "failed": false,
+          "wallMs": 1094,
+          "msPerTick": 0.005,
+          "moneyEnd": 1756559.1999948672,
+          "pax": 122795,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1203,
+          "flightsOut": 1187,
+          "annulated": 11,
+          "incidents": {
+            "runway": 41,
+            "fuel": 56,
+            "surge": 139
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 7,
+      "policy": "greedy",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s7-greedy-dt1",
+          "failed": false,
+          "wallMs": 417,
+          "msPerTick": 0.005,
+          "moneyEnd": 2487037.754249809,
+          "pax": 186127,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1818,
+          "flightsOut": 1805,
+          "annulated": 8,
+          "incidents": {
+            "runway": 51,
+            "fuel": 0,
+            "surge": 147
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s7-greedy-dt0_4",
+          "failed": false,
+          "wallMs": 846,
+          "msPerTick": 0.004,
+          "moneyEnd": 2748854.524887409,
+          "pax": 203907,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1974,
+          "flightsOut": 1969,
+          "annulated": 0,
+          "incidents": {
+            "runway": 50,
+            "fuel": 0,
+            "surge": 126
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 7,
+      "policy": "refus-temp",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s7-refus-temp-dt1",
+          "failed": false,
+          "wallMs": 352,
+          "msPerTick": 0.004,
+          "moneyEnd": 2159567.1837522886,
+          "pax": 162583,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1573,
+          "flightsOut": 1570,
+          "annulated": 0,
+          "incidents": {
+            "runway": 39,
+            "fuel": 0,
+            "surge": 151
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s7-refus-temp-dt0_4",
+          "failed": false,
+          "wallMs": 712,
+          "msPerTick": 0.003,
+          "moneyEnd": 2169537.300196591,
+          "pax": 163489,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1570,
+          "flightsOut": 1568,
+          "annulated": 0,
+          "incidents": {
+            "runway": 43,
+            "fuel": 0,
+            "surge": 151
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 7,
+      "policy": "badinvest",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s7-badinvest-dt1",
+          "failed": false,
+          "wallMs": 503,
+          "msPerTick": 0.006,
+          "moneyEnd": 1727486.2645024825,
+          "pax": 120885,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1162,
+          "flightsOut": 1156,
+          "annulated": 1,
+          "incidents": {
+            "runway": 45,
+            "fuel": 59,
+            "surge": 148
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s7-badinvest-dt0_4",
+          "failed": false,
+          "wallMs": 1050,
+          "msPerTick": 0.005,
+          "moneyEnd": 1758639.819094859,
+          "pax": 122795,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1203,
+          "flightsOut": 1187,
+          "annulated": 11,
+          "incidents": {
+            "runway": 41,
+            "fuel": 56,
+            "surge": 139
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 42,
+      "policy": "prudent",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s42-prudent-dt1",
+          "failed": false,
+          "wallMs": 341,
+          "msPerTick": 0.004,
+          "moneyEnd": 1964182.3932528263,
+          "pax": 149677,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1430,
+          "flightsOut": 1428,
+          "annulated": 0,
+          "incidents": {
+            "runway": 42,
+            "fuel": 0,
+            "surge": 150
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s42-prudent-dt0_4",
+          "failed": false,
+          "wallMs": 692,
+          "msPerTick": 0.003,
+          "moneyEnd": 2013575.4239347212,
+          "pax": 152891,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1473,
+          "flightsOut": 1472,
+          "annulated": 0,
+          "incidents": {
+            "runway": 51,
+            "fuel": 0,
+            "surge": 153
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 42,
+      "policy": "expansion",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s42-expansion-dt1",
+          "failed": false,
+          "wallMs": 497,
+          "msPerTick": 0.006,
+          "moneyEnd": 1737844.0000025313,
+          "pax": 119674,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 2,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1158,
+          "flightsOut": 1152,
+          "annulated": 2,
+          "incidents": {
+            "runway": 47,
+            "fuel": 47,
+            "surge": 155
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s42-expansion-dt0_4",
+          "failed": false,
+          "wallMs": 1041,
+          "msPerTick": 0.005,
+          "moneyEnd": 1750221.9999948821,
+          "pax": 122559,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1206,
+          "flightsOut": 1190,
+          "annulated": 12,
+          "incidents": {
+            "runway": 43,
+            "fuel": 58,
+            "surge": 147
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 42,
+      "policy": "greedy",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s42-greedy-dt1",
+          "failed": false,
+          "wallMs": 422,
+          "msPerTick": 0.005,
+          "moneyEnd": 2520944.071749531,
+          "pax": 188909,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1837,
+          "flightsOut": 1823,
+          "annulated": 9,
+          "incidents": {
+            "runway": 51,
+            "fuel": 0,
+            "surge": 152
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s42-greedy-dt0_4",
+          "failed": false,
+          "wallMs": 850,
+          "msPerTick": 0.004,
+          "moneyEnd": 2742924.700247193,
+          "pax": 203405,
+          "satisfaction": 100,
+          "holding": 2,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1976,
+          "flightsOut": 1971,
+          "annulated": 0,
+          "incidents": {
+            "runway": 53,
+            "fuel": 0,
+            "surge": 155
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 42,
+      "policy": "refus-temp",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s42-refus-temp-dt1",
+          "failed": false,
+          "wallMs": 360,
+          "msPerTick": 0.004,
+          "moneyEnd": 2173240.3892521877,
+          "pax": 163771,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1563,
+          "flightsOut": 1559,
+          "annulated": 0,
+          "incidents": {
+            "runway": 41,
+            "fuel": 0,
+            "surge": 150
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s42-refus-temp-dt0_4",
+          "failed": false,
+          "wallMs": 700,
+          "msPerTick": 0.003,
+          "moneyEnd": 2119238.7688952796,
+          "pax": 159972,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1543,
+          "flightsOut": 1541,
+          "annulated": 0,
+          "incidents": {
+            "runway": 51,
+            "fuel": 0,
+            "surge": 153
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 42,
+      "policy": "badinvest",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s42-badinvest-dt1",
+          "failed": false,
+          "wallMs": 491,
+          "msPerTick": 0.006,
+          "moneyEnd": 1739886.3110025348,
+          "pax": 119674,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 2,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1158,
+          "flightsOut": 1152,
+          "annulated": 2,
+          "incidents": {
+            "runway": 47,
+            "fuel": 47,
+            "surge": 155
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s42-badinvest-dt0_4",
+          "failed": false,
+          "wallMs": 1056,
+          "msPerTick": 0.005,
+          "moneyEnd": 1752315.6891948655,
+          "pax": 122559,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1206,
+          "flightsOut": 1190,
+          "annulated": 12,
+          "incidents": {
+            "runway": 43,
+            "fuel": 58,
+            "surge": 147
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 99,
+      "policy": "prudent",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s99-prudent-dt1",
+          "failed": false,
+          "wallMs": 349,
+          "msPerTick": 0.004,
+          "moneyEnd": 1950491.4957527989,
+          "pax": 148633,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1430,
+          "flightsOut": 1429,
+          "annulated": 0,
+          "incidents": {
+            "runway": 46,
+            "fuel": 0,
+            "surge": 145
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s99-prudent-dt0_4",
+          "failed": false,
+          "wallMs": 711,
+          "msPerTick": 0.003,
+          "moneyEnd": 2089888.7565146906,
+          "pax": 158277,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1513,
+          "flightsOut": 1511,
+          "annulated": 0,
+          "incidents": {
+            "runway": 38,
+            "fuel": 0,
+            "surge": 152
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 99,
+      "policy": "expansion",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s99-expansion-dt1",
+          "failed": false,
+          "wallMs": 492,
+          "msPerTick": 0.006,
+          "moneyEnd": 1730946.0000025374,
+          "pax": 121069,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1162,
+          "flightsOut": 1156,
+          "annulated": 1,
+          "incidents": {
+            "runway": 38,
+            "fuel": 57,
+            "surge": 151
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s99-expansion-dt0_4",
+          "failed": false,
+          "wallMs": 1068,
+          "msPerTick": 0.005,
+          "moneyEnd": 1734033.1999949175,
+          "pax": 121856,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1201,
+          "flightsOut": 1184,
+          "annulated": 12,
+          "incidents": {
+            "runway": 40,
+            "fuel": 58,
+            "surge": 146
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 99,
+      "policy": "greedy",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s99-greedy-dt1",
+          "failed": false,
+          "wallMs": 420,
+          "msPerTick": 0.005,
+          "moneyEnd": 2472433.56000003,
+          "pax": 184569,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1800,
+          "flightsOut": 1787,
+          "annulated": 8,
+          "incidents": {
+            "runway": 42,
+            "fuel": 0,
+            "surge": 156
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s99-greedy-dt0_4",
+          "failed": false,
+          "wallMs": 839,
+          "msPerTick": 0.004,
+          "moneyEnd": 2796025.2254279414,
+          "pax": 207581,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1991,
+          "flightsOut": 1985,
+          "annulated": 0,
+          "incidents": {
+            "runway": 40,
+            "fuel": 0,
+            "surge": 147
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 99,
+      "policy": "refus-temp",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s99-refus-temp-dt1",
+          "failed": false,
+          "wallMs": 360,
+          "msPerTick": 0.004,
+          "moneyEnd": 2134518.5155025106,
+          "pax": 161021,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1551,
+          "flightsOut": 1549,
+          "annulated": 0,
+          "incidents": {
+            "runway": 46,
+            "fuel": 0,
+            "surge": 145
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s99-refus-temp-dt0_4",
+          "failed": false,
+          "wallMs": 745,
+          "msPerTick": 0.003,
+          "moneyEnd": 2193755.4183767904,
+          "pax": 165207,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1582,
+          "flightsOut": 1580,
+          "annulated": 0,
+          "incidents": {
+            "runway": 38,
+            "fuel": 0,
+            "surge": 152
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 99,
+      "policy": "badinvest",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s99-badinvest-dt1",
+          "failed": false,
+          "wallMs": 493,
+          "msPerTick": 0.006,
+          "moneyEnd": 1732983.8547525455,
+          "pax": 121069,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1162,
+          "flightsOut": 1156,
+          "annulated": 1,
+          "incidents": {
+            "runway": 38,
+            "fuel": 57,
+            "surge": 151
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s99-badinvest-dt0_4",
+          "failed": false,
+          "wallMs": 1053,
+          "msPerTick": 0.005,
+          "moneyEnd": 1736126.5487949043,
+          "pax": 121856,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1201,
+          "flightsOut": 1184,
+          "annulated": 12,
+          "incidents": {
+            "runway": 40,
+            "fuel": 58,
+            "surge": 146
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 123,
+      "policy": "prudent",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s123-prudent-dt1",
+          "failed": false,
+          "wallMs": 344,
+          "msPerTick": 0.004,
+          "moneyEnd": 1924141.3262527888,
+          "pax": 146847,
+          "satisfaction": 100,
+          "holding": 1,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1412,
+          "flightsOut": 1408,
+          "annulated": 0,
+          "incidents": {
+            "runway": 48,
+            "fuel": 0,
+            "surge": 153
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s123-prudent-dt0_4",
+          "failed": false,
+          "wallMs": 721,
+          "msPerTick": 0.003,
+          "moneyEnd": 2060506.3145146933,
+          "pax": 156127,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1502,
+          "flightsOut": 1498,
+          "annulated": 0,
+          "incidents": {
+            "runway": 48,
+            "fuel": 0,
+            "surge": 165
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 123,
+      "policy": "expansion",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s123-expansion-dt1",
+          "failed": false,
+          "wallMs": 495,
+          "msPerTick": 0.006,
+          "moneyEnd": 1648422.0000024517,
+          "pax": 117518,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1143,
+          "flightsOut": 1136,
+          "annulated": 2,
+          "incidents": {
+            "runway": 48,
+            "fuel": 57,
+            "surge": 154
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s123-expansion-dt0_4",
+          "failed": false,
+          "wallMs": 1046,
+          "msPerTick": 0.005,
+          "moneyEnd": 1779629.9999948787,
+          "pax": 122894,
+          "satisfaction": 100,
+          "holding": 1,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1202,
+          "flightsOut": 1186,
+          "annulated": 11,
+          "incidents": {
+            "runway": 50,
+            "fuel": 56,
+            "surge": 153
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 123,
+      "policy": "greedy",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s123-greedy-dt1",
+          "failed": false,
+          "wallMs": 422,
+          "msPerTick": 0.005,
+          "moneyEnd": 2521214.830999583,
+          "pax": 188658,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1828,
+          "flightsOut": 1815,
+          "annulated": 7,
+          "incidents": {
+            "runway": 37,
+            "fuel": 0,
+            "surge": 162
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s123-greedy-dt0_4",
+          "failed": false,
+          "wallMs": 851,
+          "msPerTick": 0.004,
+          "moneyEnd": 2785685.7395480173,
+          "pax": 206574,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1992,
+          "flightsOut": 1988,
+          "annulated": 0,
+          "incidents": {
+            "runway": 36,
+            "fuel": 0,
+            "surge": 150
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 123,
+      "policy": "refus-temp",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s123-refus-temp-dt1",
+          "failed": false,
+          "wallMs": 371,
+          "msPerTick": 0.004,
+          "moneyEnd": 2144747.255252374,
+          "pax": 161807,
+          "satisfaction": 100,
+          "holding": 1,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1557,
+          "flightsOut": 1553,
+          "annulated": 0,
+          "incidents": {
+            "runway": 48,
+            "fuel": 0,
+            "surge": 153
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s123-refus-temp-dt0_4",
+          "failed": false,
+          "wallMs": 721,
+          "msPerTick": 0.003,
+          "moneyEnd": 2181295.975296517,
+          "pax": 164269,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1579,
+          "flightsOut": 1575,
+          "annulated": 0,
+          "incidents": {
+            "runway": 48,
+            "fuel": 0,
+            "surge": 165
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 123,
+      "policy": "badinvest",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s123-badinvest-dt1",
+          "failed": false,
+          "wallMs": 503,
+          "msPerTick": 0.006,
+          "moneyEnd": 1650486.657502451,
+          "pax": 117518,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1143,
+          "flightsOut": 1136,
+          "annulated": 2,
+          "incidents": {
+            "runway": 48,
+            "fuel": 57,
+            "surge": 154
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s123-badinvest-dt0_4",
+          "failed": false,
+          "wallMs": 1044,
+          "msPerTick": 0.005,
+          "moneyEnd": 1781711.9461948732,
+          "pax": 122894,
+          "satisfaction": 100,
+          "holding": 1,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1202,
+          "flightsOut": 1186,
+          "annulated": 11,
+          "incidents": {
+            "runway": 50,
+            "fuel": 56,
+            "surge": 153
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 256,
+      "policy": "prudent",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s256-prudent-dt1",
+          "failed": false,
+          "wallMs": 341,
+          "msPerTick": 0.004,
+          "moneyEnd": 1897952.4182527578,
+          "pax": 145029,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1402,
+          "flightsOut": 1398,
+          "annulated": 0,
+          "incidents": {
+            "runway": 48,
+            "fuel": 0,
+            "surge": 140
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s256-prudent-dt0_4",
+          "failed": false,
+          "wallMs": 705,
+          "msPerTick": 0.003,
+          "moneyEnd": 2037635.6042347085,
+          "pax": 154597,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1486,
+          "flightsOut": 1483,
+          "annulated": 0,
+          "incidents": {
+            "runway": 45,
+            "fuel": 0,
+            "surge": 146
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 256,
+      "policy": "expansion",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s256-expansion-dt1",
+          "failed": false,
+          "wallMs": 501,
+          "msPerTick": 0.006,
+          "moneyEnd": 1757410.5000025763,
+          "pax": 121830,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1179,
+          "flightsOut": 1174,
+          "annulated": 1,
+          "incidents": {
+            "runway": 40,
+            "fuel": 56,
+            "surge": 151
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s256-expansion-dt0_4",
+          "failed": false,
+          "wallMs": 1070,
+          "msPerTick": 0.005,
+          "moneyEnd": 1796918.4999949166,
+          "pax": 125216,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1207,
+          "flightsOut": 1196,
+          "annulated": 6,
+          "incidents": {
+            "runway": 50,
+            "fuel": 66,
+            "surge": 139
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 256,
+      "policy": "greedy",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s256-greedy-dt1",
+          "failed": false,
+          "wallMs": 414,
+          "msPerTick": 0.005,
+          "moneyEnd": 2501289.4149996666,
+          "pax": 187036,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1826,
+          "flightsOut": 1817,
+          "annulated": 4,
+          "incidents": {
+            "runway": 49,
+            "fuel": 0,
+            "surge": 153
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s256-greedy-dt0_4",
+          "failed": false,
+          "wallMs": 859,
+          "msPerTick": 0.004,
+          "moneyEnd": 2788635.2630080525,
+          "pax": 207074,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1981,
+          "flightsOut": 1977,
+          "annulated": 0,
+          "incidents": {
+            "runway": 45,
+            "fuel": 0,
+            "surge": 146
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 256,
+      "policy": "refus-temp",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s256-refus-temp-dt1",
+          "failed": false,
+          "wallMs": 354,
+          "msPerTick": 0.004,
+          "moneyEnd": 2106366.791502786,
+          "pax": 159048,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1536,
+          "flightsOut": 1532,
+          "annulated": 0,
+          "incidents": {
+            "runway": 48,
+            "fuel": 0,
+            "surge": 140
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s256-refus-temp-dt0_4",
+          "failed": false,
+          "wallMs": 702,
+          "msPerTick": 0.003,
+          "moneyEnd": 2142307.638495693,
+          "pax": 161594,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1555,
+          "flightsOut": 1552,
+          "annulated": 0,
+          "incidents": {
+            "runway": 45,
+            "fuel": 0,
+            "surge": 146
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 256,
+      "policy": "badinvest",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s256-badinvest-dt1",
+          "failed": false,
+          "wallMs": 499,
+          "msPerTick": 0.006,
+          "moneyEnd": 1759471.6825025787,
+          "pax": 121830,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1179,
+          "flightsOut": 1174,
+          "annulated": 1,
+          "incidents": {
+            "runway": 40,
+            "fuel": 56,
+            "surge": 151
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s256-badinvest-dt0_4",
+          "failed": false,
+          "wallMs": 1077,
+          "msPerTick": 0.005,
+          "moneyEnd": 1799000.6461949036,
+          "pax": 125216,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1207,
+          "flightsOut": 1196,
+          "annulated": 6,
+          "incidents": {
+            "runway": 50,
+            "fuel": 66,
+            "surge": 139
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 512,
+      "policy": "prudent",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s512-prudent-dt1",
+          "failed": false,
+          "wallMs": 349,
+          "msPerTick": 0.004,
+          "moneyEnd": 1911304.9875027908,
+          "pax": 145968,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1404,
+          "flightsOut": 1403,
+          "annulated": 0,
+          "incidents": {
+            "runway": 47,
+            "fuel": 0,
+            "surge": 163
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s512-prudent-dt0_4",
+          "failed": false,
+          "wallMs": 703,
+          "msPerTick": 0.003,
+          "moneyEnd": 2006523.9904746518,
+          "pax": 152353,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1471,
+          "flightsOut": 1470,
+          "annulated": 0,
+          "incidents": {
+            "runway": 50,
+            "fuel": 0,
+            "surge": 154
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 512,
+      "policy": "expansion",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s512-expansion-dt1",
+          "failed": false,
+          "wallMs": 486,
+          "msPerTick": 0.006,
+          "moneyEnd": 1737758.000002646,
+          "pax": 120621,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1169,
+          "flightsOut": 1165,
+          "annulated": 0,
+          "incidents": {
+            "runway": 44,
+            "fuel": 56,
+            "surge": 143
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s512-expansion-dt0_4",
+          "failed": false,
+          "wallMs": 1056,
+          "msPerTick": 0.005,
+          "moneyEnd": 1774441.499994902,
+          "pax": 123570,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1205,
+          "flightsOut": 1185,
+          "annulated": 15,
+          "incidents": {
+            "runway": 45,
+            "fuel": 56,
+            "surge": 150
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 512,
+      "policy": "greedy",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s512-greedy-dt1",
+          "failed": false,
+          "wallMs": 419,
+          "msPerTick": 0.005,
+          "moneyEnd": 2452159.147250068,
+          "pax": 182993,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1782,
+          "flightsOut": 1770,
+          "annulated": 7,
+          "incidents": {
+            "runway": 45,
+            "fuel": 0,
+            "surge": 155
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s512-greedy-dt0_4",
+          "failed": false,
+          "wallMs": 852,
+          "msPerTick": 0.004,
+          "moneyEnd": 2779662.831607628,
+          "pax": 206285,
+          "satisfaction": 100,
+          "holding": 2,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1982,
+          "flightsOut": 1977,
+          "annulated": 0,
+          "incidents": {
+            "runway": 42,
+            "fuel": 0,
+            "surge": 157
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 512,
+      "policy": "refus-temp",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s512-refus-temp-dt1",
+          "failed": false,
+          "wallMs": 357,
+          "msPerTick": 0.004,
+          "moneyEnd": 2156252.144002349,
+          "pax": 162481,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1563,
+          "flightsOut": 1560,
+          "annulated": 0,
+          "incidents": {
+            "runway": 47,
+            "fuel": 0,
+            "surge": 163
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s512-refus-temp-dt0_4",
+          "failed": false,
+          "wallMs": 714,
+          "msPerTick": 0.003,
+          "moneyEnd": 2136433.2859755848,
+          "pax": 161080,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1556,
+          "flightsOut": 1554,
+          "annulated": 0,
+          "incidents": {
+            "runway": 50,
+            "fuel": 0,
+            "surge": 154
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 512,
+      "policy": "badinvest",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s512-badinvest-dt1",
+          "failed": false,
+          "wallMs": 491,
+          "msPerTick": 0.006,
+          "moneyEnd": 1739826.489002647,
+          "pax": 120621,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1169,
+          "flightsOut": 1165,
+          "annulated": 0,
+          "incidents": {
+            "runway": 44,
+            "fuel": 56,
+            "surge": 143
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s512-badinvest-dt0_4",
+          "failed": false,
+          "wallMs": 1064,
+          "msPerTick": 0.005,
+          "moneyEnd": 1776524.9040948907,
+          "pax": 123570,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1205,
+          "flightsOut": 1185,
+          "annulated": 15,
+          "incidents": {
+            "runway": 45,
+            "fuel": 56,
+            "surge": 150
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 1000,
+      "policy": "prudent",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s1000-prudent-dt1",
+          "failed": false,
+          "wallMs": 342,
+          "msPerTick": 0.004,
+          "moneyEnd": 1926714.9430028105,
+          "pax": 147079,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1415,
+          "flightsOut": 1413,
+          "annulated": 0,
+          "incidents": {
+            "runway": 38,
+            "fuel": 0,
+            "surge": 151
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s1000-prudent-dt0_4",
+          "failed": false,
+          "wallMs": 712,
+          "msPerTick": 0.003,
+          "moneyEnd": 2009687.773614704,
+          "pax": 152717,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1468,
+          "flightsOut": 1466,
+          "annulated": 0,
+          "incidents": {
+            "runway": 52,
+            "fuel": 0,
+            "surge": 156
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 1000,
+      "policy": "expansion",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s1000-expansion-dt1",
+          "failed": false,
+          "wallMs": 495,
+          "msPerTick": 0.006,
+          "moneyEnd": 1717078.5000024133,
+          "pax": 121042,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1166,
+          "flightsOut": 1159,
+          "annulated": 2,
+          "incidents": {
+            "runway": 40,
+            "fuel": 61,
+            "surge": 151
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s1000-expansion-dt0_4",
+          "failed": false,
+          "wallMs": 1069,
+          "msPerTick": 0.005,
+          "moneyEnd": 1757195.4999949299,
+          "pax": 121128,
+          "satisfaction": 100,
+          "holding": 1,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1188,
+          "flightsOut": 1171,
+          "annulated": 12,
+          "incidents": {
+            "runway": 45,
+            "fuel": 48,
+            "surge": 165
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 1000,
+      "policy": "greedy",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s1000-greedy-dt1",
+          "failed": false,
+          "wallMs": 424,
+          "msPerTick": 0.005,
+          "moneyEnd": 2500662.278999674,
+          "pax": 186717,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1807,
+          "flightsOut": 1799,
+          "annulated": 3,
+          "incidents": {
+            "runway": 45,
+            "fuel": 0,
+            "surge": 152
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s1000-greedy-dt0_4",
+          "failed": false,
+          "wallMs": 850,
+          "msPerTick": 0.004,
+          "moneyEnd": 2764919.78846755,
+          "pax": 205390,
+          "satisfaction": 100,
+          "holding": 2,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1977,
+          "flightsOut": 1971,
+          "annulated": 0,
+          "incidents": {
+            "runway": 52,
+            "fuel": 0,
+            "surge": 138
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 1000,
+      "policy": "refus-temp",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s1000-refus-temp-dt1",
+          "failed": false,
+          "wallMs": 357,
+          "msPerTick": 0.004,
+          "moneyEnd": 2191338.7780020507,
+          "pax": 164781,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1585,
+          "flightsOut": 1582,
+          "annulated": 0,
+          "incidents": {
+            "runway": 37,
+            "fuel": 0,
+            "surge": 155
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s1000-refus-temp-dt0_4",
+          "failed": false,
+          "wallMs": 717,
+          "msPerTick": 0.003,
+          "moneyEnd": 2138824.1431757705,
+          "pax": 161379,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1550,
+          "flightsOut": 1548,
+          "annulated": 0,
+          "incidents": {
+            "runway": 52,
+            "fuel": 0,
+            "surge": 156
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 1000,
+      "policy": "badinvest",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s1000-badinvest-dt1",
+          "failed": false,
+          "wallMs": 497,
+          "msPerTick": 0.006,
+          "moneyEnd": 1719137.82550242,
+          "pax": 121042,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1166,
+          "flightsOut": 1159,
+          "annulated": 2,
+          "incidents": {
+            "runway": 40,
+            "fuel": 61,
+            "surge": 151
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s1000-badinvest-dt0_4",
+          "failed": false,
+          "wallMs": 1069,
+          "msPerTick": 0.005,
+          "moneyEnd": 1759285.4667949209,
+          "pax": 121128,
+          "satisfaction": 100,
+          "holding": 1,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1188,
+          "flightsOut": 1171,
+          "annulated": 12,
+          "incidents": {
+            "runway": 45,
+            "fuel": 48,
+            "surge": 165
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 2024,
+      "policy": "prudent",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s2024-prudent-dt1",
+          "failed": false,
+          "wallMs": 343,
+          "msPerTick": 0.004,
+          "moneyEnd": 1922295.4920028066,
+          "pax": 146876,
+          "satisfaction": 100,
+          "holding": 1,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1413,
+          "flightsOut": 1411,
+          "annulated": 0,
+          "incidents": {
+            "runway": 51,
+            "fuel": 0,
+            "surge": 148
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s2024-prudent-dt0_4",
+          "failed": false,
+          "wallMs": 704,
+          "msPerTick": 0.003,
+          "moneyEnd": 2028523.4947947168,
+          "pax": 153862,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1485,
+          "flightsOut": 1483,
+          "annulated": 0,
+          "incidents": {
+            "runway": 50,
+            "fuel": 0,
+            "surge": 154
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 2024,
+      "policy": "expansion",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s2024-expansion-dt1",
+          "failed": false,
+          "wallMs": 490,
+          "msPerTick": 0.006,
+          "moneyEnd": 1731528.000002625,
+          "pax": 119493,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1162,
+          "flightsOut": 1157,
+          "annulated": 1,
+          "incidents": {
+            "runway": 51,
+            "fuel": 47,
+            "surge": 147
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s2024-expansion-dt0_4",
+          "failed": false,
+          "wallMs": 1052,
+          "msPerTick": 0.005,
+          "moneyEnd": 1773383.099994912,
+          "pax": 124240,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1212,
+          "flightsOut": 1199,
+          "annulated": 8,
+          "incidents": {
+            "runway": 41,
+            "fuel": 63,
+            "surge": 166
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 2024,
+      "policy": "greedy",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s2024-greedy-dt1",
+          "failed": false,
+          "wallMs": 417,
+          "msPerTick": 0.005,
+          "moneyEnd": 2530677.171749606,
+          "pax": 189291,
+          "satisfaction": 100,
+          "holding": 2,
+          "plannedPending": 2,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1832,
+          "flightsOut": 1825,
+          "annulated": 2,
+          "incidents": {
+            "runway": 36,
+            "fuel": 0,
+            "surge": 147
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s2024-greedy-dt0_4",
+          "failed": false,
+          "wallMs": 854,
+          "msPerTick": 0.004,
+          "moneyEnd": 2774176.5256876326,
+          "pax": 206059,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1977,
+          "flightsOut": 1972,
+          "annulated": 0,
+          "incidents": {
+            "runway": 46,
+            "fuel": 0,
+            "surge": 150
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 2024,
+      "policy": "refus-temp",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s2024-refus-temp-dt1",
+          "failed": false,
+          "wallMs": 359,
+          "msPerTick": 0.004,
+          "moneyEnd": 2106279.906252778,
+          "pax": 159209,
+          "satisfaction": 100,
+          "holding": 1,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1534,
+          "flightsOut": 1531,
+          "annulated": 0,
+          "incidents": {
+            "runway": 51,
+            "fuel": 0,
+            "surge": 148
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s2024-refus-temp-dt0_4",
+          "failed": false,
+          "wallMs": 707,
+          "msPerTick": 0.003,
+          "moneyEnd": 2141596.6812756318,
+          "pax": 161436,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1559,
+          "flightsOut": 1557,
+          "annulated": 0,
+          "incidents": {
+            "runway": 50,
+            "fuel": 0,
+            "surge": 154
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 2024,
+      "policy": "badinvest",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s2024-badinvest-dt1",
+          "failed": false,
+          "wallMs": 494,
+          "msPerTick": 0.006,
+          "moneyEnd": 1733571.776502629,
+          "pax": 119493,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1162,
+          "flightsOut": 1157,
+          "annulated": 1,
+          "incidents": {
+            "runway": 51,
+            "fuel": 47,
+            "surge": 147
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s2024-badinvest-dt0_4",
+          "failed": false,
+          "wallMs": 1057,
+          "msPerTick": 0.005,
+          "moneyEnd": 1775463.3699949065,
+          "pax": 124240,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1212,
+          "flightsOut": 1199,
+          "annulated": 8,
+          "incidents": {
+            "runway": 41,
+            "fuel": 63,
+            "surge": 166
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 4096,
+      "policy": "prudent",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s4096-prudent-dt1",
+          "failed": false,
+          "wallMs": 343,
+          "msPerTick": 0.004,
+          "moneyEnd": 1925826.5595027872,
+          "pax": 146905,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1422,
+          "flightsOut": 1418,
+          "annulated": 0,
+          "incidents": {
+            "runway": 43,
+            "fuel": 0,
+            "surge": 150
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s4096-prudent-dt0_4",
+          "failed": false,
+          "wallMs": 706,
+          "msPerTick": 0.003,
+          "moneyEnd": 2050215.630614696,
+          "pax": 155294,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1497,
+          "flightsOut": 1493,
+          "annulated": 0,
+          "incidents": {
+            "runway": 45,
+            "fuel": 0,
+            "surge": 160
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 4096,
+      "policy": "expansion",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s4096-expansion-dt1",
+          "failed": false,
+          "wallMs": 503,
+          "msPerTick": 0.006,
+          "moneyEnd": 1664415.000002578,
+          "pax": 119898,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1159,
+          "flightsOut": 1154,
+          "annulated": 0,
+          "incidents": {
+            "runway": 35,
+            "fuel": 69,
+            "surge": 154
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s4096-expansion-dt0_4",
+          "failed": false,
+          "wallMs": 1064,
+          "msPerTick": 0.005,
+          "moneyEnd": 1770985.6999948688,
+          "pax": 123998,
+          "satisfaction": 100,
+          "holding": 1,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1207,
+          "flightsOut": 1189,
+          "annulated": 12,
+          "incidents": {
+            "runway": 48,
+            "fuel": 61,
+            "surge": 159
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 4096,
+      "policy": "greedy",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s4096-greedy-dt1",
+          "failed": false,
+          "wallMs": 420,
+          "msPerTick": 0.005,
+          "moneyEnd": 2523627.7889995696,
+          "pax": 188956,
+          "satisfaction": 100,
+          "holding": 3,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1828,
+          "flightsOut": 1816,
+          "annulated": 6,
+          "incidents": {
+            "runway": 46,
+            "fuel": 0,
+            "surge": 163
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s4096-greedy-dt0_4",
+          "failed": false,
+          "wallMs": 847,
+          "msPerTick": 0.004,
+          "moneyEnd": 2774094.8854877306,
+          "pax": 205903,
+          "satisfaction": 100,
+          "holding": 2,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1979,
+          "flightsOut": 1974,
+          "annulated": 0,
+          "incidents": {
+            "runway": 49,
+            "fuel": 0,
+            "surge": 150
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 4096,
+      "policy": "refus-temp",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s4096-refus-temp-dt1",
+          "failed": false,
+          "wallMs": 353,
+          "msPerTick": 0.004,
+          "moneyEnd": 2140156.4932524776,
+          "pax": 161242,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1563,
+          "flightsOut": 1559,
+          "annulated": 0,
+          "incidents": {
+            "runway": 43,
+            "fuel": 0,
+            "surge": 150
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s4096-refus-temp-dt0_4",
+          "failed": false,
+          "wallMs": 719,
+          "msPerTick": 0.003,
+          "moneyEnd": 2171810.6954764496,
+          "pax": 163503,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1575,
+          "flightsOut": 1571,
+          "annulated": 0,
+          "incidents": {
+            "runway": 45,
+            "fuel": 0,
+            "surge": 160
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 4096,
+      "policy": "badinvest",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s4096-badinvest-dt1",
+          "failed": false,
+          "wallMs": 489,
+          "msPerTick": 0.006,
+          "moneyEnd": 1666491.0090025843,
+          "pax": 119898,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1159,
+          "flightsOut": 1154,
+          "annulated": 0,
+          "incidents": {
+            "runway": 35,
+            "fuel": 69,
+            "surge": 154
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s4096-badinvest-dt0_4",
+          "failed": false,
+          "wallMs": 1077,
+          "msPerTick": 0.005,
+          "moneyEnd": 1773080.293594863,
+          "pax": 123998,
+          "satisfaction": 100,
+          "holding": 1,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1207,
+          "flightsOut": 1189,
+          "annulated": 12,
+          "incidents": {
+            "runway": 48,
+            "fuel": 61,
+            "surge": 159
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 8192,
+      "policy": "prudent",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s8192-prudent-dt1",
+          "failed": false,
+          "wallMs": 358,
+          "msPerTick": 0.004,
+          "moneyEnd": 1957510.7245028166,
+          "pax": 149243,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1430,
+          "flightsOut": 1428,
+          "annulated": 0,
+          "incidents": {
+            "runway": 43,
+            "fuel": 0,
+            "surge": 158
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s8192-prudent-dt0_4",
+          "failed": false,
+          "wallMs": 711,
+          "msPerTick": 0.003,
+          "moneyEnd": 2018333.1076946962,
+          "pax": 153012,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1485,
+          "flightsOut": 1483,
+          "annulated": 0,
+          "incidents": {
+            "runway": 46,
+            "fuel": 0,
+            "surge": 150
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 8192,
+      "policy": "expansion",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s8192-expansion-dt1",
+          "failed": false,
+          "wallMs": 488,
+          "msPerTick": 0.006,
+          "moneyEnd": 1772222.500002633,
+          "pax": 121834,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 2,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1174,
+          "flightsOut": 1170,
+          "annulated": 0,
+          "incidents": {
+            "runway": 45,
+            "fuel": 53,
+            "surge": 163
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s8192-expansion-dt0_4",
+          "failed": false,
+          "wallMs": 1059,
+          "msPerTick": 0.005,
+          "moneyEnd": 1778963.1999948833,
+          "pax": 123287,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1203,
+          "flightsOut": 1184,
+          "annulated": 14,
+          "incidents": {
+            "runway": 40,
+            "fuel": 56,
+            "surge": 143
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 8192,
+      "policy": "greedy",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s8192-greedy-dt1",
+          "failed": false,
+          "wallMs": 412,
+          "msPerTick": 0.005,
+          "moneyEnd": 2510045.757499674,
+          "pax": 187624,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1827,
+          "flightsOut": 1818,
+          "annulated": 3,
+          "incidents": {
+            "runway": 43,
+            "fuel": 0,
+            "surge": 150
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s8192-greedy-dt0_4",
+          "failed": false,
+          "wallMs": 848,
+          "msPerTick": 0.004,
+          "moneyEnd": 2768901.996627525,
+          "pax": 205196,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1995,
+          "flightsOut": 1990,
+          "annulated": 0,
+          "incidents": {
+            "runway": 35,
+            "fuel": 0,
+            "surge": 141
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 8192,
+      "policy": "refus-temp",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s8192-refus-temp-dt1",
+          "failed": false,
+          "wallMs": 364,
+          "msPerTick": 0.004,
+          "moneyEnd": 2187809.89900212,
+          "pax": 164775,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1581,
+          "flightsOut": 1578,
+          "annulated": 0,
+          "incidents": {
+            "runway": 43,
+            "fuel": 0,
+            "surge": 158
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s8192-refus-temp-dt0_4",
+          "failed": false,
+          "wallMs": 715,
+          "msPerTick": 0.003,
+          "moneyEnd": 2135874.7917755414,
+          "pax": 160857,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1561,
+          "flightsOut": 1559,
+          "annulated": 0,
+          "incidents": {
+            "runway": 46,
+            "fuel": 0,
+            "surge": 150
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 8192,
+      "policy": "badinvest",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s8192-badinvest-dt1",
+          "failed": false,
+          "wallMs": 477,
+          "msPerTick": 0.006,
+          "moneyEnd": 1774277.3265026386,
+          "pax": 121834,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 2,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1174,
+          "flightsOut": 1170,
+          "annulated": 0,
+          "incidents": {
+            "runway": 45,
+            "fuel": 53,
+            "surge": 163
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s8192-badinvest-dt0_4",
+          "failed": false,
+          "wallMs": 1064,
+          "msPerTick": 0.005,
+          "moneyEnd": 1781044.7911948788,
+          "pax": 123287,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1203,
+          "flightsOut": 1184,
+          "annulated": 14,
+          "incidents": {
+            "runway": 40,
+            "fuel": 56,
+            "surge": 143
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 99999,
+      "policy": "prudent",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s99999-prudent-dt1",
+          "failed": false,
+          "wallMs": 351,
+          "msPerTick": 0.004,
+          "moneyEnd": 1944542.6787527858,
+          "pax": 148543,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1419,
+          "flightsOut": 1417,
+          "annulated": 0,
+          "incidents": {
+            "runway": 46,
+            "fuel": 0,
+            "surge": 159
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s99999-prudent-dt0_4",
+          "failed": false,
+          "wallMs": 719,
+          "msPerTick": 0.003,
+          "moneyEnd": 2020647.5104147163,
+          "pax": 153480,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1474,
+          "flightsOut": 1472,
+          "annulated": 0,
+          "incidents": {
+            "runway": 47,
+            "fuel": 0,
+            "surge": 137
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 99999,
+      "policy": "expansion",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s99999-expansion-dt1",
+          "failed": false,
+          "wallMs": 491,
+          "msPerTick": 0.006,
+          "moneyEnd": 1780869.5000026189,
+          "pax": 122760,
+          "satisfaction": 100,
+          "holding": 1,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1177,
+          "flightsOut": 1172,
+          "annulated": 0,
+          "incidents": {
+            "runway": 43,
+            "fuel": 56,
+            "surge": 151
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s99999-expansion-dt0_4",
+          "failed": false,
+          "wallMs": 1049,
+          "msPerTick": 0.005,
+          "moneyEnd": 1761267.199994926,
+          "pax": 124529,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1213,
+          "flightsOut": 1200,
+          "annulated": 8,
+          "incidents": {
+            "runway": 48,
+            "fuel": 69,
+            "surge": 151
+          },
+          "invest": 10000,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 99999,
+      "policy": "greedy",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s99999-greedy-dt1",
+          "failed": false,
+          "wallMs": 423,
+          "msPerTick": 0.005,
+          "moneyEnd": 2494703.474749897,
+          "pax": 186618,
+          "satisfaction": 100,
+          "holding": 2,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1808,
+          "flightsOut": 1794,
+          "annulated": 8,
+          "incidents": {
+            "runway": 48,
+            "fuel": 0,
+            "surge": 142
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s99999-greedy-dt0_4",
+          "failed": false,
+          "wallMs": 841,
+          "msPerTick": 0.004,
+          "moneyEnd": 2782205.466207883,
+          "pax": 206461,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1988,
+          "flightsOut": 1982,
+          "annulated": 0,
+          "incidents": {
+            "runway": 37,
+            "fuel": 0,
+            "surge": 158
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 31,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 99999,
+      "policy": "refus-temp",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s99999-refus-temp-dt1",
+          "failed": false,
+          "wallMs": 360,
+          "msPerTick": 0.004,
+          "moneyEnd": 2174751.51225214,
+          "pax": 163979,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1571,
+          "flightsOut": 1567,
+          "annulated": 0,
+          "incidents": {
+            "runway": 46,
+            "fuel": 0,
+            "surge": 159
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s99999-refus-temp-dt0_4",
+          "failed": false,
+          "wallMs": 706,
+          "msPerTick": 0.003,
+          "moneyEnd": 2122350.0666952995,
+          "pax": 160280,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1539,
+          "flightsOut": 1537,
+          "annulated": 0,
+          "incidents": {
+            "runway": 47,
+            "fuel": 0,
+            "surge": 137
+          },
+          "invest": 0,
+          "strategy": {
+            "upgradesBought": 0,
+            "upgradesRefused": 0,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    },
+    {
+      "seed": 99999,
+      "policy": "badinvest",
+      "cells": [
+        {
+          "dt": 1,
+          "runId": "r36m-s99999-badinvest-dt1",
+          "failed": false,
+          "wallMs": 493,
+          "msPerTick": 0.006,
+          "moneyEnd": 1782920.004502621,
+          "pax": 122760,
+          "satisfaction": 100,
+          "holding": 1,
+          "plannedPending": 1,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1177,
+          "flightsOut": 1172,
+          "annulated": 0,
+          "incidents": {
+            "runway": 43,
+            "fuel": 56,
+            "surge": 151
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        },
+        {
+          "dt": 0.4,
+          "runId": "r36m-s99999-badinvest-dt0_4",
+          "failed": false,
+          "wallMs": 1063,
+          "msPerTick": 0.005,
+          "moneyEnd": 1763344.9869949077,
+          "pax": 124529,
+          "satisfaction": 100,
+          "holding": 0,
+          "plannedPending": 0,
+          "bankruptcy": false,
+          "bankruptAt": null,
+          "flightsIn": 1213,
+          "flightsOut": 1200,
+          "annulated": 8,
+          "incidents": {
+            "runway": 48,
+            "fuel": 69,
+            "surge": 151
+          },
+          "invest": 7900,
+          "strategy": {
+            "upgradesBought": 3,
+            "upgradesRefused": 93,
+            "contractsAccepted": 0,
+            "contractsRefused": 0
+          }
+        }
+      ]
+    }
+  ],
+  "findings": {
+    "paxPerPolicy": {
+      "prudent": {
+        "pax": 147388,
+        "money": 1931519,
+        "invest": 0
+      },
+      "expansion": {
+        "pax": 120531,
+        "money": 1725602,
+        "invest": 10000
+      },
+      "greedy": {
+        "pax": 187112,
+        "money": 2502303,
+        "invest": 0
+      },
+      "refus-temp": {
+        "pax": 162368,
+        "money": 2154282,
+        "invest": 0
+      },
+      "badinvest": {
+        "pax": 120531,
+        "money": 1727658,
+        "invest": 7900
+      }
+    },
+    "expansionVsBadinvest": {
+      "paxDelta": 0,
+      "investGap": 2100,
+      "note": "Les PAX sont identiques expansion vs badinvest sur les 12 seeds (Δ=0) : dans la fenêtre 24 h, le goulot des FILES n'est jamais le plafond du trafic — l'amélioration « terminal » (capacité) ni « teams » (nettoyage) ne convertissent AUCUNE file. Seule la DÉPENSE diffère (2100 $ d'investissement) : le « mauvais achat » R31 reste mesurable (l'argent dépensé n'achète rien), et l'effet NEUTRE est documenté ici."
+    }
+  },
+  "determinism": {
+    "sameConfigByteIdentical": {
+      "a": "r36m-det-same-A",
+      "b": "r36m-det-same-B",
+      "expectSame": true,
+      "ok": true,
+      "sha256A": "d14226f76d7cc6d07171570f1165d420e511bc32facb8c0c3c104278f80b2fbc",
+      "sha256B": "d14226f76d7cc6d07171570f1165d420e511bc32facb8c0c3c104278f80b2fbc"
+    },
+    "differentSeedsDiverge": {
+      "a": "r36m-det-same-A",
+      "b": "r36m-det-diff",
+      "expectSame": false,
+      "ok": true,
+      "sha256A": "d14226f76d7cc6d07171570f1165d420e511bc32facb8c0c3c104278f80b2fbc",
+      "sha256B": "1a3ed2212b9a2fe69de3533ed2e86f65a8614449b463f2beb6fbc2d11545c6ff"
+    }
+  },
+  "tolerances": [
+    {
+      "seed": 1,
+      "policy": "prudent",
+      "paxDelta": 7062,
+      "moneyDelta": 101742.80470188567,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 1,
+      "policy": "expansion",
+      "paxDelta": 3338,
+      "moneyDelta": 78564.69999229163,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 1,
+      "policy": "greedy",
+      "paxDelta": 16696,
+      "moneyDelta": 243449.57746756077,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 1,
+      "policy": "refus-temp",
+      "paxDelta": 811,
+      "moneyDelta": 15263.796885881573,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 1,
+      "policy": "badinvest",
+      "paxDelta": 3338,
+      "moneyDelta": 78578.3528422662,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 7,
+      "policy": "prudent",
+      "paxDelta": 10645,
+      "moneyDelta": 155325.27078192355,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 7,
+      "policy": "expansion",
+      "paxDelta": 1910,
+      "moneyDelta": 31123.19999239617,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 7,
+      "policy": "greedy",
+      "paxDelta": 17780,
+      "moneyDelta": 261816.77063760022,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 7,
+      "policy": "refus-temp",
+      "paxDelta": 906,
+      "moneyDelta": 9970.116444302257,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 7,
+      "policy": "badinvest",
+      "paxDelta": 1910,
+      "moneyDelta": 31153.554592376575,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 42,
+      "policy": "prudent",
+      "paxDelta": 3214,
+      "moneyDelta": 49393.03068189486,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 42,
+      "policy": "expansion",
+      "paxDelta": 2885,
+      "moneyDelta": 12377.999992350815,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 42,
+      "policy": "greedy",
+      "paxDelta": 14496,
+      "moneyDelta": 221980.62849766202,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 42,
+      "policy": "refus-temp",
+      "paxDelta": 3799,
+      "moneyDelta": 54001.62035690807,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 42,
+      "policy": "badinvest",
+      "paxDelta": 2885,
+      "moneyDelta": 12429.37819233071,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 99,
+      "policy": "prudent",
+      "paxDelta": 9644,
+      "moneyDelta": 139397.26076189172,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 99,
+      "policy": "expansion",
+      "paxDelta": 787,
+      "moneyDelta": 3087.199992380105,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 99,
+      "policy": "greedy",
+      "paxDelta": 23012,
+      "moneyDelta": 323591.66542791156,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 99,
+      "policy": "refus-temp",
+      "paxDelta": 4186,
+      "moneyDelta": 59236.90287427977,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 99,
+      "policy": "badinvest",
+      "paxDelta": 787,
+      "moneyDelta": 3142.6940423587803,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 123,
+      "policy": "prudent",
+      "paxDelta": 9280,
+      "moneyDelta": 136364.98826190457,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 123,
+      "policy": "expansion",
+      "paxDelta": 5376,
+      "moneyDelta": 131207.99999242695,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 123,
+      "policy": "greedy",
+      "paxDelta": 17916,
+      "moneyDelta": 264470.90854843426,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 123,
+      "policy": "refus-temp",
+      "paxDelta": 2462,
+      "moneyDelta": 36548.72004414303,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 123,
+      "policy": "badinvest",
+      "paxDelta": 5376,
+      "moneyDelta": 131225.2886924222,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 256,
+      "policy": "prudent",
+      "paxDelta": 9568,
+      "moneyDelta": 139683.18598195072,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 256,
+      "policy": "expansion",
+      "paxDelta": 3386,
+      "moneyDelta": 39507.99999234034,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 256,
+      "policy": "greedy",
+      "paxDelta": 20038,
+      "moneyDelta": 287345.84800838586,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 256,
+      "policy": "refus-temp",
+      "paxDelta": 2546,
+      "moneyDelta": 35940.846992907114,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 256,
+      "policy": "badinvest",
+      "paxDelta": 3386,
+      "moneyDelta": 39528.963692324935,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 512,
+      "policy": "prudent",
+      "paxDelta": 6385,
+      "moneyDelta": 95219.00297186105,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 512,
+      "policy": "expansion",
+      "paxDelta": 2949,
+      "moneyDelta": 36683.49999225605,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 512,
+      "policy": "greedy",
+      "paxDelta": 23292,
+      "moneyDelta": 327503.68435756024,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 512,
+      "policy": "refus-temp",
+      "paxDelta": 1401,
+      "moneyDelta": 19818.858026764356,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 512,
+      "policy": "badinvest",
+      "paxDelta": 2949,
+      "moneyDelta": 36698.41509224358,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 1000,
+      "policy": "prudent",
+      "paxDelta": 5638,
+      "moneyDelta": 82972.83061189344,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 1000,
+      "policy": "expansion",
+      "paxDelta": 86,
+      "moneyDelta": 40116.99999251659,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 1000,
+      "policy": "greedy",
+      "paxDelta": 18673,
+      "moneyDelta": 264257.50946787605,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 1000,
+      "policy": "refus-temp",
+      "paxDelta": 3402,
+      "moneyDelta": 52514.63482628018,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 1000,
+      "policy": "badinvest",
+      "paxDelta": 86,
+      "moneyDelta": 40147.641292500775,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 2024,
+      "policy": "prudent",
+      "paxDelta": 6986,
+      "moneyDelta": 106228.0027919102,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 2024,
+      "policy": "expansion",
+      "paxDelta": 4747,
+      "moneyDelta": 41855.09999228711,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 2024,
+      "policy": "greedy",
+      "paxDelta": 16768,
+      "moneyDelta": 243499.35393802682,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 2024,
+      "policy": "refus-temp",
+      "paxDelta": 2227,
+      "moneyDelta": 35316.77502285363,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 2024,
+      "policy": "badinvest",
+      "paxDelta": 4747,
+      "moneyDelta": 41891.59349227743,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 4096,
+      "policy": "prudent",
+      "paxDelta": 8389,
+      "moneyDelta": 124389.07111190888,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 4096,
+      "policy": "expansion",
+      "paxDelta": 4100,
+      "moneyDelta": 106570.69999229093,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 4096,
+      "policy": "greedy",
+      "paxDelta": 16947,
+      "moneyDelta": 250467.096488161,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 4096,
+      "policy": "refus-temp",
+      "paxDelta": 2261,
+      "moneyDelta": 31654.20222397195,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 4096,
+      "policy": "badinvest",
+      "paxDelta": 4100,
+      "moneyDelta": 106589.28459227877,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 8192,
+      "policy": "prudent",
+      "paxDelta": 3769,
+      "moneyDelta": 60822.383191879606,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 8192,
+      "policy": "expansion",
+      "paxDelta": 1453,
+      "moneyDelta": 6740.6999922501855,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 8192,
+      "policy": "greedy",
+      "paxDelta": 17572,
+      "moneyDelta": 258856.2391278511,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 8192,
+      "policy": "refus-temp",
+      "paxDelta": 3918,
+      "moneyDelta": 51935.10722657852,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 8192,
+      "policy": "badinvest",
+      "paxDelta": 1453,
+      "moneyDelta": 6767.464692240115,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 99999,
+      "policy": "prudent",
+      "paxDelta": 4937,
+      "moneyDelta": 76104.83166193054,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 99999,
+      "policy": "expansion",
+      "paxDelta": 1769,
+      "moneyDelta": 19602.30000769277,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 99999,
+      "policy": "greedy",
+      "paxDelta": 19843,
+      "moneyDelta": 287501.9914579857,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 99999,
+      "policy": "refus-temp",
+      "paxDelta": 3699,
+      "moneyDelta": 52401.445556840394,
+      "satisfactionDelta": 0
+    },
+    {
+      "seed": 99999,
+      "policy": "badinvest",
+      "paxDelta": 1769,
+      "moneyDelta": 19575.017507713288,
+      "satisfactionDelta": 0
+    }
+  ],
+  "toleranceMax": {
+    "pax": 23292,
+    "money": 327503.68435756024,
+    "satisfaction": 0,
+    "note": "Tolérance DOCUMENTÉE du pas 0,4 s face au pas de référence 1 s (24 h, tous seeds × politiques) : Δ pax ≤ 23292, Δ money ≤ 327504 $, Δ satisfaction ≤ 0 pts. Le pas 0,4 s EST le pas naturel du jeu navigateur (dt réel clampé à 0,1 s, src/core/loop.mjs, × vitesse max x4 = 0,4 s de sim par frame) — la matrice couvre donc le pas réel du jeu. Cause du Δ : le PRNG est consommé par TICK (pas par temps sim) — moins de ticks = moins d'échantillons de la même suite (fenêtres d'offres, incidents), d'où des suites légèrement différentes mais des résultats dans la tolérance mesurée."
+  },
+  "longRun48h": {
+    "runId": "r36m-long-48h",
+    "money": {
+      "start": 12000,
+      "end": 4377131.651736094,
+      "min": 11574.399999999903,
+      "atMin": 133,
+      "debt": 0
+    },
+    "pax": 330746,
+    "satisfaction": 100,
+    "holding": 2,
+    "bankruptcy": false,
+    "sha256state": "814dad8ca62ef800c0d154c72dcd0a17dbd8695821c6234832151499420ff25d"
+  },
+  "replay": "Rejouer : node qa/r36-matrix.mjs (les runIds ci-dessus pointent les rapports et states dans evidence/r36m-*)"
+}

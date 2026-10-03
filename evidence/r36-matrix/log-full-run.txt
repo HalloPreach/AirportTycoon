@@ -1,0 +1,7 @@
+
+=== MATRICE R36 : 12 seeds × 5 politiques × 2 pas = 120 runs (commit 2ecc93c) ===
+déterminisme : paire byte-identique OK + seeds divergentes OK
+tolérance dt 1 s vs 0,4 s : Δpax ≤ 23292 | Δmoney ≤ 327504 $ | Δsat ≤ 0
+extension 48 h : money 4377132 $ | pax 330746 | faillite non
+preuve : C:\Users\Lucas\Documents\AirportTycoon\evidence\r36-matrix\rapport-matrix.json
+EXIT=0
