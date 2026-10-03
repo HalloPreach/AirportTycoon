@@ -17,10 +17,23 @@ import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 import { isSurge, runwayClosed, fuelOut } from '../sim/incidents.mjs';
 import { activeContract } from './contracts.mjs';
+import { qualityTier, Q_TIERS } from '../progression/quality.mjs'; // R26 : le palier qualité filtre les tailles offertes
 import { PAX_REVENUE, PAX_REVENUE_DRY, LANDING_FEE, GATE_FEE, FUEL_COST_PER_PAX } from '../economy/economy.mjs';
 
 const SPAWN_EVERY_S = 60;  // cadence d'une fenêtre (x4 raisonnable)
 export const MAX_PENDING = 4; // plafond UNIQUE d'arrivées (A-5) : au-delà, on n'en fait plus arriver
+// R26 (t_62ffa6bc) : le plafond n'est plus un nombre caché — c'est un PARAMÈTRE
+// de la sim (sim.pendingCap, sérialisé), borné [MAX_PENDING, PENDING_CAP_MAX].
+// Scénarios de croissance : le joueur (ou un futur module d'investissement)
+// l'ajuste pour absorber la demande qu'il ouvre (portes/pistes en plus) —
+// l'agrandissement ne se heurte JAMAIS à un plafond dur invisible.
+export const PENDING_CAP_MAX = 8; // borne haute bornée (pas de croissance illimitée — spec R26)
+// Lecture du plafond effectif (une seule source : sim.pendingCap, borné) :
+// le planificateur l'applique, le panneau le lit, les tests le forcent.
+export function pendingCap(sim) {
+  const cap = sim.pendingCap ?? MAX_PENDING; // absent (sauvegarde ancienne) → 4 (comportement A-5)
+  return Math.min(PENDING_CAP_MAX, Math.max(MAX_PENDING, Math.floor(cap) || MAX_PENDING));
+}
 // Politique explicite (A-5, cohérent avec l'annulation bloquée à 10 min d'aircraft.mjs) :
 // une OFFRE jamais décidée (état « planned ») expire 10 min sim après son heure prévue →
 // refusé (événement lisible), sa place se libère, le planificateur repart. En attendant,
@@ -86,10 +99,15 @@ export function tickPlanner(sim, dt, rng = Math.random) {
 // fenêtre) — le pic se mesure au nombre de vols planifiés.
 function windowClose(sim, rng) {
   if (sim.infra.runways.length) {
-    const n = isSurge(sim) ? 2 : 1; // pic de demande (BL-14) : cadence doublée
+    // R26 : le contrat ACTIF ouvre une augmentation ANNONCÉE de demande
+    // (+1 offre par fenêtre, comme le pic BL-14) — l'engagement augmente
+    // RÉELLEMENT les vols proposés ; la capacité pour les traiter est le
+    // paramètre pendingCap (plafond borné) + l'infra (portes/pistes).
+    const n = (isSurge(sim) ? 2 : 1) + (activeContract(sim) ? 1 : 0);
+    const cap = pendingCap(sim); // R26 : le plafond est un PARAMÈTRE de la sim (borné)
     for (let k = 0; k < n; k++) {
       const pending = pendingCount(sim) + sim.planning.filter((e) => e.status === 'planned' || e.status === 'accepted').length;
-      if (pending >= MAX_PENDING) break;
+      if (pending >= cap) break;
       planOneFlight(sim, rng);
     }
   }
@@ -114,7 +132,7 @@ function deployDue(sim) {
   for (const e of sim.planning) {
     if (e.status !== 'accepted') continue; // planned = en attente de décision JOUEUR (ou expiration)
     if (e.planned > sim.time + 1) continue; // pas encore son heure (tolérance 1 s)
-    if (pendingCount(sim) >= MAX_PENDING) break; // plafond (A-5) : compte les avions déjà poussés ici
+    if (pendingCount(sim) >= pendingCap(sim)) break; // plafond (A-5/R26) : compte les avions déjà poussés ici
     sim.aircraft.push(makeAircraft(sim, e));
     pushEvent(sim, { kind: 'flight-in', volId: e.id, airline: airlineName(e.airline), acType: e.acType });
   }
@@ -144,7 +162,7 @@ export function spawnArrivals(sim, dt, rng = Math.random) {
   if (windows < 1) return;
   sim._spawnAcc -= windows * SPAWN_EVERY_S; // R13 : reste conservé (comme tickPlanner)
   if (!sim.infra.runways.length) return;
-  if (pendingCount(sim) >= MAX_PENDING) return; // plafond (A-5) : on n'en fait plus
+  if (pendingCount(sim) >= pendingCap(sim)) return; // plafond (A-5/R26) : on n'en fait plus
   // Planning vide (aucun vol à déployer) → on en planifie UN, d'arrivée immédiate,
   // pour qu'un spawn forcé en produise toujours un (comportement historique).
   const due = sim.planning.some((e) => ['planned', 'accepted'].includes(e.status) && e.planned <= (sim.time ?? 0));
@@ -173,15 +191,22 @@ export function spawnArrivals(sim, dt, rng = Math.random) {
 // « servable » est la même que attributeFlight : piste ≥ minRunway + porte de
 // la taille. Si l'infra ne sert AUCUN type → pas de vol planifié (on ne fait
 // pas arriver un avion que l'aéroport ne pourrait jamais desservir).
+// R26 : le palier qualité filtre les TAILLES que le planificateur est
+// autorisé à proposer (Q_TIERS, quality.mjs) — la réputation mesurée
+// module l'offre (bornes + inertie dans le module, jamais 2 règles).
+// Le filtre « servable » (infra) s'applique EN PLUS : les 2 filtres se
+// combinent, jamais l'un ne contredit l'autre.
 function servableTypes(sim) {
+  const tierSizes = Q_TIERS[qualityTier(sim)].sizes;
   return Object.keys(AIRCRAFT).filter((k) => {
+    if (!tierSizes.includes(k)) return false; // R26 : taille au-dessus du palier → pas proposée
     const spec = AIRCRAFT[k];
     return !!runwayFor(sim, spec.minRunway) // R05 : critère compatibilité piste centralisé (infra.mjs)
       && sim.infra.gates.some((g) => g.size === spec.gate);
   });
 }
 
-function planOneFlight(sim, rng) {
+export function planOneFlight(sim, rng) {
   const servable = servableTypes(sim);
   if (!servable.length) return null; // aucune infra servable → pas de vol
   // Tirer d'abord un type SERVABLE, puis une compagnie qui l'opère : chaque
@@ -289,7 +314,7 @@ export function attributeFlight(sim, acType) {
   const hasRunway = !!runwayFor(sim, ac.minRunway);
   const hasGate = sim.infra.gates.some((g) => g.size === ac.gate);
   const compatible = hasRunway && hasGate;
-  const available = pendingCount(sim) < MAX_PENDING;
+  const available = pendingCount(sim) < pendingCap(sim);
   const accessible = compatible && hasAccessiblePath(sim, ac.gate);
   const alternatives = Object.keys(AIRCRAFT)
     .filter((k) => k !== acType && !!runwayFor(sim, AIRCRAFT[k].minRunway)
@@ -336,11 +361,13 @@ export function planNote(sim, e) {
     // critère R19 « une offre impossible explique son obstacle ».
     obstacles.push(attr.cause);
   }
-  // Risque 1 : saturation des arrivées (plafond A-5) — le vol sera en attente
-  // (holding), retard. Le plafond est le MÊME MAX_PENDING que le déploiement.
+  // Risque 1 : saturation des arrivées (plafond A-5, paramètre R26) — le vol
+  // sera en attente (holding), retard. Le plafond est le MÊME pendingCap
+  // (paramètre de la sim) que le déploiement — jamais un nombre en dur ici.
   const pending = sim.aircraft.filter((a) => ['approach', 'holding', 'landing', 'blocked'].includes(a.phase)).length;
+  const cap = pendingCap(sim);
   const risks = [];
-  if (pending >= MAX_PENDING) risks.push(`file d'arrivées saturée (${pending}/${MAX_PENDING}) : retard probable`);
+  if (pending >= cap) risks.push(`file d'arrivées saturée (${pending}/${cap}) : retard probable`);
   // Risque 2 : station carburant ABSENTE ou EN PANE → départ sec, billets
   // moitiés (la pénalité existe, elle est lisible AVANT la décision).
   const hasFuelStation = sim.infra.services.some((s) => s.type === 'fuel');

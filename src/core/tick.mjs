@@ -11,6 +11,7 @@ import { tickAircraft } from '../sim/aircraft.mjs';
 import { tickEconomy, tickPassengers } from '../economy/economy.mjs';
 import { tickUnlocks, cleanGates } from '../infra/infra.mjs';
 import { tickIncidents } from '../sim/incidents.mjs';
+import { tickQuality } from '../progression/quality.mjs'; // R26 : la qualité des offres converge vers la mesure (inertie)
 import { tickObjectives } from '../progression/objectives.mjs';
 import { tickContracts } from '../flights/contracts.mjs';
 import { makeSimRng } from './rng.mjs';
@@ -22,6 +23,7 @@ export function tick(state, dt, rng) {
   if (!rng) rng = makeSimRng(sim); // pas de Math.random à l'état : le générateur est SÉMÉ + sérialisé (EV-10)
   tickPlanner(sim, dt, rng); // horloge de la sim (sim.time) est pilotée PAR le planificateur
   tickAircraft(sim, dt);
+  tickQuality(sim, dt); // R26 : APRÈS les avions (leur fin de vol alimente la fenêtre de ponctualité)
   cleanGates(sim, dt); // t_2179387d : nettoyage (g.cleaning) + hangar (g.maintenance)
   tickEconomy(sim, dt);
   tickPassengers(sim, dt);

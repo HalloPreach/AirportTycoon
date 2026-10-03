@@ -23,6 +23,8 @@ import { OBJECTIVES, objectiveView } from '../progression/objectives.mjs';
 // COMMANDES de décision (decideContract/cancelContract) : la sim règle la
 // prime/pénalité (tickContracts), le panneau ne décide que par ces portes.
 import { contractView, decideContract, cancelContract, contractCapable } from '../flights/contracts.mjs';
+import { pendingCap } from '../flights/flights.mjs'; // R26 : le plafond d'arrivées est un PARAMÈTRE de la sim (borné) — le panneau le lit, pas un nombre en dur
+import { qualityView } from '../progression/quality.mjs'; // R26 : la qualité des offres (palier + mesure R17)
 import { unlockView } from '../infra/unlocks.mjs';
 
 const PHASES_FR = Object.freeze({
@@ -54,10 +56,9 @@ const CAUSE_FR = Object.freeze({
   departed: 'parti',
   cancelled: 'annulé',
 });
-// Plafond de file d'arrivées (MAX_PENDING de flights.mjs) : le diagnostic de
-// saturation le compare. ponytail: constante dupliquée ici, à synchroniser si
-// MAX_PENDING bouge.
-const PENDING_CAP = 4;
+// R26 : le plafond d'arrivées est un PARAMÈTRE de la sim (pendingCap,
+// flights.mjs — borné [MAX_PENDING, PENDING_CAP_MAX]) : le panneau le LIT,
+// la constante dupliquée est supprimée (le panneau ne peut plus diverger).
 
 function fmtClock(t) {
   const s = Math.max(0, Math.floor(t || 0));
@@ -443,10 +444,12 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         if (!sim) return 'none';
         const i = sim.incidents || {};
         const pending = sim.aircraft.filter((a) => ['approach', 'holding', 'landing', 'blocked'].includes(a.phase)).length;
+        const q = qualityView(sim); // R26 : palier qualité (mix d'offres) + mesure sous-jacente
         return [
           sim._graph ? sim._graph.nodes.length : null, sim._graphDirty ? 1 : 0,
           sim.infra.runways.length, sim.infra.gates.length,
-          pending, i.runway?.closed > 0 ? 1 : 0, i.fuel?.out > 0 ? 1 : 0, i.surge?.active ? 1 : 0,
+          pending, pendingCap(sim), i.runway?.closed > 0 ? 1 : 0, i.fuel?.out > 0 ? 1 : 0, i.surge?.active ? 1 : 0,
+          q.tier, q.q.toFixed(2),
         ].join('|');
       },
       (body) => {
@@ -454,9 +457,17 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         const sim = state.sim;
         if (!sim) return;
         const i = sim.incidents || {};
-        // SATURATION : file d'arrivées face au plafond (MAX_PENDING, flights.mjs).
+        // SATURATION : file d'arrivées face au plafond (PARAMÈTRE de la sim,
+        // R26 : pendingCap — le panneau le lit, la sim le borne [4, 8]).
         const pending = sim.aircraft.filter((a) => ['approach', 'holding', 'landing', 'blocked'].includes(a.phase)).length;
-        line(body, 'File d’arrivées', `${pending}/${PENDING_CAP}`, pending >= PENDING_CAP ? 'bad' : '');
+        const cap = pendingCap(sim);
+        line(body, 'File d’arrivées', `${pending}/${cap}`, pending >= cap ? 'bad' : '');
+        // R26 : la qualité module les offres (palier = le mix de tailles
+        // proposé par le planificateur, mesure = la ponctualité R17).
+        const q = qualityView(sim);
+        line(body, 'Qualité des offres',
+          `${q.tierName} (valeur ${Math.round(q.q * 100)} %) — mesure ${q.measured == null ? '—' : Math.round(q.measured * 100) + ' %'}`,
+          q.tier === 2 ? 'good' : '');
         if (i.runway?.closed > 0) line(body, 'Piste', `FERMÉE (${Math.ceil(i.runway.closed)} s restants)`, 'bad');
         if (i.fuel?.out > 0) line(body, 'Carburant', `panne stations (${Math.ceil(i.fuel.out)} s)`, 'bad');
         if (i.surge?.active) line(body, 'Demande', 'pic actif (cadence doublée)', 'warn');
