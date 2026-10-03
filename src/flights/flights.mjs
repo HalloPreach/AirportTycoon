@@ -196,13 +196,26 @@ export function spawnArrivals(sim, dt, rng = Math.random) {
 // module l'offre (bornes + inertie dans le module, jamais 2 règles).
 // Le filtre « servable » (infra) s'applique EN PLUS : les 2 filtres se
 // combinent, jamais l'un ne contredit l'autre.
+// G3 (t_26f71267) : « servable » exige aussi la JOIGNABILITÉ de la porte —
+// hasAccessiblePath, LA même règle que attributeFlight.accessible (jamais 2
+// règles divergentes : le planificateur et le panneau lisent la MÊME règle de
+// servabilité). Avant : le filtre ne regardait que l'EXISTENCE d'une porte
+// (g.size === spec.gate) → un petit avion était proposé alors que sa porte S
+// était COUPÉE du réseau (ex. 2e terminal mal placé) → atterrit, bloqué,
+// annulé (indemnité 500 $, revenu 0) → hémorragie d'indemnités → faillite.
+// La porte existe mais l'avion ne peut PAS y rouler : on ne planifie qu'un
+// vol que l'aéroport peut effectivement desservir.
+// ponytail : hasAccessiblePath subsume le test d'EXISTENCE de porte (elle ne
+// renvoie true que si une porte de la taille est atteignable) → on ne le garde
+// pas ; runwayFor reste car la LONGUEUR de piste n'est pas subsumée (une sortie
+// de piste quelconque suffit à hasAccessiblePath, pas une piste assez longue).
 function servableTypes(sim) {
   const tierSizes = Q_TIERS[qualityTier(sim)].sizes;
   return Object.keys(AIRCRAFT).filter((k) => {
     if (!tierSizes.includes(k)) return false; // R26 : taille au-dessus du palier → pas proposée
     const spec = AIRCRAFT[k];
-    return !!runwayFor(sim, spec.minRunway) // R05 : critère compatibilité piste centralisé (infra.mjs)
-      && sim.infra.gates.some((g) => g.size === spec.gate);
+    return !!runwayFor(sim, spec.minRunway) // R05 : piste ASSEZ LONGUE (critère centralisé infra.mjs)
+      && hasAccessiblePath(sim, spec.gate); // G3 : porte JOIGNABLE (même règle que attributeFlight)
   });
 }
 

@@ -9,9 +9,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newSimState } from '../src/core/sim-state.mjs';
-import { buildBuilding } from '../src/infra/infra.mjs';
+import { buildBuilding, placeBuilding } from '../src/infra/infra.mjs';
 import { rebuildGraph } from '../src/pathfinding/path.mjs';
-import { tickPlanner, attributeFlight, decideFlight } from '../src/flights/flights.mjs';
+import { tickPlanner, attributeFlight, decideFlight, planOneFlight } from '../src/flights/flights.mjs';
 
 // PRNG déterministe (mulberry32) : le même seed → la même suite de vols planifiés.
 function rng(seed) {
@@ -153,4 +153,43 @@ test('AC3 : plafond d\'arrivées atteint (A-5) → indisponible + CAUSE', () => 
   const r = attributeFlight(sim, 'small');
   assert.equal(r.available, false, 'plafond atteint → indisponible');
   assert.ok(r.cause.includes('plafond'), 'la CAUSE nomme le plafond');
+});
+
+// G3 (t_26f71267) : le filtre « servable » du planificateur doit exiger la
+// JOIGNABILITÉ de la porte (hasAccessiblePath), pas seulement son EXISTENCE.
+// C'est la cause racine de la faillite : un 2e terminal mal placé offrait des
+// vols qu'il ne pouvait PAS desservir — la porte existe dans l'infra mais
+// aucun taxiway ne la relie → l'avion atterrit, reste bloqué, est annulé
+// (indemnité versée, revenu 0) → hémorragie d'indemnités.
+// Régression : le planificateur ne propose QUE des tailles dont la porte est
+// atteignable, JAMAIS une taille dont la seule porte est coupée.
+test('G3 : une porte EXISTE mais COUPÉE → l\'avion correspondant n\'est JAMAIS proposé', () => {
+  const sim = newSimState();
+  sim.quality = { q: 0.9 }; // palier 2 : toutes les tailles sont autorisées
+  // Réseau CONNECTÉ : piste + taxiway + terminal 1 (portes S/M), tous se touchent.
+  placeBuilding(sim, { id: sim.infra.nextId++, type: 'runway', x: 750, y: 100, w: 100, h: 1000, cost: 0 });
+  placeBuilding(sim, { id: sim.infra.nextId++, type: 'taxiway', x: 550, y: 1050, w: 200, h: 40, cost: 0 });
+  placeBuilding(sim, { id: sim.infra.nextId++, type: 'terminal', x: 550, y: 900, w: 200, h: 150, cost: 0 }, ['S', 'M']);
+  // Terminal 2 ISOLÉ (seule porte L, loin de tout segment) : sa porte L EXISTE
+  // dans l'infra mais AUCUN taxiway ne la relie → inaccessible.
+  placeBuilding(sim, { id: sim.infra.nextId++, type: 'terminal', x: 1000, y: 100, w: 200, h: 150, cost: 0 }, ['L']);
+  rebuildGraph(sim);
+
+  // Contrôle : le critère d'attribution (MÊME règle que le planificateur) est
+  // bien le discriminateur — S/M servies, L coupée malgré l'existence de la porte.
+  assert.equal(sim.infra.gates.some((g) => g.size === 'L'), true, 'une porte L EXISTE (infra)');
+  assert.equal(attributeFlight(sim, 'small').accessible, true, 'porte S atteignable → petit avion servi');
+  assert.equal(attributeFlight(sim, 'medium').accessible, true, 'porte M atteignable → moyen servi');
+  assert.equal(attributeFlight(sim, 'large').accessible, false, 'porte L COUPÉE → gros avion INservable');
+
+  // Le planificateur ne doit proposer QUE les tailles servables. Le même seed →
+  // la même suite (deterministe) ; on tire 300× pour couvrir chaque type.
+  const counts = { small: 0, medium: 0, large: 0 };
+  for (let i = 0; i < 300; i++) {
+    const e = planOneFlight(sim, rng(42 + i));
+    if (e) counts[e.acType]++;
+  }
+  assert.equal(counts.large, 0, 'le gros avion (porte coupée) n\'est JAMAIS proposé');
+  assert.ok(counts.small > 0, 'le petit avion (porte atteignable) EST proposé');
+  assert.ok(counts.medium > 0, 'le moyen (porte atteignable) EST proposé');
 });
