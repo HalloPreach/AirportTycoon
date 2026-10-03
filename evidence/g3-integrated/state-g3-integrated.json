@@ -91,7 +91,7 @@
             "h": 10,
             "cleaning": 100,
             "maintenance": 100,
-            "acId": 2237
+            "acId": 2547
           },
           {
             "id": "3-g1",
@@ -151,7 +151,7 @@
             "h": 10,
             "cleaning": 100,
             "maintenance": 100,
-            "acId": null
+            "acId": 2548
           }
         ],
         "services": [
@@ -162,7 +162,10 @@
             "y": 0,
             "w": 120,
             "h": 80,
-            "cost": 1200
+            "cost": 1200,
+            "target": 3,
+            "auto": true,
+            "migrated": false
           }
         ],
         "grid": {
@@ -19374,17 +19377,17 @@
       },
       "aircraft": [
         {
-          "id": 2231,
-          "airline": "atlantique",
-          "color": "#1e88e5",
-          "acType": "medium",
-          "pax": 71,
+          "id": 2546,
+          "airline": "pacific",
+          "color": "#43a047",
+          "acType": "large",
+          "pax": 267,
           "phase": "blocked",
-          "x": 950,
+          "x": 826,
           "y": 1100,
           "gateId": null,
           "runwayId": 4,
-          "delayed": 597,
+          "delayed": 117,
           "timer": 2,
           "path": null,
           "pathPtr": 0,
@@ -19393,45 +19396,23 @@
           "contractId": "c60",
           "contractModel": "quality",
           "_delayCause": "porte",
-          "_blockedAcc": 597
+          "_blockedAcc": 117
         },
         {
-          "id": 2233,
+          "id": 2547,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 103,
-          "phase": "blocked",
-          "x": 950,
-          "y": 1100,
-          "gateId": null,
-          "runwayId": 4,
-          "delayed": 477,
-          "timer": 2,
+          "pax": 92,
+          "phase": "ground",
+          "x": 595,
+          "y": 1045,
+          "gateId": "3-g0",
+          "runwayId": 1,
+          "delayed": 27,
+          "timer": 7,
           "path": null,
-          "pathPtr": 0,
-          "seg": null,
-          "heading": "gate",
-          "contractId": "c60",
-          "contractModel": "quality",
-          "_delayCause": "porte",
-          "_blockedAcc": 477
-        },
-        {
-          "id": 2235,
-          "airline": "atlantique",
-          "color": "#1e88e5",
-          "acType": "medium",
-          "pax": 111,
-          "phase": "blocked",
-          "x": 950,
-          "y": 1100,
-          "gateId": null,
-          "runwayId": 4,
-          "delayed": 359,
-          "timer": 4,
-          "path": null,
-          "pathPtr": 0,
+          "pathPtr": 1,
           "seg": null,
           "heading": "gate",
           "contractId": "c60",
@@ -19439,21 +19420,24 @@
           "_delayCause": "porte",
           "_holdBlocked": 0,
           "_holdAcc": 0,
-          "_blockedAcc": 294
+          "_blockedAcc": 0,
+          "_paxInjected": true,
+          "_refueling": false,
+          "_refuelNeed": 0
         },
         {
-          "id": 2237,
-          "airline": "atlantique",
-          "color": "#1e88e5",
-          "acType": "medium",
-          "pax": 124,
-          "phase": "refuel",
-          "x": 595,
-          "y": 1045,
-          "gateId": "3-g0",
+          "id": 2548,
+          "airline": "pacific",
+          "color": "#43a047",
+          "acType": "large",
+          "pax": 302,
+          "phase": "board",
+          "x": 530,
+          "y": 1095,
+          "gateId": "6-g3",
           "runwayId": 1,
           "delayed": 0,
-          "timer": 49,
+          "timer": -12,
           "path": null,
           "pathPtr": 1,
           "seg": null,
@@ -19461,61 +19445,113 @@
           "contractId": "c60",
           "contractModel": "quality",
           "_paxInjected": true,
-          "_refueling": true,
-          "_refuelNeed": 6
+          "_refueling": false,
+          "_refuelNeed": 0,
+          "_dryDeparture": true,
+          "_noFuelNotified": true
+        },
+        {
+          "id": 2549,
+          "airline": "pacific",
+          "color": "#43a047",
+          "acType": "large",
+          "pax": 217,
+          "phase": "blocked",
+          "x": 829,
+          "y": 1100,
+          "gateId": null,
+          "runwayId": 4,
+          "delayed": 57,
+          "timer": 2,
+          "path": null,
+          "pathPtr": 0,
+          "seg": null,
+          "heading": "gate",
+          "contractId": "c60",
+          "contractModel": "quality",
+          "_delayCause": "porte",
+          "_blockedAcc": 57
+        },
+        {
+          "id": 2550,
+          "airline": "pacific",
+          "color": "#43a047",
+          "acType": "large",
+          "pax": 212,
+          "phase": "landing",
+          "x": 710,
+          "y": 880,
+          "gateId": null,
+          "runwayId": 1,
+          "delayed": 0,
+          "timer": 0,
+          "path": null,
+          "pathPtr": 0,
+          "seg": null,
+          "heading": "gate",
+          "contractId": "c60",
+          "contractModel": "quality"
         }
       ],
       "planning": [
         {
-          "id": 2231,
-          "airline": "atlantique",
-          "color": "#1e88e5",
-          "acType": "medium",
-          "pax": 71,
-          "planned": 172200,
+          "id": 2546,
+          "airline": "pacific",
+          "color": "#43a047",
+          "acType": "large",
+          "pax": 267,
+          "planned": 172680,
           "status": "in-flight"
         },
         {
-          "id": 2233,
+          "id": 2547,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 103,
-          "planned": 172320,
+          "pax": 92,
+          "planned": 172680,
           "status": "in-flight"
         },
         {
-          "id": 2235,
-          "airline": "atlantique",
-          "color": "#1e88e5",
-          "acType": "medium",
-          "pax": 111,
-          "planned": 172440,
-          "status": "delayed",
-          "why": "piste fermée — atterrissage en attente"
-        },
-        {
-          "id": 2237,
-          "airline": "atlantique",
-          "color": "#1e88e5",
-          "acType": "medium",
-          "pax": 124,
+          "id": 2548,
+          "airline": "pacific",
+          "color": "#43a047",
+          "acType": "large",
+          "pax": 302,
           "planned": 172740,
           "status": "in-flight"
         },
         {
-          "id": 2238,
+          "id": 2549,
+          "airline": "pacific",
+          "color": "#43a047",
+          "acType": "large",
+          "pax": 217,
+          "planned": 172740,
+          "status": "in-flight"
+        },
+        {
+          "id": 2550,
+          "airline": "pacific",
+          "color": "#43a047",
+          "acType": "large",
+          "pax": 212,
+          "planned": 172800,
+          "status": "in-flight"
+        },
+        {
+          "id": 2551,
           "airline": "atlantique",
           "color": "#1e88e5",
           "acType": "medium",
-          "pax": 113,
+          "pax": 105,
           "planned": 172860,
           "status": "planned"
         }
       ],
-      "nextAcId": 2239,
+      "nextAcId": 2552,
       "passengers": {
-        "totalCarried": 229543,
+        "totalCarried": 296286,
         "satisfaction": 100,
         "queue": {
           "checkin": 0,
@@ -19524,31 +19560,38 @@
         },
         "groups": [
           {
-            "volId": 2237,
-            "pax": 124,
+            "volId": 2547,
+            "pax": 92,
             "terminalId": 3,
-            "base": 229543,
+            "base": 296286,
+            "injected": true
+          },
+          {
+            "volId": 2548,
+            "pax": 302,
+            "terminalId": 6,
+            "base": 296378,
             "injected": true
           }
         ],
-        "securityDone": 229667,
-        "injectedTotal": 229667
+        "securityDone": 296680,
+        "injectedTotal": 296680
       },
       "economy": {
-        "money": 3687752.0017400137,
+        "money": 3538261.534240048,
         "revenue": {
-          "landing": 346503.95199999993,
-          "gate": 173251.97599999997,
-          "pax": 5311985.473749999,
+          "landing": 396849.464,
+          "gate": 198424.732,
+          "pax": 5039549.922250002,
           "reward": 2500,
-          "contract": 29873.5
+          "contract": 117171.81599999999
         },
         "spent": {
           "opex": 1743191.3999948564,
-          "fuel": 114771.5,
+          "fuel": 148143,
           "construction": 6700,
-          "contract-penalty": 70200,
-          "compensation": 253500
+          "contract-penalty": 32700,
+          "compensation": 297500
         },
         "debt": 0,
         "bankrupt": false,
@@ -19556,101 +19599,188 @@
           {
             "at": 171900,
             "minutes": 5,
-            "revenue": 7786,
+            "revenue": 12404.5625,
             "opex": 3059.99999998603,
-            "fuel": 239,
-            "compensation": 0,
+            "fuel": 414,
+            "compensation": 1000,
             "invest": 0,
             "debt": 0,
-            "net": 4487.00000001397
+            "net": 7930.56250001397
           },
           {
             "at": 172200,
             "minutes": 5,
-            "revenue": 12075,
+            "revenue": 17121.387499999255,
             "opex": 3059.99999998603,
-            "fuel": 229.5,
+            "fuel": 312.5,
             "compensation": 500,
             "invest": 0,
             "debt": 0,
-            "net": 8285.50000001397
+            "net": 13248.887500013225
           },
           {
             "at": 172500,
             "minutes": 5,
-            "revenue": 8705.625,
+            "revenue": 17272.77749999985,
             "opex": 3059.99999998603,
-            "fuel": 162.5,
-            "compensation": 1000,
+            "fuel": 567,
+            "compensation": 0,
             "invest": 0,
             "debt": 0,
-            "net": 4483.12500001397
+            "net": 13645.77750001382
           },
           {
             "at": 172800,
             "minutes": 5,
-            "revenue": 5548.5,
+            "revenue": 12616.5625,
             "opex": 3059.99999998603,
-            "fuel": 93,
-            "compensation": 0,
+            "fuel": 348.5,
+            "compensation": 1000,
             "invest": 0,
             "debt": 0,
-            "net": 2395.50000001397
+            "net": 8208.06250001397
           }
         ],
         "_periodAcc": 7,
         "_periodBase": {
-          "revenue": 5864114.901749999,
+          "revenue": 5754495.934250001,
           "opex": 1743119.9999948568,
-          "fuel": 114771.5,
-          "compensation": 253500,
+          "fuel": 148143,
+          "compensation": 297500,
           "construction": 6700,
           "debt": 0
         }
       },
       "alerts": [
         {
-          "kind": "contract-offered",
-          "id": "c55",
-          "model": "quality"
+          "kind": "flight-in",
+          "volId": 2377,
+          "airline": "Atlantique",
+          "acType": "medium"
         },
         {
-          "kind": "contract-started",
-          "id": "c55",
-          "model": "quality",
-          "period": 3000
+          "kind": "flight-out",
+          "volId": 2375,
+          "airline": "pacific",
+          "pax": 250
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 311
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2368,
+          "airline": "pacific",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2378,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2370,
+          "airline": "pacific",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2376,
+          "airline": "pacific",
+          "pax": 311
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 199
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2379,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2380,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2381,
+          "airline": "PacificCargo",
+          "acType": "large"
         },
         {
           "kind": "surge-end",
           "why": "pic de demande terminé — cadence normale"
         },
         {
-          "kind": "flight-in",
-          "volId": 2044,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2045,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2038,
+          "kind": "no-fuel",
           "airline": "pacific",
-          "pax": 214
+          "pax": 271
         },
         {
           "kind": "flight-out",
-          "volId": 2039,
-          "airline": "atlantique",
-          "pax": 107
+          "volId": 2378,
+          "airline": "pacific",
+          "pax": 199
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2379,
+          "airline": "pacific",
+          "pax": 271
         },
         {
           "kind": "flight-in",
-          "volId": 2046,
+          "volId": 2382,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2383,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "fuel-out",
+          "why": "panne stations carburant — départs secs"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 298
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2380,
+          "airline": "atlantique",
+          "pax": 124
+        },
+        {
+          "kind": "fuel-back",
+          "why": "stations carburant de nouveau en service"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2382,
+          "airline": "pacific",
+          "pax": 298
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2384,
           "airline": "PacificCargo",
           "acType": "large"
         },
@@ -19659,22 +19789,9 @@
           "why": "pic de demande — plus de vols planifiés"
         },
         {
-          "kind": "flight-out",
-          "volId": 2042,
-          "airline": "atlantique",
-          "pax": 117
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2047,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2048,
-          "airline": "Atlantique",
-          "acType": "medium"
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 215
         },
         {
           "kind": "surge-end",
@@ -19682,754 +19799,44 @@
         },
         {
           "kind": "flight-out",
-          "volId": 2040,
+          "volId": 2384,
           "airline": "pacific",
-          "pax": 174
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2044,
-          "airline": "atlantique",
-          "pax": 102
+          "pax": 215
         },
         {
           "kind": "flight-in",
-          "volId": 2049,
+          "volId": 2385,
           "airline": "Atlantique",
           "acType": "medium"
         },
         {
-          "kind": "flight-out",
-          "volId": 2045,
-          "airline": "atlantique",
-          "pax": 139
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2050,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
           "kind": "flight-cancelled",
-          "volId": 2043,
+          "volId": 2377,
           "airline": "atlantique",
           "why": "blocage persistant"
         },
         {
-          "kind": "flight-out",
-          "volId": 2046,
-          "airline": "pacific",
-          "pax": 282
-        },
-        {
           "kind": "flight-in",
-          "volId": 2051,
+          "volId": 2386,
           "airline": "Atlantique",
           "acType": "medium"
         },
         {
           "kind": "flight-out",
-          "volId": 2048,
+          "volId": 2385,
           "airline": "atlantique",
           "pax": 79
         },
         {
           "kind": "flight-in",
-          "volId": 2052,
+          "volId": 2387,
           "airline": "PacificCargo",
           "acType": "large"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2053,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2047,
-          "airline": "pacific",
-          "pax": 280
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2054,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2051,
-          "airline": "atlantique",
-          "pax": 109
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2055,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2053,
-          "airline": "atlantique",
-          "pax": 119
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2056,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2049,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2050,
-          "airline": "pacific",
-          "pax": 217
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2057,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2058,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2055,
-          "airline": "atlantique",
-          "pax": 124
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2059,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2056,
-          "airline": "atlantique",
-          "pax": 132
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2060,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2061,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2052,
-          "airline": "pacific",
-          "pax": 289
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2057,
-          "airline": "atlantique",
-          "pax": 107
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2062,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2059,
-          "airline": "atlantique",
-          "pax": 112
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2063,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2064,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2054,
-          "airline": "pacific",
-          "pax": 231
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2060,
-          "airline": "atlantique",
-          "pax": 106
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2061,
-          "airline": "atlantique",
-          "pax": 86
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2058,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2065,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2062,
-          "airline": "atlantique",
-          "pax": 83
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2066,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2067,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2063,
-          "airline": "atlantique",
-          "pax": 132
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2068,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2069,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2064,
-          "airline": "atlantique",
-          "pax": 89
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2065,
-          "airline": "atlantique",
-          "pax": 81
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2070,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2066,
-          "airline": "atlantique",
-          "pax": 125
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2071,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2068,
-          "airline": "atlantique",
-          "pax": 118
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2072,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2073,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2069,
-          "airline": "atlantique",
-          "pax": 120
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2070,
-          "airline": "atlantique",
-          "pax": 67
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2074,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2071,
-          "airline": "atlantique",
-          "pax": 87
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2075,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2067,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2072,
-          "airline": "atlantique",
-          "pax": 128
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2076,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2077,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2078,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2073,
-          "airline": "atlantique",
-          "pax": 68
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2074,
-          "airline": "atlantique",
-          "pax": 129
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2079,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2075,
-          "airline": "atlantique",
-          "pax": 85
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2080,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "runway-closed",
-          "why": "fermeture piste (contrôle) — atterrissages en attente"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2076,
-          "airline": "atlantique",
-          "pax": 116
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2081,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2082,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "runway-reopen",
-          "why": "piste de nouveau ouverte"
-        },
-        {
-          "kind": "contract-failed",
-          "id": "c55",
-          "model": "quality",
-          "done": 5,
-          "pax": 1299,
-          "reward": 1500
-        },
-        {
-          "kind": "contract-offered",
-          "id": "c56",
-          "model": "quality"
-        },
-        {
-          "kind": "contract-started",
-          "id": "c56",
-          "model": "quality",
-          "period": 3000
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2077,
-          "airline": "atlantique",
-          "pax": 112
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2079,
-          "airline": "atlantique",
-          "pax": 77
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2083,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2084,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2080,
-          "airline": "atlantique",
-          "pax": 98
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2082,
-          "airline": "atlantique",
-          "pax": 139
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2085,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2078,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2083,
-          "airline": "atlantique",
-          "pax": 103
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2086,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2087,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2088,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "fuel-out",
-          "why": "panne stations carburant — départs secs"
-        },
-        {
-          "kind": "no-fuel",
-          "airline": "atlantique",
-          "pax": 83
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2085,
-          "airline": "pacific",
-          "pax": 254
         },
         {
           "kind": "no-fuel",
           "airline": "pacific",
-          "pax": 182
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2089,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "no-fuel",
-          "airline": "atlantique",
-          "pax": 88
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2086,
-          "airline": "atlantique",
-          "pax": 107
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2090,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "fuel-back",
-          "why": "stations carburant de nouveau en service"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2087,
-          "airline": "atlantique",
-          "pax": 83
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2081,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2089,
-          "airline": "atlantique",
-          "pax": 88
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2091,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2092,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2084,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2093,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2094,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2088,
-          "airline": "pacific",
-          "pax": 182
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2091,
-          "airline": "atlantique",
-          "pax": 122
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2095,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2093,
-          "airline": "pacific",
-          "pax": 243
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2096,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2090,
-          "airline": "pacific",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2097,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "fuel-out",
-          "why": "panne stations carburant — départs secs"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2092,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2095,
-          "airline": "pacific",
-          "pax": 182
-        },
-        {
-          "kind": "no-fuel",
-          "airline": "pacific",
-          "pax": 224
-        },
-        {
-          "kind": "fuel-back",
-          "why": "stations carburant de nouveau en service"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2098,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2099,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2094,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2096,
-          "airline": "pacific",
-          "pax": 224
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2100,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2101,
-          "airline": "PacificCargo",
-          "acType": "large"
+          "pax": 236
         },
         {
           "kind": "surge-start",
@@ -20437,1415 +19844,182 @@
         },
         {
           "kind": "flight-in",
-          "volId": 2102,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2097,
-          "airline": "pacific",
-          "pax": 208
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2100,
-          "airline": "atlantique",
-          "pax": 104
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2103,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2098,
-          "airline": "pacific",
-          "pax": 275
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2104,
+          "volId": 2388,
           "airline": "Atlantique",
           "acType": "medium"
         },
         {
           "kind": "flight-cancelled",
-          "volId": 2099,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2105,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2106,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2101,
+          "volId": 2381,
           "airline": "pacific",
           "why": "blocage persistant"
         },
         {
           "kind": "flight-out",
-          "volId": 2102,
-          "airline": "pacific",
-          "pax": 277
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2107,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2108,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2104,
-          "airline": "atlantique",
-          "pax": 91
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2105,
-          "airline": "atlantique",
-          "pax": 137
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2109,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2110,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2111,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2103,
-          "airline": "pacific",
-          "pax": 279
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2107,
-          "airline": "atlantique",
-          "pax": 96
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2109,
-          "airline": "atlantique",
-          "pax": 136
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2112,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2110,
-          "airline": "atlantique",
-          "pax": 111
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2113,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "runway-closed",
-          "why": "fermeture piste (contrôle) — atterrissages en attente"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2111,
-          "airline": "atlantique",
-          "pax": 131
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2114,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2106,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "runway-reopen",
-          "why": "piste de nouveau ouverte"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2112,
-          "airline": "atlantique",
-          "pax": 133
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2115,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2108,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2116,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2113,
-          "airline": "atlantique",
-          "pax": 133
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2117,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2118,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "contract-failed",
-          "id": "c56",
-          "model": "quality",
-          "done": 9,
-          "pax": 2540,
-          "reward": 1500
-        },
-        {
-          "kind": "contract-offered",
-          "id": "c57",
-          "model": "quality"
-        },
-        {
-          "kind": "contract-started",
-          "id": "c57",
-          "model": "quality",
-          "period": 3000
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2115,
-          "airline": "atlantique",
-          "pax": 97
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2119,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2120,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2116,
+          "volId": 2386,
           "airline": "atlantique",
           "pax": 75
         },
         {
           "kind": "flight-out",
-          "volId": 2117,
-          "airline": "atlantique",
-          "pax": 114
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2121,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2119,
-          "airline": "atlantique",
-          "pax": 103
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2122,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2120,
-          "airline": "atlantique",
-          "pax": 86
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2123,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2124,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2114,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2121,
-          "airline": "atlantique",
-          "pax": 109
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2125,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2126,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2127,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2122,
+          "volId": 2387,
           "airline": "pacific",
-          "pax": 291
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2118,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2123,
-          "airline": "atlantique",
-          "pax": 99
+          "pax": 236
         },
         {
           "kind": "flight-in",
-          "volId": 2128,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2124,
-          "airline": "atlantique",
-          "pax": 144
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2129,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "runway-closed",
-          "why": "fermeture piste (contrôle) — atterrissages en attente"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "runway-reopen",
-          "why": "piste de nouveau ouverte"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2125,
-          "airline": "pacific",
-          "pax": 293
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2130,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2131,
+          "volId": 2389,
           "airline": "PacificCargo",
           "acType": "large"
         },
         {
           "kind": "surge-end",
           "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2126,
-          "airline": "pacific",
-          "pax": 300
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2127,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2130,
-          "airline": "atlantique",
-          "pax": 101
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2132,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2133,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2128,
-          "airline": "pacific",
-          "pax": 171
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2134,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2129,
-          "airline": "pacific",
-          "pax": 267
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2135,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2132,
-          "airline": "pacific",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2136,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2133,
-          "airline": "pacific",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2131,
-          "airline": "pacific",
-          "pax": 254
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2137,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2135,
-          "airline": "atlantique",
-          "pax": 112
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2138,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2139,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2140,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2141,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2134,
-          "airline": "pacific",
-          "pax": 237
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2136,
-          "airline": "atlantique",
-          "pax": 104
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2137,
-          "airline": "atlantique",
-          "pax": 135
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2142,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2138,
-          "airline": "atlantique",
-          "pax": 77
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2143,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2140,
-          "airline": "atlantique",
-          "pax": 134
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2144,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2145,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2142,
-          "airline": "atlantique",
-          "pax": 132
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2143,
-          "airline": "atlantique",
-          "pax": 83
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2146,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2139,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2144,
-          "airline": "atlantique",
-          "pax": 87
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2147,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "runway-closed",
-          "why": "fermeture piste (contrôle) — atterrissages en attente"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2141,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2145,
-          "airline": "atlantique",
-          "pax": 91
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2148,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2149,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2150,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "runway-reopen",
-          "why": "piste de nouveau ouverte"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2146,
-          "airline": "atlantique",
-          "pax": 116
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2151,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2152,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2147,
-          "airline": "atlantique",
-          "pax": 74
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2149,
-          "airline": "atlantique",
-          "pax": 136
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2153,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "contract-failed",
-          "id": "c57",
-          "model": "quality",
-          "done": 7,
-          "pax": 2231,
-          "reward": 1500
-        },
-        {
-          "kind": "contract-offered",
-          "id": "c58",
-          "model": "quality"
-        },
-        {
-          "kind": "contract-started",
-          "id": "c58",
-          "model": "quality",
-          "period": 3000
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2151,
-          "airline": "atlantique",
-          "pax": 69
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2154,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2153,
-          "airline": "atlantique",
-          "pax": 99
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2155,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2154,
-          "airline": "atlantique",
-          "pax": 96
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2156,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2148,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2150,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2155,
-          "airline": "atlantique",
-          "pax": 111
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2157,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2158,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2159,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2152,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2156,
-          "airline": "atlantique",
-          "pax": 67
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2160,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2161,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2157,
-          "airline": "atlantique",
-          "pax": 85
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2162,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2159,
-          "airline": "atlantique",
-          "pax": 128
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2163,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2164,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2160,
-          "airline": "atlantique",
-          "pax": 91
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2162,
-          "airline": "atlantique",
-          "pax": 122
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2165,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2163,
-          "airline": "atlantique",
-          "pax": 105
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2166,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2164,
-          "airline": "atlantique",
-          "pax": 142
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2167,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2158,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2168,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2165,
-          "airline": "pacific",
-          "pax": 191
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2169,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2161,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2167,
-          "airline": "atlantique",
-          "pax": 98
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2170,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2171,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2172,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2166,
-          "airline": "pacific",
-          "pax": 165
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2173,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2169,
-          "airline": "atlantique",
-          "pax": 131
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2174,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2171,
-          "airline": "atlantique",
-          "pax": 137
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2168,
-          "airline": "pacific",
-          "pax": 295
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2175,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2176,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2172,
-          "airline": "pacific",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2170,
-          "airline": "pacific",
-          "pax": 304
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2175,
-          "airline": "atlantique",
-          "pax": 82
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2177,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2178,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2176,
-          "airline": "atlantique",
-          "pax": 134
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2179,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2174,
-          "airline": "pacific",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2180,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2181,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2182,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2173,
-          "airline": "pacific",
-          "pax": 226
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2177,
-          "airline": "atlantique",
-          "pax": 77
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2179,
-          "airline": "atlantique",
-          "pax": 132
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2183,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2180,
-          "airline": "atlantique",
-          "pax": 129
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2184,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "runway-closed",
-          "why": "fermeture piste (contrôle) — atterrissages en attente"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2181,
-          "airline": "atlantique",
-          "pax": 141
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2185,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "runway-reopen",
-          "why": "piste de nouveau ouverte"
-        },
-        {
-          "kind": "fuel-out",
-          "why": "panne stations carburant — départs secs"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2178,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2183,
-          "airline": "pacific",
-          "pax": 231
         },
         {
           "kind": "no-fuel",
           "airline": "pacific",
-          "pax": 157
-        },
-        {
-          "kind": "fuel-back",
-          "why": "stations carburant de nouveau en service"
+          "pax": 253
         },
         {
           "kind": "flight-in",
-          "volId": 2186,
+          "volId": 2390,
           "airline": "Atlantique",
           "acType": "medium"
         },
         {
           "kind": "flight-in",
-          "volId": 2187,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2184,
-          "airline": "pacific",
-          "pax": 157
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2182,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2188,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2189,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2187,
-          "airline": "atlantique",
-          "pax": 111
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2190,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "contract-failed",
-          "id": "c58",
-          "model": "quality",
-          "done": 7,
-          "pax": 1984,
-          "reward": 1500
-        },
-        {
-          "kind": "contract-offered",
-          "id": "c59",
-          "model": "quality"
-        },
-        {
-          "kind": "contract-started",
-          "id": "c59",
-          "model": "quality",
-          "period": 3000
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2188,
-          "airline": "atlantique",
-          "pax": 77
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2191,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2189,
-          "airline": "atlantique",
-          "pax": 72
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2192,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2193,
+          "volId": 2391,
           "airline": "PacificCargo",
           "acType": "large"
         },
         {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
           "kind": "flight-cancelled",
-          "volId": 2185,
+          "volId": 2383,
           "airline": "atlantique",
           "why": "blocage persistant"
         },
         {
           "kind": "flight-out",
-          "volId": 2190,
+          "volId": 2388,
           "airline": "atlantique",
-          "pax": 89
+          "pax": 142
         },
         {
           "kind": "flight-out",
-          "volId": 2191,
-          "airline": "atlantique",
-          "pax": 83
+          "volId": 2389,
+          "airline": "pacific",
+          "pax": 253
         },
         {
           "kind": "flight-in",
-          "volId": 2194,
+          "volId": 2392,
           "airline": "Atlantique",
           "acType": "medium"
         },
         {
           "kind": "flight-in",
-          "volId": 2195,
+          "volId": 2393,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2394,
           "airline": "Atlantique",
           "acType": "medium"
         },
         {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 164
+        },
+        {
           "kind": "flight-out",
-          "volId": 2192,
+          "volId": 2390,
           "airline": "atlantique",
           "pax": 108
         },
         {
           "kind": "flight-in",
-          "volId": 2196,
-          "airline": "Atlantique",
-          "acType": "medium"
+          "volId": 2395,
+          "airline": "PacificCargo",
+          "acType": "large"
         },
         {
-          "kind": "flight-cancelled",
-          "volId": 2186,
+          "kind": "flight-out",
+          "volId": 2392,
           "airline": "atlantique",
-          "why": "blocage persistant"
+          "pax": 143
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 231
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2393,
+          "airline": "pacific",
+          "pax": 164
         },
         {
           "kind": "flight-in",
-          "volId": 2197,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
+          "volId": 2396,
+          "airline": "PacificCargo",
+          "acType": "large"
         },
         {
           "kind": "flight-in",
-          "volId": 2198,
-          "airline": "Atlantique",
-          "acType": "medium"
+          "volId": 2397,
+          "airline": "PacificCargo",
+          "acType": "large"
         },
         {
-          "kind": "flight-in",
-          "volId": 2199,
-          "airline": "Atlantique",
-          "acType": "medium"
+          "kind": "flight-out",
+          "volId": 2395,
+          "airline": "pacific",
+          "pax": 231
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 162
         },
         {
           "kind": "runway-closed",
           "why": "fermeture piste (contrôle) — atterrissages en attente"
         },
         {
+          "kind": "flight-in",
+          "volId": 2398,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
           "kind": "flight-out",
-          "volId": 2193,
+          "volId": 2396,
           "airline": "pacific",
-          "pax": 235
+          "pax": 162
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 260
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2399,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "runway-reopen",
+          "why": "piste de nouveau ouverte"
         },
         {
           "kind": "surge-end",
@@ -21853,135 +20027,105 @@
         },
         {
           "kind": "flight-out",
-          "volId": 2194,
-          "airline": "atlantique",
-          "pax": 110
+          "volId": 2397,
+          "airline": "pacific",
+          "pax": 260
         },
         {
-          "kind": "runway-reopen",
-          "why": "piste de nouveau ouverte"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2196,
-          "airline": "atlantique",
-          "pax": 100
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 188
         },
         {
           "kind": "flight-in",
-          "volId": 2200,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2197,
-          "airline": "atlantique",
-          "pax": 85
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2201,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2198,
-          "airline": "atlantique",
-          "pax": 85
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2202,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2203,
+          "volId": 2400,
           "airline": "PacificCargo",
           "acType": "large"
         },
         {
+          "kind": "flight-cancelled",
+          "volId": 2391,
+          "airline": "pacific",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 219
+        },
+        {
           "kind": "flight-out",
-          "volId": 2200,
-          "airline": "atlantique",
-          "pax": 96
+          "volId": 2398,
+          "airline": "pacific",
+          "pax": 188
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2400,
+          "airline": "pacific",
+          "pax": 219
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2401,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2402,
+          "airline": "PacificCargo",
+          "acType": "large"
         },
         {
           "kind": "flight-cancelled",
-          "volId": 2195,
+          "volId": 2394,
           "airline": "atlantique",
           "why": "blocage persistant"
         },
         {
-          "kind": "flight-out",
-          "volId": 2201,
-          "airline": "atlantique",
-          "pax": 132
-        },
-        {
           "kind": "flight-in",
-          "volId": 2204,
+          "volId": 2403,
           "airline": "PacificCargo",
           "acType": "large"
         },
         {
           "kind": "flight-in",
-          "volId": 2205,
+          "volId": 2404,
           "airline": "Atlantique",
           "acType": "medium"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 152
         },
         {
           "kind": "flight-out",
-          "volId": 2202,
+          "volId": 2401,
           "airline": "atlantique",
-          "pax": 64
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2206,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2207,
-          "airline": "Atlantique",
-          "acType": "medium"
+          "pax": 68
         },
         {
           "kind": "fuel-out",
           "why": "panne stations carburant — départs secs"
         },
         {
+          "kind": "flight-out",
+          "volId": 2403,
+          "airline": "pacific",
+          "pax": 152
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2405,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
           "kind": "no-fuel",
           "airline": "atlantique",
-          "pax": 141
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2203,
-          "airline": "pacific",
-          "pax": 202
-        },
-        {
-          "kind": "no-fuel",
-          "airline": "pacific",
-          "pax": 223
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2199,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2206,
-          "airline": "atlantique",
-          "pax": 74
+          "pax": 77
         },
         {
           "kind": "fuel-back",
@@ -21989,195 +20133,768 @@
         },
         {
           "kind": "flight-out",
-          "volId": 2207,
+          "volId": 2405,
           "airline": "atlantique",
-          "pax": 141
+          "pax": 77
         },
         {
           "kind": "flight-in",
-          "volId": 2208,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2209,
+          "volId": 2406,
           "airline": "Atlantique",
           "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2204,
-          "airline": "pacific",
-          "pax": 223
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2210,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2211,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2209,
-          "airline": "atlantique",
-          "pax": 104
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2212,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2210,
-          "airline": "atlantique",
-          "pax": 76
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2213,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2214,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
         },
         {
           "kind": "flight-cancelled",
-          "volId": 2205,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2211,
-          "airline": "atlantique",
-          "pax": 82
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2215,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2212,
-          "airline": "atlantique",
-          "pax": 75
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2216,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2213,
-          "airline": "pacific",
-          "pax": 235
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2217,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2208,
+          "volId": 2399,
           "airline": "pacific",
           "why": "blocage persistant"
         },
         {
           "kind": "flight-in",
-          "volId": 2218,
+          "volId": 2407,
           "airline": "Atlantique",
           "acType": "medium"
         },
         {
+          "kind": "flight-in",
+          "volId": 2408,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
           "kind": "flight-out",
-          "volId": 2214,
+          "volId": 2406,
+          "airline": "atlantique",
+          "pax": 143
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2409,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2402,
+          "airline": "pacific",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 247
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2407,
+          "airline": "atlantique",
+          "pax": 117
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2409,
+          "airline": "pacific",
+          "pax": 247
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2410,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2411,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2404,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 182
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2410,
           "airline": "pacific",
           "pax": 182
         },
         {
           "kind": "flight-in",
-          "volId": 2219,
-          "airline": "PacificCargo",
-          "acType": "large"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2218,
-          "airline": "atlantique",
-          "pax": 78
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2220,
+          "volId": 2412,
           "airline": "Atlantique",
           "acType": "medium"
         },
         {
           "kind": "flight-in",
-          "volId": 2221,
+          "volId": 2413,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "contract-success",
+          "id": "c56",
+          "model": "quality",
+          "done": 19,
+          "pax": 5222,
+          "reward": 3500
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c57",
+          "model": "quality"
+        },
+        {
+          "kind": "contract-started",
+          "id": "c57",
+          "model": "quality",
+          "period": 3000
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2414,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2412,
+          "airline": "atlantique",
+          "pax": 102
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2415,
           "airline": "PacificCargo",
           "acType": "large"
         },
         {
           "kind": "flight-cancelled",
-          "volId": 2216,
+          "volId": 2408,
           "airline": "pacific",
           "why": "blocage persistant"
         },
         {
-          "kind": "flight-out",
-          "volId": 2215,
+          "kind": "no-fuel",
           "airline": "pacific",
-          "pax": 267
+          "pax": 286
         },
         {
           "kind": "flight-out",
-          "volId": 2220,
+          "volId": 2414,
           "airline": "atlantique",
-          "pax": 67
+          "pax": 95
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2415,
+          "airline": "pacific",
+          "pax": 286
         },
         {
           "kind": "flight-in",
-          "volId": 2222,
+          "volId": 2416,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2417,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 246
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2416,
+          "airline": "pacific",
+          "pax": 246
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2418,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2411,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2419,
           "airline": "Atlantique",
           "acType": "medium"
         },
         {
           "kind": "flight-in",
-          "volId": 2223,
+          "volId": 2420,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2413,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2418,
+          "airline": "atlantique",
+          "pax": 95
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2421,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2422,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2419,
+          "airline": "atlantique",
+          "pax": 118
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2423,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2421,
+          "airline": "atlantique",
+          "pax": 132
+        },
+        {
+          "kind": "fuel-out",
+          "why": "panne stations carburant — départs secs"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "atlantique",
+          "pax": 104
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2424,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2417,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "atlantique",
+          "pax": 98
+        },
+        {
+          "kind": "fuel-back",
+          "why": "stations carburant de nouveau en service"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2423,
+          "airline": "atlantique",
+          "pax": 104
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2424,
+          "airline": "atlantique",
+          "pax": 98
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2425,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2426,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2427,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "surge-end",
+          "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2420,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2425,
+          "airline": "atlantique",
+          "pax": 91
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2428,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2429,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2422,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2427,
+          "airline": "atlantique",
+          "pax": 79
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2430,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2431,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2428,
+          "airline": "atlantique",
+          "pax": 136
+        },
+        {
+          "kind": "surge-end",
+          "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2432,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2430,
+          "airline": "atlantique",
+          "pax": 100
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2433,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2426,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2432,
+          "airline": "atlantique",
+          "pax": 73
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2434,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2435,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2433,
+          "airline": "atlantique",
+          "pax": 72
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2436,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2429,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2434,
+          "airline": "atlantique",
+          "pax": 73
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2437,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2438,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2431,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2436,
+          "airline": "atlantique",
+          "pax": 141
+        },
+        {
+          "kind": "surge-end",
+          "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2439,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2440,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2437,
+          "airline": "atlantique",
+          "pax": 126
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2441,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2439,
+          "airline": "atlantique",
+          "pax": 87
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2442,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2435,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "fuel-out",
+          "why": "panne stations carburant — départs secs"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "atlantique",
+          "pax": 116
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2441,
+          "airline": "atlantique",
+          "pax": 92
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2443,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2444,
           "airline": "Atlantique",
           "acType": "medium"
         },
         {
           "kind": "runway-closed",
           "why": "fermeture piste (contrôle) — atterrissages en attente"
+        },
+        {
+          "kind": "fuel-back",
+          "why": "stations carburant de nouveau en service"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2442,
+          "airline": "atlantique",
+          "pax": 116
+        },
+        {
+          "kind": "runway-reopen",
+          "why": "piste de nouveau ouverte"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2438,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2445,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2446,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2440,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2443,
+          "airline": "atlantique",
+          "pax": 140
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2447,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2448,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "surge-end",
+          "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2445,
+          "airline": "atlantique",
+          "pax": 93
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2449,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2447,
+          "airline": "atlantique",
+          "pax": 71
+        },
+        {
+          "kind": "contract-failed",
+          "id": "c57",
+          "model": "quality",
+          "done": 2,
+          "pax": 532,
+          "reward": 1500
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c58",
+          "model": "quality"
+        },
+        {
+          "kind": "contract-started",
+          "id": "c58",
+          "model": "quality",
+          "period": 3000
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2450,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2449,
+          "airline": "atlantique",
+          "pax": 107
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2451,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "surge-end",
+          "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2444,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2450,
+          "airline": "atlantique",
+          "pax": 112
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2452,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2453,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2446,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2451,
+          "airline": "atlantique",
+          "pax": 99
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2454,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2455,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2448,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2452,
+          "airline": "atlantique",
+          "pax": 143
+        },
+        {
+          "kind": "runway-closed",
+          "why": "fermeture piste (contrôle) — atterrissages en attente"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2456,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2457,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2454,
+          "airline": "atlantique",
+          "pax": 125
         },
         {
           "kind": "runway-reopen",
@@ -22188,26 +20905,32 @@
           "why": "pic de demande — plus de vols planifiés"
         },
         {
-          "kind": "flight-out",
-          "volId": 2217,
-          "airline": "pacific",
-          "pax": 152
+          "kind": "flight-in",
+          "volId": 2458,
+          "airline": "Atlantique",
+          "acType": "medium"
         },
         {
           "kind": "surge-end",
           "why": "pic de demande terminé — cadence normale"
         },
         {
+          "kind": "flight-out",
+          "volId": 2456,
+          "airline": "atlantique",
+          "pax": 78
+        },
+        {
           "kind": "flight-in",
-          "volId": 2224,
+          "volId": 2459,
           "airline": "Atlantique",
           "acType": "medium"
         },
         {
-          "kind": "flight-in",
-          "volId": 2225,
-          "airline": "Atlantique",
-          "acType": "medium"
+          "kind": "flight-out",
+          "volId": 2458,
+          "airline": "atlantique",
+          "pax": 127
         },
         {
           "kind": "fuel-out",
@@ -22215,25 +20938,25 @@
         },
         {
           "kind": "no-fuel",
-          "airline": "pacific",
-          "pax": 288
+          "airline": "atlantique",
+          "pax": 69
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2453,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2460,
+          "airline": "Atlantique",
+          "acType": "medium"
         },
         {
           "kind": "no-fuel",
           "airline": "atlantique",
-          "pax": 117
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2222,
-          "airline": "atlantique",
-          "pax": 73
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2226,
-          "airline": "Atlantique",
-          "acType": "medium"
+          "pax": 107
         },
         {
           "kind": "fuel-back",
@@ -22241,23 +20964,89 @@
         },
         {
           "kind": "flight-out",
-          "volId": 2219,
-          "airline": "pacific",
-          "pax": 288
+          "volId": 2459,
+          "airline": "atlantique",
+          "pax": 69
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2461,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2455,
+          "airline": "atlantique",
+          "why": "blocage persistant"
         },
         {
           "kind": "flight-out",
-          "volId": 2224,
+          "volId": 2460,
           "airline": "atlantique",
-          "pax": 117
+          "pax": 107
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2462,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2463,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2464,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2461,
+          "airline": "atlantique",
+          "pax": 137
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2465,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2457,
+          "airline": "atlantique",
+          "why": "blocage persistant"
         },
         {
           "kind": "surge-start",
           "why": "pic de demande — plus de vols planifiés"
         },
         {
+          "kind": "flight-out",
+          "volId": 2462,
+          "airline": "atlantique",
+          "pax": 117
+        },
+        {
           "kind": "flight-in",
-          "volId": 2227,
+          "volId": 2466,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2467,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2468,
           "airline": "Atlantique",
           "acType": "medium"
         },
@@ -22266,18 +21055,1113 @@
           "why": "pic de demande terminé — cadence normale"
         },
         {
+          "kind": "flight-out",
+          "volId": 2463,
+          "airline": "atlantique",
+          "pax": 125
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2465,
+          "airline": "atlantique",
+          "pax": 69
+        },
+        {
           "kind": "flight-in",
-          "volId": 2228,
+          "volId": 2469,
           "airline": "Atlantique",
           "acType": "medium"
         },
         {
-          "kind": "contract-failed",
+          "kind": "flight-out",
+          "volId": 2466,
+          "airline": "atlantique",
+          "pax": 108
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2470,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "runway-closed",
+          "why": "fermeture piste (contrôle) — atterrissages en attente"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2467,
+          "airline": "atlantique",
+          "pax": 93
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2471,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "runway-reopen",
+          "why": "piste de nouveau ouverte"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2469,
+          "airline": "atlantique",
+          "pax": 125
+        },
+        {
+          "kind": "surge-end",
+          "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "fuel-out",
+          "why": "panne stations carburant — départs secs"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2472,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2464,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "atlantique",
+          "pax": 140
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2470,
+          "airline": "atlantique",
+          "pax": 75
+        },
+        {
+          "kind": "fuel-back",
+          "why": "stations carburant de nouveau en service"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2472,
+          "airline": "atlantique",
+          "pax": 140
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2473,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2474,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2468,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2475,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "surge-end",
+          "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 315
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2473,
+          "airline": "atlantique",
+          "pax": 99
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2476,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2475,
+          "airline": "pacific",
+          "pax": 315
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2477,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 146
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2478,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2476,
+          "airline": "atlantique",
+          "pax": 116
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 164
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2477,
+          "airline": "pacific",
+          "pax": 146
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2479,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2471,
+          "airline": "pacific",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2480,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2478,
+          "airline": "pacific",
+          "pax": 164
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 304
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2481,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2482,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2479,
+          "airline": "pacific",
+          "pax": 304
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 294
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2483,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2474,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2480,
+          "airline": "pacific",
+          "pax": 294
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 218
+        },
+        {
+          "kind": "runway-closed",
+          "why": "fermeture piste (contrôle) — atterrissages en attente"
+        },
+        {
+          "kind": "fuel-out",
+          "why": "panne stations carburant — départs secs"
+        },
+        {
+          "kind": "surge-end",
+          "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2484,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2485,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2481,
+          "airline": "pacific",
+          "pax": 218
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 295
+        },
+        {
+          "kind": "fuel-back",
+          "why": "stations carburant de nouveau en service"
+        },
+        {
+          "kind": "runway-reopen",
+          "why": "piste de nouveau ouverte"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 166
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2483,
+          "airline": "pacific",
+          "pax": 295
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2486,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2487,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 254
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2484,
+          "airline": "pacific",
+          "pax": 166
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2486,
+          "airline": "pacific",
+          "pax": 254
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 161
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2488,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "surge-end",
+          "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2489,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2487,
+          "airline": "pacific",
+          "pax": 161
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 176
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2482,
+          "airline": "pacific",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "contract-success",
+          "id": "c58",
+          "model": "quality",
+          "done": 10,
+          "pax": 2770,
+          "reward": 3500
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c59",
+          "model": "quality"
+        },
+        {
+          "kind": "contract-started",
           "id": "c59",
           "model": "quality",
-          "done": 8,
-          "pax": 2188,
-          "reward": 1500
+          "period": 3000
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2490,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2488,
+          "airline": "pacific",
+          "pax": 176
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 151
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2491,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2492,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2489,
+          "airline": "pacific",
+          "pax": 151
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2493,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2485,
+          "airline": "pacific",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 235
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2491,
+          "airline": "atlantique",
+          "pax": 105
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2493,
+          "airline": "pacific",
+          "pax": 235
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2494,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2495,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 274
+        },
+        {
+          "kind": "surge-end",
+          "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2494,
+          "airline": "pacific",
+          "pax": 274
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2496,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 266
+        },
+        {
+          "kind": "runway-closed",
+          "why": "fermeture piste (contrôle) — atterrissages en attente"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2496,
+          "airline": "pacific",
+          "pax": 266
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2497,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "runway-reopen",
+          "why": "piste de nouveau ouverte"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2490,
+          "airline": "pacific",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 216
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2492,
+          "airline": "pacific",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2497,
+          "airline": "pacific",
+          "pax": 216
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2498,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2499,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 281
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2500,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2498,
+          "airline": "pacific",
+          "pax": 281
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 283
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2501,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2502,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2495,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2500,
+          "airline": "pacific",
+          "pax": 283
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2503,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2501,
+          "airline": "atlantique",
+          "pax": 96
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2504,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2505,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2502,
+          "airline": "atlantique",
+          "pax": 73
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2506,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 308
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2507,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2503,
+          "airline": "atlantique",
+          "pax": 82
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2506,
+          "airline": "pacific",
+          "pax": 308
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 168
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2508,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2504,
+          "airline": "atlantique",
+          "pax": 96
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2509,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2507,
+          "airline": "pacific",
+          "pax": 168
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 212
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2499,
+          "airline": "pacific",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2510,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2508,
+          "airline": "pacific",
+          "pax": 212
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 183
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2511,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2512,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "surge-end",
+          "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2509,
+          "airline": "pacific",
+          "pax": 183
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 307
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2513,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2511,
+          "airline": "pacific",
+          "pax": 307
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 213
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2505,
+          "airline": "pacific",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2513,
+          "airline": "pacific",
+          "pax": 213
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2514,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 238
+        },
+        {
+          "kind": "fuel-out",
+          "why": "panne stations carburant — départs secs"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2515,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2514,
+          "airline": "pacific",
+          "pax": 238
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 292
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2516,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "fuel-back",
+          "why": "stations carburant de nouveau en service"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2517,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2515,
+          "airline": "pacific",
+          "pax": 292
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 148
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2518,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2516,
+          "airline": "pacific",
+          "pax": 148
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 174
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2510,
+          "airline": "pacific",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "surge-end",
+          "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2519,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2512,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2517,
+          "airline": "pacific",
+          "pax": 174
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 311
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2520,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2521,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2522,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 211
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2519,
+          "airline": "pacific",
+          "pax": 311
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2520,
+          "airline": "pacific",
+          "pax": 211
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2523,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2524,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2521,
+          "airline": "atlantique",
+          "pax": 74
+        },
+        {
+          "kind": "surge-end",
+          "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2525,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2523,
+          "airline": "atlantique",
+          "pax": 118
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2526,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 303
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2525,
+          "airline": "atlantique",
+          "pax": 85
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2518,
+          "airline": "pacific",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2526,
+          "airline": "pacific",
+          "pax": 303
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2527,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 246
+        },
+        {
+          "kind": "surge-end",
+          "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2528,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2527,
+          "airline": "pacific",
+          "pax": 246
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2529,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2522,
+          "airline": "atlantique",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 209
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2530,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2528,
+          "airline": "atlantique",
+          "pax": 70
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2529,
+          "airline": "pacific",
+          "pax": 209
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2531,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2532,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2524,
+          "airline": "pacific",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2533,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "contract-success",
+          "id": "c59",
+          "model": "quality",
+          "done": 21,
+          "pax": 6529,
+          "reward": 3500
         },
         {
           "kind": "contract-offered",
@@ -22292,119 +22176,201 @@
         },
         {
           "kind": "flight-out",
-          "volId": 2221,
-          "airline": "pacific",
-          "pax": 255
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2227,
-          "airline": "atlantique",
-          "pax": 140
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2229,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2223,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2228,
-          "airline": "atlantique",
-          "pax": 64
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2230,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2231,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2225,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2229,
-          "airline": "atlantique",
-          "pax": 64
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2232,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2233,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2226,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2230,
+          "volId": 2530,
           "airline": "atlantique",
           "pax": 118
         },
         {
-          "kind": "runway-closed",
-          "why": "fermeture piste (contrôle) — atterrissages en attente"
+          "kind": "flight-in",
+          "volId": 2534,
+          "airline": "PacificCargo",
+          "acType": "large"
         },
         {
           "kind": "flight-in",
-          "volId": 2234,
+          "volId": 2535,
           "airline": "Atlantique",
           "acType": "medium"
         },
         {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 280
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2531,
+          "airline": "atlantique",
+          "pax": 142
+        },
+        {
           "kind": "flight-in",
-          "volId": 2235,
+          "volId": 2536,
           "airline": "Atlantique",
           "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2534,
+          "airline": "pacific",
+          "pax": 280
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2537,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2533,
+          "airline": "atlantique",
+          "pax": 85
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 262
         },
         {
           "kind": "surge-start",
           "why": "pic de demande — plus de vols planifiés"
         },
         {
-          "kind": "flight-out",
-          "volId": 2232,
-          "airline": "atlantique",
-          "pax": 143
+          "kind": "flight-in",
+          "volId": 2538,
+          "airline": "Atlantique",
+          "acType": "medium"
         },
         {
-          "kind": "runway-reopen",
-          "why": "piste de nouveau ouverte"
+          "kind": "flight-out",
+          "volId": 2536,
+          "airline": "atlantique",
+          "pax": 131
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2537,
+          "airline": "pacific",
+          "pax": 262
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2539,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "fuel-out",
+          "why": "panne stations carburant — départs secs"
+        },
+        {
+          "kind": "surge-end",
+          "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "atlantique",
+          "pax": 110
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 296
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2540,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "atlantique",
+          "pax": 136
+        },
+        {
+          "kind": "fuel-back",
+          "why": "stations carburant de nouveau en service"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2538,
+          "airline": "atlantique",
+          "pax": 110
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2539,
+          "airline": "pacific",
+          "pax": 296
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2541,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 199
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2540,
+          "airline": "atlantique",
+          "pax": 136
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2542,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2541,
+          "airline": "pacific",
+          "pax": 199
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 287
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2543,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "surge-start",
+          "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "flight-cancelled",
+          "volId": 2532,
+          "airline": "pacific",
+          "why": "blocage persistant"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2544,
+          "airline": "Atlantique",
+          "acType": "medium"
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2542,
+          "airline": "pacific",
+          "pax": 287
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 216
         },
         {
           "kind": "surge-end",
@@ -22412,452 +22378,493 @@
         },
         {
           "kind": "flight-in",
-          "volId": 2236,
+          "volId": 2545,
           "airline": "Atlantique",
           "acType": "medium"
         },
         {
-          "kind": "flight-out",
-          "volId": 2234,
+          "kind": "flight-cancelled",
+          "volId": 2535,
           "airline": "atlantique",
-          "pax": 93
+          "why": "blocage persistant"
         },
         {
           "kind": "flight-in",
-          "volId": 2237,
+          "volId": 2546,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2547,
           "airline": "Atlantique",
           "acType": "medium"
         },
         {
           "kind": "flight-out",
-          "volId": 2236,
+          "volId": 2543,
+          "airline": "pacific",
+          "pax": 216
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2544,
           "airline": "atlantique",
-          "pax": 93
+          "pax": 108
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2548,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2549,
+          "airline": "PacificCargo",
+          "acType": "large"
+        },
+        {
+          "kind": "no-fuel",
+          "airline": "pacific",
+          "pax": 302
+        },
+        {
+          "kind": "flight-out",
+          "volId": 2545,
+          "airline": "atlantique",
+          "pax": 86
+        },
+        {
+          "kind": "flight-in",
+          "volId": 2550,
+          "airline": "PacificCargo",
+          "acType": "large"
         }
       ],
       "incidents": {
         "runway": {
           "closed": 0,
-          "acc": 307,
-          "last": 172380
+          "acc": 487,
+          "last": 169500
         },
         "fuel": {
           "out": 0,
-          "acc": 367,
-          "last": 171630
+          "acc": 457,
+          "last": 172260
         },
         "surge": {
           "active": false,
           "remaining": 0,
-          "acc": 7,
-          "last": 172470
+          "acc": 217,
+          "last": 172500
         }
       },
       "time": 172807,
       "_spawnAcc": 7,
       "_graphDirty": false,
       "rngSeed": 42,
-      "rngCounter": 7725,
+      "rngCounter": 8664,
       "quality": {
-        "q": 0.5894473684210515
+        "q": 0.77525
       },
       "punctuality": {
         "recent": [
           {
-            "at": 168790,
-            "id": 2182,
-            "acType": "medium",
-            "delayed": 600,
-            "cause": "porte",
-            "cancelled": true
-          },
-          {
-            "at": 168899,
-            "id": 2187,
-            "acType": "medium",
-            "delayed": 12,
-            "cause": "piste",
-            "cancelled": false
-          },
-          {
-            "at": 169007,
-            "id": 2188,
-            "acType": "medium",
-            "delayed": 0,
-            "cause": null,
-            "cancelled": false
-          },
-          {
-            "at": 169067,
-            "id": 2189,
-            "acType": "medium",
-            "delayed": 0,
-            "cause": null,
-            "cancelled": false
-          },
-          {
-            "at": 169153,
-            "id": 2185,
-            "acType": "medium",
-            "delayed": 665,
-            "cause": "porte",
-            "cancelled": true
-          },
-          {
-            "at": 169159,
-            "id": 2190,
-            "acType": "medium",
-            "delayed": 32,
-            "cause": "piste",
-            "cancelled": false
-          },
-          {
-            "at": 169217,
-            "id": 2191,
-            "acType": "medium",
-            "delayed": 30,
-            "cause": "porte",
-            "cancelled": false
-          },
-          {
-            "at": 169307,
-            "id": 2192,
-            "acType": "medium",
-            "delayed": 60,
-            "cause": "porte",
-            "cancelled": false
-          },
-          {
-            "at": 169330,
-            "id": 2186,
-            "acType": "medium",
-            "delayed": 600,
-            "cause": "porte",
-            "cancelled": true
-          },
-          {
-            "at": 169468,
-            "id": 2193,
+            "at": 169736,
+            "id": 2497,
             "acType": "large",
-            "delayed": 6,
-            "cause": "carburant",
-            "cancelled": false
-          },
-          {
-            "at": 169521,
-            "id": 2194,
-            "acType": "medium",
-            "delayed": 0,
-            "cause": "carburant",
-            "cancelled": false
-          },
-          {
-            "at": 169579,
-            "id": 2196,
-            "acType": "medium",
-            "delayed": 5,
-            "cause": "piste",
-            "cancelled": false
-          },
-          {
-            "at": 169667,
-            "id": 2197,
-            "acType": "medium",
-            "delayed": 120,
-            "cause": "porte",
-            "cancelled": false
-          },
-          {
-            "at": 169727,
-            "id": 2198,
-            "acType": "medium",
-            "delayed": 120,
-            "cause": "piste",
-            "cancelled": false
-          },
-          {
-            "at": 169819,
-            "id": 2200,
-            "acType": "medium",
-            "delayed": 32,
-            "cause": "piste",
-            "cancelled": false
-          },
-          {
-            "at": 169870,
-            "id": 2195,
-            "acType": "medium",
-            "delayed": 600,
-            "cause": "porte",
-            "cancelled": true
-          },
-          {
-            "at": 169877,
-            "id": 2201,
-            "acType": "medium",
-            "delayed": 30,
-            "cause": "porte",
-            "cancelled": false
-          },
-          {
-            "at": 169967,
-            "id": 2202,
-            "acType": "medium",
-            "delayed": 60,
-            "cause": "porte",
-            "cancelled": false
-          },
-          {
-            "at": 170127,
-            "id": 2203,
-            "acType": "large",
-            "delayed": 6,
-            "cause": "carburant",
-            "cancelled": false
-          },
-          {
-            "at": 170170,
-            "id": 2199,
-            "acType": "medium",
-            "delayed": 720,
-            "cause": "porte",
-            "cancelled": true
-          },
-          {
-            "at": 170180,
-            "id": 2206,
-            "acType": "medium",
-            "delayed": 0,
-            "cause": "carburant",
-            "cancelled": false
-          },
-          {
-            "at": 170213,
-            "id": 2207,
-            "acType": "medium",
-            "delayed": 0,
-            "cause": null,
-            "cancelled": false
-          },
-          {
-            "at": 170224,
-            "id": 2204,
-            "acType": "large",
-            "delayed": 190,
-            "cause": "porte",
-            "cancelled": false
-          },
-          {
-            "at": 170394,
-            "id": 2209,
-            "acType": "medium",
-            "delayed": 7,
-            "cause": "piste",
-            "cancelled": false
-          },
-          {
-            "at": 170447,
-            "id": 2210,
-            "acType": "medium",
-            "delayed": 0,
-            "cause": null,
-            "cancelled": false
-          },
-          {
-            "at": 170530,
-            "id": 2205,
-            "acType": "medium",
-            "delayed": 600,
-            "cause": "porte",
-            "cancelled": true
-          },
-          {
-            "at": 170542,
-            "id": 2211,
-            "acType": "medium",
-            "delayed": 35,
-            "cause": "porte",
-            "cancelled": false
-          },
-          {
-            "at": 170599,
-            "id": 2212,
-            "acType": "medium",
-            "delayed": 32,
-            "cause": "piste",
-            "cancelled": false
-          },
-          {
-            "at": 170758,
-            "id": 2213,
-            "acType": "large",
-            "delayed": 0,
-            "cause": "carburant",
-            "cancelled": false
-          },
-          {
-            "at": 170830,
-            "id": 2208,
-            "acType": "large",
-            "delayed": 600,
-            "cause": "porte",
-            "cancelled": true
-          },
-          {
-            "at": 171013,
-            "id": 2214,
-            "acType": "large",
-            "delayed": 220,
-            "cause": "porte",
-            "cancelled": false
-          },
-          {
-            "at": 171107,
-            "id": 2218,
-            "acType": "medium",
-            "delayed": 0,
-            "cause": null,
-            "cancelled": false
-          },
-          {
-            "at": 171250,
-            "id": 2216,
-            "acType": "large",
-            "delayed": 600,
-            "cause": "porte",
-            "cancelled": true
-          },
-          {
-            "at": 171268,
-            "id": 2215,
-            "acType": "large",
-            "delayed": 415,
-            "cause": "porte",
-            "cancelled": false
-          },
-          {
-            "at": 171321,
-            "id": 2220,
-            "acType": "medium",
-            "delayed": 0,
-            "cause": "carburant",
-            "cancelled": false
-          },
-          {
-            "at": 171523,
-            "id": 2217,
-            "acType": "large",
-            "delayed": 430,
-            "cause": "porte",
-            "cancelled": false
-          },
-          {
-            "at": 171647,
-            "id": 2222,
-            "acType": "medium",
-            "delayed": 120,
-            "cause": "piste",
-            "cancelled": false
-          },
-          {
-            "at": 171726,
-            "id": 2219,
-            "acType": "large",
-            "delayed": 445,
-            "cause": "carburant",
-            "cancelled": false
-          },
-          {
-            "at": 171734,
-            "id": 2224,
-            "acType": "medium",
-            "delayed": 10,
-            "cause": "piste",
-            "cancelled": false
-          },
-          {
-            "at": 171983,
-            "id": 2221,
-            "acType": "large",
-            "delayed": 470,
-            "cause": "porte",
-            "cancelled": false
-          },
-          {
-            "at": 172036,
-            "id": 2227,
-            "acType": "medium",
-            "delayed": 0,
-            "cause": "carburant",
-            "cancelled": false
-          },
-          {
-            "at": 172090,
-            "id": 2223,
-            "acType": "medium",
-            "delayed": 720,
-            "cause": "porte",
-            "cancelled": true
-          },
-          {
-            "at": 172132,
-            "id": 2228,
-            "acType": "medium",
-            "delayed": 5,
-            "cause": "porte",
-            "cancelled": false
-          },
-          {
-            "at": 172210,
-            "id": 2225,
-            "acType": "medium",
-            "delayed": 600,
-            "cause": "porte",
-            "cancelled": true
-          },
-          {
-            "at": 172247,
-            "id": 2229,
-            "acType": "medium",
-            "delayed": 0,
-            "cause": null,
-            "cancelled": false
-          },
-          {
-            "at": 172330,
-            "id": 2226,
-            "acType": "medium",
-            "delayed": 600,
-            "cause": "porte",
-            "cancelled": true
-          },
-          {
-            "at": 172367,
-            "id": 2230,
-            "acType": "medium",
-            "delayed": 0,
-            "cause": null,
-            "cancelled": false
-          },
-          {
-            "at": 172487,
-            "id": 2232,
-            "acType": "medium",
-            "delayed": 0,
-            "cause": null,
-            "cancelled": false
-          },
-          {
-            "at": 172670,
-            "id": 2234,
-            "acType": "medium",
             "delayed": 65,
             "cause": "piste",
             "cancelled": false
           },
           {
+            "at": 169853,
+            "id": 2498,
+            "acType": "large",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 169930,
+            "id": 2495,
+            "acType": "medium",
+            "delayed": 600,
+            "cause": "porte",
+            "cancelled": true
+          },
+          {
+            "at": 169948,
+            "id": 2500,
+            "acType": "large",
+            "delayed": 35,
+            "cause": "porte",
+            "cancelled": false
+          },
+          {
+            "at": 170026,
+            "id": 2501,
+            "acType": "medium",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 170086,
+            "id": 2502,
+            "acType": "medium",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 170179,
+            "id": 2503,
+            "acType": "medium",
+            "delayed": 33,
+            "cause": "piste",
+            "cancelled": false
+          },
+          {
+            "at": 170213,
+            "id": 2506,
+            "acType": "large",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 170239,
+            "id": 2504,
+            "acType": "medium",
+            "delayed": 33,
+            "cause": "piste",
+            "cancelled": false
+          },
+          {
+            "at": 170308,
+            "id": 2507,
+            "acType": "large",
+            "delayed": 35,
+            "cause": "porte",
+            "cancelled": false
+          },
+          {
+            "at": 170350,
+            "id": 2499,
+            "acType": "large",
+            "delayed": 600,
+            "cause": "porte",
+            "cancelled": true
+          },
+          {
+            "at": 170403,
+            "id": 2508,
+            "acType": "large",
+            "delayed": 70,
+            "cause": "porte",
+            "cancelled": false
+          },
+          {
+            "at": 170499,
+            "id": 2509,
+            "acType": "large",
+            "delayed": 105,
+            "cause": "porte",
+            "cancelled": false
+          },
+          {
+            "at": 170599,
+            "id": 2511,
+            "acType": "large",
+            "delayed": 25,
+            "cause": "piste",
+            "cancelled": false
+          },
+          {
+            "at": 170650,
+            "id": 2505,
+            "acType": "large",
+            "delayed": 600,
+            "cause": "porte",
+            "cancelled": true
+          },
+          {
+            "at": 170694,
+            "id": 2513,
+            "acType": "large",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 170814,
+            "id": 2514,
+            "acType": "large",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 170909,
+            "id": 2515,
+            "acType": "large",
+            "delayed": 35,
+            "cause": "porte",
+            "cancelled": false
+          },
+          {
+            "at": 171004,
+            "id": 2516,
+            "acType": "large",
+            "delayed": 70,
+            "cause": "porte",
+            "cancelled": false
+          },
+          {
+            "at": 171010,
+            "id": 2510,
+            "acType": "large",
+            "delayed": 600,
+            "cause": "porte",
+            "cancelled": true
+          },
+          {
+            "at": 171070,
+            "id": 2512,
+            "acType": "medium",
+            "delayed": 600,
+            "cause": "porte",
+            "cancelled": true
+          },
+          {
+            "at": 171099,
+            "id": 2517,
+            "acType": "large",
+            "delayed": 105,
+            "cause": "porte",
+            "cancelled": false
+          },
+          {
+            "at": 171199,
+            "id": 2519,
+            "acType": "large",
+            "delayed": 25,
+            "cause": "piste",
+            "cancelled": false
+          },
+          {
+            "at": 171289,
+            "id": 2520,
+            "acType": "large",
+            "delayed": 55,
+            "cause": "porte",
+            "cancelled": false
+          },
+          {
+            "at": 171352,
+            "id": 2521,
+            "acType": "medium",
+            "delayed": 5,
+            "cause": "porte",
+            "cancelled": false
+          },
+          {
+            "at": 171467,
+            "id": 2523,
+            "acType": "medium",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 171587,
+            "id": 2525,
+            "acType": "medium",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 171610,
+            "id": 2518,
+            "acType": "large",
+            "delayed": 600,
+            "cause": "porte",
+            "cancelled": true
+          },
+          {
+            "at": 171654,
+            "id": 2526,
+            "acType": "large",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 171774,
+            "id": 2527,
+            "acType": "large",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 171790,
+            "id": 2522,
+            "acType": "medium",
+            "delayed": 600,
+            "cause": "porte",
+            "cancelled": true
+          },
+          {
+            "at": 171887,
+            "id": 2528,
+            "acType": "medium",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 171895,
+            "id": 2529,
+            "acType": "large",
+            "delayed": 1,
+            "cause": "piste",
+            "cancelled": false
+          },
+          {
+            "at": 171910,
+            "id": 2524,
+            "acType": "large",
+            "delayed": 600,
+            "cause": "porte",
+            "cancelled": true
+          },
+          {
+            "at": 172007,
+            "id": 2530,
+            "acType": "medium",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 172067,
+            "id": 2531,
+            "acType": "medium",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 172134,
+            "id": 2534,
+            "acType": "large",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 172159,
+            "id": 2533,
+            "acType": "medium",
+            "delayed": 32,
+            "cause": "piste",
+            "cancelled": false
+          },
+          {
+            "at": 172247,
+            "id": 2536,
+            "acType": "medium",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 172255,
+            "id": 2537,
+            "acType": "large",
+            "delayed": 1,
+            "cause": "piste",
+            "cancelled": false
+          },
+          {
+            "at": 172354,
+            "id": 2538,
+            "acType": "medium",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 172374,
+            "id": 2539,
+            "acType": "large",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 172433,
+            "id": 2540,
+            "acType": "medium",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 172494,
+            "id": 2541,
+            "acType": "large",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
+            "at": 172510,
+            "id": 2532,
+            "acType": "large",
+            "delayed": 600,
+            "cause": "porte",
+            "cancelled": true
+          },
+          {
+            "at": 172589,
+            "id": 2542,
+            "acType": "large",
+            "delayed": 35,
+            "cause": "porte",
+            "cancelled": false
+          },
+          {
+            "at": 172630,
+            "id": 2535,
+            "acType": "medium",
+            "delayed": 600,
+            "cause": "porte",
+            "cancelled": true
+          },
+          {
+            "at": 172684,
+            "id": 2543,
+            "acType": "large",
+            "delayed": 70,
+            "cause": "porte",
+            "cancelled": false
+          },
+          {
+            "at": 172727,
+            "id": 2544,
+            "acType": "medium",
+            "delayed": 0,
+            "cause": null,
+            "cancelled": false
+          },
+          {
             "at": 172787,
-            "id": 2236,
+            "id": 2545,
             "acType": "medium",
             "delayed": 0,
             "cause": null,
@@ -22883,10 +22890,10 @@
           "model": "quality",
           "started": 171979,
           "due": 174979,
-          "done": 0,
-          "pax": 0,
-          "onTime": 0,
-          "ends": 0,
+          "done": 6,
+          "pax": 1540,
+          "onTime": 6,
+          "ends": 6,
           "settled": false,
           "result": null
         },
@@ -22896,70 +22903,70 @@
             "model": "quality",
             "started": 147979,
             "due": 150979,
-            "done": 9,
-            "pax": 2604,
-            "onTime": 8,
-            "ends": 12,
+            "done": 7,
+            "pax": 1826,
+            "onTime": 7,
+            "ends": 9,
             "settled": true,
-            "result": "failed"
+            "result": "success"
           },
           {
             "id": "c53",
             "model": "quality",
             "started": 150979,
             "due": 153979,
-            "done": 7,
-            "pax": 2043,
-            "onTime": 5,
-            "ends": 9,
+            "done": 14,
+            "pax": 3660,
+            "onTime": 14,
+            "ends": 16,
             "settled": true,
-            "result": "failed"
+            "result": "success"
           },
           {
             "id": "c54",
             "model": "quality",
             "started": 153979,
             "due": 156979,
-            "done": 1,
-            "pax": 271,
-            "onTime": 1,
-            "ends": 1,
+            "done": 20,
+            "pax": 4950,
+            "onTime": 20,
+            "ends": 23,
             "settled": true,
-            "result": "failed"
+            "result": "success"
           },
           {
             "id": "c55",
             "model": "quality",
             "started": 156979,
             "due": 159979,
-            "done": 5,
-            "pax": 1299,
-            "onTime": 1,
-            "ends": 5,
+            "done": 18,
+            "pax": 4391,
+            "onTime": 18,
+            "ends": 20,
             "settled": true,
-            "result": "failed"
+            "result": "success"
           },
           {
             "id": "c56",
             "model": "quality",
             "started": 159979,
             "due": 162979,
-            "done": 9,
-            "pax": 2540,
-            "onTime": 8,
-            "ends": 11,
+            "done": 19,
+            "pax": 5222,
+            "onTime": 19,
+            "ends": 23,
             "settled": true,
-            "result": "failed"
+            "result": "success"
           },
           {
             "id": "c57",
             "model": "quality",
             "started": 162979,
             "due": 165979,
-            "done": 7,
-            "pax": 2231,
-            "onTime": 3,
-            "ends": 9,
+            "done": 2,
+            "pax": 532,
+            "onTime": 2,
+            "ends": 2,
             "settled": true,
             "result": "failed"
           },
@@ -22968,24 +22975,24 @@
             "model": "quality",
             "started": 165979,
             "due": 168979,
-            "done": 7,
-            "pax": 1984,
-            "onTime": 5,
-            "ends": 9,
+            "done": 10,
+            "pax": 2770,
+            "onTime": 10,
+            "ends": 12,
             "settled": true,
-            "result": "failed"
+            "result": "success"
           },
           {
             "id": "c59",
             "model": "quality",
             "started": 168979,
             "due": 171979,
-            "done": 8,
-            "pax": 2188,
-            "onTime": 5,
-            "ends": 10,
+            "done": 21,
+            "pax": 6529,
+            "onTime": 21,
+            "ends": 28,
             "settled": true,
-            "result": "failed"
+            "result": "success"
           }
         ]
       },

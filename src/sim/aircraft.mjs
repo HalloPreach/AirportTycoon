@@ -29,6 +29,7 @@ import { AIRCRAFT, REFUEL_TIME_S, GATE_WEAR_PER_SEC, GATE_MAINT_PER_SEC, GATE_WE
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 import { gateFor, pickRunway, runwayBusy, runwayFor } from '../infra/infra.mjs';
+import { servicesServingGate } from '../infra/assignments.mjs'; // R27 : lances mesurées par terminal
 import { onGateArrived, onGateDeparted, onFlightCancelled } from '../economy/economy.mjs';
 import { countContractFlight } from '../flights/contracts.mjs';
 import { arrivePassengers, countCarried, boardDelay, groupComplete } from './passengers.mjs';
@@ -442,7 +443,7 @@ function doRefuel(sim, ac, dt, spec) {
     g.cleaning = Math.min(100, g.cleaning + GATE_WEAR_PER_SEC * dt);
     g.maintenance = Math.min(100, g.maintenance + GATE_MAINT_PER_SEC * dt);
   }
-  const lances = fuelLances(sim);
+  const lances = fuelLancesForGate(sim, ac);
   if (!lances || fuelOut(sim)) {
     // Pas de station OU panne station (incident BL-14) OU station DÉMOLIE
     // (disparition du service) → départ SÉC (non bloquant, expliqué) :
@@ -496,11 +497,16 @@ function releaseLance(ac) {
   ac._refuelNeed = 0;
 }
 
-// BL-12 : lances disponibles = stations carburant construites (une lance par
-// station). La saturation est MESURABLE : 2 vols au sol, 1 lance → le 2e
-// attend (retard, critère de fin).
-function fuelLances(sim) {
-  return sim.infra.services.filter((s) => s.type === 'fuel').length * FUEL_LANCES_PER_STATION;
+// BL-12 : lances disponibles = stations carburant (une lance par station).
+// R27 (t_6424937a) : les lances sont MESURÉES PAR TERMINAL (assignments.mjs)
+// — les stations servent SEULEMENT les portes de leur terminal affecté : une
+// station posée loin de tout ne sert plus « implicitement » tout l'aéroport.
+// Le terminal du vol = celui de sa porte (ac.gateId). Porte absente (vol
+// annulé en cours de plein) → terminal inconnu → 0 lance (départ sec).
+function fuelLancesForGate(sim, ac) {
+  const g = sim.infra.gates.find((x) => x.id === ac.gateId);
+  if (!g) return 0;
+  return servicesServingGate(sim, 'fuel', g).length * FUEL_LANCES_PER_STATION;
 }
 
 // OPÉRATIONS AU SOL : débarquement → sol → embarquement → pushback.

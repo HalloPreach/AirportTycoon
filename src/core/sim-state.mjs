@@ -33,7 +33,7 @@ export function newSimState() {
       taxiways: [],  // {id, x, y, w, h}
       terminals: [], // {id, x, y, w, h, gates:[ids]}
       gates: [],     // {id, size, terminalId, x, y, w, h, acId, cleaning, maintenance}
-      services: [],  // {id, type, x, y, w, h}
+      services: [],  // {id, type, x, y, w, h, target: terminalId|null, auto: bool} — R27 : `target` = terminal desservi (null = inactif), `auto` = affectation de la sim (réaffectable), pas du joueur
       grid: { w: 160, h: 120, cells: new Uint8Array(160 * 120) },
     },
     aircraft: [],    // un vol en cours de cycle (voir sim/aircraft.mjs)

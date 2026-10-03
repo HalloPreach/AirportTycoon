@@ -3,8 +3,9 @@
 // Grille d'occupation 10×10 px : un segment de 200 px = 20 cellules, ça suffit
 // pour « est-ce que ça empiète sur autre chose ? » et « est-ce qu'un avion peut
 // poser/rouler ici ». ponytail : grille carrée simple, pas d'arborescence spatiale.
-import { BUILDINGS, TERMINAL_GATE_SIZES, HANGAR_CLEAN_PER_SEC, CLEANING_RATE_PER_SEC } from '../data/catalog.mjs';
+import { BUILDINGS, TERMINAL_GATE_SIZES, HANGAR_CLEAN_PER_SEC, CLEANING_RATE_PER_SEC, GROUND_SERVICE_TYPES } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
+import { autoAssign, ensureAssignments, servicesServingGate } from './assignments.mjs'; // R27 : affectation des services aux terminaux
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 
 const CELL = 10;
@@ -70,6 +71,14 @@ export function buildBuilding(sim, type, x, y) {
     return null;
   }
   const b = placeBuilding(sim, { id: sim.infra.nextId++, type, x, y, w: spec.w, h: spec.h, cost: spec.cost });
+  // R27 (t_6424937a) : un service posé est IMMÉDIATEMENT affecté au terminal
+  // le plus proche (règle déterministe du placement, autoAssign) — son effet
+  // se mesurera UNIQUEMENT sur ce terminal (pas de bonus implicite global).
+  if (b && GROUND_SERVICE_TYPES.includes(type)) autoAssign(sim, b);
+  // R27 : un terminal NOUVEAU réactive les services dormants (posés avant
+  // tout terminal, target null + auto) — ils passent inactifs → affectés
+  // (motif lisible), jamais d'orphelin.
+  if (b && type === 'terminal') ensureAssignments(sim);
   sim.economy.money -= spec.cost;
   // BL-15 : les CONSTRUCTIONS partent d'un compte dédié (spent.construction) —
   // le compte « fuel » est réservé à la DÉPENSE carburant des départs (A-6) :
@@ -143,6 +152,10 @@ export function demolishBuilding(sim, id) {
   sim.infra.runways = sim.infra.runways.filter((x) => x.id !== id);
   sim.infra.taxiways = sim.infra.taxiways.filter((x) => x.id !== id);
   sim.infra.terminals = sim.infra.terminals.filter((x) => x.id !== id);
+  // R27 (t_6424937a) : terminal supprimé → les services auto qui le servaient
+  // sont RÉAFFECTÉS au terminal le plus proche RESTANT (ou inactifs s'il n'en
+  // reste aucun) — motif lisible, jamais d'orphelin en silence.
+  ensureAssignments(sim);
   sim.infra.services = sim.infra.services.filter((x) => x.id !== id);
   buildGrid(sim);
   // R03 (t_9dab76f4) : une démolition qui touche le graphe (segment/terminal)
@@ -264,14 +277,15 @@ export function gateFor(sim, size, excludeAcId) {
 // t_2179387d : DEUX usures de porte, DEUX services qui les nettoient (critère 85) —
 //   - g.cleaning (« sale ») : nettoyée par l'ÉQUIPE NETTOYAGE (bâtiment « cleaning ») ;
 //   - g.maintenance (« mécanique ») : nettoyée par le HANGAR (bâtiment « hangar »).
-// Sans le bon service la porte reste usée (délai ground croissant) → chaque
-// bâtiment coûte (opex) ET sert (effet mesurable). Ponytail : pas de zone d'effet,
-// chaque bâtiment sert tout l'aéroport (débit = taux × nb bâtiments × dt).
+// R27 (t_6424937a) : l'effet est MESURÉ par terminal (assignments.mjs) — un service
+// affecté au terminal A ne nettoie que les portes de A (débit = taux × nb services
+// DU TERMINAL × dt) ; chaque bâtiment coûte (opex) ET sert (effet mesurable).
 export function cleanGates(sim, dt) {
-  const hangars = sim.infra.services.filter((s) => s.type === 'hangar').length;
-  const cleanings = sim.infra.services.filter((s) => s.type === 'cleaning').length;
-  if (!hangars && !cleanings) return;
+  // R27 (t_6424937a) : nettoyage HANGAR + CLEANING par terminal — les services
+  // servent UNIQUEMENT les portes de leur terminal (servicesServingGate).
   for (const g of sim.infra.gates) {
+    const cleanings = servicesServingGate(sim, 'cleaning', g).length;
+    const hangars = servicesServingGate(sim, 'hangar', g).length;
     if (cleanings) g.cleaning = Math.max(0, g.cleaning - CLEANING_RATE_PER_SEC * cleanings * dt);
     if (hangars) g.maintenance = Math.max(0, g.maintenance - HANGAR_CLEAN_PER_SEC * hangars * dt);
   }

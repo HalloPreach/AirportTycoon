@@ -10,7 +10,7 @@
 // clics ne partent pas).
 import { periodStatement, lastPeriod, forecast } from '../economy/economy.mjs';
 import { findPath, runwayExitNode } from '../pathfinding/path.mjs';
-import { AIRCRAFT, AIRLINES, BUILDINGS, opexPerMin, opexPerHour } from '../data/catalog.mjs';
+import { AIRCRAFT, AIRLINES, BUILDINGS, opexPerMin, opexPerHour, GROUND_SERVICE_TYPES } from '../data/catalog.mjs';
 // R17 (t_fc0d1920) : la cause du retard est LUE (causeAt, aircraft.mjs) — le
 // panneau ne recalcule rien, il traduit (DELAY_CAUSE_FR) ; la ponctualité
 // (fenêtre bornée, dénominateur clair) vient de punctualityStats (id.).
@@ -26,6 +26,11 @@ import { contractView, decideContract, cancelContract, contractCapable } from '.
 import { pendingCap } from '../flights/flights.mjs'; // R26 : le plafond d'arrivées est un PARAMÈTRE de la sim (borné) — le panneau le lit, pas un nombre en dur
 import { qualityView } from '../progression/quality.mjs'; // R26 : la qualité des offres (palier + mesure R17)
 import { unlockView } from '../infra/unlocks.mjs';
+// R27 (t_6424937a) : l'affectation des services aux terminaux — LECTURE
+// (assignmentView : affectation + capacités par terminal, la sim est la
+// source) + COMMANDE (setAssignment : le joueur change l'affectation, la règle
+// est dans la sim, le panneau émet l'intention).
+import { assignmentView, setAssignment } from '../infra/assignments.mjs';
 
 const PHASES_FR = Object.freeze({
   approach: 'approche', holding: 'attente', landing: 'atterrissage', exit: 'sortie de piste',
@@ -123,6 +128,10 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         const b = find(sim.infra.runways) || find(sim.infra.taxiways)
           || find(sim.infra.terminals) || find(sim.infra.services);
         if (!b) return 'none';
+        // R27 : la signature d'un SERVICE inclut l'affectation (target + auto)
+        // — le panneau se reconstruit quand le joueur la change (pas de vieux
+        // affichage). Les autres bâtiments sont statiques (une seule valeur).
+        if (GROUND_SERVICE_TYPES.includes(b.type)) return `bldg:${pick.id}:${b.target ?? 'n'}:${b.auto ? 'a' : 'j'}`;
         return `bldg:${pick.id}`; // les bâtiments ne bougent pas : une seule valeur
       },
       (body) => {
@@ -166,6 +175,39 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
           // 60 s de jeu ; les chiffres viennent d'OPEX_PER_SEC via les accès).
           const pm = opexPerMin(b.type), ph = opexPerHour(b.type);
           if (pm > 0) line(body, 'Exploitation', `${money(pm)} /min · ${money(ph)} /h`);
+          // R27 (t_6424937a) : service au sol — AFFECTATION visible (terminal
+          // desservi + capacité = portes du terminal, coût d'exploitation au
+          //-dessus) + COMMANDE du joueur pour la CHANGER (setAssignment : la
+          // règle est dans la sim, le panneau émet l'intention — UI fine).
+          if (GROUND_SERVICE_TYPES.includes(b.type)) {
+            const term = sim.infra.terminals.find((t) => t.id === b.target);
+            const nGates = (tid) => (sim.infra.gates || []).filter((g) => g.terminalId === tid).length;
+            const gates = term ? nGates(term.id) : 0;
+            line(body, 'Affectation', b.target == null
+              ? (b.auto ? 'inactif (aucun terminal à servir)' : 'inactif (choix joueur)')
+              : `terminal ${term.id} — auto${b.auto ? '' : ', modifié'}`,
+                b.target == null ? 'warn' : '');
+            line(body, 'Desservi', term ? `les ${gates} porte(s) du terminal ${term.id}` : "aucun terminal — le service n'a pas d'effet");
+            line(body, 'Capacité', `soutient ${gates} porte(s)${b.type === 'fuel' ? ` · ${gates} lance(s) de plein` : ''}`);
+            // Changer l'affectation : UNE commande (setAssignment) — la mesure
+            // (servicesServingGate) suit la décision au prochain tick, jamais
+            // le contraire.
+            const sel = document.createElement('select');
+            const opts = [{ v: null, l: 'Inactif' }, ...sim.infra.terminals.map((t) => ({ v: t.id, l: `Terminal ${t.id} (${nGates(t.id)} portes)` }))];
+            for (const o of opts) {
+              const op = document.createElement('option');
+              op.value = o.v == null ? '' : String(o.v);
+              op.textContent = o.l;
+              if (String(b.target ?? '') === (o.v == null ? '' : String(o.v))) op.selected = true;
+              sel.appendChild(op);
+            }
+            sel.setAttribute('aria-label', `Changer l'affectation du service #${b.id}`);
+            sel.addEventListener('change', () => {
+              if (!state.sim) return;
+              setAssignment(state.sim, b.id, sel.value === '' ? null : Number(sel.value));
+            });
+            body.appendChild(sel);
+          }
           if (b.type === 'runway') line(body, 'Longueur', `${b.len} px`);
           if (b.type === 'terminal') {
             const gates = (sim.infra.gates || []).filter((g) => g.terminalId === b.id);

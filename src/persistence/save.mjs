@@ -46,6 +46,7 @@
 // format, on bump SAVE_VERSION et on rejette l'ancienne au lieu de crasher.
 import { AIRCRAFT } from '../data/catalog.mjs';
 import { buildGrid } from '../infra/infra.mjs';
+import { ensureAssignments } from '../infra/assignments.mjs'; // R27 : migration des affectations
 
 export const SAVE_KEY = 'airport-tycoon-save';
 export const SAVE_VERSION = 1;
@@ -235,6 +236,13 @@ export function deserialize(json) {
       if (!isObj(infra.grid)) infra.grid = {}; // buildGrid remplit w/h/cells
       buildGrid(out.sim);
     }
+    // R27 (t_6424937a) : migration des AFFECTATIONS de services — les
+    // sauvegardes pré-R27 n'ont pas de champ `target` : ensureAssignments
+    // applique la règle du placement (terminal le plus proche, DETERMINISTE)
+    // aux services sans affectation, et réaffecte ceux devenus orphelins
+    // (terminal supprimé entre-temps). Le retour (nombre de services touchés)
+    // est lisible : l'UI peut annoncer la migration.
+    ensureAssignments(out.sim);
   }
   return out;
 }

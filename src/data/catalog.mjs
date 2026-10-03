@@ -20,6 +20,13 @@ export const BUILDINGS = Object.freeze({
 // x4 la sim consomme 4× de s de jeu par seconde réelle, donc 4× de débit.
 // Le socle (piste + taxiway + terminal) fait 3,2 $/s ≈ 11 520 $/h
 // (≈ 276 k$/jour, ≈ 553 k$/48 h — cf. la note « ~550 k$/48 h » de sim-state).
+// R27 : les services AU SOL — ceux qui se PLACENT sur le terrain et dont
+// l'effet est AFFECTÉ à un terminal (mesures assignments.mjs) : le carburant
+// sert les pleins des portes de son terminal, le nettoyage/hangar remette à
+// zéro l'usure des portes de son terminal, bagages/cafétéria/maintenance
+// servent les passagers qui ARRIVENT à son terminal.
+export const GROUND_SERVICE_TYPES = Object.freeze(['fuel', 'hangar', 'cleaning', 'baggage', 'catering', 'maintenance']);
+
 export const OPEX_PER_SEC = Object.freeze({
   runway: 1.2,     // piste : 72 $/min, 4 320 $/h
   taxiway: 0.2,    // 12 $/min, 720 $/h

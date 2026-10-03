@@ -8,15 +8,15 @@
   "bankrupt": false,
   "money": {
     "start": 12000,
-    "end": 3687752.0017400137,
+    "end": 3538261.534240048,
     "debt": 0
   },
-  "net": 3745952.0017551426,
-  "revenue": 5864114.901749999,
+  "net": 3558961.534255144,
+  "revenue": 5754495.934250001,
   "opex": 1743191.3999948564,
-  "fuel": 114771.5,
+  "fuel": 148143,
   "passengers": {
-    "totalCarried": 229543
+    "totalCarried": 296286
   },
   "infra": {
     "runways": 2,
@@ -50,21 +50,21 @@
     }
   ],
   "benefit": {
-    "dryDepartures": 249,
+    "dryDepartures": 921,
     "largeCompatible": true,
     "netNonNegative": true,
-    "lastPeriodNet": 2395.50000001397
+    "lastPeriodNet": 8208.06250001397
   },
   "save": {
     "at": 172800,
     "pre": {
-      "money": 3687823.401740015,
+      "money": 3538332.934240049,
       "time": 172800,
-      "ac": 4,
-      "planning": 5,
+      "ac": 5,
+      "planning": 6,
       "auto": true,
       "seed": 42,
-      "counter": 7725,
+      "counter": 8664,
       "objPaid": [
         true,
         true
