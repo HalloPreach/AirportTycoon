@@ -536,12 +536,17 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         const sim = state.sim;
         if (!sim) return 'none';
         const i = sim.incidents || {};
+        // R32 : les incidents sont PAR ACTIF — la fermeture piste et la panne
+        // station sont attachées (i.runways / i.fuels) ; le pic (i.surge) reste
+        // global (une demande, pas un actif). On compte les actifs touchés.
         const pending = sim.aircraft.filter((a) => ['approach', 'holding', 'landing', 'blocked'].includes(a.phase)).length;
         const q = qualityView(sim); // R26 : palier qualité (mix d'offres) + mesure sous-jacente
+        const nClosedRw = Object.values(i.runways || {}).filter((r) => r && r.remaining > 0).length;
+        const nOutSt = Object.values(i.fuels || {}).filter((f) => f && f.remaining > 0).length;
         return [
           sim._graph ? sim._graph.nodes.length : null, sim._graphDirty ? 1 : 0,
           sim.infra.runways.length, sim.infra.gates.length,
-          pending, pendingCap(sim), i.runway?.closed > 0 ? 1 : 0, i.fuel?.out > 0 ? 1 : 0, i.surge?.active ? 1 : 0,
+          pending, pendingCap(sim), nClosedRw, nOutSt, i.surge?.active ? 1 : 0,
           q.tier, q.q.toFixed(2),
         ].join('|');
       },
@@ -561,8 +566,17 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         line(body, 'Qualité des offres',
           `${q.tierName} (valeur ${Math.round(q.q * 100)} %) — mesure ${q.measured == null ? '—' : Math.round(q.measured * 100) + ' %'}`,
           q.tier === 2 ? 'good' : '');
-        if (i.runway?.closed > 0) line(body, 'Piste', `FERMÉE (${Math.ceil(i.runway.closed)} s restants)`, 'bad');
-        if (i.fuel?.out > 0) line(body, 'Carburant', `panne stations (${Math.ceil(i.fuel.out)} s)`, 'bad');
+        // R32 : les incidents sont PAR ACTIF (attachés) — on liste ceux en
+        // cours (l'actif est lisible : laquelle piste / quelle station).
+        for (const r of Object.values(i.runways || {})) {
+          if (r && r.remaining > 0) {
+            const rw = (sim.infra.runways || []).find((x) => x.id === r.asset);
+            line(body, `Piste ${r.asset}`, `FERMÉE (${Math.ceil(r.remaining)} s restants)${rw ? ` — ${rw.id}` : ''}`, 'bad');
+          }
+        }
+        for (const f of Object.values(i.fuels || {})) {
+          if (f && f.remaining > 0) line(body, `Station ${f.asset}`, `panne carburant (${Math.ceil(f.remaining)} s)`, 'bad');
+        }
         if (i.surge?.active) line(body, 'Demande', 'pic actif (cadence doublée)', 'warn');
         // COUPÉ : lecture SEULE du graphe — JAMAIS de rebuildGraph ici (avant le
         // 1er tick le graphe est null et c'est voulu : on l'affiche, on ne le

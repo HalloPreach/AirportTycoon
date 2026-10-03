@@ -48,6 +48,7 @@ import { AIRCRAFT } from '../data/catalog.mjs';
 import { buildGrid } from '../infra/infra.mjs';
 import { ensureAssignments } from '../infra/assignments.mjs'; // R27 : migration des affectations
 import { ensureUpgrades } from '../infra/upgrades.mjs'; // R31 : migration des améliorations (niveau 0 absent)
+import { ensureIncidents } from '../sim/incidents.mjs'; // R32 : migration + purge des incidents attachés
 
 export const SAVE_KEY = 'airport-tycoon-save';
 export const SAVE_VERSION = 1;
@@ -280,6 +281,13 @@ export function deserialize(json) {
     // crée l'objet vide (niveaux 0 par défaut — on ne RE-débite jamais au
     // chargement, le niveau est la source du coût déjà payé).
     ensureUpgrades(out.sim);
+    // R32 (t_9f267552) : migration des INCIDENTS attachés aux actifs — les
+    // sauvegardes pré-R32 ont les 3 commutateurs GLOBAUX (runway/fuel/surge)
+    // et pas les objets i.runways/i.fuels (fermeture PISTE / panne STATION
+    // attachées). ensureIncidents crée les sous-objets manquants ET PURGE les
+    // enregistrements dont l'actif a été supprimé (pas de référence orpheline)
+    // — l'état et le calendrier (compteurs acc/last) survivent à la reprise.
+    ensureIncidents(out.sim);
   }
   return out;
 }

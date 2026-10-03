@@ -34,7 +34,7 @@ import { onGateArrived, onGateDeparted, onFlightCancelled } from '../economy/eco
 import { countContractFlight } from '../flights/contracts.mjs';
 import { arrivePassengers, countCarried, boardDelay, groupComplete, removePassengers } from './passengers.mjs';
 import { refuelTimeMult } from '../infra/upgrades.mjs'; // R31 : temps de plein par terminal (amelioration)
-import { runwayClosed, fuelOut } from './incidents.mjs';
+import { runwayClosed } from './incidents.mjs';
 
 const V = { approach: 220, landing: 130, taxi: 60, pushback: 30, departure: 150 };
 const GATE_OPS_S = 60;   // débarquement+sol+embarquement : durée d'occupation porte
@@ -218,7 +218,7 @@ function doApproach(sim, ac, dt, spec) {
   // conséquence est MESURABLE, la récupération = réouverture).
   // Aucune piste compatible / toutes occupées → HOLDING (A4), doHolding prend
   // le relais (le compteur d'attente bornée R04 ne tourne QUE sur blocage).
-  if (!rw || runwayClosed(sim)) { ac.phase = 'holding'; ac.timer = 0; return; }
+  if (!rw || (rw && runwayClosed(sim, rw.id))) { ac.phase = 'holding'; ac.timer = 0; return; }
   ac.runwayId = rw.id;
   const topY = rw.y; // haut de la piste (arrivée de l'approche)
   const speed = V.approach * dt;
@@ -248,8 +248,13 @@ function doHolding(sim, ac, dt, spec, occupied) {
   // (runwayFor = compatibilité SEULE, sans occupation : on distingue « aucune
   // compatible » (blocage permanent → annulation bornée) de « toutes
   // occupées » (congestion, R05 — le compteur reste à zéro).)
-  const holdWhy = !runwayFor(sim, spec.minRunway) ? 'pas de piste assez longue'
-    : (runwayClosed(sim) ? 'piste fermée' : null);
+  // R32 : runwayFor exclut les pistes FERMÉES — « compatible mais toutes
+  // fermées » est un blocage (cause « piste fermée »), distinct de « aucune
+  // piste assez longue ».
+  const anyCompatible = sim.infra.runways.some((r) => r.len >= spec.minRunway);
+  const holdWhy = !runwayFor(sim, spec.minRunway)
+    ? (anyCompatible ? 'piste fermée' : 'pas de piste assez longue')
+    : null;
   if (holdWhy) {
     ac._holdBlocked = (ac._holdBlocked ?? 0) + dt;
     if (ac._holdBlocked >= HOLDING_CANCEL_S) {
@@ -275,8 +280,10 @@ function doHolding(sim, ac, dt, spec, occupied) {
     ac._holdAcc = 0;
     // La piste est exclusive (A4) : on n'y entre que si personne d'autre
     // n'y atterrit, n'en sort, ou n'en décolle. Piste fermée (incident) :
-    // on patiente aussi (la réouverture relance la tentative).
-    if (!runwayBusy(sim, rw.id, ac.id) && !runwayClosed(sim) && ac.y >= topY) {
+    // on patiente aussi (la réouverture relance la tentative). R32 : la
+    // fermeture est lue sur CETTE piste (rw.id) — l'AUTRE piste peut être
+    // fermée sans bloquer l'atterrissage ici (rw est déjà choisie ouverte).
+    if (!runwayBusy(sim, rw.id, ac.id) && !runwayClosed(sim, rw.id) && ac.y >= topY) {
       ac.runwayId = rw.id;
       ac.phase = 'landing';
       ac.timer = 0;
@@ -459,9 +466,12 @@ function doRefuel(sim, ac, dt, spec) {
     const svc = lances.find((s) => s.id === ac._lanceId);
     if (!svc || svc.fuelOut) releaseLance(ac);
   }
-  // Sans station du tout OU panne GLOBALE (incident BL-14) → départ sec
-  // (comportement EXISTANT inchangé : billets moitiés, non bloquant).
-  if (!lances.length || fuelOut(sim)) {
+  // Sans station du tout → départ sec (billets moitiés, non bloquant).
+  // R32 : la panne est PAR STATION (svc.fuelOut) — si d'autres stations servent
+  // encore la porte, le plein continue (les lances tombées sont juste
+  // exclues d'acquireLance). « Toutes en panne » est géré ci-dessous
+  // (lances.some(s => !s.fuelOut)).
+  if (!lances.length) {
     releaseLance(ac);
     ac._dryDeparture = true;
     if (!ac._noFuelNotified) {
@@ -477,8 +487,10 @@ function doRefuel(sim, ac, dt, spec) {
     // R28 : AUCUNE lance opérable (toutes en panne LOCALE) → départ sec
     // (non bloquant, expliqué) — idem à la panne globale. Si c'est de la
     // SATURATION (lances occupées par d'autres pleins), l'avion attend (R08 :
-    // la saturation est mesurable, pas un départ sec).
+    // la saturation est mesurable, pas un départ sec). releaseLance normalise
+    // l'état (pas de lance fantôme) — même pour un avion qui n'en tenait pas.
     if (!lances.some((s) => !s.fuelOut)) {
+      releaseLance(ac);
       ac._dryDeparture = true;
       if (!ac._noFuelNotified) {
         ac._noFuelNotified = true;

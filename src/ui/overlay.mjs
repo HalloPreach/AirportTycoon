@@ -15,6 +15,7 @@
 // l'overlay reste inactif à la reprise (pas d'état dérivé).
 import { rebuildGraph } from '../pathfinding/path.mjs';
 import { gateReachable } from '../infra/infra.mjs';
+import { runwayClosed } from '../sim/incidents.mjs'; // R32 : la fermeture piste est lue PAR PISTE (attachée)
 
 // Lecture pure de l'état de sim → structure platte pour le rendu.
 // Exportée telle quelle : les tests s'appuient sur cette LECTURE (zéro
@@ -40,7 +41,9 @@ export function overlayState(sim) {
   }
   const runways = sim.infra.runways.map((r) => ({
     id: r.id,
-    closed: !!(sim.incidents && sim.incidents.runway && sim.incidents.runway.closed > 0),
+    // R32 : la fermeture est ATTACHÉE à la piste — lue par actif (runwayClosed),
+    // pas un champ global : fermer UNE piste n'affecte PAS l'autre.
+    closed: runwayClosed(sim, r.id),
     // La même dérivée que runwayBusy (aircraft.mjs) : usage exclusif par les
     // phases, pas d'état parallèle.
     busy: sim.aircraft.some((a) => a.runwayId === r.id && ['landing', 'exit', 'departure'].includes(a.phase)),

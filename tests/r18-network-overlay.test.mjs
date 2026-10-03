@@ -16,6 +16,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeGameState } from '../src/core/new-game.mjs';
 import { demolishBuilding, gateReachable } from '../src/infra/infra.mjs';
+import { forceIncident } from '../src/sim/incidents.mjs'; // R32 : la fermeture piste est PAR PISTE
 import { overlayState } from '../src/ui/overlay.mjs';
 import { serialize, deserialize } from '../src/persistence/save.mjs';
 
@@ -47,7 +48,9 @@ test('R18 : l’overlay lit le MÊME graphe de la sim (segments + occupation)', 
   const ov2 = overlayState(sim);
   assert.ok(ov2.segs.find((s) => s.id === taxi.id).occupied, 'taxiway occupé (ac.seg)');
   // Piste fermée (incident) : lue par l’overlay (pas de 2e état d’incident).
-  sim.incidents.runway.closed = 120;
+  // R32 : la fermeture est PAR PISTE (attachée) — on force la fermeture de la
+  // piste du socle, l'overlay lit l'état attaché via runwayClosed(sim, id).
+  forceIncident(sim, 'runway');
   assert.equal(overlayState(sim).runways[0].closed, true, 'fermeture piste lue (incidents)');
 });
 

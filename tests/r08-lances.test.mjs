@@ -109,9 +109,12 @@ test('R08 (4) : RETOUR du service → le plein reprend (pas de lance fantôme en
   assert.equal(a1._dryDeparture, true, 'a1 en dry departure (conséquence lisible, non bloquante)');
   assert.equal(a2._refueling, false, 'a2 aussi en dry departure (releaseLance normalise son état)');
   assert.equal(sim.aircraft.filter((a) => a._refueling).length, 0, 'AUCUNE lance fantôme après la panne');
-  // Récupération : la panne finit → le service est de retour (knob déterministe
-  // : l horloge d incident avance dans tickIncidents, que ce test ne pilote pas).
-  sim.incidents.fuel.out = 0;
+  // Récupération : la panne (R32 : PAR STATION, i.fuels) finit → le service est
+  // de retour. Knob déterministe (l horloge d'incident avance dans tickIncidents,
+  // que ce test ne pilote pas) : on remet le record par station + le flag local
+  // svc.fuelOut au service (équivalent R32 de l'ancien knob global fuel.out=0).
+  for (const k of Object.keys(sim.incidents.fuels)) delete sim.incidents.fuels[k];
+  for (const s of sim.infra.services) if (s.type === 'fuel') s.fuelOut = false;
   assert.ok(!fuelOut(sim), 'le service est revenu (panne terminée)');
   const a3 = seedRefueling(sim, g1.id); // NOUVEL avion
   for (let i = 0; i < 10; i++) tick(sim);

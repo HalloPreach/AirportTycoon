@@ -12,6 +12,7 @@ import { newSimState } from '../src/core/sim-state.mjs';
 import { buildBuilding } from '../src/infra/infra.mjs';
 import { rebuildGraph } from '../src/pathfinding/path.mjs';
 import { planNote, MAX_PENDING } from '../src/flights/flights.mjs';
+import { forceIncident } from '../src/sim/incidents.mjs'; // R32 : la panne station est PAR STATION
 
 // Socle des tests : piste 1000 + terminal (4 portes S/M/M/L, infra.mjs).
 function base() {
@@ -90,7 +91,7 @@ test('R19 : offre risquée → le risque est INDUIT, sans promesse de rentabilit
 test('R19 : panne station (incident) → risque de départ sec', () => {
   const sim = base();
   addFuelStation(sim);
-  sim.incidents.fuel.out = 300; // incident BL-14 : la station est en panne
+  forceIncident(sim, 'fuel'); // incident BL-14 (R32) : la STATION est en panne (attachée)
   const n = planNote(sim, E('medium'));
   assert.ok(n.risks.some((r) => r.includes('panne')),
     `la panne en cours est un risque lisible : ${n.risks.join(' | ')}`);

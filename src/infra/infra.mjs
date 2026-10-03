@@ -8,6 +8,7 @@ import { pushEvent } from '../core/sim-state.mjs';
 import { autoAssign, ensureAssignments, countTypeServing } from './assignments.mjs'; // R27/R29 : affectation des services + debit d'equipe par terminal
 import { teamRateMult } from './upgrades.mjs'; // R31 : debit equipes par terminal (amelioration)
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
+import { ensureIncidents, runwayClosed } from '../sim/incidents.mjs'; // R32 : purge orphelins (démo) + fermeture PAR PISTE
 
 const CELL = 10;
 
@@ -168,6 +169,10 @@ export function demolishBuilding(sim, id) {
     rebuildGraph(sim);
     sim._graphDirty = false;
   }
+  // R32 : un incident ATTACHÉ à l'actif détruit (fermeture de piste, panne de
+  // station) est PURGÉ — pas de référence orpheline (l'enregistrement
+  // référencait un actif qui n'existe plus). Idempotent, sans effet sinon.
+  ensureIncidents(sim);
   pushEvent(sim, { kind: 'demolished', type: b.type, id, refund });
   return { ok: true, refund };
 }
@@ -210,8 +215,12 @@ function runwayFree(sim, rw, excludeAcId) {
 //    : la 2e piste libre est choisie si la 1re est occupée) ;
 // 2) longueur croissante (la plus courte qui suffit — critère historique) ;
 // 3) id croissant (égalité de longueur : le plus ancien, déterministe).
+// R32 : une piste FERMÉE (incident attaché) est exclue du choix — fermer UNE
+// piste sur deux laisse l'AUTRE utilisable (pickRunway/runwayFor retombent
+// dessus) ; la fermeture est lue par actif (runwayClosed(sim, r.id)), pas
+// globalement.
 export function runwayCandidates(sim, minRunway, excludeAcId = null) {
-  const ok = sim.infra.runways.filter((r) => r.len >= minRunway);
+  const ok = sim.infra.runways.filter((r) => r.len >= minRunway && !runwayClosed(sim, r.id));
   return ok.sort((a, b) =>
     (runwayFree(sim, b, excludeAcId) - runwayFree(sim, a, excludeAcId))
     || (a.len - b.len)

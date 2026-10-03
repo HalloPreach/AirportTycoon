@@ -70,9 +70,13 @@ export function tickPlanner(sim, dt, rng = Math.random) {
     // arrêté ne cumule pas 2× le même retard dans plusieurs modules ») ;
     // la cause du retard reste LISIBLE (causeAt, aircraft.mjs) et l'état
     // « retardé » du planning est maintenu ci-dessous (marquage lisible).
-    // BL-14 : piste FERMÉE (incident) → les atterrissages patientent (retard
-    // lisible dans le planning), la réouverture les relance.
-    if (runwayClosed(sim)) {
+    // R32 : la fermeture piste est PAR PISTE — un atterrissage n'est retardé
+    // que si AUCUNE piste compatible n'est OUVERTE (l'autre piste, ouverte,
+    // reste utilisable : la fermeture ne retarde pas tout le trafic). on
+    // distingue « piste fermée » (compatible mais toutes fermées) de « pas de
+    // piste compatible » (le critère 6, ci-dessous).
+    const compatible = (sim.infra.runways || []).filter((r) => r.len >= ac.minRunway);
+    if (compatible.length && compatible.every((r) => runwayClosed(sim, r.id))) {
       markPlannedDelayed(sim, a.id, 'piste fermée — atterrissage en attente');
       continue;
     }
