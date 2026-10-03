@@ -579,6 +579,7 @@ function doDeparture(sim, ac, dt) {
   ac.y -= V.departure * dt;
   if (ac.y < rw.y - 120) {
     onGateDeparted(sim, ac); // recettes passagers au décollage
+    if (!ac._dryDeparture) sim._cleanCycle = true; // R22 : cycle complet AVEC PLEIN (objet O1)
     logFlightEnd(sim, ac, false); // R17 : fin du vol (départ) dans la fenêtre de ponctualité
     ac.phase = 'departed';
     ac.seg = null;

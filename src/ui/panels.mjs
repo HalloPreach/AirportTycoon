@@ -15,6 +15,10 @@ import { AIRCRAFT, AIRLINES, BUILDINGS, opexPerMin, opexPerHour } from '../data/
 // panneau ne recalcule rien, il traduit (DELAY_CAUSE_FR) ; la ponctualité
 // (fenêtre bornée, dénominateur clair) vient de punctualityStats (id.).
 import { causeAt, DELAY_CAUSE_FR, DELAY_WINDOW_S, punctualityStats } from '../sim/aircraft.mjs';
+// R22 (t_00318fe0) : les objectifs de progression + récompense payée UNE fois —
+// le panneau est une LECTURE (objectiveView) : il ne décide rien, il affiche
+// l'état (à venir / atteinte / payée) et la mesure live du critère.
+import { OBJECTIVES, objectiveView } from '../progression/objectives.mjs';
 
 const PHASES_FR = Object.freeze({
   approach: 'approche', holding: 'attente', landing: 'atterrissage', exit: 'sortie de piste',
@@ -279,6 +283,33 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
     );
   }
 
+  // --- 3b. R22 : objectifs de progression (récompense payée une fois) ------
+  // UI fine : LECTURE seule (objectiveView) — le paiement est fait par la sim
+  // (tickObjectives), pas par le panneau.
+  const goals = makeSection(col, 'panel', 'Objectifs');
+  function refreshGoals() {
+    goals.refresh(
+      () => {
+        const sim = state.sim;
+        if (!sim) return 'none';
+        return OBJECTIVES.map((o) => {
+          const v = objectiveView(sim, o.id);
+          return [o.id, v.state, v.detail].join('|');
+        }).join('§');
+      },
+      (body) => {
+        body.replaceChildren();
+        const sim = state.sim;
+        if (!sim) return;
+        for (const o of OBJECTIVES) {
+          const v = objectiveView(sim, o.id);
+          line(body, `${o.name} (${o.reward} $)`, `${v.state} — ${v.detail}`,
+               v.state === 'payée' ? 'good' : v.state === 'atteinte' ? 'warn' : '');
+        }
+      },
+    );
+  }
+
   // --- 4. Historique d'alertes (sim.alerts, les plus récentes d'abord) ------
   const hist = makeSection(col, 'panel', 'Alertes (historique)');
   function refreshHist() {
@@ -361,7 +392,7 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   return {
     // Appel à chaque frame (bus 'frame') : chaque panneau ne reconstruit son DOM
     // que si sa signature a changé — coût négligeable sinon (pattern planning).
-    refresh: () => { refreshInspect(); refreshFin(); refreshStats(); refreshHist(); refreshNet(); },
+    refresh: () => { refreshInspect(); refreshFin(); refreshStats(); refreshGoals(); refreshHist(); refreshNet(); },
     // R07 : une sauvegarde rechargée ou une nouvelle partie change tout l'état —
     // la sélection inspecte un OBJET QUI N'EXISTE PLUS. invalidate() vide le pick
     // ; la prochaine refreshInspect rend l'état par défaut (pas un « parti »

@@ -95,7 +95,11 @@ récupérable. La configuration vivante (données, pas de logique) :
 ## Ce que R21 ne fait pas (frontière des cartes suivantes)
 
 - R22 : objectifs/récompenses *implémentés* (fenêtres explicites, récompense
-  atomique, identifiant persistant, compteur temporaire documenté).
+  atomique, identifiant persistant, compteur temporaire documenté) : livré
+  (`src/progression/objectives.mjs`) — O1 « premier cycle avec plein » (1 000 $)
+  + O2 « pic absorbé » (1 500 $), payés UNE fois par la sim (`tickObjectives`),
+  ids persistants survivent à la sauvegarde (reprise = jamais re-payable),
+  panneau « Objectifs » (ui/panels.mjs).
 - R23 : espacer les déblocages autour des besoins (remplacer les seuls seuils
   100-300 pax ; carburant avant le besoin, nettoyage/maintenance quand l'usure
   compte, bagages quand les volumes le justifient ; pas de dépendance circulaire).
