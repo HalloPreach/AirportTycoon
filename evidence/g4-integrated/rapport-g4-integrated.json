@@ -1,0 +1,140 @@
+{
+  "tool": "qa/g4-integrated.mjs",
+  "commit": "ddb54b8596a391c2af6624ba442efe616588a3b2",
+  "criteria": {
+    "a": "services affectés aux terminaux (affectation déterministe modifiable, migration expliquée)",
+    "b": "carburant local : stations id/lances, panne A laisse B, pas de propriétaire fantôme après reprise",
+    "c": "équipes : 2e équipe améliore le délai, aucune porte affamée indéfiniment",
+    "d": "passagers isolés par terminal (reprise mid-check-in, retrait pax vol annulé, comptage unique)",
+    "e": "comparaison de 2 plans de capacité avec effet spatial explicable"
+  },
+  "failures": 0,
+  "passed": 25,
+  "checks": [
+    {
+      "name": "(a) 2 terminaux construits (2 × 4 portes)",
+      "ok": true,
+      "detail": "2 terminaux / 8 portes"
+    },
+    {
+      "name": "(a) affectation DÉTERMINISTE au placement (distance, pas l’ordre) : A→t1, B→t2",
+      "ok": true,
+      "detail": "A#5→3 (attendu 3), B#6→4 (attendu 4)"
+    },
+    {
+      "name": "(a) affectation MODIFIABLE par le joueur (setAssignment A → t2)",
+      "ok": true,
+      "detail": "A→4 (auto=false)"
+    },
+    {
+      "name": "(a) la station C est AUTO-affectée à t2 (règle du placement)",
+      "ok": true,
+      "detail": "C→4 (auto=true)"
+    },
+    {
+      "name": "(a) migration expliquée : service AUTO démolie → réaffecté au terminal RESTANT (t1)",
+      "ok": true,
+      "detail": "C→3 (attendu 3)"
+    },
+    {
+      "name": "(a) le choix EXPLICITE du joueur n’est JAMAIS écrasé (A reste pointée vers t2, inactif à la lecture)",
+      "ok": true,
+      "detail": "A→4 (auto=false) — jamais écrasé"
+    },
+    {
+      "name": "(a) la mesure suit la décision : les lances de t1 = stations AFFECTÉES à t1 (A→t2 démoli ne sert plus t1, B a migré vers t1)",
+      "ok": true,
+      "detail": "lances t1=[6] (A#5→t2 démoli exclu, B#6 migré inclus)"
+    },
+    {
+      "name": "(b) chaque station a UN id explicite (pas de comptage anonyme)",
+      "ok": true,
+      "detail": "A=5, B=6"
+    },
+    {
+      "name": "(b) lance EXPLICITE : l’avion a la station A (id de station, pas un index)",
+      "ok": true,
+      "detail": "lance=5 (attendu 5)"
+    },
+    {
+      "name": "(b) panne LOCALE de A : B reste SAINNE (la panne est par station)",
+      "ok": true,
+      "detail": "A.panne=true, B.panne=false"
+    },
+    {
+      "name": "(b) station A en panne → l’avion de t1 libère sa lance et part SEC (non bloquant)",
+      "ok": true,
+      "detail": "lance=null, refueling=false"
+    },
+    {
+      "name": "(b) la station B CONTINUE de servir (la panne A ne la touche PAS) : l’avion de t2 a B",
+      "ok": true,
+      "detail": "lance=6 (attendu 6)"
+    },
+    {
+      "name": "(b) la lance est SÉRIALISÉE (reprise mid-plein, propriétaire explicite)",
+      "ok": true,
+      "detail": "lance reprise=6 (attendu 6)"
+    },
+    {
+      "name": "(b) PAS de propriétaire FANTÔME après la reprise : station B démolie → lance nettoyée (null)",
+      "ok": true,
+      "detail": "lance=null, refueling=false"
+    },
+    {
+      "name": "(c) l’équipe posée près de t2 est AFFECTÉE à t2 (pas globale)",
+      "ok": true,
+      "detail": "team→4"
+    },
+    {
+      "name": "(c) l’équipe de t2 ne sert QUE t2 : les portes de t1 ne sont PAS touchées",
+      "ok": true,
+      "detail": "t1=0→0, t2=120→110 (budget partagé = 10)"
+    },
+    {
+      "name": "(c) LA 2e ÉQUIPE AMÉLIORE LE DÉLAI (délai plus court à charge égale)",
+      "ok": true,
+      "detail": "1 équipe=120s, 2 équipes=60s"
+    },
+    {
+      "name": "(c) AUCUNE porte n’est AFFAMÉE indéfiniment : 3 portes usées → toutes propres",
+      "ok": true,
+      "detail": "somme usure après 200 s = 0"
+    },
+    {
+      "name": "(d) REPRISE MID-CHECK-IN : les queues PAR TERMINAL sont sérialisées (t1 ≠ t2, pas de perte)",
+      "ok": true,
+      "detail": "t1.checkin=40, t2.checkin=20"
+    },
+    {
+      "name": "(d) RETRAIT DES PAX D’UN VOL ANNULÉ : le pax de t1 est retiré (file t1 réduite), t2 INTACT",
+      "ok": true,
+      "detail": "t1.checkin=0 (attendu 0), t2.checkin=20 (attendu 20)"
+    },
+    {
+      "name": "(d) le vol annulé n’est PLUS compté (comptage unique : ses pax ne sont jamais totalCarried)",
+      "ok": true,
+      "detail": "totalCarried=400 (base à la reprise=400)"
+    },
+    {
+      "name": "(d) le vol suivant (t2) n’est PAS bloqué (parcours terminé, compté UNE fois)",
+      "ok": true,
+      "detail": "totalCarried=420 (attendu 420), groupes=0"
+    },
+    {
+      "name": "(e) le plan 2 AMÉLIORE la capacité du terminal 2 (capMult 1.6×, file tolérée plus longue)",
+      "ok": true,
+      "detail": "capacité t2 : plan 1 capMult=1× (120 pax), plan 2 capMult=1.6× (192 pax — tolérée plus longue)"
+    },
+    {
+      "name": "(e) l’effet est SPATIAL : le terminal 1 n’est PAS affecté (capacité t1 identique)",
+      "ok": true,
+      "detail": "t1 : plan 1 capMult=1× (0 pax en file), plan 2 capMult=1× (0 pax en file) — identique (effet local, pas global)"
+    },
+    {
+      "name": "(e) la LECTURE du GOUTLE (upgradeView) est DIFFÉRENTE selon le plan (explicable, effet spatial attribué)",
+      "ok": true,
+      "detail": "t2 plan 2 : inQueue=0, capMult=1.6× (capacité 192 pax) vs t1 plan 2 : inQueue=0, capMult=1× (capacité 120 pax) — la LECTURE attribue l'effet à t2"
+    }
+  ]
+}

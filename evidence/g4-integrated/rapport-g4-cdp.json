@@ -1,0 +1,100 @@
+{
+  "at": "2026-10-03T20:43:07.282Z",
+  "passed": 10,
+  "failed": 0,
+  "fixtures": [
+    "Terminal 1 = terminal fourni du plan de départ (A-2) ; terminal 2 = buildBuilding (1050,900)",
+    "Plan 1 : capacité de base (niveau 0 des 3 tracks partout)",
+    "Plan 2 : terminal 2 amélioré (1 niveau du track terminal, capMult 1.6×) — effet LOCAL, t1 intact"
+  ],
+  "screenshots": [
+    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\g4-integrated\\01-plan1-terminal1.png",
+    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\g4-integrated\\02-plan1-terminal2.png",
+    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\g4-integrated\\03-plan2-terminal2-ameliore.png",
+    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\g4-integrated\\04-plan2-terminal1-inchange.png"
+  ],
+  "limitations": [
+    "Capture navigateur de la LECTURE de la comparaison de plans (effet spatial attribué au bon terminal par le panneau) ; la règle est MESURée par qa/g4-integrated.mjs (capMult, saturation).",
+    "QA automatisée de critères ciblés ; ne prouve pas toute la jouabilité ni un cycle complet de vol."
+  ],
+  "results": [
+    {
+      "name": "2 terminaux (fourni + construit)",
+      "ok": true,
+      "detail": {
+        "t1": 3,
+        "t1x": 550,
+        "t1y": 900,
+        "t2": 4,
+        "terminals": 2
+      }
+    },
+    {
+      "name": "Terminal 2 construit (id explicite)",
+      "ok": true,
+      "detail": "t2=#4"
+    },
+    {
+      "name": "Plan 1 : capacité de BASE (track terminal niveau 0 des deux terminaux)",
+      "ok": true,
+      "detail": {
+        "t1": 0,
+        "t2": 0
+      }
+    },
+    {
+      "name": "Plan 1 : le panneau du terminal 2 montre le niveau 0 (lecture « niv. 1/3 »)",
+      "ok": true,
+      "detail": "Inspection — clic sur la carte\nTerminal #4\n200×150 px\nCoût d’origine\n3 000 $\nRemboursement démolition\n1 500 $\nExploitation\n108 $ /min · 6 480 $ /h\nPortes\n4-g0 ("
+    },
+    {
+      "name": "Plan 2 : l’upgrade terminal est ACHETÉ (t2 niveau 1, t1 niveau 0)",
+      "ok": true,
+      "detail": {
+        "a": {
+          "ok": true,
+          "level": 1,
+          "cost": 1500
+        },
+        "t1": 0,
+        "t2": 1,
+        "capT1": 1,
+        "capT2": 1.6
+      }
+    },
+    {
+      "name": "Plan 2 : la CAPACITÉ (capMult) est locale — t2 1.6×, t1 1.0×",
+      "ok": true,
+      "detail": {
+        "capT1": 1,
+        "capT2": 1.6
+      }
+    },
+    {
+      "name": "Effet SPATIAL : la LECTURE du terminal 1 est IDENTIQUE entre les plans",
+      "ok": true,
+      "detail": "longueur=713"
+    },
+    {
+      "name": "Effet SPATIAL : le panneau du terminal 2 CHANGÉ (track terminal niv. 2/3)",
+      "ok": true,
+      "detail": "textes différents (effet attribué à t2)"
+    },
+    {
+      "name": "Lecture lisible du GOUTLE + des 3 CHOIX (explicable, non opaque)",
+      "ok": true,
+      "detail": "Inspection — clic sur la carte\nTerminal #4\n200×150 px\nCoût d’origine\n3 000 $\nRemboursement démolition\n1 500 $\nExploitation\n108 $ /min · 6 480 $ /h\nPortes\n4-g0 ("
+    },
+    {
+      "name": "Aucune exception JavaScript navigateur",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "logs": [
+    "AirportTycoon : http://127.0.0.1:59408\n",
+    "\r\nDevTools listening on ws://127.0.0.1:59409/devtools/browser/ebce2348-0e3a-41ca-b742-6afe3ca6f0de\r\n",
+    "[24848:29212:1003/224306.137:ERROR:chrome\\browser\\task_manager\\providers\\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a \"Renderer\" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.\r\n",
+    "[24848:34440:1003/224306.908:ERROR:chrome\\elevation_service\\edge_elevation_service_browser_helper.cc:94] LaunchUpdateCmdElevatedAndWait:  hr = 80070002 with exit code: 32\r\n"
+  ]
+}

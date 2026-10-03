@@ -1,0 +1,29 @@
+PASS 2 terminaux (fourni + construit)
+{"t1":3,"t1x":550,"t1y":900,"t2":4,"terminals":2}
+
+PASS Terminal 2 construit (id explicite)
+"t2=#4"
+
+PASS Plan 1 : capacité de BASE (track terminal niveau 0 des deux terminaux)
+{"t1":0,"t2":0}
+
+PASS Plan 1 : le panneau du terminal 2 montre le niveau 0 (lecture « niv. 1/3 »)
+"Inspection — clic sur la carte\nTerminal #4\n200×150 px\nCoût d’origine\n3 000 $\nRemboursement démolition\n1 500 $\nExploitation\n108 $ /min · 6 480 $ /h\nPortes\n4-g0 ("
+
+PASS Plan 2 : l’upgrade terminal est ACHETÉ (t2 niveau 1, t1 niveau 0)
+{"a":{"ok":true,"level":1,"cost":1500},"t1":0,"t2":1,"capT1":1,"capT2":1.6}
+
+PASS Plan 2 : la CAPACITÉ (capMult) est locale — t2 1.6×, t1 1.0×
+{"capT1":1,"capT2":1.6}
+
+PASS Effet SPATIAL : la LECTURE du terminal 1 est IDENTIQUE entre les plans
+"longueur=713"
+
+PASS Effet SPATIAL : le panneau du terminal 2 CHANGÉ (track terminal niv. 2/3)
+"textes différents (effet attribué à t2)"
+
+PASS Lecture lisible du GOUTLE + des 3 CHOIX (explicable, non opaque)
+"Inspection — clic sur la carte\nTerminal #4\n200×150 px\nCoût d’origine\n3 000 $\nRemboursement démolition\n1 500 $\nExploitation\n108 $ /min · 6 480 $ /h\nPortes\n4-g0 ("
+
+PASS Aucune exception JavaScript navigateur
+[]
