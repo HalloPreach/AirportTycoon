@@ -5,7 +5,7 @@
 // poser/rouler ici ». ponytail : grille carrée simple, pas d'arborescence spatiale.
 import { BUILDINGS, TERMINAL_GATE_SIZES, HANGAR_CLEAN_PER_SEC, CLEANING_RATE_PER_SEC, GROUND_SERVICE_TYPES } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
-import { autoAssign, ensureAssignments, servicesServingGate } from './assignments.mjs'; // R27 : affectation des services aux terminaux
+import { autoAssign, ensureAssignments, countTypeServing } from './assignments.mjs'; // R27/R29 : affectation des services + debit d'equipe par terminal
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 
 const CELL = 10;
@@ -274,20 +274,44 @@ export function gateFor(sim, size, excludeAcId) {
   return free[0];
 }
 
-// t_2179387d : DEUX usures de porte, DEUX services qui les nettoient (critère 85) —
-//   - g.cleaning (« sale ») : nettoyée par l'ÉQUIPE NETTOYAGE (bâtiment « cleaning ») ;
-//   - g.maintenance (« mécanique ») : nettoyée par le HANGAR (bâtiment « hangar »).
-// R27 (t_6424937a) : l'effet est MESURÉ par terminal (assignments.mjs) — un service
-// affecté au terminal A ne nettoie que les portes de A (débit = taux × nb services
-// DU TERMINAL × dt) ; chaque bâtiment coûte (opex) ET sert (effet mesurable).
+// R29 (t_9842f7a3) : DEBIT LIMITE + PRIORITE EXPLICITE des equipes.
+// Une equipe a un debit FIXE : son budget d'intervention est PARTAGE entre
+// les portes de son terminal (n equipes × taux, par tick). On ne donne PLUS
+// le debit complet a chaque porte — le nettoyage existait en presence d'un
+// batiment et nettoyait TOUTES les portes en meme temps (reduction globale
+// gratuite, interdite par R29 : « deux portes usees avec une equipe :
+// ressources partages, pas de reduction globale gratuite »).
+// Regle de priorite (deterministe) : la porte LA PLUS USEE (sale + mecanique
+// cumulees) d'abord, egalite → la plus ANCIENNE (id le plus petit). Le budget
+// se deplace de porte en porte ; chaque porte est bornée à 0 (pas de
+// dépassement) et la 2e equipe DOUBLE le debit (le delai s'amoindrit —
+// « 2e equipe ameliore le delai »). L'activite mesuree (portes desservies,
+// usure retiree, porte la plus usee servie) est ecrie sur sim._teamActivity
+// (serialisable, l'UI la lit — « afficher usure, activite et effet attendu »).
 export function cleanGates(sim, dt) {
-  // R27 (t_6424937a) : nettoyage HANGAR + CLEANING par terminal — les services
-  // servent UNIQUEMENT les portes de leur terminal (servicesServingGate).
-  for (const g of sim.infra.gates) {
-    const cleanings = servicesServingGate(sim, 'cleaning', g).length;
-    const hangars = servicesServingGate(sim, 'hangar', g).length;
-    if (cleanings) g.cleaning = Math.max(0, g.cleaning - CLEANING_RATE_PER_SEC * cleanings * dt);
-    if (hangars) g.maintenance = Math.max(0, g.maintenance - HANGAR_CLEAN_PER_SEC * hangars * dt);
+  for (const [type, field, rate] of [['cleaning', 'cleaning', CLEANING_RATE_PER_SEC],
+                                     ['hangar', 'maintenance', HANGAR_CLEAN_PER_SEC]]) {
+    for (const t of sim.infra.terminals) {
+      const teams = countTypeServing(sim, type, t.id);
+      sim._teamActivity = sim._teamActivity || {};
+      const act = (sim._teamActivity[type] = sim._teamActivity[type] || {});
+      act[t.id] = { teams, gates: 0, drain: 0, servedGate: null, budget: teams * rate * dt };
+      if (!teams) continue; // aucune equipe : aucune usure ne diminue
+      const worn = sim.infra.gates.filter((g) => g.terminalId === t.id && g[field] > 0);
+      // Priorite : la plus usee d'abord, egalite → la plus ancienne (deterministe).
+      worn.sort((a, b) => (b.cleaning + b.maintenance) - (a.cleaning + a.maintenance)
+        || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+      let budget = teams * rate * dt;
+      for (const g of worn) {
+        if (budget <= 0) break;
+        const before = g[field];
+        g[field] = Math.max(0, before - budget); // bornee a 0 (pas de dépassement)
+        budget = Math.max(0, budget - before);   // budget reel consomme par la porte
+        act[t.id].drain += before - g[field];
+        act[t.id].gates++;
+        act[t.id].servedGate = g.id; // la porte la plus usee servie (UI : effet)
+      }
+    }
   }
 }
 

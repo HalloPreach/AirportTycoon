@@ -58,8 +58,12 @@ test('R27 (1) : un service affecté à A ne renforce pas B (nettoyage par termin
   assert.equal(svc.target, A.id, `affectation automatique = terminal le plus proche (${A.id})`);
   const aGates = gatesOf(sim, A.id), bGates = gatesOf(sim, B.id);
   for (const g of [...aGates, ...bGates]) g.cleaning = 80; // tous sales
-  cleanGates(sim, 10); // 10 s avec le service (débit 1/s)
-  assert.ok(aGates.every((g) => g.cleaning < 71), `les portes de A sont nettoyées (80 → ${aGates[0].cleaning.toFixed(1)})`);
+  // R29 : le budget d'une équipe est PARTAGÉ (pas de réduction globale) —
+  // on compare la SOMME d'usure du terminal (A baisse, B ne change pas).
+  const sumA0 = aGates.reduce((s, g) => s + g.cleaning, 0);
+  cleanGates(sim, 10); // 10 s avec le service (1 équipe = budget 10 unités)
+  const sumA = aGates.reduce((s, g) => s + g.cleaning, 0);
+  assert.ok(sumA < sumA0 - 9, `les portes de A sont nettoyées (somme ${sumA0} → ${sumA} — budget partagé, pas de réduction globale)`);
   assert.ok(bGates.every((g) => g.cleaning === 80),
     `les portes de B restent sales (80) — le service n'est PAS global`);
 });
@@ -76,9 +80,12 @@ test('R27 (2) : déplacer l affectation change les capacités (setAssignment A �
   assert.equal(svc.auto, false, 'choix joueur : auto=false (ensureAssignments ne l écrase plus)');
   const aGates = gatesOf(sim, A.id), bGates = gatesOf(sim, B.id);
   for (const g of [...aGates, ...bGates]) g.cleaning = 80;
+  // R29 : budget PARTAGÉ (pas de réduction globale) — on compare la SOMME d'usure.
+  const sumB0 = bGates.reduce((s, g) => s + g.cleaning, 0);
   cleanGates(sim, 10);
   assert.ok(aGates.every((g) => g.cleaning === 80), `les portes de A ne sont PLUS nettoyées (stable ${aGates[0].cleaning})`);
-  assert.ok(bGates.every((g) => g.cleaning < 71), `les portes de B sont maintenant nettoyées (80 → ${bGates[0].cleaning.toFixed(1)})`);
+  const sumB = bGates.reduce((s, g) => s + g.cleaning, 0);
+  assert.ok(sumB < sumB0 - 9, `les portes de B sont maintenant nettoyées (somme ${sumB0} → ${sumB} — budget partagé)`);
 });
 
 // (2bis) CARBURANT : les LANCES sont comptées PAR TERMINAL — une station

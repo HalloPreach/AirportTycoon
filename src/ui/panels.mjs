@@ -189,6 +189,22 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
                 b.target == null ? 'warn' : '');
             line(body, 'Desservi', term ? `les ${gates} porte(s) du terminal ${term.id}` : "aucun terminal — le service n'a pas d'effet");
             line(body, 'Capacité', `soutient ${gates} porte(s)${b.type === 'fuel' ? ` · ${gates} lance(s) de plein` : ''}`);
+            // R29 (t_9842f7a3) : usure + activité + effet attendu de l'équipe —
+            // LECTURE seule de sim._teamActivity (la sim l'écrit à chaque tick,
+            // cleanGates). Débit limité : le budget d'intervention est PARTAGÉ
+            // (pas de réduction globale), priorité = la porte la plus usée d'abord.
+            if ((b.type === 'cleaning' || b.type === 'hangar') && term) {
+              const act = sim._teamActivity?.[b.type]?.[term.id];
+              const teams = act ? act.teams : 0;
+              const field = b.type === 'hangar' ? 'maintenance' : 'cleaning';
+              const served = act?.servedGate ? sim.infra.gates.find((g) => g.id === act.servedGate) : null;
+              const wearLabel = served ? ` · usure courante ${Math.round(served[field] ?? 0)}` : '';
+              line(body, 'Équipes', `${teams} — débit limité, priorité : la porte la plus usée d'abord${wearLabel}`);
+              line(body, 'Activité', act && act.servedGate
+                ? `porte ${act.servedGate} · ${act.drain.toFixed(1)} usure retirée / ${act.budget.toFixed(1)} budget`
+                : (teams ? 'toutes propres (aucune usure en cours)' : 'aucune équipe — usure en stagnation'),
+                teams ? '' : 'warn');
+            }
             // Changer l'affectation : UNE commande (setAssignment) — la mesure
             // (servicesServingGate) suit la décision au prochain tick, jamais
             // le contraire.
