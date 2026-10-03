@@ -34,6 +34,11 @@ import { assignmentView, setAssignment } from '../infra/assignments.mjs';
 // R30 (t_1623523e) : les files passagers sont PAR TERMINAL (sim.passengers.queues)
 // — le panneau l'affiche via queueTotals (somme des terminaux, lecture seule).
 import { queueTotals } from '../sim/passengers.mjs';
+// R31 (t_7a512737) : améliorations de capacité CIBLÉE par terminal — LECTURE
+// (upgradeView : les 3 choix + goulot courant du terminal) + COMMANDE
+// (buyUpgrade : la sim règle le coût/l'effet, le panneau émet l'intention —
+// UI fine, même pattern que setAssignment).
+import { upgradeView, buyUpgrade } from '../infra/upgrades.mjs';
 
 const PHASES_FR = Object.freeze({
   approach: 'approche', holding: 'attente', landing: 'atterrissage', exit: 'sortie de piste',
@@ -231,6 +236,31 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
           if (b.type === 'terminal') {
             const gates = (sim.infra.gates || []).filter((g) => g.terminalId === b.id);
             line(body, 'Portes', gates.map((g) => `${g.id} (${g.size}${g.acId ? ` · avion #${g.acId}` : ''})`).join(' · ') || 'aucune');
+            // R31 (t_7a512737) : 3 CHOIX D'AMÉLIORATION CIBLÉE du terminal —
+            // coût FIXE + résultat ATTENDU (UPGRADES, catalog.mjs) + le GOUTLE
+            // COURANT du terminal (upgradeView, lecture seule) : le « mauvais
+            // achat » est COMPRÉHENSIBLE (le choix utile suit le goulot, le
+            // panneau le dit). COMMANDE : buyUpgrade (la sim règle coût/effet).
+            const uv = upgradeView(sim, b.id);
+            if (uv) {
+              line(body, 'Goulot', uv.bottleneckWhy, uv.bottleneck === 'files' ? 'warn' : '');
+              for (const c of uv.choices) {
+                if (c.level >= c.maxLevel) {
+                  line(body, `Amélioration ${c.name}`, `niveau ${c.maxLevel} (maximal)`);
+                  continue;
+                }
+                const btn = document.createElement('button');
+                btn.textContent = `Améliorer ${c.name} — niv. ${c.level + 1}/${c.maxLevel} · ${money(c.cost)}${c.useful ? ' · suit le goulot' : ''}`;
+                btn.disabled = !c.affordable;
+                btn.setAttribute('aria-label', `Améliorer ${c.name} du terminal ${b.id} pour ${c.cost} $`);
+                btn.addEventListener('click', () => {
+                  if (!state.sim) return;
+                  buyUpgrade(state.sim, b.id, c.kind); // l'événement passe dans sim.alerts (HUD)
+                });
+                body.appendChild(btn);
+                line(body, 'Effet attendu', c.effect, c.useful ? '' : 'warn');
+              }
+            }
           }
         }
       },

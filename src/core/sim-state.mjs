@@ -54,6 +54,12 @@ export function newSimState() {
     // vol annulé sont retirés EXPLICITEMENT (removePassengers).
     passengers: { totalCarried: 0, satisfaction: 100,
                   queues: {}, groups: [], injectedTotal: {}, securityDone: {} },
+    // R31 : améliorations de capacité PAR TERMINAL — sim.upgrades[terminalId]
+    // = { terminal: n, fueling: n, teams: n } (clés chaînes, comme queues).
+    // Le NIVEAU est la source (sérialisé : la reprise restitue niveau + coût
+    // déjà payé — on ne re-débite JAMAIS au chargement). Absent d'une
+    // sauvegarde ancienne = niveau 0 (toléré, upgrades.mjs ensureUpgrades).
+    upgrades: {},
     economy: { money: START_FUNDS, revenue: {}, spent: {}, debt: 0, bankrupt: false,
       // R16 : périodes financières (5 min de jeu) — les 4 dernières closes
       // (borné, comme R14) + l'accumulateur de clôture (_periodAcc, pattern

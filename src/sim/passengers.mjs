@@ -33,6 +33,7 @@
 // L'état de la sim (sim-state.mjs) reste la source ; l'UI ne lit que cet objet.
 import { pushEvent } from '../core/sim-state.mjs';
 import { countTypeServing } from '../infra/assignments.mjs';
+import { capMult } from '../infra/upgrades.mjs'; // R31 : capacité check-in/sécurité par terminal (amélioration)
 
 // Équilibrage (ponytail : constantes fixes, calées sur les tests saturation —
 // pas de table par type d'avion ; le débit des files ne dépend pas du vol).
@@ -233,8 +234,11 @@ export function boardDelay(sim, ac) {
 // l'INFRA construite : le terminal et SES portes). Un terminal ne traite JAMAIS
 // les pax d'un autre : la capacité est CELLE DU TERMINAL, jamais « × nombre de
 // terminaux ».
-function checkinCap(sim, tid) { return PAX.checkinCapPerTerminal; }
-function securityCap(sim, tid) { return PAX.securityCapPerTerminal; }
+// R31 : les CAPACITÉS de base (PAX.*PerTerminal) sont MULTIPLIÉES par le
+// facteur d'amélioration « terminal » (capMult, upgrades.mjs) — le niveau 0
+// renvoie 1 (l'état existant, les tests saturation inchangés).
+function checkinCap(sim, tid) { return Math.round(PAX.checkinCapPerTerminal * capMult(sim, tid)); }
+function securityCap(sim, tid) { return Math.round(PAX.securityCapPerTerminal * capMult(sim, tid)); }
 export function waitCapFor(sim, tid) {
   // R30 : les clés de `queues`/`securityDone` sont des CHAÎNES (clé d'objet),
   // mais `g.terminalId` est un NOMBRE — on compare en String() pour que la
@@ -387,9 +391,11 @@ export function passengerSummary(sim) {
     byTerminal,
     // Compat globale (HUD) : les files GLOBALES (somme des terminaux) — l'UI
     // globale peut les afficher sans connaître les terminaux.
+    // R31 : les caps GLOBALES somment les caps PAR TERMINAL (améliorations
+    // incluses — capMult, upgrades.mjs) ; l'affichage reste cohérent.
     queue: {
-      checkin: { n: inCheckin, cap: PAX.checkinCapPerTerminal * Math.max(1, sim.infra.terminals.length), occ: 0 },
-      security: { n: inSecurity, cap: PAX.securityCapPerTerminal * Math.max(1, sim.infra.terminals.length), occ: 0 },
+      checkin: { n: inCheckin, cap: sim.infra.terminals.reduce((s, t) => s + Math.round(PAX.checkinCapPerTerminal * capMult(sim, t.id)), 0), occ: 0 },
+      security: { n: inSecurity, cap: sim.infra.terminals.reduce((s, t) => s + Math.round(PAX.securityCapPerTerminal * capMult(sim, t.id)), 0), occ: 0 },
       board: { n: inBoard, cap: waitCap(sim), occ: 0 },
     },
   };

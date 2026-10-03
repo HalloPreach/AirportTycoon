@@ -6,6 +6,7 @@
 import { BUILDINGS, TERMINAL_GATE_SIZES, HANGAR_CLEAN_PER_SEC, CLEANING_RATE_PER_SEC, GROUND_SERVICE_TYPES } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
 import { autoAssign, ensureAssignments, countTypeServing } from './assignments.mjs'; // R27/R29 : affectation des services + debit d'equipe par terminal
+import { teamRateMult } from './upgrades.mjs'; // R31 : debit equipes par terminal (amelioration)
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 
 const CELL = 10;
@@ -293,15 +294,19 @@ export function cleanGates(sim, dt) {
                                      ['hangar', 'maintenance', HANGAR_CLEAN_PER_SEC]]) {
     for (const t of sim.infra.terminals) {
       const teams = countTypeServing(sim, type, t.id);
+      // R31 : le debit par equipe est MULTIPLIÉ par l'amelioration « equipes »
+      // DU TERMINAL (teamRateMult, upgrades.mjs) — le niveau 0 renvoie 1
+      // (l'etat existant, les tests R29 inchanges).
+      const rateT = rate * teamRateMult(sim, t.id);
       sim._teamActivity = sim._teamActivity || {};
       const act = (sim._teamActivity[type] = sim._teamActivity[type] || {});
-      act[t.id] = { teams, gates: 0, drain: 0, servedGate: null, budget: teams * rate * dt };
+      act[t.id] = { teams, gates: 0, drain: 0, servedGate: null, budget: teams * rateT * dt };
       if (!teams) continue; // aucune equipe : aucune usure ne diminue
       const worn = sim.infra.gates.filter((g) => g.terminalId === t.id && g[field] > 0);
       // Priorite : la plus usee d'abord, egalite → la plus ancienne (deterministe).
       worn.sort((a, b) => (b.cleaning + b.maintenance) - (a.cleaning + a.maintenance)
         || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-      let budget = teams * rate * dt;
+      let budget = teams * rateT * dt;
       for (const g of worn) {
         if (budget <= 0) break;
         const before = g[field];

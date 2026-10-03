@@ -33,6 +33,7 @@ import { servicesServingGate } from '../infra/assignments.mjs'; // R27 : lances 
 import { onGateArrived, onGateDeparted, onFlightCancelled } from '../economy/economy.mjs';
 import { countContractFlight } from '../flights/contracts.mjs';
 import { arrivePassengers, countCarried, boardDelay, groupComplete, removePassengers } from './passengers.mjs';
+import { refuelTimeMult } from '../infra/upgrades.mjs'; // R31 : temps de plein par terminal (amelioration)
 import { runwayClosed, fuelOut } from './incidents.mjs';
 
 const V = { approach: 220, landing: 130, taxi: 60, pushback: 30, departure: 150 };
@@ -541,7 +542,11 @@ function acquireLance(sim, ac, spec, lances) {
   // la priorité d'acquisition ; SANS agents véhicules : la sim reste sans
   // entités mobiles, le déplacement est un simple retard proportionnel à la
   // distance — la station éloignée sert plus lentement que la station proche).
-  ac._refuelNeed = spec.refuel * REFUEL_TIME_S + bestD * (REFUEL_TRAVEL_S_PER_1000 / 1000);
+  // R31 : le temps de PLEIN est MULTIPLIÉ par le facteur d'avitaillement DU
+  // TERMINAL (refuelTimeMult, upgrades.mjs) — le niveau 0 renvoie 1 (l'état
+  // existant, les tests R28 inchangés). Le déplacement (station éloignée) ne
+  // change PAS : l'amélioration sert le DÉBIT, pas le placement.
+  ac._refuelNeed = spec.refuel * REFUEL_TIME_S * refuelTimeMult(sim, g.terminalId) + bestD * (REFUEL_TRAVEL_S_PER_1000 / 1000);
   ac._lanceId = best.id; // R28 : le propriétaire est EXPLICITE (id de station)
 }
 

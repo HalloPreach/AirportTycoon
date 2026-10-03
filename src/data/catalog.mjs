@@ -101,6 +101,30 @@ export const UNLOCK_RULES = Object.freeze({
     why: '300 pax transportés (les volumes justifient le confort)' },
 });
 
+// R31 (t_7a512737) : 3 CHOIX D'AMÉLIORATION DE CAPACITÉ CIBLÉE, par terminal —
+// coût FIXE par niveau (pas de %), résultat ATTENDU affiché AVANT achat (le
+// joueur voit ce qu'il achète) :
+//   terminal : +60 % de capacité check-in/sécurité DU terminal (files plus
+//              longues → occupation/satisfaction au-delà de la capacité) ;
+//   fueling  : −25 % de temps de plein PAR NIVEAU (le goulot avitaillement,
+//              la SATURATION des lances ne change pas — c'est le débit) ;
+//   teams    : ×2 du débit de nettoyage/remise à zéro par équipe DU terminal
+//              (l'usure s'accumule moins vite RELATIVEMENT : moins de délai).
+// Le « mauvais achat » reste COMPRÉHENSIBLE : l'UI montre le goulot courant
+// du terminal (src/infra/upgrades.mjs, bottleneckView) — acheter « terminal »
+// quand le goulot est le PLEIN est inutile, et l'écran l'explique.
+// Les niveaux vivent dans l'ÉTAT (sim.upgrades, sérialisé — la reprise
+// restitue niveau ET le coût déjà payé : le niveau est la source, on ne
+// re-débite JAMAIS au chargement).
+export const UPGRADES = Object.freeze({
+  terminal: { name: 'Terminal efficace', cost: 1500, maxLevel: 3, capMultPerLevel: 0.6,
+    effect: '+60 % de capacité check-in/sécurité de ce terminal (file tolérée plus longue)' },
+  fueling:  { name: 'Avitaillement rapide', cost: 1200, maxLevel: 3, timeMultPerLevel: 0.25,
+    effect: '−25 % du temps de plein de ce terminal par niveau (la saturation des lances ne change pas)' },
+  teams:    { name: 'Équipement d\'équipe', cost: 800, maxLevel: 3, rateMultPerLevel: 1,
+    effect: '×2 du débit nettoyage/remise à zéro par équipe de ce terminal par niveau' },
+});
+
 // Décomposition du cycle avion (ordre d'exécution, l'état est la donnée).
 // AC18 (A9) : « docking » = amarrage physique du nœud de porte au centre de la
 // porte (taxi → docking → gate).

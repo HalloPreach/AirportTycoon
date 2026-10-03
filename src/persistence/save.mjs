@@ -47,6 +47,7 @@
 import { AIRCRAFT } from '../data/catalog.mjs';
 import { buildGrid } from '../infra/infra.mjs';
 import { ensureAssignments } from '../infra/assignments.mjs'; // R27 : migration des affectations
+import { ensureUpgrades } from '../infra/upgrades.mjs'; // R31 : migration des améliorations (niveau 0 absent)
 
 export const SAVE_KEY = 'airport-tycoon-save';
 export const SAVE_VERSION = 1;
@@ -188,6 +189,21 @@ function validateSim(sim) {
       throw new Error('Sauvegarde invalide : groupes de passagers non listable');
     }
   }
+  // R31 (t_7a512737) : améliorations de capacité PAR TERMINAL —
+  // sim.upgrades[terminalId] = { terminal, fueling, teams } (niveaux entiers).
+  // ABSENTE = sauvegarde ancienne (tolérée, ensureUpgrades au chargement) ;
+  // PRÉSENTE mais de mauvais type (objet non lisible, niveau non numérique)
+  // → REJETÉE (les multiplicateurs feraient NaN dans la sim au 1er tick).
+  if (isObj(sim.upgrades)) {
+    for (const [tid, t] of Object.entries(sim.upgrades)) {
+      if (!isObj(t)) throw new Error(`Sauvegarde invalide : améliorations du terminal ${tid} illisibles`);
+      for (const k of ['terminal', 'fueling', 'teams']) {
+        if (k in t && !Number.isInteger(t[k])) {
+          throw new Error(`Sauvegarde invalide : niveau d'amélioration « ${k} » (terminal ${tid}) non entier`);
+        }
+      }
+    }
+  }
 }
 
 // Sérialise un état de jeu en chaîne JSON (stockable). FONCTION PURE (A11) :
@@ -259,6 +275,11 @@ export function deserialize(json) {
     // (terminal supprimé entre-temps). Le retour (nombre de services touchés)
     // est lisible : l'UI peut annoncer la migration.
     ensureAssignments(out.sim);
+    // R31 (t_7a512737) : migration des AMÉLIORATIONS de capacité — les
+    // sauvegardes pré-R31 n'ont pas de champ `upgrades` : ensureUpgrades
+    // crée l'objet vide (niveaux 0 par défaut — on ne RE-débite jamais au
+    // chargement, le niveau est la source du coût déjà payé).
+    ensureUpgrades(out.sim);
   }
   return out;
 }
