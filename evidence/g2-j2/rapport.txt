@@ -2,7 +2,7 @@ PASS Commandes accessibles à la souris et pause active
 {"paused":true,"buttons":["1 · Piste (2500 $)","2 · Taxiway (400 $)","3 · Terminal (3000 $)","4 · Station carburant (1200 $)","5 · Hangar maintenance (1500 $)","6 · Salle de restauration (1000 $)","7 · Équipe nettoyage (900 $)","8 · Salle bagages (900 $)","X · Démolir","Reprendre (P)","Vitesse x1 (F)","Sauvegarder (S)","Charger la sauvegarde (L)"]}
 
 PASS Pause : aucun débit ni temps simulé
-{"before":{"money":11999.30656,"time":0.21670000000000003},"after":{"money":11999.30656,"time":0.21670000000000003}}
+{"before":{"money":11999.36,"time":0.20000000000000004},"after":{"money":11999.36,"time":0.20000000000000004}}
 
 PASS Bouton vitesse x4
 ""
@@ -14,7 +14,7 @@ PASS Coût piste affiché par minute = débit réel sur 60 secondes
 {"rate":{"observed":72,"shown":72},"costText":"Inspection — clic sur la carte\nPiste #1\n100×1000 px\nCoût d’origine\n0 $\nRemboursement démolition\n0 $\nExploitation\n72 $ /min · 4 320 $ /h\nLongueur\n1000 px"}
 
 PASS Construction souris : infrastructure ajoutée et coût débité
-{"construction":{"money":11999.30656,"count":1},"built":{"money":11599.30656,"count":2}}
+{"construction":{"money":11999.36,"count":1},"built":{"money":11599.36,"count":2}}
 
 PASS Planning : obstacle explicite pour une offre impossible
 "PacificCargo · Boeing 747 · 301 pax · 00:00:00 · prévu\n· charge 301/350 · ≈ 3912 $ (estimé) · ⚠ pas de station carburant : départ sec (billets moitiés) · ⛔ pas de porte de taille L\nAccepter\nRefuser"

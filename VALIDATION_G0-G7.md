@@ -20,7 +20,7 @@ lu en lecture seule (`qa/_g-status.cjs`, `qa/_r08-lock.cjs`).
 |------|-------|--------|---------------|
 | G0 | Référence (J0) | **VALIDÉ** | 4 critères (a)-(d) relancés et passés sur `e3dc3fc` (§ G0) |
 | G1 | Fiabilité (J1) | **VALIDÉ** | `2369c67` : 12 prérequis R03-R14 clos avec preuve (suite 174/174) + partie intégrée `qa/g1-integrated.mjs` 15/15 + porte CDP 18/18 (§ G1) |
-| G2 | Compréhension (J2) | **BLOQUÉ** | cascade : R15-R20 en todo (amont J1 VALIDÉ, à exécuter) (§ G2-G7) |
+| G2 | Compréhension (J2) | **VALIDÉ** | `63f11d1` : R15-R20 clos avec preuve + 1er cycle navigateur CDP `qa/g2-j2.mjs` 19/19, comparaison chiffrée (§ G2) |
 | G3 | Progression (J3) | **BLOQUÉ** | cascade : R21-R26 en todo (amont J1+J2 non validés) |
 | G4 | Exploitation (J4) | **BLOQUÉ** | cascade : R27-R31 en todo (amont J3 non validé) |
 | G5 | Risque (J5) | **BLOQUÉ** | cascade : R32-R35 en todo (amont J4 non validé) |
@@ -126,15 +126,59 @@ preuve, la partie intégrée est saine (critère a+b), la limite UI est consign�
 La vague J2 (R15-R20) est libérée ; G2 (t_93b886f9) reste en todo tant que R15-R20 ne
 sont pas livrées (règle : un G ne se valide pas sur le seul nombre de cartes).
 
-## G2-G7 — BLOQUÉS en cascade
+## G2 — Compréhension (J2) : VALIDÉ sur `63f11d1` (t_93b886f9)
 
-Aucune carte R15-R43 n'est exécutée (toutes `todo`, aucun run) et chaque jalon exige
-l'amont validé (règle des G : « amont non validé » = statut À FAIRE/BLOQUÉ, pas VALIDÉ) :
+Critères de la carte : (a) commandes accessibles sans README ni touches mystiques ;
+(b) unités correctes (coût affiché/min = débit constaté, pause ne débite rien, x4
+cohérent) ; (c) inspection vivante (phase change sans reselection, objet disparu ≠ actif) ;
+(d) goulot lisible par cause (piste/porte/carburant/passagers, pas de double comptage) ;
+(e) planning utilisable (offre impossible → obstacle expliqué, décision non doublée).
+Preuves attendues : observation navigateur (CDP/Edge) du 1er cycle avec captures ;
+valeurs affichées = valeurs sim exportées (comparaison chiffrée).
 
-- **G2** ← R15-R20 (todo, LIBÉRÉES par G1 — amont J1 validé `2369c67`) : le 1er cycle
-  navigateur (unités, overlay, planning) sera exercé dès R15-R20 livrées ; G2 (t_93b886f9)
-  reste en todo tant que les 6 cartes ne sont pas closes.
-- **G3** ← R21-R26 (todo, gated J1+J2) — progression/contrats : non exécutable.
+Prérequis : les 6 cartes R15-R20 sont closes avec preuve (R15 `90609b1`+`7cfa98c`,
+R16 `47da950`+`b885d3c`, R17 `7faa963`, R18 `5f675ec`, R19 `5b431da`, R20 `fb13efd`) —
+relu via les handoffs de tâches parents, pas par le seul nombre de cartes.
+
+**1er cycle navigateur** — `qa/g2-j2.mjs` (scénario CDP Edge headless, re-exécuté
+aujourd'hui sur `63f11d1`) : **19/19 PASS, 0 FAIL**, zéro exception page
+(`evidence/g2-j2/` : `rapport.json`/`rapport.txt` + 5 captures). Réception →
+construction → offres → décision → inspection :
+
+- **(a)** commandes à la souris : nouvelle partie (menu), Passer (intro), Pause (P),
+  Vitesse (F), Sauvegarder (S), Charger (L), Piste/Terminal/Démolir (toolbar) —
+  toutes présentes et fonctionnelles sans clavier ; pause active (état figé) ;
+- **(b)** pause : money/time inchangés entre deux lectures (11999.36 / 0.2 avant
+  et après) ; cadence : x4 = 4 s simulées / 12.8 $ pour x1 = 1 s / 3.2 $
+  (4× exact, copies de simulation) ; coût piste affiché **72 $/min = 72 $ observés
+  sur 60 s de tick** (comparaison chiffrée affiché=sim, 4 320 $/h) ;
+- **(c)** inspection vivante : la phase change d'« attente » à « atterrissage »
+  **sans reselection** ; objet supprimé de `sim.aircraft` → le panneau affiche
+  « parti — plus en simulation » sans reselection ;
+- **(d)** 5 causes de goulot (piste/porte/segment/carburant/passagers) : la cause
+  affichée dans l'inspection = `causeAt` (modèle) dans chaque état ; retard compté
+  **une seule fois par seconde** (60→61 sur tick de 1 s, pas de double comptage) ;
+- **(e)** planning : offre large (301 pax, ⛔ pas de porte de taille L) → obstacle
+  explicite affiché ; offre medium (73 pax) acceptée par clic → statut `accepted`
+  une fois ; `decideFlight` répété sur le même vol = `false` (décision non doublée).
+
+Suite Node relancée sur `63f11d1` : **210/210 PASS** (dont 7 R16, 4 R15, 7 R17,
+3 R18, 5 R19, 8 R20).
+
+Limites consignées (honnêtes) : le scénario CDP utilise des fixtures explicites pour
+les états d'avion/congestion difficiles à attendre — la QA cible les 5 critères, elle
+n'est pas une preuve d'un cycle de vol complet de bout en bout ; le jugement global de
+« compréhension joueur » reste subjectif. Invariants respectés : état métier JSON-sérialisable intact, sim sans DOM/timers, pas de nouvelle dépendance, assertions
+intactes (aucune retirée).
+
+## G3-G7 — BLOQUÉS en cascade
+
+Les cartes R15-R43 : R15-R20 done (vague J2, G2 validé ci-dessus), R21-R43 en todo
+sans run. Chaque jalon exige l'amont validé (règle des G : « amont non validé » = statut
+À FAIRE/BLOQUÉ, pas VALIDÉ) :
+
+- **G3** ← R21-R26 (todo, gated J1+J2 — J1 validé `2369c67`, J2 validé `63f11d1` →
+  PRÊTES à exécuter) — progression/contrats : non exécutable tant que R21-R26 sont todo.
 - **G4** ← R27-R31 (todo, gated J3) — 2 terminaux/exploitation : non exécutable.
 - **G5** ← R32-R35 (todo, gated J4 ; note fixtures D5) — risque/déficit : non exécutable.
 - **G6** ← R36-R38 (todo, gated J5) — matrice ≥10 seeds effectives (R09 pré-req ✓ déjà) :
