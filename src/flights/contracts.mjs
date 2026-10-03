@@ -10,8 +10,9 @@
 // Aucun billet n'est payé deux fois (les pax payent PAX_REVENUE comme d'habitude).
 // Les offres facultatives refusées ne coûtent rien (pas de pénalité, l'offre
 // disparaît — le joueur peut rester sur une petite activité, tiers R21).
-import { AIRCRAFT } from '../data/catalog.mjs';
 import { earn, charge } from '../economy/economy.mjs';
+import { AIRCRAFT } from '../data/catalog.mjs'; // R25 : affichage des capacités (sièges), pas de règle
+import { runwayFor } from '../infra/infra.mjs'; // R25 : critère compatibilité piste (le même que le planificateur)
 import { nominalRotation } from '../sim/aircraft.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
 
@@ -72,6 +73,14 @@ export function contractModel(sim, id) {
   return CONTRACT_MODELS.find((m) => m.id === (id?.model ?? id));
 }
 
+// Mesure de la période : le contrat est-il RÉUSSI à l'heure courante ? LA
+// même règle que le règlement (tickContracts) — jamais deux prédictions
+// divergentes (R25 : le panneau lit le verdict ici, il ne ré-impose rien).
+export function contractOnTrack(c, m) {
+  return c.done >= m.flights && c.pax >= m.minPax
+    && (m.punctuality == null || (c.ends > 0 && c.onTime / c.ends >= m.punctuality));
+}
+
 // LECTURE pour le panneau (UI fine, pattern objectiveView) : l'état + la mesure
 // live (x/y vols, pax, ponctualité, temps restant) + le prochain contrat offert.
 export function contractView(sim) {
@@ -89,16 +98,40 @@ export function contractView(sim) {
       desc: m.desc,
     };
   };
+  const active = c.active ? view(c.active) : null;
+  if (active) active.onTrack = contractOnTrack(c.active, CONTRACT_MODELS.find((x) => x.id === c.active.model));
   return {
-    active: c.active ? view(c.active) : null,
+    active,
     offered: c.offered ? { id: c.offered.id, model: c.offered.model,
       name: CONTRACT_MODELS.find((x) => x.id === c.offered.model).name,
+      acType: CONTRACT_MODELS.find((x) => x.id === c.offered.model).acType,
       desc: CONTRACT_MODELS.find((x) => x.id === c.offered.model).desc,
       left: Math.max(0, c.offered.until - (sim.time ?? 0)) } : null,
     nextOfferAt: (c.offered || c.active || (c.cooldownUntil ?? 0) > (sim.time ?? 0)) ? null
                 : CONTRACT_FIRST_PAX, // condition (pax) du prochain contrat ; null sinon
     history: c.history.slice().reverse().map(view), // les plus récents d'abord (borné)
   };
+}
+
+// R25 (t_974e6b1e) : présentation RICHE des capacités — le PANNEAU affiche
+// « quel appareil / combien de sièges / et l'infra le sert-elle ? » SANS
+// décider : les chiffres viennent du catalogue (AIRCRAFT) et le verdict de
+// capacité réutilise le critère de COMPATIBILITÉ du planificateur (runwayFor,
+// infra.mjs : piste ≥ minRunway + porte de la taille — la même règle que
+// flights.servableTypes, jamais une 2e règle de sim). Le panneau ne ré-impose
+// rien : il lit, la sim décide (tickContracts) ; aucun état nouveau n'est
+// créé (la sauvegarde reste EXACTE : R24 persistait déjà tout l'état contrats,
+// R25 n'ajoute aucun champ).
+export function contractCapable(sim, m) {
+  const spec = AIRCRAFT[m.acType] || {};
+  const runway = runwayFor(sim, spec.minRunway || 0);
+  const gate = (sim.infra.gates || []).some((g) => g.size === spec.gate);
+  const capable = !!runway && gate; // servable par l'infra (critère planificateur)
+  // Motif lisible quand pas servable (l'offre reste possible : le joueur peut
+  // investir pour servir le contrat — la décision, pas un blocage).
+  const why = capable ? '' : (runway ? 'pas de porte de la taille'
+    : `piste trop courte (≥ ${spec.minRunway} px)` + (gate ? '' : ' et pas de porte de la taille'));
+  return { type: m.acType, name: spec.name || m.acType, seats: spec.seats || 0, capable, why };
 }
 
 // Décision du joueur (commande sim ; l'UI n'envoie que l'intention) :
@@ -155,8 +188,7 @@ export function tickContracts(sim, dt) {
   // Échéance : le contrat est réglé d'après la mesure sur la période.
   if (c.active && !c.active.settled && c.active.due <= (sim.time ?? 0)) {
     const m = CONTRACT_MODELS.find((x) => x.id === c.active.model);
-    const ok = c.active.done >= m.flights && c.active.pax >= m.minPax
-      && (m.punctuality == null || (c.active.ends > 0 && c.active.onTime / c.active.ends >= m.punctuality));
+    const ok = contractOnTrack(c.active, m); // LA règle unique (lu aussi par le panneau)
     settle(sim, c.active, ok ? 'success' : 'failed', ok ? null : m.penalty);
   }
   // Prochain contrat : un contrat réglé (ou refusé/expiré, plus de place) ouvre

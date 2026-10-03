@@ -111,7 +111,15 @@ récupérable. La configuration vivante (données, pas de logique) :
   état sérialisé avec la sim (reprise = jamais re-réglable), panneau
   « Contrats de compagnie » (ui/panels.mjs).
 - R25 : présentation riche du contrat (délai/vols/capacités/revenus/pire
-  pénalité) + progression et risque après départ et sauvegarde exacte.
+  pénalité) + progression et risque après départ et sauvegarde exacte
+  *implémentée* : livrée (panneau Contrats, ui/panels.mjs, lit `contractView`
+  enrichi + `contractCapable`/`contractOnTrack` de `src/flights/contracts.mjs`) —
+  l'offre affiche l'appareil + sièges + SERVABILITÉ (critère du planificateur :
+  piste ≥ min + porte de la taille, motif lisible sinon) ; le contrat actif
+  affiche le risque après départ (vols/pax restants, « sur la bonne voie »,
+  infra non servable) + pire pénalité plafonnée payée une fois ; le verdict
+  onTrack est LA règle unique du règlement (lue par le panneau, jamais
+  ré-imposée) ; AUCUN champ d'état nouveau → la sauvegarde R24 reste exacte.
 - R26 : offres liées progression/quality (contrat de croissance → vols proposés
   réels ; réputation faible = voie de reprise ; `MAX_PENDING` devient paramètre,
   pas plafond caché).

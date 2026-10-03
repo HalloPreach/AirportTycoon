@@ -22,7 +22,7 @@ import { OBJECTIVES, objectiveView } from '../progression/objectives.mjs';
 // R24 (t_f712f1a5) : les contrats de compagnie — LECTURE (contractView) + les
 // COMMANDES de décision (decideContract/cancelContract) : la sim règle la
 // prime/pénalité (tickContracts), le panneau ne décide que par ces portes.
-import { contractView, decideContract, cancelContract } from '../flights/contracts.mjs';
+import { contractView, decideContract, cancelContract, contractCapable } from '../flights/contracts.mjs';
 import { unlockView } from '../infra/unlocks.mjs';
 
 const PHASES_FR = Object.freeze({
@@ -362,7 +362,12 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         if (!sim) return;
         const v = contractView(sim);
         if (v.offered) {
-          line(body, `Contrat proposé — ${v.offered.name}`, `${v.offered.desc} Décision ${v.offered.left} s (refus gratuit)`);
+          const cap = contractCapable(sim, { acType: v.offered.acType });
+          line(body, `Contrat proposé — ${v.offered.name}`,
+            `décision ${v.offered.left} s (refus gratuit)`);
+          line(body, '', `${v.offered.desc}`);
+          line(body, 'Appareil', `${cap.name} (${cap.seats} sièges) — ` +
+            (cap.capable ? 'servable par l’infra actuelle' : `non servable : ${cap.why}`));
           const ok = document.createElement('button');
           ok.textContent = 'Accepter le contrat';
           ok.addEventListener('click', () => { decideContract(sim, v.offered.id, true); refreshContracts(); });
@@ -373,10 +378,20 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         }
         if (v.active) {
           const a = v.active;
+          const cap = contractCapable(sim, { acType: a.acType });
           const pct = a.rate == null ? '—' : `${Math.round(a.rate * 100)} %`;
+          // Risque aprÈs DÉPART (R25) : ce qu'il reste à faire + le pire cas
+          // (pénalité plafonnée, payée une fois — le contrat ne peut JAMAIS
+          // coûter plus que ça ; la prime si la mesure passe au vert).
+          // Le verdict onTrack vient du module (contractOnTrack — LA règle
+          // unique du règlement, lue ici, jamais ré-imposée par le panneau).
+          const risk = a.onTrack ? 'sur la bonne voie'
+            : (cap.capable ? `reste ${Math.max(0, a.flights - a.done)} vol(s)${a.pax < a.minPax ? ` et ${a.minPax - a.pax} pax` : ''}`
+                           : `infra non servable (${cap.why})`);
           line(body, `Contrat actif — ${a.name}`,
             `${a.done}/${a.flights} vols · ${a.pax}/${a.minPax} pax · ponctualité ${pct} (exigée ${Math.round((a.punctuality ?? 0) * 100)} %) · ${a.left | 0} s restantes`);
-          line(body, '', `Prime ${a.bonus} $ si réussi · pénalité ${a.penalty} $ si manqué (payée une fois)`);
+          line(body, '', `${cap.name} (${cap.seats} sièges) — ${risk}`);
+          line(body, '', `Prime ${a.bonus} $ si réussi · pire pénalité ${a.penalty} $ (payée une fois)`);
           const cancel = document.createElement('button');
           cancel.textContent = 'Annuler le contrat (pénalité due)';
           cancel.addEventListener('click', () => { cancelContract(sim, a.id); refreshContracts(); });
