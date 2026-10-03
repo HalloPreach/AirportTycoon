@@ -32,6 +32,33 @@ const COMP_FEE_PER_CANCEL = 500;
 export const DEBT = Object.freeze({
   ratePerSec: 0.01,  // 1 %/s (BL-18) — paramètre D5
   baseCap: 10000,    // borne de l'assiette (BL-18 : −BANKRUPT_LIMIT) — paramètre D5
+  // R35 (t_dabe90d7) : le taux s'applique sur une PÉRIODE EXPLICITE — 5 min,
+  // la période financière (R16) : l'intérêt d'une période = ratePerSec ×
+  // periodSec × assiette (1 %/s × 300 s = 3 % de l'assiette par période),
+  // bornée par la cap (D5 : une seule politique — le paramètre de période,
+  // pas un 2e mécanisme).
+  periodSec: 300,
+});
+
+// R35 (t_dabe90d7) : le redressement BORNÉ — un emprunt UNIQUE par partie.
+// L'emprunt n'est PAS une recette d'exploitation (jamais dans revenue) et ne
+// peut pas être obtenu indéfiniment (maxLoans) : c'est une liquidité qui
+// s'ajoute au solde, avec ses intérêts facturés UNE fois à la conclusion
+// (compte `debt`, comme le taux D5 : le bilan reste à l'équilibre, R12).
+export const LOAN = Object.freeze({
+  principal: 5000, // la liquidité obtenue
+  rate: 0.05,      // 5 % d'intérêts (facturés une fois, à la conclusion)
+  maxLoans: 1,     // BORNE : un seul emprunt par partie (pas indéfini)
+});
+
+// R35 (t_dabe90d7) : l'ALERTE de TRÉSORERIE — deux niveaux (la trésorerie
+// s'amenuise, puis le déficit s'approfondit) avec un COOLDOWN (pas de spam :
+// on ne re-prévient un niveau que s'il n'a pas été atteint depuis cooldownSec).
+// Ignorer les avertissements mène à la faillite (BANKRUPT_LIMIT, mesurable).
+export const TREASURY = Object.freeze({
+  warn: { below: 4000, kind: 'treasury-warn' },        // sous 4 000 $ : « s'amenuit »
+  critical: { below: -5000, kind: 'treasury-critical' }, // sous −5 000 $ : « dette s'approfondit »
+  cooldownSec: 300, // 5 min : on ne re-prévient pas plus souvent un niveau
 });
 
 export function canAfford(sim, cost) { return sim.economy.money >= cost; }
@@ -136,7 +163,94 @@ export function tickEconomy(sim, dt) {
       sim.economy._periodAcc -= PERIOD_S;
     }
   }
+  // R35 (t_dabe90d7) : l'ALERTE de TRÉSORERIE (deux niveaux, cooldown) —
+  // AVANT checkBankruptcy : le niveau critique prévient encore le tick où la
+  // faillite est atteinte (l'avertissement précède la faillite, mesurable).
+  treasuryAlerts(sim);
   checkBankruptcy(sim);
+}
+
+// R35 (t_dabe90d7) : ALERTE de TRÉSORERIE — deux niveaux (TREASURY : la
+// trésorerie s'amenuise, puis le déficit s'approfondit) avec COOLDOWN (pas de
+// spam : on ne re-prévient un niveau que s'il n'a pas été atteint depuis
+// cooldownSec — le compteur vit sur la sim → la reprise est cohérente).
+// C'est l'avertissement AVANT la faillite : l'ignorer (ne pas emprunter)
+// laisse la pente (opex + intérêts) atteindre BANKRUPT_LIMIT (mesurable, test).
+// L'UI lit sim.alerts (toasts) — la sim décide, l'UI affiche (UI fine).
+export function treasuryAlerts(sim) {
+  const e = sim.economy;
+  if (e.bankrupt) return; // la sim est stoppée : plus d'alertes (l'écran de faillite les remplace)
+  const now = sim.time ?? 0;
+  const last = e._treasuryAlerts || (e._treasuryAlerts = {}); // sauvegarde ancienne : absent → 1re alerte
+  for (const lvl of [TREASURY.warn, TREASURY.critical]) {
+    const due = last[lvl.kind] == null || now - last[lvl.kind] >= TREASURY.cooldownSec;
+    if (e.money < lvl.below && due) {
+      pushEvent(sim, { kind: lvl.kind, money: Math.round(e.money), below: lvl.below });
+      last[lvl.kind] = now;
+    }
+  }
+}
+
+// R35 (t_dabe90d7) : EMPRUNT — le redressement BORNÉ (LOAN : un seul par
+// partie, liquidité + intérêts facturés UNE fois à la conclusion). PATRON R33
+// (réponse opérationnelle) : LECTURE pure (loanState : conséquences AVANT la
+// décision) + COMMANDE (takeLoan : validation AVANT toute écriture — refus
+// = motif lisible, SANS mutation partielle). L'emprunt n'est PAS une recette
+// d'exploitation (jamais dans revenue, R11) : c'est une liquidité ; ses
+// intérêts vont au compte dédié `debt` (l'identité EV-9 tient, R12 : le
+// principal est une ligne de crédit du bilan, comptée UNE fois).
+export function ensureLoan(sim) {
+  const e = sim.economy;
+  if (!e) return; // simulation sans module économie (sauvegarde très ancienne) — rien à migrer
+  if (!isLoanObj(e.loan)) e.loan = { principal: 0, count: 0 }; // sauvegarde ancienne / absente
+}
+const isLoanObj = (l) => l && typeof l === 'object'
+  && (l.principal == null || typeof l.principal === 'number')
+  && (l.count == null || typeof l.count === 'number');
+
+// LECTURE pure (pattern R33) : l'emprunt est-il encore possible, à quel coût —
+// le panneau affiche les conséquences AVANT le clic.
+export function loanState(sim) {
+  ensureLoan(sim);
+  const l = sim.economy.loan;
+  const interest = Math.round(LOAN.principal * LOAN.rate);
+  const taken = l.count >= LOAN.maxLoans;
+  return {
+    available: !taken,
+    count: l.count, max: LOAN.maxLoans,
+    principal: LOAN.principal, interest,
+    netLiquidity: LOAN.principal - interest, // ce qui reste EN MAIN après les intérêts
+    reason: taken ? `emprunt déjà obtenu (${LOAN.maxLoans} max par partie)` : null,
+  };
+}
+
+// COMMANDE : validation AVANT toute écriture (refus = motif, pas de mutation
+// partielle) ; l'écriture est UN BLOC (la sim est l'unique écrivain).
+export function takeLoan(sim) {
+  ensureLoan(sim);
+  const e = sim.economy;
+  if (e.bankrupt) return { ok: false, reason: 'faillite : la sim est stoppée (reprendre ou nouvelle partie)' };
+  const ls = loanState(sim);
+  if (!ls.available) return { ok: false, reason: ls.reason };
+  e.loan.count += 1;
+  e.loan.principal += LOAN.principal; // le principal DÛ (le distingue des intérêts/liquidités)
+  e.money += LOAN.principal - ls.interest; // la liquidité nette (PAS revenue — R11)
+  e.debt += ls.interest;                    // les intérêts, compte dédié (EV-9 : comptés une fois)
+  pushEvent(sim, { kind: 'loan-taken', principal: LOAN.principal, interest: ls.interest });
+  return { ok: true, principal: LOAN.principal, interest: ls.interest };
+}
+
+// R35 (t_dabe90d7) : REPRISE après faillite — la sim était stoppée (le tick
+// rentrait par l'entrée : sim.economy.bankrupt). Le joueur choisit de
+// REPRISE (la sim continue depuis le bilan) : le flag est levé, un événement
+// lisible est poussé. La NOUVELLE PARTIE est du côté UI (menu, main.mjs) —
+// la sim ne décide pas de la renaissance du jeu.
+export function resumeAfterBankruptcy(sim) {
+  const e = sim.economy;
+  if (!e.bankrupt) return { ok: false, reason: 'pas en faillite (rien à reprendre)' };
+  e.bankrupt = false;
+  pushEvent(sim, { kind: 'bankruptcy-resumed' });
+  return { ok: true };
 }
 
 // Faillite : solde trop négatif → on arrête la sim (le jeu reste jouable pour réagir).
@@ -155,17 +269,25 @@ export function checkBankruptcy(sim) {
 // (dépense des départs) et des indemnités vols annulés (spent.compensation).
 export function periodStatement(sim) {
   const e = sim.economy;
+  ensureLoan(sim); // l'état de l'emprunt est normalisé (sauvegarde ancienne)
   const revenue = Object.values(e.revenue).reduce((a, b) => a + b, 0);
   const opex = e.spent.opex ?? 0;
   const fuel = e.spent.fuel ?? 0;
   const compensation = e.spent.compensation ?? 0;
   const invest = e.spent.construction ?? 0;
   const interest = e.debt; // R12 : compte dédié des intérêts (ledger de l'identité EV-9)
+  // R35 (t_dabe90d7) : l'EMPRUNT (redressement borné) — la distinction
+  // PRINCIPAL / INTÉRÊTS / LIQUIDITÉS exigée par la carte : le principal est
+  // une ligne de CRÉDIT du bilan (l'argent obtenu, pas une recette — R11) ;
+  // les intérêts sont dans le compte dédié `debt` (ci-dessus, EV-9 : la dette
+  // est comptée UNE fois, R12) ; la liquidité = ce qui reste EN MAIN (solde).
+  const loan = e.loan ? e.loan.principal : 0;
   // R12 (t_25614b63) : le net COMPTABILISE la dette (compte dédié) — le bilan se
   // RAPPORCHE au solde : money (partant de 0) == net. L'intérêt est chargé UNE
   // fois du solde (tickEconomy) et cumulé ici ; le −debt de l'identité EV-9
-  // couvre cette ligne.
-  const net = revenue - opex - fuel - invest - compensation - interest;
+  // couvre cette ligne. R35 : le principal emprunté est la ligne de crédit qui
+  // compense les intérêts facturés (le bilan reste à l'équilibre du solde).
+  const net = revenue + loan - opex - fuel - invest - compensation - interest;
   const causes = [];
   if (net < 0) {
     if (opex > 0) causes.push(`exploitation ${Math.round(opex)} $ (socle + services)`);
@@ -175,7 +297,7 @@ export function periodStatement(sim) {
     if (interest > 0) causes.push(`intérêts sur la dette ${Math.round(interest)} $`);
     if (!causes.length) causes.push('solde dû aux remboursements de démolition');
   }
-  return { revenue, opex, fuel, compensation, invest, net, money: e.money, debt: interest, causes };
+  return { revenue, opex, fuel, compensation, invest, net, money: e.money, debt: interest, loan, causes };
 }
 
 // R16 (t_007f2297) : périodes financières stables + prévision simple.

@@ -49,6 +49,7 @@ import { buildGrid } from '../infra/infra.mjs';
 import { ensureAssignments } from '../infra/assignments.mjs'; // R27 : migration des affectations
 import { ensureUpgrades } from '../infra/upgrades.mjs'; // R31 : migration des améliorations (niveau 0 absent)
 import { ensureIncidents } from '../sim/incidents.mjs'; // R32 : migration + purge des incidents attachés
+import { ensureLoan } from '../economy/economy.mjs'; // R35 : migration de l'emprunt borné (champ absent)
 
 export const SAVE_KEY = 'airport-tycoon-save';
 export const SAVE_VERSION = 1;
@@ -87,6 +88,27 @@ function validateSim(sim) {
   if ('aircraft' in sim && !isArr(sim.aircraft)) throw new Error('Sauvegarde invalide : sim.aircraft non listable');
   if (isObj(sim.economy) && !isFiniteNum(sim.economy.money)) {
     throw new Error('Sauvegarde invalide : solde de trésorerie non numérique');
+  }
+  // R35 (t_dabe90d7) : l'emprunt borné (economy.loan) — PRÉSENT doit être un
+  // objet {principal, count} numériques (la lecture loanState / le bilan les
+  // lit — un type corrompu ferait NaN dans la sim au 1er tick). Absent =
+  // sauvegarde ancienne, tolérée (ensureLoan au chargement, pattern R31).
+  if (isObj(sim.economy) && 'loan' in sim.economy && !isObj(sim.economy.loan)) {
+    throw new Error('Sauvegarde invalide : emprunt (economy.loan) illisible');
+  }
+  if (isObj(sim.economy) && isObj(sim.economy.loan)) {
+    for (const k of ['principal', 'count']) {
+      if (k in sim.economy.loan && !isFiniteNum(sim.economy.loan[k])) {
+        throw new Error(`Sauvegarde invalide : emprunt (${k}) non numérique`);
+      }
+    }
+  }
+  // R35 : le compteur d'alertes de trésorerie (cooldown) SI présent est un objet
+  // (des horodatages) — un type corrompu ferait la re-prévention spammer.
+  if (isObj(sim.economy) && isObj(sim.economy._treasuryAlerts)) {
+    for (const v of Object.values(sim.economy._treasuryAlerts)) {
+      if (!isFiniteNum(v)) throw new Error('Sauvegarde invalide : alerte de trésorerie non numérique');
+    }
   }
   // EV-10 : l'état du PRNG, SI présent, doit être des entiers 32 bits (seed + compteur).
   if (sim.rngSeed !== undefined && !Number.isInteger(sim.rngSeed)) {
@@ -288,6 +310,10 @@ export function deserialize(json) {
     // enregistrements dont l'actif a été supprimé (pas de référence orpheline)
     // — l'état et le calendrier (compteurs acc/last) survivent à la reprise.
     ensureIncidents(out.sim);
+    // R35 (t_dabe90d7) : l'emprunt borné (economy.loan) — les sauvegardes
+    // pré-R35 ont le champ ABSENT (comme upgrades/incidents : toléré, la
+    // factory le met par défaut ; on ne réinvente pas la migration ici).
+    ensureLoan(out.sim);
   }
   return out;
 }

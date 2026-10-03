@@ -13,6 +13,7 @@ import { makeSavePanel } from './ui/save-panel.mjs';
 import { makePlanningPanel } from './ui/planning-panel.mjs';
 import { makePanels } from './ui/panels.mjs';
 import { makeIntro } from './ui/intro.mjs';
+import { makeBankruptcyScreen, resumeCommand } from './ui/bankruptcy.mjs'; // R35 : écran de faillite (bilan + décisions)
 import { drawNetworkOverlay } from './ui/overlay.mjs';
 import { clearSave } from './persistence/save.mjs';
 import { makeGameState } from './core/new-game.mjs';
@@ -79,6 +80,16 @@ export function boot(canvas) {
   // → goulot → investir. UI fine (aucune règle) ; la progression est sur
   // `state.intro` (sérialisée → elle reprend après sauvegarde).
   const intro = makeIntro(state);
+
+  // R35 : l'ÉCRAN de faillite (bilan + décisions : reprendre / nouvelle
+  // partie) — UI fine : l'UI émet l'intention, la sim règle (resumeAfter-
+  // Bankruptcy) ; l'écran s'ouvre/ferme sur le flag de la sim (frame).
+  // « Nouvelle partie » = le vrai startNewGame du menu (défini plus bas —
+  // le clic n'arrive qu'après l'initialisation, closure, comme le panel).
+  const bankruptcyScreen = makeBankruptcyScreen(state, document.body, {
+    onResume: () => { if (state.sim) resumeCommand(state.sim); },
+    onNewGame: () => startNewGame(),
+  });
 
   // Commandes de bas niveau : l'UI émet, l'état tranche.
   bus.on('pause', () => togglePause(state));
@@ -150,6 +161,12 @@ export function boot(canvas) {
     'unlocked': (e) => `${e.name} débloqué(e) (construction possible)${e.detail ? ` — ${e.detail}` : ''}`,
     'locked': (e) => `${e.name} : ${e.why || e.need || 'non débloqué'}`,
     'bankrupt': () => 'FAILLITE — les caisses sont vides',
+    // R35 : les alertes de TRÉSORERIE (deux niveaux, cooldown — economy.mjs) :
+    // l'avertissement AVANT la faillite (ignorer → la pente atteint le seuil).
+    'treasury-warn': (e) => `Trésorerie : le solde s'amenuit (${e.money} $, sous ${e.below} $) — l'emprunt est dans le bilan financier`,
+    'treasury-critical': (e) => `URGENCE TRÉSORERIE : le déficit s'approfondit (${e.money} $, sous ${e.below} $) — empruntez ou la faillite arrive`,
+    'loan-taken': (e) => `Emprunt obtenu : +${e.principal} $ de liquidités, ${e.interest} $ d'intérêts (compte dette)`,
+    'bankruptcy-resumed': () => 'Reprise : la simulation continue depuis le bilan',
   };
   // R14 : un tick qui lève (bug de règle, état corrompu) arrive ici via
   // 'sim-error' (voir loop.mjs) — erreur lisible en toast, le jeu ne crashe pas.
@@ -175,7 +192,9 @@ export function boot(canvas) {
       const a = sim.alerts[i];
       if (!a || !a.kind) continue;
       const text = (ALERT_MSG[a.kind] || ((e) => a.why || a.kind))(a);
-      toasts.toast(text, a.kind === 'bankrupt' ? 'err' : a.kind.startsWith('ac-') || a.kind === 'flight-cancelled' ? 'err' : 'info');
+      toasts.toast(text, a.kind === 'bankrupt' || a.kind === 'treasury-critical'
+        ? 'err' : a.kind === 'treasury-warn' || a.kind === 'loan-taken'
+        ? 'warn' : a.kind.startsWith('ac-') || a.kind === 'flight-cancelled' ? 'err' : 'info');
     }
     state._alertSeen = sim.alerts.length;
   });
@@ -190,6 +209,7 @@ export function boot(canvas) {
     // R20 : l'intro (carte du premier cycle) + les boutons de commandes
     // (vitesse/pause reflètent l'état courant) suivent à chaque frame.
     intro.refresh();
+    bankruptcyScreen.refresh(); // R35 : l'écran suit le flag de la sim (open/fermé + peinture)
     buildTool.refreshControls();
   });
 
@@ -250,6 +270,7 @@ export function boot(canvas) {
     toasts,
     panels,
     intro, // R20 : l'introduction (tests CDP : étape courante, done/skipped)
+    bankruptcyScreen, // R35 : l'écran de faillite (tests CDP : ouvert sur bankrupt, boutons)
   };
 }
 

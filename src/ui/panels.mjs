@@ -8,7 +8,7 @@
 // fixe créé une fois, la zone de contenu se reconstruit seulement quand la
 // signature change (les éléments ne disparaissent pas sous la souris, les
 // clics ne partent pas).
-import { periodStatement, lastPeriod, forecast } from '../economy/economy.mjs';
+import { periodStatement, lastPeriod, forecast, loanState, takeLoan } from '../economy/economy.mjs';
 import { findPath, runwayExitNode } from '../pathfinding/path.mjs';
 import { AIRCRAFT, AIRLINES, BUILDINGS, opexPerMin, opexPerHour, GROUND_SERVICE_TYPES } from '../data/catalog.mjs';
 // R17 (t_fc0d1920) : la cause du retard est LUE (causeAt, aircraft.mjs) — le
@@ -324,7 +324,10 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
     fin.refresh(
       () => {
         const sim = state.sim;
-        return sim ? JSON.stringify(periodStatement(sim)) : 'none';
+        // R35 : la signature porte LE BILAN + l'EMPRUNT (le bouton « Emprunter »
+        // doit passer « obtenu » au clic — la lecture loanState fait partie de
+        // la signature, pas seulement la lecture du bilan).
+        return sim ? JSON.stringify([periodStatement(sim), loanState(sim)]) : 'none';
       },
       (body) => {
         body.replaceChildren();
@@ -339,6 +342,21 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         line(body, 'Indemnités vols annulés', `−${money(s.compensation)}`);
         line(body, 'Investissements', `−${money(s.invest)}`);
         if (s.debt > 0) line(body, 'Dette (intérêts)', money(s.debt));
+        // R35 : l'EMPRUNT borné (redressement) — LECTURE (loanState : les
+        // conséquences sont affichées AVANT le clic, pattern R33) + COMMANDE
+        // (takeLoan : la sim règle la liquidité, l'UI émet l'intention). Le
+        // principal est une ligne de crédit du bilan (s.loan, distincte des
+        // intérêts en « Dette ») — jamais une recette (R11).
+        if (s.loan > 0) line(body, 'Emprunt obtenu (principal dû)', money(s.loan));
+        const ls = loanState(sim);
+        const btn = document.createElement('button');
+        btn.className = 'tool';
+        btn.textContent = ls.available
+          ? `Emprunter ${money(ls.principal)} (intérêts ${money(ls.interest)}, net ${money(ls.netLiquidity)} — 1 seul par partie)`
+          : `Emprunt obtenu (${ls.count}/${ls.max}) — borne atteinte`;
+        btn.disabled = !ls.available || sim.economy.bankrupt;
+        btn.addEventListener('click', () => { if (state.sim) takeLoan(state.sim); });
+        body.appendChild(btn);
         // R16 : période récente + prévision (cumuls ci-dessus = toute la partie,
         // la période = les 5 dernières minutes de jeu ; les deux sont distincts).
         const lp = lastPeriod(sim);

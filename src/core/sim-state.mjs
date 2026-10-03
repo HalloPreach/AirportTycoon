@@ -61,6 +61,10 @@ export function newSimState() {
     // sauvegarde ancienne = niveau 0 (toléré, upgrades.mjs ensureUpgrades).
     upgrades: {},
     economy: { money: START_FUNDS, revenue: {}, spent: {}, debt: 0, bankrupt: false,
+      // R35 (t_dabe90d7) : l'emprunt borné (LOAN, economy.mjs) — le PRINCIPAL
+      // dû (distinct des intérêts : ceux-ci vont au compte dédié `debt`, EV-9)
+      // + le nombre d'emprunts obtenus (la borne maxLoans est paramétrée).
+      loan: { principal: 0, count: 0 },
       // R16 : périodes financières (5 min de jeu) — les 4 dernières closes
       // (borné, comme R14) + l'accumulateur de clôture (_periodAcc, pattern
       // _spawnAcc) + la base des comptes cumulés au dernier close (la 1re

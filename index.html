@@ -100,6 +100,25 @@
     .intro h4 { margin: 0 0 4px; color: #ffe082; font-size: 13px; }
     .intro p { margin: 0 0 6px; color: #eceff1; }
     .intro-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    /* R35 : écran de faillite (bilan + décisions) — modal plein centre, la
+       carte est STOPPÉE derrière (le tick rentre par l'entrée : bankrupt). */
+    .bankruptcy {
+      position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      z-index: 30; max-width: 480px; width: calc(100vw - 24px);
+      background: rgba(26,16,8,0.97); border: 2px solid #ef5350; border-radius: 10px;
+      padding: 14px; font: 13px system-ui, sans-serif; color: #fff;
+    }
+    .bankruptcy h4 { margin: 0 0 8px; color: #ef5350; font-size: 15px; }
+    .bankruptcy-statement .kv { display: flex; gap: 8px; padding: 1px 0; }
+    .bankruptcy-statement .kv > span:first-child { color: #b0bec5; min-width: 190px; flex: none; }
+    .kv--bad > span:last-child { color: #ef9a9a; }
+    .kv--warn > span:last-child { color: #fff59d; }
+    .bankruptcy-statement p { margin: 6px 0 8px; color: #cfd8dc; font-size: 12px; }
+    .bankruptcy-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .bankruptcy-actions .tool {
+      background: #37474f; color: #fff; border: 1px solid #546e7a;
+      border-radius: 6px; padding: 6px 12px; cursor: pointer; font: 13px system-ui;
+    }
   </style>
 </head>
 <body>
