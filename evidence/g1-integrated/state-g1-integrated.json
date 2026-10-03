@@ -22359,26 +22359,11 @@
       "_graphDirty": false,
       "rngSeed": 42,
       "rngCounter": 9321,
-      "objectives": [
-        {
-          "id": "o1-cycle",
-          "paid": true
-        },
-        {
-          "id": "o2-surge",
-          "paid": true
-        }
-      ],
+      "quality": {
+        "q": 0.8191034482758592
+      },
       "punctuality": {
         "recent": [
-          {
-            "at": 169667,
-            "id": 2719,
-            "acType": "medium",
-            "delayed": 20,
-            "cause": "porte",
-            "cancelled": false
-          },
           {
             "at": 169727,
             "id": 2720,
@@ -22781,6 +22766,16 @@
           }
         ]
       },
+      "objectives": [
+        {
+          "id": "o1-cycle",
+          "paid": true
+        },
+        {
+          "id": "o2-surge",
+          "paid": true
+        }
+      ],
       "contracts": {
         "nextId": 289,
         "offered": {
