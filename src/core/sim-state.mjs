@@ -34,6 +34,11 @@ export function newSimState() {
       terminals: [], // {id, x, y, w, h, gates:[ids]}
       gates: [],     // {id, size, terminalId, x, y, w, h, acId, cleaning, maintenance}
       services: [],  // {id, type, x, y, w, h, target: terminalId|null, auto: bool} — R27 : `target` = terminal desservi (null = inactif), `auto` = affectation de la sim (réaffectable), pas du joueur
+      // R28 : type fuel — `fuelOut` (bool, ABSENT/false = saine, true = panne
+      // locale de CETTE station : ses lances sont hors service, la voisine
+      // continue). Champ sérialisé naturellement (absent au JSON si jamais pas
+      // mis — la validation de schéma ne le requiert pas : pas de propriété
+      // fantôme à la reprise).
       grid: { w: 160, h: 120, cells: new Uint8Array(160 * 120) },
     },
     aircraft: [],    // un vol en cours de cycle (voir sim/aircraft.mjs)

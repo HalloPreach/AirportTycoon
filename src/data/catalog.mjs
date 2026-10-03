@@ -113,6 +113,16 @@ export const PHASES = Object.freeze([
 // (le catalogue donne le niveau de carburant : 40/110/320) — un gros plein (747)
 // prend plus qu'un petit (Cessna).
 export const REFUEL_TIME_S = 0.5;
+// R28 (t_bd681587) : le SERVICE de la lance inclut un temps de DÉPLACEMENT
+// simple (la station se rend au poste) fondé sur la DISTANCE porte→station,
+// SANS agents véhicules individuels (la sim reste sans entités mobiles — le
+// déplacement est un simple retard proportionnel à la distance). La station
+// éloignée sert plus lentement que la station proche : c'est la MESURE du
+// « gain d'ajouter une station » (une 2e station plus proche réduit le temps
+// de service). 20 s par 1 000 px (le plein medium de base = 55 s ; la marge
+// des boucles de test — 60 s (r08) / 70 s (services) — reste saine pour une
+// distance porte→station réaliste ~500 px = +10 s).
+export const REFUEL_TRAVEL_S_PER_1000 = 20;
 // R17 (t_fc0d1920, D7 tranchée) : durée de ROTATION nominale — le temps que
 // prend le cycle au sol d'un avion AMARRÉ (gate → décollage : avitaillement
 // si station, débarquement, sol, embarquement, poussée) SANS aucune attente :

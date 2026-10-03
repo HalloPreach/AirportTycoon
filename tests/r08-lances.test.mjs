@@ -81,11 +81,15 @@ test('R08 (3) : 1 lance / DEUX avions → le 2e attend, puis a la lance dès qu 
   tick(sim);
   assert.equal(a1._refueling, true, 'le 1er prend la lance (ordre d insertion, déterministe)');
   assert.equal(a2._refueling, undefined, 'le 2e ATTEND (1 seule lance) — pas de débordement');
-  // Le plein du 1er (55 s) est terminé → libération normale, la lance est libre.
-  for (let i = 0; i < 600; i++) tick(sim); // 60 s
+  // R28 : le plein du 1er = 55 s (taille) + le temps de DÉPLACEMENT de la
+  // station (distance porte→station) — le loop court JUSQU'À ce que la lance
+  // soit réellement libérée et reprise par le 2e (pas un nombre magique de
+  // ticks : R28 a allongé le service, le 2e attend le plein COMPLET du 1er).
+  let s = 0;
+  for (let i = 0; i < 3000 && !a2._refueling; i++) { tick(sim); s++; } // 30 s
+  assert.ok(a2._refueling, `le 2e a la lance DÈS qu elle est RÉELLEMENT disponible (t=${(s * 0.1).toFixed(1)} s)`);
   assert.equal(a1.phase, 'disembark', 'le plein du 1er est terminé (lance libérée)');
   assert.equal(a1._refueling, false, 'fin normale : plus compté occupé');
-  assert.equal(a2._refueling, true, 'le 2e a la lance DÈS qu elle est RÉELLEMENT disponible');
   assert.equal(sim.aircraft.filter((a) => a._refueling).length, 1, 'encore 1 plein actif (celui du 2e)');
 });
 

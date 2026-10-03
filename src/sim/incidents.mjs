@@ -107,6 +107,28 @@ export function isSurge(sim) {
   return ensureIncidents(sim).surge.active;
 }
 
+// R28 (t_bd681587) : les pannes de CARBURANT sont LOCALES — l'état de chaque
+// station vit dans l'ENTRÉE D'INFRA (`svc.fuelOut`, PANNE LOCALE : true = en
+// panne, absent/false = saine — jamais de propriété fantôme à la reprise, la
+// validation de schéma ne le requiert pas, un champ absent est toléré comme
+// les autres).
+//  - fuelOutStation(sim, stationId) : UNE station est-elle en panne ?
+//  - fuelOut(sim) : la panne GLOBALE (incident BL-14, horloge ci-dessus) —
+//    le comportement EXISTANT inchangé : pendant l'incident, TOUS les pleins
+//    passent en départ sec (R08 D2 : la lance est libérée).
+// L'incident par station se force via forceIncident(sim, 'fuel:<stationId>')
+// : la panne de A laisse B JOIGNABLE — les pleins à B continuent (les
+// lances de B sont encore servies, l'avion garde sa lance A seulement s'il
+// l'avait — le propriétaire est EXPLICITE, ac._lanceId).
+// ponytail : la panne locale est un FLAG (pas de compte à rebours — la panne
+// globale de 90 s, elle, finit toujours) : lever l'outage =
+// `sim.infra.services[i].fuelOut = false` (test/joueur). Upgrade : horloge
+// locale par station si un scénario veut la récupération automatique.
+export function fuelOutStation(sim, stationId) {
+  const svc = sim.infra.services.find((s) => s.id === stationId);
+  return !!(svc && svc.fuelOut);
+}
+
 // La lance carburant regarde la panne (doRefuel, aircraft.mjs) : 0 lance
 // pendant la panne → départ sec (comportement EXISTANT, conséquence mesurée).
 export function fuelOut(sim) {
@@ -121,6 +143,8 @@ export function runwayClosed(sim) {
 
 // Forçage DETERMINISTE d'un incident (tests + débogage UI) : met l'état à la
 // position voulue + événement (le compteur de fin démarre, la fin est normale).
+// R28 : 'fuel:<stationId>' = panne LOCALE d'UNE station (flag svc.fuelOut) —
+// la station voisine continue de servir ses lances.
 export function forceIncident(sim, which) {
   const i = ensureIncidents(sim);
   if (which === 'runway') {
@@ -131,6 +155,11 @@ export function forceIncident(sim, which) {
     i.fuel.out = INCID.FUEL_OUT_S;
     i.fuel.last = sim.time ?? 0;
     pushEvent(sim, { kind: 'fuel-out', why: 'panne stations carburant (forçage) — départs secs' });
+  } else if (typeof which === 'string' && which.startsWith('fuel:')) {
+    const svc = sim.infra.services.find((s) => s.id === Number(which.slice(5)) && s.type === 'fuel');
+    if (!svc) throw new Error(`station inconnue : ${which}`);
+    svc.fuelOut = true; // R28 : panne locale (la station voisine continue)
+    pushEvent(sim, { kind: 'fuel-out', station: svc.id, why: `panne STATION ${svc.id} (forçage) — ses lances sont hors service` });
   } else if (which === 'surge') {
     i.surge.active = true;
     i.surge.remaining = INCID.SURGE_S;

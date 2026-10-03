@@ -25,7 +25,7 @@
 // physiquement l'avion au CENTRE de la porte (le nœud de porte n'est pas le
 // centre).
 // Les ressources partagées (piste, segment, porte) provoquent conflits/retards.
-import { AIRCRAFT, REFUEL_TIME_S, GATE_WEAR_PER_SEC, GATE_MAINT_PER_SEC, GATE_WEAR_DELAY_S, NOMINAL_TURNOVER_S } from '../data/catalog.mjs';
+import { AIRCRAFT, REFUEL_TIME_S, REFUEL_TRAVEL_S_PER_1000, GATE_WEAR_PER_SEC, GATE_MAINT_PER_SEC, GATE_WEAR_DELAY_S, NOMINAL_TURNOVER_S } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 import { gateFor, pickRunway, runwayBusy, runwayFor } from '../infra/infra.mjs';
@@ -47,7 +47,9 @@ const BLOCKED_CANCEL_S = 600; // 10 min sim : blocage persistant → annulation 
 const HOLDING_CANCEL_S = 600; // 10 min sim : attente d'atterrissage bornée (R04, A-4)
 // BL-12 : stations carburant — UNE station = UNE LANCE (2e lance à partir de la
 // 2e station : la saturation devient mesurable, critère de fin).
-const FUEL_LANCES_PER_STATION = 1;
+// R28 (t_bd681587) : la lance = LA STATION (id EXPLICITE, ac._lanceId) — la
+// saturation est comptée par occupation (qui tient quelle station), pas par
+// un comptage anonyme « busy < lances ».
 // R17 (t_fc0d1920) : fenêtre bornée de ponctualité — la statistique ne porte
 // QUE sur les N fins de vol les plus récentes (départs + annulations) : pas
 // d'historique sans fin (esprit R14 : borné à la racine, pas de 2e journal),
@@ -444,13 +446,20 @@ function doRefuel(sim, ac, dt, spec) {
     g.maintenance = Math.min(100, g.maintenance + GATE_MAINT_PER_SEC * dt);
   }
   const lances = fuelLancesForGate(sim, ac);
-  if (!lances || fuelOut(sim)) {
-    // Pas de station OU panne station (incident BL-14) OU station DÉMOLIE
-    // (disparition du service) → départ SÉC (non bloquant, expliqué) :
-    // billets moitié. R08 (D2) : la lance est LIBÉRÉE IMMÉDIATEMENT si le
-    // plein était en cours (avant la fix, ac._refueling restait true → lance
-    // comptée occupée artificiellement par le comptage busy). La panne est
-    // temporaire — quand le service revient, les pleins reprennent.
+  // R28 (t_bd681587) : la panne est LOCALE — chaque station a son propre état
+  // (svc.fuelOut, incidents.mjs forceIncident 'fuel:<id>'). Le propriétaire de
+  // la lance est EXPLICITE (ac._lanceId = id de station, pas un comptage
+  // anonyme) : si la station ne sert PLUS cette porte (démolie, réaffectée au
+  // joueur — R27) ou est EN PANNE locale, la lance est LIBÉRÉE (pas de
+  // propriétaire fantôme) et l'avion re-sélectionne au prochain tick (ou
+  // part sec s'il ne reste aucune station opérable).
+  if (ac._refueling && ac._lanceId != null) {
+    const svc = lances.find((s) => s.id === ac._lanceId);
+    if (!svc || svc.fuelOut) releaseLance(ac);
+  }
+  // Sans station du tout OU panne GLOBALE (incident BL-14) → départ sec
+  // (comportement EXISTANT inchangé : billets moitiés, non bloquant).
+  if (!lances.length || fuelOut(sim)) {
     releaseLance(ac);
     ac._dryDeparture = true;
     if (!ac._noFuelNotified) {
@@ -461,7 +470,22 @@ function doRefuel(sim, ac, dt, spec) {
     return;
   }
   acquireLance(sim, ac, spec, lances);
-  if (!ac._refueling) noteCause(ac, 'carburant'); // R17 : lance(s) prise(s) — attente (saturation)
+  if (!ac._refueling) {
+    noteCause(ac, 'carburant'); // R17 : lance(s) prise(s) — attente (saturation)
+    // R28 : AUCUNE lance opérable (toutes en panne LOCALE) → départ sec
+    // (non bloquant, expliqué) — idem à la panne globale. Si c'est de la
+    // SATURATION (lances occupées par d'autres pleins), l'avion attend (R08 :
+    // la saturation est mesurable, pas un départ sec).
+    if (!lances.some((s) => !s.fuelOut)) {
+      ac._dryDeparture = true;
+      if (!ac._noFuelNotified) {
+        ac._noFuelNotified = true;
+        pushEvent(sim, { kind: 'no-fuel', airline: ac.airline, pax: ac.pax });
+      }
+      ac.phase = 'disembark'; ac.timer = 0;
+    }
+    return;
+  }
   if (ac._refueling) {
     ac._refuelNeed -= dt;
     if (ac._refuelNeed <= 0) {
@@ -480,21 +504,54 @@ function doRefuel(sim, ac, dt, spec) {
 // pas le refuel (un avion refuel n'est jamais annulé — la purge retire les
 // vols cancelled de sim.aircraft et leur lance ne compte plus). Le comptage
 // d'occupation ne compte QUE les pleins réellement actifs (a._refueling).
+// R28 (t_bd681587) : le propriétaire est EXPLICITE — ac._lanceId (l'id de la
+// station qui sert l'avion), PAS un comptage anonyme « busy < lances » :
+// (a) la panne locale (svc.fuelOut) ne touche QUE la station concernée ;
+// (b) après une reprise, une lance « fantôme » (ac._lanceId pointant vers une
+// station supprimée) est nettoyée (releaseLance, pas de propriété orpheline) ;
+// (c) la distance porte→station EST la priorité : la station LA PLUS PRÈCHE de
+// la porte (au sens de la distance point→rectangle, R27) est servie en premier
+// — pas un ordre arbitraire (pas de « liste des stations » triée par id).
 function acquireLance(sim, ac, spec, lances) {
   if (ac._refueling) return; // déjà en plein : pas de 2e lance
-  const busy = sim.aircraft.filter((a) => a._refueling).length;
-  if (busy < lances) {
-    ac._refueling = true;
-    ac._refuelNeed = spec.refuel * REFUEL_TIME_S; // durée liée à la taille
+  // R28 : la priorité d'acquisition est la DISTANCE — la station la plus
+  // proche de la porte (distance point→rectangle entre les centres, la même
+  // règle que nearestTerminal, R27 ; en égalité, l'id le plus petit = le plus
+  // ancien) est servie EN PREMIER, pas un ordre arbitraire. Les stations en
+  // panne LOCALE (svc.fuelOut, R28) sont exclues ; la saturation (R08) est
+  // comptée par occupation EXPLICITE (ac._lanceId, pas un comptage anonyme).
+  const g = sim.infra.gates.find((x) => x.id === ac.gateId);
+  if (!g) return; // porte absente : pas de lance (le départ sec est géré en amont)
+  const gx = g.x + g.w / 2, gy = g.y + g.h / 2;
+  const busy = new Set(sim.aircraft.filter((a) => a._refueling && a._lanceId != null).map((a) => a._lanceId));
+  let best = null, bestD = Infinity;
+  for (const s of lances) {
+    if (s.fuelOut || busy.has(s.id)) continue;
+    const dx = Math.max(Math.abs(gx - (s.x + s.w / 2)) - s.w / 2, 0);
+    const dy = Math.max(Math.abs(gy - (s.y + s.h / 2)) - s.h / 2, 0);
+    const d = Math.hypot(dx, dy);
+    if (d < bestD || (d === bestD && s.id < best)) { bestD = d; best = s; }
   }
+  if (!best) return; // toutes occupées (saturation) ou en panne : on attend
+  ac._refueling = true;
+  // R28 (t_bd681587) : le SERVICE de la lance = le temps de PLEIN (lié à la
+  // taille, spec.refuel × REFUEL_TIME_S) + un temps de DÉPLACEMENT simple fondé
+  // sur la DISTANCE porte→station (bestD, la même distance point→rectangle que
+  // la priorité d'acquisition ; SANS agents véhicules : la sim reste sans
+  // entités mobiles, le déplacement est un simple retard proportionnel à la
+  // distance — la station éloignée sert plus lentement que la station proche).
+  ac._refuelNeed = spec.refuel * REFUEL_TIME_S + bestD * (REFUEL_TRAVEL_S_PER_1000 / 1000);
+  ac._lanceId = best.id; // R28 : le propriétaire est EXPLICITE (id de station)
 }
 
-// Libération CENTRALE : le propriétaire (ac._refueling) ET le temps restant
-// (ac._refuelNeed) sont nettoyés ensemble — aucun chemin de sortie n'en oublie
-// un (le branch panne avant R08 n'en nettoyait aucun).
+// Libération CENTRALE : le propriétaire (ac._refueling, ac._lanceId) ET le temps
+// restant (ac._refuelNeed) sont nettoyés ENSEMBLE — aucun chemin de sortie
+// n'en oublie un (le branch panne avant R08 n'en nettoyait aucun ; R28 ajoute
+// _lanceId au même geste : PAS de propriété orpheline).
 function releaseLance(ac) {
   ac._refueling = false;
   ac._refuelNeed = 0;
+  ac._lanceId = null; // R28 : la lance est LIBÉRÉE (l'avion n'a plus de station)
 }
 
 // BL-12 : lances disponibles = stations carburant (une lance par station).
@@ -503,10 +560,15 @@ function releaseLance(ac) {
 // station posée loin de tout ne sert plus « implicitement » tout l'aéroport.
 // Le terminal du vol = celui de sa porte (ac.gateId). Porte absente (vol
 // annulé en cours de plein) → terminal inconnu → 0 lance (départ sec).
+// R28 (t_bd681587) : la liste renvoyée est des STATIONS (objets, pas des
+// nombres) — l'acquisition (acquireLance) a besoin de l'ID ET de la GÉOMÉTRIE
+// (distance point→rectangle, priorité « plus proche ») ; la saturation
+// (R08) est comptée par occupation EXPLICITE (ac._lanceId, pas un comptage
+// anonyme).
 function fuelLancesForGate(sim, ac) {
   const g = sim.infra.gates.find((x) => x.id === ac.gateId);
-  if (!g) return 0;
-  return servicesServingGate(sim, 'fuel', g).length * FUEL_LANCES_PER_STATION;
+  if (!g) return [];
+  return servicesServingGate(sim, 'fuel', g); // R27 : stations du terminal de la porte
 }
 
 // OPÉRATIONS AU SOL : débarquement → sol → embarquement → pushback.
