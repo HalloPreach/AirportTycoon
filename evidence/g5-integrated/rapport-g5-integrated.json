@@ -1,0 +1,191 @@
+{
+  "tool": "qa/g5-integrated.mjs",
+  "commit": "(non connu)",
+  "seed": 42,
+  "criteria": {
+    "a": "incident ATTACHÉ à un actif (id/type/actif/durée/gravité/cause lisible) + isolement",
+    "b": "2 réponses (passive vs coûteuse) : conséquences lues AVANT décision, deltas chiffrés, non répétable",
+    "c": "pic absorbé → faible pénalité ; pic mal géré → effet mesurable (module unique des files, pas de cumul contradictoire)",
+    "d": "déficit : taux paramétré sur période (D5) + alerte trésorerie (2 niveaux, cooldown) + écran faillite bilan/reprise/nouvelle partie",
+    "e": "sauvegarde PENDANT l'incident → reprise COHÉRENTE (record + calendrier survivent, pas d'orphelin)"
+  },
+  "failures": 0,
+  "passed": 35,
+  "checks": [
+    {
+      "name": "(a) incident ATTACHÉ à un actif (id/type/actif/durée/gravité/cause lisibles)",
+      "ok": true,
+      "detail": "record piste A : id=inc-rw-1 type=runway asset=1 restant=120s gravité=major"
+    },
+    {
+      "name": "(a) ISOLEMENT : la piste A est FERMÉE, la piste B reste UTILISABLE",
+      "ok": true,
+      "detail": "A fermée=true, B ouverte=true"
+    },
+    {
+      "name": "(b) conséquences AFFICHÉES AVANT décision : 2 réponses (coût 0 vs coût payant) lues en lecture pure",
+      "ok": true,
+      "detail": "attendre=0 $, intervenir=600 $ (réouverture IMMÉDIATE de la pi…)"
+    },
+    {
+      "name": "(b) LECTURE pure : incidentResponse ne modifie PAS la sim (pas de mutation)",
+      "ok": true,
+      "detail": "solde/fermeture/durée inchangés par la lecture"
+    },
+    {
+      "name": "(b) réponse PASSIVE (attendre) acceptée, AUCUN coût (gratuit)",
+      "ok": true,
+      "detail": "solde avant=89200 après=89200 (delta 0) — fermeture continue"
+    },
+    {
+      "name": "(b) réponse COÛTEUSE (interventre) acceptée, coût DÉBITÉ, réouverture IMMÉDIATE",
+      "ok": true,
+      "detail": "délai=0s (réouverture immédiate), coût=600 $ (débité), solde=88600"
+    },
+    {
+      "name": "(b) DELTAS CHIFFRÉS : même incident, 2 réponses → coût (0 vs 600 $) et délai (naturel vs immédiat) DIFFÉRENTS",
+      "ok": true,
+      "detail": "passive : 0 $ + attente naturelle ; coûteuse : 600 $ + réouverture immédiate"
+    },
+    {
+      "name": "(b) action NON répétable : 2e intervention → motif lisible SANS mutation",
+      "ok": true,
+      "detail": "motif=\"aucune piste en fermeture\" (pas de 2e débit, spent.intervention reste 600 $)"
+    },
+    {
+      "name": "(c) pic ACTIF (cadence doublée) forcé",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "(c) pic ABSORBÉ (files vides) : AUCUNE pénalité directe sur la satisfaction",
+      "ok": true,
+      "detail": "satisfaction=80 (inchangée pendant le pic)"
+    },
+    {
+      "name": "(c) pic absorbé : la satisfaction REMONTE (récupération, plafond 100)",
+      "ok": true,
+      "detail": "satisfaction=100 (remontée après le pic)"
+    },
+    {
+      "name": "(c) pic MAL GÉRÉ (files saturées) : effet MESURABLE (la satisfaction CHUTE)",
+      "ok": true,
+      "detail": "satisfaction 100 → 0 (chute mesurée)"
+    },
+    {
+      "name": "(c) LECTURE pure des CAUSES (satisfactionCauses) : sim nue = cause nulle, AUCUNE mutation",
+      "ok": true,
+      "detail": "causes={\"loss\":0,\"satStages\":0,\"overflow\":0} (la lecture ne touche PAS la satisfaction)"
+    },
+    {
+      "name": "(c) files saturées : les CAUSES sont lues (stages saturées + débordement, même formule que le tick)",
+      "ok": true,
+      "detail": "stages=1 débordement=10 perte/s=0.16999999999999998 (la même formule que le tick)"
+    },
+    {
+      "name": "(d) Taux D5 paramétré sur une PÉRIODE EXPLICITE (DEBT : rate/periode/borne)",
+      "ok": true,
+      "detail": "rate=0.01/s, période=300s (3 % de l'assiette par période), borne=10000"
+    },
+    {
+      "name": "(d) Alerte de TRÉSORERIE bornée (2 niveaux warn/critical + cooldown, pas de spam)",
+      "ok": true,
+      "detail": "warn<4000, critical<-5000, cooldown=300s"
+    },
+    {
+      "name": "(d) l'ALERTE sonne les 2 niveaux (s'amenuit → s'approfondit)",
+      "ok": true,
+      "detail": "niveaux=[treasury-warn, treasury-critical]"
+    },
+    {
+      "name": "(d) COOLDOWN : aucune re-alerte dans la fenêtre (pas de spam)",
+      "ok": true,
+      "detail": "aucune re-alerte dans le cooldown"
+    },
+    {
+      "name": "(d) après le COOLDOWN, l'alerte re-sonne (la condition persiste)",
+      "ok": true,
+      "detail": "re-alerte après 300s"
+    },
+    {
+      "name": "(d) scénario ANNONCÉ : graine fixée (seed 42) + solde déficitaire de départ (saison creuse)",
+      "ok": true,
+      "detail": "seed=42, solde de départ=-3000 $ (défice)"
+    },
+    {
+      "name": "(d) REDRESSEMENT observable : l'emprunt borne (1/partie) rend le solde POSITIF",
+      "ok": true,
+      "detail": "solde -3000 → 1750 $ (+4750 $ net)"
+    },
+    {
+      "name": "(d) l'EMPRUNT est BORNE : disponible → non-disponible (1 seul par partie)",
+      "ok": true,
+      "detail": "emprunt non-disponible (count=1/1) — non-obtenable indéfiniment"
+    },
+    {
+      "name": "(d) l'emprunt N'EST PAS une recette : revenue (exploitation) est PRESERVÉ",
+      "ok": true,
+      "detail": "revenue inchangé (le crédit est une ligne de bilan, PAS une recette — R11)"
+    },
+    {
+      "name": "(d) PRINCIPAL / INTÉRÊTS / LIQUIDITÉS DISTINCTS (bilan lisible)",
+      "ok": true,
+      "detail": "principal=5000 (ligne de crédit), intérêts=250 (compte dédié debt), liquidité nette=4750 (en main)"
+    },
+    {
+      "name": "(d) SANS action : la pente atteint le seuil → FAILLITE (mesurable)",
+      "ok": true,
+      "detail": "faillite atteinte après 5s (solde=-10001 $ < −10 000)"
+    },
+    {
+      "name": "(d) l'ALERTE critique PRÉCÈDE la faillite (ordre mesurable)",
+      "ok": true,
+      "detail": "ordre : critical (1) < bankrupt (2)"
+    },
+    {
+      "name": "(d) l'ÉCRAN s'OUVRE sur le flag de faillite (economy.bankrupt=true)",
+      "ok": true,
+      "detail": "display=\"\" (visible)"
+    },
+    {
+      "name": "(d) le BILAN est lisible (solde, dette, causes du déficit)",
+      "ok": true,
+      "detail": "solde=-10001 $, dette=485 $, causes=[exploitation 16 $ (socle + services); intérêts s]"
+    },
+    {
+      "name": "(d) « Reprendre » : la COMMANDE est émise (flag levé, la sim REPART)",
+      "ok": true,
+      "detail": "flag de faillite levé (la sim continue depuis le bilan)"
+    },
+    {
+      "name": "(d) l'écran se REFERME sur la reprise (flag levé → display masqué)",
+      "ok": true,
+      "detail": "display=\"none\" (masqué)"
+    },
+    {
+      "name": "(d) « Nouvelle partie » : l'INTENTION est émise (retour menu, la sim ne redécide pas)",
+      "ok": true,
+      "detail": "l'action de nouvelle partie est câblée (main.mjs : startNewGame)"
+    },
+    {
+      "name": "(e) le record ATTACHÉ à l'actif SURVIT à la reprise (fermeture préservée)",
+      "ok": true,
+      "detail": "record piste A : remaining=120s (attendu 120s)"
+    },
+    {
+      "name": "(e) la FERMETURE est ACTIVE à la reprise (la sim la lit)",
+      "ok": true,
+      "detail": "la piste A reste fermée après save/load"
+    },
+    {
+      "name": "(e) le CALENDRIER (compteurs de fréquence acc/last) SURVIT à la reprise",
+      "ok": true,
+      "detail": "acc=12.5 last=42 (préservés)"
+    },
+    {
+      "name": "(e) PAS d'orphelin : chaque record pointe vers un actif EXISTANT",
+      "ok": true,
+      "detail": "orphelins=[] (vide)"
+    }
+  ]
+}
