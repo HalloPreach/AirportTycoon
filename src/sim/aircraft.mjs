@@ -30,6 +30,7 @@ import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 import { gateFor, pickRunway, runwayBusy, runwayFor } from '../infra/infra.mjs';
 import { onGateArrived, onGateDeparted, onFlightCancelled } from '../economy/economy.mjs';
+import { countContractFlight } from '../flights/contracts.mjs';
 import { arrivePassengers, countCarried, boardDelay, groupComplete } from './passengers.mjs';
 import { runwayClosed, fuelOut } from './incidents.mjs';
 
@@ -73,6 +74,7 @@ export function logFlightEnd(sim, ac, cancelled) {
     at: sim.time || 0, id: ac.id, acType: ac.acType,
     delayed: ac.delayed || 0, cause: ac._delayCause || null, cancelled: !!cancelled,
   });
+  countContractFlight(sim, ac, cancelled); // R24 : fin de vol comptée pour le contrat actif (mesure de période)
 }
 // Durée de rotation NOMINALE d'une taille d'avion (catalog.mjs, explicite) :
 // opérations au sol (NOMINAL_TURNOVER_S) + avitaillement lié à la taille

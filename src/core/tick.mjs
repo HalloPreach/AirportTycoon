@@ -12,6 +12,7 @@ import { tickEconomy, tickPassengers } from '../economy/economy.mjs';
 import { tickUnlocks, cleanGates } from '../infra/infra.mjs';
 import { tickIncidents } from '../sim/incidents.mjs';
 import { tickObjectives } from '../progression/objectives.mjs';
+import { tickContracts } from '../flights/contracts.mjs';
 import { makeSimRng } from './rng.mjs';
 
 export function tick(state, dt, rng) {
@@ -26,5 +27,6 @@ export function tick(state, dt, rng) {
   tickPassengers(sim, dt);
   tickIncidents(sim, dt, rng); // BL-14 : incidents opérationnels limités (après la passe)
   tickObjectives(sim); // R22 : objectifs de progression — récompense payée UNE fois (condition mesurée)
+  tickContracts(sim, dt); // R24 : contrats de compagnie — prime/pénalité réglées UNE fois (mesure de période)
   tickUnlocks(sim);
 }

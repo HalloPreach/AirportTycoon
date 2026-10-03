@@ -103,8 +103,15 @@ récupérable. La configuration vivante (données, pas de logique) :
 - R23 : espacer les déblocages autour des besoins (remplacer les seuls seuils
   100-300 pax ; carburant avant le besoin, nettoyage/maintenance quand l'usure
   compte, bagages quand les volumes le justifient ; pas de dépendance circulaire).
-- R24/R25 : contrats courts + présentation (délai/vols/capacités/revenus/pire
-  pénalité ; progression et risque après départ et sauvegarde exacte).
+- R24 : contrats courts de compagnie *implémentés* (3 modèles — faible volume,
+  volume régulier, qualité exigeante ; prime/pénalité plafonnées réglées UNE
+  fois sur une mesure de période) : livré (`src/flights/contracts.mjs`) —
+  cycle proposé → accepté → actif → réussi/échoué/annulé, pénalité comptée
+  même en déficit (D5, compte dédié `contract-penalty`), refus gratuit,
+  état sérialisé avec la sim (reprise = jamais re-réglable), panneau
+  « Contrats de compagnie » (ui/panels.mjs).
+- R25 : présentation riche du contrat (délai/vols/capacités/revenus/pire
+  pénalité) + progression et risque après départ et sauvegarde exacte.
 - R26 : offres liées progression/quality (contrat de croissance → vols proposés
   réels ; réputation faible = voie de reprise ; `MAX_PENDING` devient paramètre,
   pas plafond caché).

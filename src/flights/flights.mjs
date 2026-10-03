@@ -16,6 +16,7 @@ import { runwayFor } from '../infra/infra.mjs'; // R05 : critère de compatibili
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 import { isSurge, runwayClosed, fuelOut } from '../sim/incidents.mjs';
+import { activeContract } from './contracts.mjs';
 import { PAX_REVENUE, PAX_REVENUE_DRY, LANDING_FEE, GATE_FEE, FUEL_COST_PER_PAX } from '../economy/economy.mjs';
 
 const SPAWN_EVERY_S = 60;  // cadence d'une fenêtre (x4 raisonnable)
@@ -207,7 +208,7 @@ function planOneFlight(sim, rng) {
 function makeAircraft(sim, e) {
   const airline = airlineOf(e.airline);
   e.status = 'in-flight';
-  return {
+  const ac = {
     id: e.id, airline: e.airline, color: airline.color, acType: e.acType, pax: e.pax,
     phase: 'approach',
     x: 200 + (e.id % 1200), // position d'approche déterminée par l'id (pas rng, AC18)
@@ -215,6 +216,12 @@ function makeAircraft(sim, e) {
     gateId: null, runwayId: null, delayed: 0, timer: 0,
     path: null, pathPtr: 0, seg: null, heading: 'gate',
   };
+  // R24 : l'opération enregistre son contrat — si le contrat ACTIF existe, le
+  // vol compte pour la période du contrat (logFlightEnd → countContractFlight).
+  // Les vols hors contrat (aucun contrat actif) n'ont pas le champ.
+  const contract = activeContract(sim);
+  if (contract) { ac.contractId = contract.id; ac.contractModel = contract.model; }
+  return ac;
 }
 
 // Retard (critère 6, AC3) : la CAUSE du retard est portée par l'entrée de

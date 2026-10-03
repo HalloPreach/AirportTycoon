@@ -19,6 +19,10 @@ import { causeAt, DELAY_CAUSE_FR, DELAY_WINDOW_S, punctualityStats } from '../si
 // le panneau est une LECTURE (objectiveView) : il ne décide rien, il affiche
 // l'état (à venir / atteinte / payée) et la mesure live du critère.
 import { OBJECTIVES, objectiveView } from '../progression/objectives.mjs';
+// R24 (t_f712f1a5) : les contrats de compagnie — LECTURE (contractView) + les
+// COMMANDES de décision (decideContract/cancelContract) : la sim règle la
+// prime/pénalité (tickContracts), le panneau ne décide que par ces portes.
+import { contractView, decideContract, cancelContract } from '../flights/contracts.mjs';
 import { unlockView } from '../infra/unlocks.mjs';
 
 const PHASES_FR = Object.freeze({
@@ -334,6 +338,61 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
       },
     );
   }
+  // --- 3d. R24 : contrats de compagnie (prime/pénalité réglées une fois) ---
+  // UI fine : LECTURE seule (contractView) — le règlement est fait par la sim
+  // (tickContracts), le panneau affiche l'état (proposé/actif/finis) + la
+  // mesure live (vols, pax, ponctualité, temps restant) + les décisions
+  // accepter/refuser/annuler (les COMMANDES contracts, pas de règle ici).
+  const contracts = makeSection(col, 'panel', 'Contrats de compagnie');
+  function refreshContracts() {
+    contracts.refresh(
+      () => {
+        const sim = state.sim;
+        if (!sim) return 'none';
+        const v = contractView(sim);
+        return [
+          v.active ? `${v.active.id}:${v.active.done}:${v.active.pax}:${v.active.onTime}:${v.active.ends}:${v.active.left | 0}` : 'none',
+          v.offered ? v.offered.id : 'none', v.offered ? v.offered.left | 0 : '',
+          v.nextOfferAt, (v.history || []).map((h) => `${h.id}:${h.result}`).join(','),
+        ].join('|');
+      },
+      (body) => {
+        body.replaceChildren();
+        const sim = state.sim;
+        if (!sim) return;
+        const v = contractView(sim);
+        if (v.offered) {
+          line(body, `Contrat proposé — ${v.offered.name}`, `${v.offered.desc} Décision ${v.offered.left} s (refus gratuit)`);
+          const ok = document.createElement('button');
+          ok.textContent = 'Accepter le contrat';
+          ok.addEventListener('click', () => { decideContract(sim, v.offered.id, true); refreshContracts(); });
+          const no = document.createElement('button');
+          no.textContent = 'Refuser (gratuit)';
+          no.addEventListener('click', () => { decideContract(sim, v.offered.id, false); refreshContracts(); });
+          body.append(ok, no);
+        }
+        if (v.active) {
+          const a = v.active;
+          const pct = a.rate == null ? '—' : `${Math.round(a.rate * 100)} %`;
+          line(body, `Contrat actif — ${a.name}`,
+            `${a.done}/${a.flights} vols · ${a.pax}/${a.minPax} pax · ponctualité ${pct} (exigée ${Math.round((a.punctuality ?? 0) * 100)} %) · ${a.left | 0} s restantes`);
+          line(body, '', `Prime ${a.bonus} $ si réussi · pénalité ${a.penalty} $ si manqué (payée une fois)`);
+          const cancel = document.createElement('button');
+          cancel.textContent = 'Annuler le contrat (pénalité due)';
+          cancel.addEventListener('click', () => { cancelContract(sim, a.id); refreshContracts(); });
+          body.appendChild(cancel);
+        }
+        if (!v.offered && !v.active) {
+          if (v.nextOfferAt != null) line(body, 'Prochain contrat', `proposé à ${v.nextOfferAt} pax transportés (${sim.passengers?.totalCarried ?? 0} actuels)`);
+          else if (!(v.history || []).length) line(body, '', 'Aucun contrat (l’activité s’annonce — ≥ 300 pax transportés pour la première offre).');
+        }
+        for (const h of (v.history || []).slice(0, 4)) {
+          line(body, `Fini — ${h.name}`,
+            `${h.result === 'success' ? 'réussi' : h.result === 'cancelled' ? 'annulé (pénalité)' : 'manqué (pénalité)'} : ${h.done}/${h.flights} vols · ${h.pax} pax`);
+        }
+      },
+    );
+  }
   // --- 4. Historique d'alertes (sim.alerts, les plus récentes d'abord) ------
   const hist = makeSection(col, 'panel', 'Alertes (historique)');
   function refreshHist() {
@@ -416,7 +475,7 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   return {
     // Appel à chaque frame (bus 'frame') : chaque panneau ne reconstruit son DOM
     // que si sa signature a changé — coût négligeable sinon (pattern planning).
-    refresh: () => { refreshInspect(); refreshFin(); refreshStats(); refreshGoals(); refreshUnlocks(); refreshHist(); refreshNet(); },
+    refresh: () => { refreshInspect(); refreshFin(); refreshStats(); refreshGoals(); refreshUnlocks(); refreshContracts(); refreshHist(); refreshNet(); },
     // R07 : une sauvegarde rechargée ou une nouvelle partie change tout l'état —
     // la sélection inspecte un OBJET QUI N'EXISTE PLUS. invalidate() vide le pick
     // ; la prochaine refreshInspect rend l'état par défaut (pas un « parti »

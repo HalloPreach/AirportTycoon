@@ -19561,216 +19561,6 @@
         {
           "kind": "no-fuel",
           "airline": "atlantique",
-          "pax": 82
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2570,
-          "airline": "atlantique",
-          "pax": 86
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2573,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "no-fuel",
-          "airline": "atlantique",
-          "pax": 140
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "no-fuel",
-          "airline": "atlantique",
-          "pax": 127
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2571,
-          "airline": "atlantique",
-          "pax": 82
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2574,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "fuel-back",
-          "why": "stations carburant de nouveau en service"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2572,
-          "airline": "atlantique",
-          "pax": 140
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2573,
-          "airline": "atlantique",
-          "pax": 127
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2575,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2576,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-end",
-          "why": "pic de demande terminé — cadence normale"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2577,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2578,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2574,
-          "airline": "atlantique",
-          "pax": 118
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2579,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2575,
-          "airline": "atlantique",
-          "pax": 105
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2580,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2577,
-          "airline": "atlantique",
-          "pax": 73
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2581,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "runway-closed",
-          "why": "fermeture piste (contrôle) — atterrissages en attente"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2579,
-          "airline": "atlantique",
-          "pax": 84
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2582,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2580,
-          "airline": "atlantique",
-          "pax": 125
-        },
-        {
-          "kind": "runway-reopen",
-          "why": "piste de nouveau ouverte"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2583,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2581,
-          "airline": "atlantique",
-          "pax": 81
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2584,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2576,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2583,
-          "airline": "atlantique",
-          "pax": 107
-        },
-        {
-          "kind": "fuel-out",
-          "why": "panne stations carburant — départs secs"
-        },
-        {
-          "kind": "no-fuel",
-          "airline": "atlantique",
-          "pax": 126
-        },
-        {
-          "kind": "flight-cancelled",
-          "volId": 2578,
-          "airline": "atlantique",
-          "why": "blocage persistant"
-        },
-        {
-          "kind": "flight-in",
-          "volId": 2585,
-          "airline": "Atlantique",
-          "acType": "medium"
-        },
-        {
-          "kind": "surge-start",
-          "why": "pic de demande — plus de vols planifiés"
-        },
-        {
-          "kind": "flight-out",
-          "volId": 2584,
-          "airline": "atlantique",
-          "pax": 126
-        },
-        {
-          "kind": "no-fuel",
-          "airline": "atlantique",
           "pax": 96
         },
         {
@@ -19840,6 +19630,15 @@
           "volId": 2591,
           "airline": "Atlantique",
           "acType": "medium"
+        },
+        {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c270",
+          "model": "light"
         },
         {
           "kind": "surge-start",
@@ -19981,6 +19780,15 @@
         {
           "kind": "surge-start",
           "why": "pic de demande — plus de vols planifiés"
+        },
+        {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c271",
+          "model": "light"
         },
         {
           "kind": "flight-in",
@@ -20133,6 +19941,15 @@
           "pax": 135
         },
         {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c272",
+          "model": "light"
+        },
+        {
           "kind": "runway-closed",
           "why": "fermeture piste (contrôle) — atterrissages en attente"
         },
@@ -20230,6 +20047,15 @@
           "volId": 2612,
           "airline": "atlantique",
           "why": "blocage persistant"
+        },
+        {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c273",
+          "model": "light"
         },
         {
           "kind": "flight-in",
@@ -20391,6 +20217,15 @@
           "why": "piste de nouveau ouverte"
         },
         {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c274",
+          "model": "light"
+        },
+        {
           "kind": "flight-in",
           "volId": 2629,
           "airline": "Atlantique",
@@ -20511,6 +20346,15 @@
           "volId": 2627,
           "airline": "atlantique",
           "why": "blocage persistant"
+        },
+        {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c275",
+          "model": "light"
         },
         {
           "kind": "flight-in",
@@ -20639,6 +20483,15 @@
           "volId": 2648,
           "airline": "Atlantique",
           "acType": "medium"
+        },
+        {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c276",
+          "model": "light"
         },
         {
           "kind": "flight-out",
@@ -20779,6 +20632,15 @@
           "why": "fermeture piste (contrôle) — atterrissages en attente"
         },
         {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c277",
+          "model": "light"
+        },
+        {
           "kind": "flight-out",
           "volId": 2656,
           "airline": "atlantique",
@@ -20911,6 +20773,15 @@
           "volId": 2668,
           "airline": "Atlantique",
           "acType": "medium"
+        },
+        {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c278",
+          "model": "light"
         },
         {
           "kind": "flight-out",
@@ -21059,6 +20930,15 @@
           "volId": 2679,
           "airline": "Atlantique",
           "acType": "medium"
+        },
+        {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c279",
+          "model": "light"
         },
         {
           "kind": "flight-out",
@@ -21218,6 +21098,15 @@
           "why": "blocage persistant"
         },
         {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c280",
+          "model": "light"
+        },
+        {
           "kind": "flight-out",
           "volId": 2687,
           "airline": "atlantique",
@@ -21359,6 +21248,15 @@
           "volId": 2700,
           "airline": "Atlantique",
           "acType": "medium"
+        },
+        {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c281",
+          "model": "light"
         },
         {
           "kind": "flight-out",
@@ -21506,6 +21404,15 @@
           "why": "pic de demande — plus de vols planifiés"
         },
         {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c282",
+          "model": "light"
+        },
+        {
           "kind": "flight-out",
           "volId": 2708,
           "airline": "atlantique",
@@ -21636,6 +21543,15 @@
           "volId": 2721,
           "airline": "Atlantique",
           "acType": "medium"
+        },
+        {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c283",
+          "model": "light"
         },
         {
           "kind": "flight-out",
@@ -21803,6 +21719,15 @@
           "acType": "medium"
         },
         {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c284",
+          "model": "light"
+        },
+        {
           "kind": "surge-start",
           "why": "pic de demande — plus de vols planifiés"
         },
@@ -21948,6 +21873,15 @@
           "why": "stations carburant de nouveau en service"
         },
         {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c285",
+          "model": "light"
+        },
+        {
           "kind": "runway-reopen",
           "why": "piste de nouveau ouverte"
         },
@@ -22062,6 +21996,15 @@
           "acType": "medium"
         },
         {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c286",
+          "model": "light"
+        },
+        {
           "kind": "flight-out",
           "volId": 2747,
           "airline": "atlantique",
@@ -22174,6 +22117,15 @@
           "volId": 2750,
           "airline": "atlantique",
           "why": "blocage persistant"
+        },
+        {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c287",
+          "model": "light"
         },
         {
           "kind": "flight-out",
@@ -22329,6 +22281,15 @@
         {
           "kind": "surge-end",
           "why": "pic de demande terminé — cadence normale"
+        },
+        {
+          "kind": "contract-expired",
+          "model": "light"
+        },
+        {
+          "kind": "contract-offered",
+          "id": "c288",
+          "model": "light"
         },
         {
           "kind": "flight-out",
@@ -22819,6 +22780,17 @@
             "cancelled": false
           }
         ]
+      },
+      "contracts": {
+        "nextId": 289,
+        "offered": {
+          "id": "c288",
+          "model": "light",
+          "at": 172637,
+          "until": 173237
+        },
+        "active": null,
+        "history": []
       },
       "_unlocked": {
         "fuel": true,
