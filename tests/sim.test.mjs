@@ -175,7 +175,7 @@ test('progression : les services se débloquent par CONDITION MESURABLE (R23, cr
   sim2.infra.gates.push({ id: 1, size: 'M', terminalId: 1, cleaning: 10, maintenance: 10 });
   sim2.planning.push({ id: sim2.nextAcId++, airline: 'solaire', acType: 'small',
     pax: 5, planned: 60, status: 'planned' }); // fuel (offre en vue)
-  sim2.passengers.queue.checkin = 90;           // baggage (file ≥ 90)
+  sim2.passengers.queues['t1'] = { checkin: 90, security: 0, board: 0 }; // baggage (file ≥ 90, R30 : PAR TERMINAL)
   sim2.passengers.totalCarried = 400;            // baggage (carried) + catering (≥ 300)
   tickUnlocks(sim2);
   tickUnlocks(sim2);

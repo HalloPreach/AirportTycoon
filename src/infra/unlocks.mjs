@@ -32,6 +32,7 @@ import { UNLOCK_RULES } from '../data/catalog.mjs';
 import { lastPeriod } from '../economy/economy.mjs';
 import { punctualityStats } from '../sim/aircraft.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
+import { queueTotals } from '../sim/passengers.mjs'; // R30 : files par terminal → somme (condition globale)
 
 // Capacité check-in de base (par terminal, sans service bagages).
 const CHECKIN_CAP = 120;
@@ -57,7 +58,11 @@ const CONDS = Object.freeze({
   // sans file ne se bloque jamais.
   baggage(sim) {
     const p = sim.passengers;
-    const over = Math.max(0, (p.queue?.checkin ?? 0) - CHECKIN_CAP * sim.infra.terminals.length);
+    // R30 : la file check-in GLOBALE = somme des files PAR TERMINAL (queueTotals,
+    // agrégat de lecture — la règle de déblocage est globale, les files sont
+    // per-terminal). Seuil 90 pax = 75 % de la capacité check-in (120 × nb
+    // terminaux) : le goulou se voit avant le déblocage bagages.
+    const over = Math.max(0, queueTotals(sim).checkin - CHECKIN_CAP * sim.infra.terminals.length);
     return over >= UNLOCK_RULES.baggage.queue
       || p.totalCarried >= UNLOCK_RULES.baggage.carried;
   },

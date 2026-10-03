@@ -100,7 +100,12 @@ test('R10 : CHemin non restaurable (path présent mais pas un tableau) → rejet
   expectReject(json);
 });
 test('R10 : FILE PASSAGÈRE non numérique → rejet (capacités)', () => {
-  const json = altSave((s) => { s.sim.passengers.queue.board = 'plein'; });
+  // R30 : les files sont PAR TERMINAL (queues[terminalId]) — une file non
+  // numérique d'UN terminal rejette l'état (la validation parcourt les queues).
+  const json = altSave((s) => {
+    const tid = s.sim.infra.terminals[0].id;
+    s.sim.passengers.queues[tid] = { checkin: 0, security: 0, board: 'plein' };
+  });
   expectReject(json);
 });
 test('R10 : version INCOMPATIBLE → rejet dur (politique D4 : pas de migration)', () => {

@@ -31,6 +31,9 @@ import { unlockView } from '../infra/unlocks.mjs';
 // source) + COMMANDE (setAssignment : le joueur change l'affectation, la règle
 // est dans la sim, le panneau émet l'intention).
 import { assignmentView, setAssignment } from '../infra/assignments.mjs';
+// R30 (t_1623523e) : les files passagers sont PAR TERMINAL (sim.passengers.queues)
+// — le panneau l'affiche via queueTotals (somme des terminaux, lecture seule).
+import { queueTotals } from '../sim/passengers.mjs';
 
 const PHASES_FR = Object.freeze({
   approach: 'approche', holding: 'attente', landing: 'atterrissage', exit: 'sortie de piste',
@@ -305,9 +308,10 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         // R17 : la ponctualité (fenêtre bornée) fait partie de la signature —
         // sinon le panneau ne se met pas à jour quand un vol se termine.
         const pu = punctualityStats(sim);
+        const qt = queueTotals(sim); // R30 : files par terminal → somme (affichage)
         return [
           Math.floor(sim.time || 0), Math.round(p.satisfaction), p.totalCarried,
-          p.queue.checkin, p.queue.security, p.queue.board,
+          qt.checkin, qt.security, qt.board,
           sim.aircraft.length, sim.planning.length,
           svcCount('fuel'), svcCount('hangar'), svcCount('cleaning'), svcCount('baggage'),
           pu.rate == null ? 'no' : `${pu.total}|${pu.onTime}|${pu.cancels}`,
@@ -318,10 +322,11 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         const sim = state.sim;
         if (!sim) return;
         const p = sim.passengers;
+        const qt = queueTotals(sim); // R30 : files par terminal → somme (affichage)
         line(body, 'Temps de jeu', fmtClock(sim.time));
         line(body, 'Passagers transportés', `${p.totalCarried}`);
         line(body, 'Satisfaction', `${Math.round(p.satisfaction)} %`);
-        line(body, 'Files', `check-in ${p.queue.checkin} · sécurité ${p.queue.security} · embarquement ${p.queue.board}`);
+        line(body, 'Files', `check-in ${qt.checkin} · sécurité ${qt.security} · embarquement ${qt.board}`);
         const inFlight = sim.aircraft.filter((a) => ['approach', 'holding', 'landing', 'blocked'].includes(a.phase)).length;
         line(body, 'Avions', `${sim.aircraft.length} (${inFlight} en vol/attente · ${sim.aircraft.length - inFlight} au sol)`);
         line(body, 'Vols planifiés', `${sim.planning.length}`);

@@ -45,10 +45,15 @@ export function newSimState() {
     planning: [],    // vols planifiés (pas encore arrivés) : {id, airline, acType, pax, planned, status}
     nextAcId: 1,
     // Passagers agrégés (BL-13, AC22/AC40) : total transporté (compté UNE fois
-    // à l'embarquement), satisfaction évolutive, groupes en cours + files par
-    // étape (check-in/sécurité/embarquement) — voir src/sim/passengers.mjs.
+    // à l'embarquement), satisfaction évolutive, groupes en cours + files PAR
+    // TERMINAL (R30 : queues[terminalId] = {checkin,security,board}) + compteurs
+    // de flux par terminal (injectedTotal/securityDone) — voir
+    // src/sim/passengers.mjs. R30 : l'ancienne file GLOBALE `queue` (qui
+    // permettait à un terminal de traiter les pax d'un autre sans règle) est
+    // SUPPRIMÉE — les files, capacités et flux sont PAR TERMINAL ; les pax d'un
+    // vol annulé sont retirés EXPLICITEMENT (removePassengers).
     passengers: { totalCarried: 0, satisfaction: 100,
-                  queue: { checkin: 0, security: 0, board: 0 }, groups: [] },
+                  queues: {}, groups: [], injectedTotal: {}, securityDone: {} },
     economy: { money: START_FUNDS, revenue: {}, spent: {}, debt: 0, bankrupt: false,
       // R16 : périodes financières (5 min de jeu) — les 4 dernières closes
       // (borné, comme R14) + l'accumulateur de clôture (_periodAcc, pattern

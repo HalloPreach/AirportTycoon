@@ -175,16 +175,19 @@ test('t_2179387d (b) : hangar et nettoyage touchent DES usures DIFFÉRENTES (2 s
 test('t_2179387d (c) : avec le service bagages la file check-in se vide PLUS VITE', () => {
   // 5 s (10 ticks × 0.5 s), file de 200 pax. Débit de base 12 pax/s ;
   // avec UNE salle bagages : 12 + 8 = 20 pax/s → plus de pax traités.
+  // R30 : la file check-in est PAR TERMINAL (queues[terminalId]) ; buildSocle
+  // pose UN terminal — on lit/seed sa file check-in directement.
   const runCheckin = (sim) => {
     for (let i = 0; i < 10; i++) tickPassengers(sim, 0.5);
-    return sim.passengers.queue.checkin;
+    const tid = sim.infra.terminals[0].id;
+    return sim.passengers.queues[tid].checkin;
   };
   const sim1 = newSimState(); buildSocle(sim1); unlock(sim1);
-  sim1.passengers.queue.checkin = 200;
+  sim1.passengers.queues[sim1.infra.terminals[0].id] = { checkin: 200, security: 0, board: 0 };
   const baseLeft = runCheckin(sim1);
   const sim2 = newSimState(); buildSocle(sim2); unlock(sim2);
   buildBuilding(sim2, 'baggage', 100, 200);
-  sim2.passengers.queue.checkin = 200;
+  sim2.passengers.queues[sim2.infra.terminals[0].id] = { checkin: 200, security: 0, board: 0 };
   const boostedLeft = runCheckin(sim2);
   assert.ok(boostedLeft < baseLeft,
     `avec bagages moins de pax en attente check-in (${boostedLeft} < ${baseLeft}) — service opérationnel`);

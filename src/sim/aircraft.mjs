@@ -32,7 +32,7 @@ import { gateFor, pickRunway, runwayBusy, runwayFor } from '../infra/infra.mjs';
 import { servicesServingGate } from '../infra/assignments.mjs'; // R27 : lances mesurées par terminal
 import { onGateArrived, onGateDeparted, onFlightCancelled } from '../economy/economy.mjs';
 import { countContractFlight } from '../flights/contracts.mjs';
-import { arrivePassengers, countCarried, boardDelay, groupComplete } from './passengers.mjs';
+import { arrivePassengers, countCarried, boardDelay, groupComplete, removePassengers } from './passengers.mjs';
 import { runwayClosed, fuelOut } from './incidents.mjs';
 
 const V = { approach: 220, landing: 130, taxi: 60, pushback: 30, departure: 150 };
@@ -253,6 +253,7 @@ function doHolding(sim, ac, dt, spec, occupied) {
     ac._holdBlocked = (ac._holdBlocked ?? 0) + dt;
     if (ac._holdBlocked >= HOLDING_CANCEL_S) {
       ac.phase = 'cancelled';
+      removePassengers(sim, ac); // R30 : retrait EXPLICITE (no-op si le groupe n'existe pas encore — vol en holding, non débarqué)
       onFlightCancelled(sim);
       logFlightEnd(sim, ac, true); // R17 : annulation = fin de vol dans la fenêtre (comptée)
       pushEvent(sim, { kind: 'flight-cancelled', volId: ac.id, airline: ac.airline, why: `attente bornée — ${holdWhy}` });
@@ -672,6 +673,7 @@ function doBlocked(sim, ac, dt, spec, occupied) {
     if (g && g.acId === ac.id) g.acId = null; // libération sûre de la porte réservée
     ac.seg = null;
     ac.phase = 'cancelled';
+    removePassengers(sim, ac); // R30 : retrait EXPLICITE des pax EN COURS du vol annulé (ne bloque PAS les groupes suivants)
     onFlightCancelled(sim); // BL-15 (AC6) : l'incident a un coût (indemnité)
     logFlightEnd(sim, ac, true); // R17 : annulation = fin de vol dans la fenêtre (comptée)
     pushEvent(sim, { kind: 'flight-cancelled', volId: ac.id, airline: ac.airline, why: 'blocage persistant' });

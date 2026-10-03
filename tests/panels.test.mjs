@@ -126,14 +126,18 @@ test('NONMVP-5 : les statistiques lues existent (temps, passagers, files, avions
   sim.time = 3661; // 01:01:01
   sim.passengers.totalCarried = 1234;
   sim.passengers.satisfaction = 87.4;
-  sim.passengers.queue = { checkin: 3, security: 2, board: 1 };
+  // R30 : les files sont PAR TERMINAL (sim.passengers.queues[terminalId]) —
+  // le panneau les lit via queueTotals (somme) ; le contrat prouvé ici est que
+  // la file du terminal construit porte les bons types (entiers, ≥ 0).
+  const tid = sim.infra.terminals[0].id;
+  sim.passengers.queues[tid] = { checkin: 3, security: 2, board: 1 };
   sim.aircraft.push(ac(sim, { id: 1, phase: 'approach' }), ac(sim, { id: 2, phase: 'gate' }));
   sim.planning.push({ id: 5, status: 'planned' });
   // Champs lus par le panneau :
   assert.ok(Number.isFinite(sim.time), 'horloge de la sim');
   assert.equal(sim.passengers.totalCarried, 1234, 'pax transportés');
   assert.ok(Number.isFinite(sim.passengers.satisfaction), 'satisfaction (bornée 0-100 par la sim)');
-  for (const k of ['checkin', 'security', 'board']) assert.ok(Number.isInteger(sim.passengers.queue[k]), `file ${k}`);
+  for (const k of ['checkin', 'security', 'board']) assert.ok(Number.isInteger(sim.passengers.queues[tid][k]), `file ${k}`);
   // Règle UI : le compteur « en vol/attente » utilise LA LISTE DE PHASES du panneau.
   const IN_FLIGHT = ['approach', 'holding', 'landing', 'blocked'];
   const inFlight = sim.aircraft.filter((a) => IN_FLIGHT.includes(a.phase)).length;

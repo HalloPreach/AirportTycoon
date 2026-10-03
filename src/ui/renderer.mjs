@@ -1,5 +1,6 @@
 // Rendu canvas 2D : LIT l'état, ne calcule rien de jeu (règle UI fine).
 // Sprites vectoriels simples — ponytail : à remplacer par de vrais assets une fois la boucle jouable.
+import { queueTotals } from '../sim/passengers.mjs'; // R30 : files par terminal → somme (HUD)
 export function makeRenderer(canvas, { overlays = [], onMenuCommands = null } = {}) {
   const ctx = canvas.getContext('2d');
 
@@ -167,10 +168,11 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null } = 
     if (sim && sim.passengers) {
       lines.push(`Passagers : ${sim.passengers.totalCarried} · ${Math.round(sim.passengers.satisfaction)} %`);
       // BL-13 (AC22) : les files du parcours passagers sont VISIBLES (occupation
-      // lisible par étape) ; les capacités détaillées iront dans l'interface
-      // de gestion (BL-16).
-      const q = sim.passengers.queue;
-      if (q) lines.push(`Files : check-in ${Math.round(q.checkin)} · sécurité ${Math.round(q.security)} · attente ${Math.round(q.board)}`);
+      // lisible par étape). R30 : les files sont PAR TERMINAL (sim.passengers.
+      // queues[terminalId]) ; le HUD affiche la SOMME des terminaux (queueTotals,
+      // agrégat de lecture — pas une règle).
+      const q = queueTotals(sim);
+      lines.push(`Files : check-in ${Math.round(q.checkin)} · sécurité ${Math.round(q.security)} · attente ${Math.round(q.board)}`);
     }
     if (state.paused) lines.push('PAUSE (P pour reprendre)');
     const w = 240;

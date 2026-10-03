@@ -158,14 +158,30 @@ function validateSim(sim) {
       throw new Error(`Sauvegarde invalide : porte ${g.id} réservée par un avion inexistant (${g.acId})`);
     }
   }
-  // R10 (files passagers) : si `passengers` est PRÉSENT, les files (queue) et les
-  // groupes (groups) sont des types CONSISTANTS — le tick les avance (q[stage] -= …)
-  // : un champ non numérique rendrait les files NaN et la satisfaction non bornée.
+  // R10 (files passagers) : si `passengers` est PRÉSENT, les structures sont des
+  // types CONSISTANTS — le tick les avance (q[stage] -= …) : un champ non
+  // numérique rendrait les files NaN et la satisfaction non bornée.
+  // R30 : les files sont PAR TERMINAL (queues[terminalId] = {checkin,security,
+  // board}) + compteurs de flux par terminal (injectedTotal/securityDone) ; les
+  // groupes (gr.volId) servent au comptage unique. L'ancienne file GLOBALE
+  // `queue` (pré-R30) est tolérée (sauvegarde ancienne) mais plus lue.
   if (isObj(sim.passengers)) {
-    const q = sim.passengers.queue;
-    if (isObj(q)) for (const s of ['checkin', 'security', 'board']) {
-      if (s in q && !isFiniteNum(q[s])) {
-        throw new Error(`Sauvegarde invalide : file passagers « ${s} » non numérique`);
+    const pq = sim.passengers.queues;
+    if (isObj(pq)) for (const [tid, q] of Object.entries(pq)) {
+      if (isObj(q)) for (const s of ['checkin', 'security', 'board']) {
+        if (s in q && !isFiniteNum(q[s])) {
+          throw new Error(`Sauvegarde invalide : file passagers « ${s} » (terminal ${tid}) non numérique`);
+        }
+      }
+    }
+    // Compteurs de flux par terminal (R30) : objets terminalId → nombre.
+    for (const k of ['injectedTotal', 'securityDone']) {
+      if (k in sim.passengers && isObj(sim.passengers[k])) {
+        for (const v of Object.values(sim.passengers[k])) {
+          if (v !== undefined && !isFiniteNum(v)) {
+            throw new Error(`Sauvegarde invalide : compteur passagers « ${k} » non numérique`);
+          }
+        }
       }
     }
     if ('groups' in sim.passengers && !isArr(sim.passengers.groups)) {

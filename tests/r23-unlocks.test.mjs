@@ -103,12 +103,17 @@ test('R23 : les VOLUMES justifient le débit (baggage) et le confort (catering)'
   assert.equal(unlockState(sim, 'catering').unlocked, true, '400 ≥ 300 pax → restauration');
 
   const sim2 = freshSim();
-  sim2.passengers.queue.checkin = 90; // le goulou de base se voit (75 % de la capacité 120)
+  // R30 : la file check-in est PAR TERMINAL — queueTotals (la condition de
+  // déblocage bagages) somme les queues[terminalId]. Un terminal SANS infra
+  // (freshSim, pas de terminal construit) porte une file sur une key
+  // synthétique ; queueTotals l'additionne sans requérir le terminal dans
+  // infra.terminals (la règle est globale, les files sont per-terminal).
+  sim2.passengers.queues['t1'] = { checkin: 90, security: 0, board: 0 }; // le goulou de base se voit (75 % de la capacité 120)
   tickUnlocks(sim2);
   assert.equal(unlockState(sim2, 'baggage').unlocked, true, 'file check-in ≥ 90 → bagages');
 
   const sim3 = freshSim();
-  sim3.passengers.queue.checkin = 89; // sous le seuil → verrouillé
+  sim3.passengers.queues['t1'] = { checkin: 89, security: 0, board: 0 }; // sous le seuil → verrouillé
   sim3.passengers.totalCarried = 299; // sous les 300 pax → verrouillé
   tickUnlocks(sim3);
   assert.equal(unlockState(sim3, 'baggage').unlocked, false, 'sous les seuils : bagages verrouillé');
@@ -131,7 +136,7 @@ test('R23 : les 5 services débloqués en un tick — UN événement par service
   const sim = freshSim();
   addOffer(sim); // fuel (offre en vue)
   wornGate(sim, 10, 10); // cleaning + hangar
-  sim.passengers.queue.checkin = 90; // baggage
+  sim.passengers.queues['t1'] = { checkin: 90, security: 0, board: 0 }; // baggage (R30 : file PAR TERMINAL)
   sim.passengers.totalCarried = 400; // baggage (carried) + catering (≥ 300)
   tickUnlocks(sim);
   for (const s of SERVICES) assert.equal(unlockState(sim, s).unlocked, true, `${s} débloqué`);
@@ -167,7 +172,7 @@ test('R23 : aucune condition ne fait référence à un service non débloqué (p
   assert.equal(sim.infra.services.length, 0, 'aucun service construit');
   addOffer(sim);
   wornGate(sim, 10, 10);
-  sim.passengers.queue.checkin = 90;
+  sim.passengers.queues['t1'] = { checkin: 90, security: 0, board: 0 }; // R30 : file PAR TERMINAL
   sim.passengers.totalCarried = 400;
   for (const s of SERVICES) {
     assert.equal(unlockState(sim, s).unlocked, true, `${s} : condition atteignable sans autre service`);

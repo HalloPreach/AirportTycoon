@@ -118,11 +118,17 @@ export function setAssignment(sim, serviceId, target) {
 // la règle.
 export function servicesServingGate(sim, type, gate) {
   const tid = gate.terminalId;
+  // R30 : les `svc.target` et les clés `queues` peuvent être chaîne OU nombre
+  // (clé d'objet = chaîne, champ d'infra = nombre) — on compare en String()
+  // pour que la mesure marche quel que soit le type (pas de bonus silencieux).
   return sim.infra.services.filter((s) => s.type === type
-    && serviceTypeKnown(s.type) && s.target === tid);
+    && serviceTypeKnown(s.type) && String(s.target) === String(tid));
 }
 export function countTypeServing(sim, type, terminalId) {
-  return sim.infra.services.filter((s) => s.type === type && s.target === terminalId).length;
+  // R30 : `terminalId` peut être une CHAÎNE (Object.keys des queues /
+  // securityDone) ou un NOMBRE (champ d'infra) — String() des deux côtés.
+  return sim.infra.services.filter((s) => s.type === type
+    && String(s.target) === String(terminalId)).length;
 }
 
 // La VUE pour l'UI (affectation + capacités par terminal). L'UI est FINE :
