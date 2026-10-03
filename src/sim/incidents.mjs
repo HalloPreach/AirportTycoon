@@ -10,8 +10,12 @@
 //             station continue de servir (R32 : la panne est ATTACHÉE à la
 //             station, la voisine reste ACTIVE) ; service revenu → plein normal.
 //   surge   : pic DEMANDE — le planificateur double sa cadence (plus de vols
-//             planifiés) ET la satisfaction perd du confort (le pic se paie,
-//             la qualité dégradée se lit) ; fin du pic → la cadence revient.
+//             planifiés) ; la satisfaction ne perd RIEN directement : la
+//             pénalité du pic, S'IL Y EN A UNE, vient des files (R34 : le pic
+//             qui sature se paie dans le module unique des files, pas dans un
+//             second module — pas de perte directe qui se « compense »
+//             artificiellement avec la récupération constante) ; fin du pic →
+//             la cadence revient.
 // R32 : un incident = UN OBJET { id, type, asset, remaining, severity, cause }
 // ATTACHÉ à un ACTIF (une piste, une station) — l'actif est l'id de l'actif ;
 // « la fréquence dépend de l'usure ou d'une table bornée » : la table bornée
@@ -36,8 +40,7 @@ const INCID = Object.freeze({
   FUEL_EVERY_S: 720,     // tirage « panne station » toutes les ~12 min sim
   FUEL_OUT_S: 90,        // durée de la panne (départ sec pendant la panne)
   SURGE_EVERY_S: 240,    // tirage « pic de demande » toutes les ~4 min sim
-  SURGE_S: 90,           // durée du pic
-  SURGE_SAT_LOSS: 0.5,   // %/s de satisfaction perdue PENDANT le pic (ça se paie)
+  SURGE_S: 90,           // durée du pic (la cadence est DOUBLÉE pendant le pic)
   // R32 : l'usure BIAISE la fréquence — plus un terminal est usé (portes
   // cleaning+maintenance, R29), plus un incident d'actif s'y déclenche vite
   // (le 1er tirage reste borné : il n'arrive QU'APRÈS la 1re fenêtre).
@@ -195,11 +198,15 @@ export function tickIncidents(sim, dt, rng) {
     }
   }
 
-  // 3) PIC DE DEMANDE : l'effet est lu par le planificateur (cadence doublée)
-  //    + la satisfaction perd du confort PENDANT le pic (le pic a un coût).
+  // 3) PIC DE DEMANDE : l'effet est lu par le planificateur (cadence doublée).
+  //    R34 : la satisfaction ne perd RIEN directement pendant le pic — la
+  //    pénalité du pic, S'IL Y EN A UNE, vient UNIQUEMENT des files
+  //    (sim/passengers.mjs, module unique de vérité : saturation → perte,
+  //    files vides → récupération). L'ancienne perte directe (0,5 %/s) se
+  //    « compensait » artificiellement avec la récupération constante quand
+  //    les files restaient vides (pic absorbé) : le pic payé même bien géré.
   if (i.surge.active) {
     i.surge.remaining -= dt;
-    sim.passengers.satisfaction = Math.max(0, sim.passengers.satisfaction - INCID.SURGE_SAT_LOSS * dt);
     if (i.surge.remaining <= 0) {
       i.surge.active = false;
       pushEvent(sim, { kind: 'surge-end', why: 'pic de demande terminé — cadence normale' });
@@ -372,7 +379,7 @@ export function incidentResponse(sim, which) {
     ok: true, type: 'surge', remaining: Math.ceil(i.surge.remaining),
     responses: [
       { id: 'absorb', name: 'Absorber le pic (gratuit)', cost: 0,
-        effect: `le pic continue ${Math.ceil(i.surge.remaining)} s — la cadence reste doublée, le confort baisse (${INCID.SURGE_SAT_LOSS} %/s)` },
+        effect: `le pic continue ${Math.ceil(i.surge.remaining)} s — la cadence reste doublée ; s'il sature les files, la satisfaction baisse (sinon rien)` },
       { id: 'relief', name: 'Allègement du planning', cost: 0,
         effect: `refuser les ${n} vol(s) planifié(s) (leur revenu est perdu) — les files d'arrivée se vident` },
     ],

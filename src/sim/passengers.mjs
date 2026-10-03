@@ -327,17 +327,11 @@ export function tickPassengers(sim, dt) {
   // GLOBALE (l'aéroport) — la satisfaction reste un indicateur global de
   // l'aéroport, mais la PENALITÉ est calculée sur les files DE CHAQUE
   // TERMINAL (un terminal vide n'est jamais pénalisé par un autre saturé).
-  let loss = 0;
-  for (const tid of Object.keys(p.queues)) {
-    const q = p.queues[tid];
-    const caps = { checkin: checkinCap(sim, tid), security: securityCap(sim, tid), board: waitCapFor(sim, tid) };
-    loss += PAX.satLossPerSat *
-      (['checkin', 'security', 'board'].filter((s) => q[s] >= caps[s]).length);
-    for (const s of ['checkin', 'security', 'board']) {
-      const over = Math.max(0, q[s] - caps[s]); // au-delà de la capacité (DU TERMINAL)
-      loss += (over / 10) * PAX.satLossPerWait10;
-    }
-  }
+  // R34 : satisfaction/réputation reliées aux RÉSULTATS OBSERVÉS — la perte
+  // directe de pic (incidents.mjs) est SUPPRIMÉE : un pic qui sature les
+  // files se paie ICI (et seulement ici) ; un pic absorbé (files vides) ne
+  // se compense plus artificiellement avec la récupération constante.
+  const { loss } = satisfactionCauses(sim);
   if (loss > 0) p.satisfaction = Math.max(0, p.satisfaction - loss * dt);
   else {
     let gain = PAX.recoverRate;
@@ -345,6 +339,30 @@ export function tickPassengers(sim, dt) {
     if (sim.infra.services.some((s) => s.type === 'maintenance')) gain += PAX.comfortMaintenance;
     p.satisfaction = Math.min(100, p.satisfaction + gain * dt);
   }
+}
+
+// R34 (t_48232e68) : explication des CAUSES de la satisfaction — LECTURE pure
+// (pattern incidentResponse) : le panneau affiche ce qui PÈSE (files
+// saturées + débordement au-delà de la capacité, PAR TERMINAL) ou ce qui
+// REMONTE (files vides → récupération + confort). MÊME calcul que le tick —
+// UNE règle (jamais deux modules qui se contredisent, R34) : le tick LIT
+// cette fonction, il ne recopie pas la formule.
+export function satisfactionCauses(sim) {
+  const p = ensurePassengers(sim); // init paresseuse (sauvegarde M1 / sim nue)
+  let loss = 0, satStages = 0, overflow = 0;
+  for (const tid of Object.keys(p.queues)) {
+    const q = p.queues[tid];
+    const caps = { checkin: checkinCap(sim, tid), security: securityCap(sim, tid), board: waitCapFor(sim, tid) };
+    loss += PAX.satLossPerSat *
+      (['checkin', 'security', 'board'].filter((s) => q[s] >= caps[s]).length);
+    satStages += ['checkin', 'security', 'board'].filter((s) => q[s] >= caps[s]).length;
+    for (const s of ['checkin', 'security', 'board']) {
+      const over = Math.max(0, q[s] - caps[s]); // au-delà de la capacité (DU TERMINAL)
+      loss += (over / 10) * PAX.satLossPerWait10;
+      overflow += over;
+    }
+  }
+  return { loss, satStages, overflow };
 }
 
 // Totaux DISPLAY (HUD/panneau) : les pax en cours SOMMÉS sur TOUS les

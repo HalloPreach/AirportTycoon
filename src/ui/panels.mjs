@@ -38,7 +38,7 @@ import { assignmentView, setAssignment } from '../infra/assignments.mjs';
 import { incidentResponse, respondIncident } from '../sim/incidents.mjs';
 // R30 (t_1623523e) : les files passagers sont PAR TERMINAL (sim.passengers.queues)
 // — le panneau l'affiche via queueTotals (somme des terminaux, lecture seule).
-import { queueTotals } from '../sim/passengers.mjs';
+import { queueTotals, satisfactionCauses } from '../sim/passengers.mjs';
 // R31 (t_7a512737) : améliorations de capacité CIBLÉE par terminal — LECTURE
 // (upgradeView : les 3 choix + goulot courant du terminal) + COMMANDE
 // (buyUpgrade : la sim règle le coût/l'effet, le panneau émet l'intention —
@@ -376,6 +376,9 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
           qt.checkin, qt.security, qt.board,
           sim.aircraft.length, sim.planning.length,
           svcCount('fuel'), svcCount('hangar'), svcCount('cleaning'), svcCount('baggage'),
+          // R34 : la CAUSE de la satisfaction fait partie de la signature — le
+          // panneau se met à jour quand les files saturent / se vident.
+          ...(() => { const c = satisfactionCauses(sim); return [c.loss > 0, c.satStages, Math.round(c.overflow)]; })(),
           pu.rate == null ? 'no' : `${pu.total}|${pu.onTime}|${pu.cancels}`,
         ].join('|');
       },
@@ -387,7 +390,14 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         const qt = queueTotals(sim); // R30 : files par terminal → somme (affichage)
         line(body, 'Temps de jeu', fmtClock(sim.time));
         line(body, 'Passagers transportés', `${p.totalCarried}`);
-        line(body, 'Satisfaction', `${Math.round(p.satisfaction)} %`);
+        // R34 : satisfaction + CAUSES (lecture satisfactionCauses — module
+        // unique, pas de second module qui se contredit) : ce qui pèse
+        // (files saturées / débordement) ou ce qui remonte (files vides).
+        const sc = satisfactionCauses(sim);
+        const satCause = sc.loss > 0
+          ? `pèse : ${sc.satStages} file(s) saturée(s)${sc.overflow ? ` + débordement ${Math.round(sc.overflow)} pax` : ''} (${Math.round(sc.loss * 10) / 10} %/s)`
+          : 'files vides : remonte progressivement (+confort si services)';
+        line(body, 'Satisfaction', `${Math.round(p.satisfaction)} % — ${satCause}`, sc.loss > 0 ? 'warn' : 'good');
         line(body, 'Files', `check-in ${qt.checkin} · sécurité ${qt.security} · embarquement ${qt.board}`);
         const inFlight = sim.aircraft.filter((a) => ['approach', 'holding', 'landing', 'blocked'].includes(a.phase)).length;
         line(body, 'Avions', `${sim.aircraft.length} (${inFlight} en vol/attente · ${sim.aircraft.length - inFlight} au sol)`);
