@@ -1,3 +1,4 @@
+import { Camera } from '../src/ui/camera.mjs';
 // NONMVP-5 — Les 5 panneaux de consultation (src/ui/panels.mjs) : le CONTRAT
 // DE DONNÉES qu'ils surfacent est prouvé ici, sans DOM (zéro navigateur).
 //
@@ -271,7 +272,8 @@ function makeR07Dom() {
 // Câblage FAIT COMME main.mjs : viewSize, camera (dummy), buildTool absent.
 function wireR07Panels(state) {
   const { body, canvas } = makeR07Dom();
-  const camera = { zoom: 1, screenToWorldX: (x) => x, screenToWorldY: (y) => y };
+  state.camera ??= { x: 50, y: 50, zoom: 1 };
+  const camera = new Camera(state);
   const panels = makePanels({ state, camera, viewSize: () => ({ width: 100, height: 100 }), buildTool: undefined });
   return { panels, body, canvas, camera };
 }
@@ -348,4 +350,18 @@ test('R15 : l\'inspection d\'un bâtiment affiche l\'exploitation en $/min · $/
   assert.ok(panelText.includes('Exploitation'), 'la ligne Exploitation existe');
   assert.ok(panelText.includes(expected),
     `le /min·/h affiché = le dérivé des règles (${expected})`);
+});
+
+test('G2 : une cause dérivée change même si la phase et le retard restent identiques', () => {
+  const state = { screen: 'game', sim: newSimState() };
+  const { panels, canvas } = wireR07Panels(state);
+  const a = ac(state.sim, { id: 90, phase: 'blocked', x: 50, y: 50, heading: 'gate', delayed: 60 });
+  state.sim.aircraft.push(a);
+  canvas.fire('click', { offsetX: 50, offsetY: 50 });
+  panels.refresh();
+  assert.ok(JSON.stringify(panels.col.children).includes('porte (réservée/usure)'));
+  a.heading = 'runway';
+  panels.refresh();
+  assert.ok(JSON.stringify(panels.col.children).includes('segment (taxi occupé)'));
+  assert.ok(!JSON.stringify(panels.col.children).includes('porte (réservée/usure)'));
 });

@@ -1,0 +1,183 @@
+{
+  "at": "2026-10-03T12:42:29.531Z",
+  "passed": 19,
+  "failed": 0,
+  "fixtures": [
+    "Offres medium/large déterministes dans une partie jetable",
+    "Avion sélectionné : phases et disparition contrôlées pour vérifier le rafraîchissement",
+    "Copies du simulateur pour les mesures de cadence et de coûts",
+    "États de congestion isolés pour comparer les causes affichées et les compteurs"
+  ],
+  "limitations": [
+    "QA automatisée de critères ciblés ; ne prouve pas toute la jouabilité ni un cycle complet de vol.",
+    "Le jugement de compréhension du joueur reste à confirmer par le reviewer G2."
+  ],
+  "results": [
+    {
+      "name": "Commandes accessibles à la souris et pause active",
+      "ok": true,
+      "detail": {
+        "paused": true,
+        "buttons": [
+          "1 · Piste (2500 $)",
+          "2 · Taxiway (400 $)",
+          "3 · Terminal (3000 $)",
+          "4 · Station carburant (1200 $)",
+          "5 · Hangar maintenance (1500 $)",
+          "6 · Salle de restauration (1000 $)",
+          "7 · Équipe nettoyage (900 $)",
+          "8 · Salle bagages (900 $)",
+          "X · Démolir",
+          "Reprendre (P)",
+          "Vitesse x1 (F)",
+          "Sauvegarder (S)",
+          "Charger la sauvegarde (L)"
+        ]
+      }
+    },
+    {
+      "name": "Pause : aucun débit ni temps simulé",
+      "ok": true,
+      "detail": {
+        "before": {
+          "money": 11999.30656,
+          "time": 0.21670000000000003
+        },
+        "after": {
+          "money": 11999.30656,
+          "time": 0.21670000000000003
+        }
+      }
+    },
+    {
+      "name": "Bouton vitesse x4",
+      "ok": true
+    },
+    {
+      "name": "Cadence/coûts x4 cohérents (copies de simulation)",
+      "ok": true,
+      "detail": {
+        "x1": {
+          "seconds": 1,
+          "spent": 3.2
+        },
+        "x4": {
+          "seconds": 4,
+          "spent": 12.8
+        }
+      }
+    },
+    {
+      "name": "Coût piste affiché par minute = débit réel sur 60 secondes",
+      "ok": true,
+      "detail": {
+        "rate": {
+          "observed": 72,
+          "shown": 72
+        },
+        "costText": "Inspection — clic sur la carte\nPiste #1\n100×1000 px\nCoût d’origine\n0 $\nRemboursement démolition\n0 $\nExploitation\n72 $ /min · 4 320 $ /h\nLongueur\n1000 px"
+      }
+    },
+    {
+      "name": "Construction souris : infrastructure ajoutée et coût débité",
+      "ok": true,
+      "detail": {
+        "construction": {
+          "money": 11999.30656,
+          "count": 1
+        },
+        "built": {
+          "money": 11599.30656,
+          "count": 2
+        }
+      }
+    },
+    {
+      "name": "Planning : obstacle explicite pour une offre impossible",
+      "ok": true,
+      "detail": "PacificCargo · Boeing 747 · 301 pax · 00:00:00 · prévu\n· charge 301/350 · ≈ 3912 $ (estimé) · ⚠ pas de station carburant : départ sec (billets moitiés) · ⛔ pas de porte de taille L\nAccepter\nRefuser"
+    },
+    {
+      "name": "Décision souris enregistrée une fois ; répétition sans effet",
+      "ok": true,
+      "detail": {
+        "decision": "accepted",
+        "duplicate": false
+      }
+    },
+    {
+      "name": "Fixture avion visible et ciblable",
+      "ok": true,
+      "detail": {
+        "point": {
+          "x": 1085,
+          "y": 552.5
+        },
+        "hit": "<canvas id=\"game\" width=\"1570\" height=\"1005\"></canvas>",
+        "active": false,
+        "camera": {
+          "x": 800,
+          "y": 600,
+          "zoom": 1
+        }
+      }
+    },
+    {
+      "name": "Inspection : cause de congestion lisible",
+      "ok": true,
+      "detail": "Inspection — clic sur la carte\nAvion #1\nAtlantique · Airbus A320\nPhase\nattente (retard 60 s)\nCause du retard\npiste (fermée/occupée)\nPassagers\n73 pax\nPiste\n1\nRessource attendue\nporte M\nPosition\n1100, 650"
+    },
+    {
+      "name": "Attente piste : retard compté une seule fois par seconde",
+      "ok": true,
+      "detail": {
+        "before": 60,
+        "after": 61,
+        "cause": "piste"
+      }
+    },
+    {
+      "name": "Inspection live : phase actualisée sans reselection",
+      "ok": true,
+      "detail": "Inspection — clic sur la carte\nAvion #1\nAtlantique · Airbus A320\nPhase\natterrissage\nÉtat\nroulage sur la piste\nPassagers\n73 pax\nPiste\n1\nRessource attendue\nporte M\nPosition\n1105, 650"
+    },
+    {
+      "name": "Goulot piste : modèle et inspection concordent",
+      "ok": true,
+      "detail": "Inspection — clic sur la carte\nAvion #1\nAtlantique · Airbus A320\nPhase\nattente (retard 60 s)\nCause du retard\npiste (fermée/occupée)\nPassagers\n73 pax\nPiste\n1\nRessource attendue\nporte M\nPosition\n1105, 650"
+    },
+    {
+      "name": "Goulot porte : modèle et inspection concordent",
+      "ok": true,
+      "detail": "Inspection — clic sur la carte\nAvion #1\nAtlantique · Airbus A320\nPhase\nbloqué (retard 60 s)\nCause du retard\nporte (réservée/usure)\nPassagers\n73 pax\nPiste\n1\nRessource attendue\nporte M\nPosition\n1105, 650"
+    },
+    {
+      "name": "Goulot segment : modèle et inspection concordent",
+      "ok": true,
+      "detail": "Inspection — clic sur la carte\nAvion #1\nAtlantique · Airbus A320\nPhase\nbloqué (retard 60 s)\nCause du retard\nsegment (taxi occupé)\nPassagers\n73 pax\nPiste\n1\nRessource attendue\nporte M\nPosition\n1105, 650"
+    },
+    {
+      "name": "Goulot carburant : modèle et inspection concordent",
+      "ok": true,
+      "detail": "Inspection — clic sur la carte\nAvion #1\nAtlantique · Airbus A320\nPhase\ncarburant (retard 60 s)\nCause du retard\ncarburant (lance/panne)\nPassagers\n73 pax\nPiste\n1\nRessource attendue\nporte M\nPosition\n1105, 650"
+    },
+    {
+      "name": "Goulot passagers : modèle et inspection concordent",
+      "ok": true,
+      "detail": "Inspection — clic sur la carte\nAvion #1\nAtlantique · Airbus A320\nPhase\nembarquement (retard 60 s)\nCause du retard\npassagers (file saturée)\nPassagers\n73 pax\nPiste\n1\nRessource attendue\nporte M\nPosition\n1105, 650"
+    },
+    {
+      "name": "Inspection : objet parti signalé sans reselection",
+      "ok": true,
+      "detail": "Inspection — clic sur la carte\nAvion #1\nparti — plus en simulation"
+    },
+    {
+      "name": "Aucune exception JavaScript navigateur",
+      "ok": true,
+      "detail": []
+    }
+  ],
+  "logs": [
+    "AirportTycoon : http://127.0.0.1:60934\n"
+  ]
+}

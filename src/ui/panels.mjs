@@ -107,7 +107,7 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         if (pick.kind === 'ac') {
           const ac = sim.aircraft.find((a) => a.id === pick.id);
           if (!ac) return 'none';
-          return [ac.phase, ac.pax, Math.round(ac.x), Math.round(ac.y), ac.gateId, ac.runwayId, Math.round(ac.delayed), ac._delayCause || null].join('|');
+          return [ac.phase, ac.pax, Math.round(ac.x), Math.round(ac.y), ac.gateId, ac.runwayId, Math.round(ac.delayed), causeAt(sim, ac)].join('|');
         }
         const find = (arr) => (arr || []).find((b) => b.id === pick.id);
         const b = find(sim.infra.runways) || find(sim.infra.taxiways)
@@ -177,7 +177,7 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
     const wx = camera.screenToWorldX(e.offsetX, v.width);
     const wy = camera.screenToWorldY(e.offsetY, v.height);
     const sim = state.sim;
-    const r = 30 / camera.zoom; // rayon d'inspection en unités MONDE (le zoom compte)
+    const r = 30 / state.camera.zoom; // rayon d'inspection en unités MONDE (le zoom compte)
     const ac = sim.aircraft.find((a) => Math.abs(a.x - wx) <= r && Math.abs(a.y - wy) <= r);
     if (ac) { pick = { kind: 'ac', id: ac.id }; return; }
     const b = [...sim.infra.runways, ...sim.infra.taxiways, ...sim.infra.terminals, ...sim.infra.services]
