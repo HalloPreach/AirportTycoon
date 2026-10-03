@@ -45,10 +45,15 @@ function overBuild(sim) {
   buildBuilding(sim, 'catering', 400, 200);
 }
 
-// Débloque les services (seuil passagers) et met assez de trésorerie.
+// R23 : services DÉJÀ DÉBLOQUÉS (état mi-jeu) — le flag persistant sim._unlocked
+// court-circuite les conditions mesurables (unlocks.mjs). On n'atteste PAS les
+// conditions : ce test porte sur le BILAN (AC6/AC23), pas sur les déblocages.
+// Le flag ne pollue ni le planning ni le compteur d'ids (les 16 vols semés
+// suivent, et le scénario 2 CONSTITUE la station — la condition n'est pas le
+// sujet ici).
 function unlock(sim) {
-  sim.passengers.totalCarried = 300;
   sim.economy.money = 100000;
+  sim._unlocked = { fuel: true, cleaning: true, hangar: true, baggage: true, catering: true };
 }
 
 // 16 vols medium semés DIRECTEMENT en phase « refuel » sur les 2 portes M

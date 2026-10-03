@@ -22,12 +22,14 @@ function base() {
   rebuildGraph(sim);
   return sim;
 }
-// Une station carburant construite (débloquée par 100 pax transportés).
+// Une station carburant construite (R23 : débloquée par UNE OFFRE DE VOL EN
+// VUE — pas un seuil de pax, unlocks.mjs).
 function addFuelStation(sim) {
-  sim.passengers.totalCarried = 100;
+  sim.planning.push({ id: sim.nextAcId++, airline: 'atlantique', acType: 'medium',
+    pax: 100, planned: 300, status: 'planned' }); // l'offre (condition fuel)
   const svc = buildBuilding(sim, 'fuel', 550, 1100);
   rebuildGraph(sim);
-  assert.ok(svc, 'la station carburant est construite (débloquée)');
+  assert.ok(svc, 'la station carburant est construite (offre en vue)');
 }
 // N avions en attente (phases d'arrivée) — file saturée.
 function saturate(sim, n) {

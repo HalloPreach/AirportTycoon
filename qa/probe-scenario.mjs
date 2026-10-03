@@ -26,8 +26,8 @@
 //                      refuse                   : tout est refusé (aucun nouveau vol)
 //                      nodecision               : AUCUNE décision (file « planned »
 //                                                 stagnée — vols qui n'arrivent jamais)
-//   --services S     : CONSTRUCTION des services, chacun dès son seuil
-//                      (UNLOCKS, pax transportés) :
+//   --services S     : CONSTRUCTION des services, chacun dès que la sim le
+//                      permet (R23 : unlockState, conditions mesurables) :
 //                      none (défaut) | fuel (carburant seul) | all (TOUTS :
 //                      fuel, catering, cleaning, baggage, hangar)
 //   --scenario bl17  : LE SCÉNARIO DU GATE (qa/bl17-sim48h.mjs) : fenêtres de
@@ -67,7 +67,8 @@ import { decideFlight } from '../src/flights/flights.mjs';
 import { forceIncident } from '../src/sim/incidents.mjs';
 import { buildBuilding, hasService } from '../src/infra/infra.mjs';
 import { passengerSummary } from '../src/sim/passengers.mjs';
-import { UNLOCKS, opexPerHour } from '../src/data/catalog.mjs';
+import { opexPerHour } from '../src/data/catalog.mjs';
+import { unlockState } from '../src/infra/unlocks.mjs';
 import { START_FUNDS } from '../src/core/sim-state.mjs';
 import { periodStatement } from '../src/economy/economy.mjs';
 
@@ -94,7 +95,8 @@ if (!['none', 'fuel', 'all'].includes(SERVICES)) { console.error(`--services : n
 // ---------- services : placement FIXE (coin haut-gauche, hors du plan de
 // départ A-2 qui occupe x>=550) — construction CHARGÉE (buildBuilding débite
 // le solde, comme le ferait le joueur). Chaque service est construit dès que
-// SON seuil (UNLOCKS, pax transportés) est franchi : la progression du jeu.
+// SON condition est remplie (R23 : unlockState, conditions mesurables —
+// plus de seuil pax) : la progression du jeu.
 const SERVICE_SPOTS = Object.freeze({
   fuel: { x: 0, y: 0 }, catering: { x: 120, y: 0 }, cleaning: { x: 220, y: 0 },
   baggage: { x: 320, y: 0 }, hangar: { x: 0, y: 100 },
@@ -156,13 +158,14 @@ function applyDueEvents(r) {
   }
 }
 
-// Construction des services voulus : dès le seuil de chacun (pax), placement
-// fixe ; buildBuilding ré-essaie (fonds/position), la charge passe par l'éco.
+// Construction des services voulus : dès que la sim LEUR PERMET (R23 :
+// unlockState = la MÊME règle que tickUnlocks, conditions mesurables —
+// plus de seuil de pax fixe) ; placement fixe ; buildBuilding ré-essaie
+// (fonds/position), la charge passe par l'éco.
 function buildWantedServices(sim) {
   for (const type of wantedServices) {
     if (hasService(sim, type)) continue;
-    const unlock = UNLOCKS.find((u) => u.service === type);
-    if (!unlock || sim.passengers.totalCarried < unlock.at) continue; // pas encore débloqué
+    if (!unlockState(sim, type).unlocked) continue; // pas encore débloqué (règle sim)
     const spot = SERVICE_SPOTS[type];
     buildBuilding(sim, type, spot.x, spot.y); // charge + grille + alertes (built / locked / no-funds)
   }

@@ -19,6 +19,7 @@ import { causeAt, DELAY_CAUSE_FR, DELAY_WINDOW_S, punctualityStats } from '../si
 // le panneau est une LECTURE (objectiveView) : il ne décide rien, il affiche
 // l'état (à venir / atteinte / payée) et la mesure live du critère.
 import { OBJECTIVES, objectiveView } from '../progression/objectives.mjs';
+import { unlockView } from '../infra/unlocks.mjs';
 
 const PHASES_FR = Object.freeze({
   approach: 'approche', holding: 'attente', landing: 'atterrissage', exit: 'sortie de piste',
@@ -310,6 +311,29 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
     );
   }
 
+  // --- 3c. R23 : déblocages des services (conditions mesurables) ------------
+  // UI fine : LECTURE seule (unlockView) — les conditions sont décidées par
+  // tickUnlocks (unlocks.mjs), le panneau affiche le BÉNÉFICE + la condition
+  // restante pour chaque service verrouillé (à l'avance, pas de seuil pax).
+  const unlocks = makeSection(col, 'panel', 'Déblocages services');
+  function refreshUnlocks() {
+    unlocks.refresh(
+      () => {
+        const sim = state.sim;
+        if (!sim) return 'none';
+        return unlockView(sim).join('§');
+      },
+      (body) => {
+        body.replaceChildren();
+        const sim = state.sim;
+        if (!sim) return;
+        for (const l of unlockView(sim)) {
+          const isDone = l.startsWith('débloqué(s)') || l.startsWith('tous');
+          line(body, l.split(' : ')[0] || 'Déblocages', l.split(' : ').slice(1).join(' : '), isDone ? 'good' : '');
+        }
+      },
+    );
+  }
   // --- 4. Historique d'alertes (sim.alerts, les plus récentes d'abord) ------
   const hist = makeSection(col, 'panel', 'Alertes (historique)');
   function refreshHist() {
@@ -392,7 +416,7 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   return {
     // Appel à chaque frame (bus 'frame') : chaque panneau ne reconstruit son DOM
     // que si sa signature a changé — coût négligeable sinon (pattern planning).
-    refresh: () => { refreshInspect(); refreshFin(); refreshStats(); refreshGoals(); refreshHist(); refreshNet(); },
+    refresh: () => { refreshInspect(); refreshFin(); refreshStats(); refreshGoals(); refreshUnlocks(); refreshHist(); refreshNet(); },
     // R07 : une sauvegarde rechargée ou une nouvelle partie change tout l'état —
     // la sélection inspecte un OBJET QUI N'EXISTE PLUS. invalidate() vide le pick
     // ; la prochaine refreshInspect rend l'état par défaut (pas un « parti »

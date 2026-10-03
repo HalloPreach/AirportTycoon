@@ -153,32 +153,36 @@ test('plusieurs vols simultanés (critère 5) : 3 arrivées → 3 départs', () 
   assert.equal(departed.size, 3, `les 3 vols (ids ${[...departed].join(',')} vus) sont partis — assertion exacte`);
 });
 
-test('progression : les services se débloquent par seuil de passagers (critère 9)', () => {
+test('progression : les services se débloquent par CONDITION MESURABLE (R23, critère 9)', () => {
   const sim = newSimState();
-  // Au départ : carburant (seuil 100 pax) et hangar (seuil 300 pax) sont refusés.
-  assert.equal(buildBuilding(sim, 'fuel', 300, 300), null);
+  // R23 : les anciens seuils de pax (fuel 100, hangar 300…) sont remplacés par
+  // des conditions mesurables (usure porte, volumes, offre en vue) — les règles
+  // vivent dans src/infra/unlocks.mjs (tests dédiés : tests/r23-unlocks.test.mjs).
+  // Avant condition : la construction du service est refusée (+ « locked »).
+  assert.equal(buildBuilding(sim, 'fuel', 300, 300), null, 'fuel refusé sans condition atteinte');
   assert.ok(sim.alerts.some((a) => a.kind === 'locked'), 'un événement « locked » est émis');
-  assert.equal(buildBuilding(sim, 'hangar', 500, 500), null);
-  // Après 100 passagers transportés : la station carburant devient constructible.
-  sim.passengers.totalCarried = 100;
-  assert.ok(buildBuilding(sim, 'fuel', 300, 300), 'station carburant débloquée à 100 pax');
-  assert.equal(buildBuilding(sim, 'hangar', 500, 500), null, 'le hangar reste verrouillé (300 pax)');
-  sim.passengers.totalCarried = 300;
-  assert.ok(buildBuilding(sim, 'hangar', 500, 500), 'hangar débloqué à 300 pax');
+  // Condition atteinte (offre de vol en vue) → déverrouillage au prochain tick.
+  sim.planning.push({ id: sim.nextAcId++, airline: 'atlantique', acType: 'medium',
+    pax: 100, planned: (sim.time ?? 0) + 60, status: 'planned' });
+  tickUnlocks(sim);
+  assert.ok(buildBuilding(sim, 'fuel', 300, 300), 'station carburant débloquée (offre en vue)');
+  assert.equal(buildBuilding(sim, 'hangar', 500, 500), null, 'le hangar attend l’usure mécanique (g.maintenance)');
   // Les bâtiments de base (piste/taxiway/terminal) restent toujours constructibles.
   assert.ok(buildBuilding(sim, 'taxiway', 100, 100));
-  // tickUnlocks signale chaque service une seule fois.
-  // t_2179387d : à 350 pax, CINQ services sont débloqués — fuel (100), catering
-  // (200), cleaning (200), baggage (250) et hangar (300) ; chacun est signalé
-  // UNE fois (pas de double toast même si tickUnlocks tourne 2×).
+  // Usure porte : g.cleaning + g.maintenance ≥ 10 → CHAQUE service de sa propre
+  // usure se débloque, chacun signalé UNE fois (pas de double toast).
   const sim2 = newSimState();
-  sim2.passengers.totalCarried = 350;
+  sim2.infra.gates.push({ id: 1, size: 'M', terminalId: 1, cleaning: 10, maintenance: 10 });
+  sim2.planning.push({ id: sim2.nextAcId++, airline: 'solaire', acType: 'small',
+    pax: 5, planned: 60, status: 'planned' }); // fuel (offre en vue)
+  sim2.passengers.queue.checkin = 90;           // baggage (file ≥ 90)
+  sim2.passengers.totalCarried = 400;            // baggage (carried) + catering (≥ 300)
   tickUnlocks(sim2);
   tickUnlocks(sim2);
   const unlocked = sim2.alerts.filter((a) => a.kind === 'unlocked');
-  assert.equal(unlocked.length, 5, 'cinq services débloqués (fuel + catering + cleaning + baggage + hangar), chacun signalé une fois');
-  assert.ok(unlocked.every((a) => ['fuel', 'catering', 'cleaning', 'baggage', 'hangar'].includes(a.service)),
-    'les services débloqués sont bien fuel, catering, cleaning, baggage et hangar');
+  assert.equal(unlocked.length, 5, 'cinq services débloqués (fuel + cleaning + hangar + baggage + catering), chacun signalé une fois');
+  assert.ok(unlocked.every((a) => ['fuel', 'cleaning', 'hangar', 'baggage', 'catering'].includes(a.service)),
+    'les services débloqués sont bien fuel, cleaning, hangar, baggage et catering');
 });
 
 test('retards si l\'aéroport est mal conçu (critère 6)', () => {

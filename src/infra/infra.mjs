@@ -3,7 +3,7 @@
 // Grille d'occupation 10×10 px : un segment de 200 px = 20 cellules, ça suffit
 // pour « est-ce que ça empiète sur autre chose ? » et « est-ce qu'un avion peut
 // poser/rouler ici ». ponytail : grille carrée simple, pas d'arborescence spatiale.
-import { BUILDINGS, UNLOCKS, TERMINAL_GATE_SIZES, HANGAR_CLEAN_PER_SEC, CLEANING_RATE_PER_SEC } from '../data/catalog.mjs';
+import { BUILDINGS, TERMINAL_GATE_SIZES, HANGAR_CLEAN_PER_SEC, CLEANING_RATE_PER_SEC } from '../data/catalog.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 
@@ -27,20 +27,16 @@ export function buildGrid(sim) {
   for (const s of sim.infra.services) mark(s);
 }
 
-// Progression (critère 9) : les seuils de débloquement sont dans UNLOCKS (catalog).
-// Types absents de UNLOCKS (piste, taxiway, terminal) = toujours constructibles.
+// R23 (t_c992b7d6) : la DÉCISION de déverrouillage a quitté ce module — elle
+// vit dans src/infra/unlocks.mjs (conditions mesurables, appelées par
+// tickUnlocks) ; ce module ne FAIT QUE POSER : les conditions sont lues par
+// unlockState (MÊME code du côté sim et du côté build-tool : jamais deux
+// règles divergentes).
+import { unlockState } from './unlocks.mjs';
 
-// Vérifie les seuils à chaque tick ; émet une alerte lisible par service débloqué.
-export function tickUnlocks(sim) {
-  if (!sim._unlocked) sim._unlocked = {};
-  for (const u of UNLOCKS) {
-    if (u.service === 'base') continue; // le socle est toujours là
-    if (!sim._unlocked[u.service] && sim.passengers.totalCarried >= u.at) {
-      sim._unlocked[u.service] = true;
-      pushEvent(sim, { kind: 'unlocked', service: u.service, name: u.name });
-    }
-  }
-}
+// Vérifie les conditions à chaque tick ; émet une alerte lisible par service
+// débloqué (le module de règle : src/infra/unlocks.mjs).
+export { tickUnlocks } from './unlocks.mjs';
 
 // Est-ce que le rect [x,y,w,h] tient dans le terrain et n'empiète sur personne ?
 function fits(sim, x, y, w, h) {
@@ -59,10 +55,10 @@ function fits(sim, x, y, w, h) {
 export function buildBuilding(sim, type, x, y) {
   const spec = BUILDINGS[type];
   if (!spec) return null;
-  // Service pas encore débloqué (seuil de passagers, critère 9) → refus lisible.
-  const gate = UNLOCKS.find((u) => u.service === type);
-  if (gate && sim.passengers.totalCarried < gate.at) {
-    pushEvent(sim, { kind: 'locked', type, name: spec.name, need: gate.at });
+  // Service pas encore débloqué (condition mesurable, R23) → refus lisible.
+  const st = unlockState(sim, type);
+  if (!st.unlocked) {
+    pushEvent(sim, { kind: 'locked', type, name: spec.name, why: st.why });
     return null;
   }
   if (sim.economy.money < spec.cost) {

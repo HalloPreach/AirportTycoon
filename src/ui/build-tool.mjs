@@ -3,7 +3,8 @@
 // La décision de pose/vraie démolition est la sim (infra.mjs) : l'UI ne fait que
 // le DOM, la souris et un aperçu « est-ce que ça tient ? » (grille + fonds).
 // Le fantôme est dessiné par le renderer via drawGhost(ctx, cam, view).
-import { BUILDINGS, UNLOCKS } from '../data/catalog.mjs';
+import { BUILDINGS } from '../data/catalog.mjs';
+import { unlockState } from '../infra/unlocks.mjs';
 
 const KINDS = ['runway', 'taxiway', 'terminal', 'fuel', 'hangar', 'catering', 'cleaning', 'baggage'];
 
@@ -106,10 +107,12 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
     if (money !== undefined && money < def.cost) {
       return { ok: false, why: `Fonds insuffisants (${def.cost} $)` };
     }
-    // Service pas encore débloqué (seuil de passagers) : le fantôme l'indique.
-    const gate = UNLOCKS.find((u) => u.service === kind);
-    if (gate && sim.passengers.totalCarried < gate.at) {
-      return { ok: false, why: `Se débloque à ${gate.at} pax transportés` };
+    // Service pas encore débloqué (condition mesurable, R23) : le fantôme
+    // l'indique À L'AVANCE — le BÉNÉFICE (pourquoi acheter) + la condition
+    // restante (quand ça se débloquera), pas un simple seuil de pax.
+    const st = unlockState(sim, kind);
+    if (!st.unlocked) {
+      return { ok: false, why: st.why };
     }
     const free = cellFree(x, y, def.w, def.h);
     if (free === false) return { ok: false, why: 'Zone déjà occupée' };

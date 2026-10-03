@@ -59,17 +59,40 @@ export const AIRLINES = Object.freeze([
   { id: 'pacific', name: 'PacificCargo', color: '#43a047', types: ['large'] },
 ]);
 
-// Progression : à partir de quel total de passagers transportés un service se débloque.
-// BL-12 : catering (200 pax) — le confort de salle devient CONSTRUCTIBLE :
-// la branche « comfortCatering » de tickPassengers cesse d'être morte.
-export const UNLOCKS = Object.freeze([
-  { at: 0,   service: 'base',  name: 'Aéroport de base' },
-  { at: 100, service: 'fuel',  name: 'Station carburant' },
-  { at: 200, service: 'catering', name: 'Salle de restauration' },
-  { at: 200, service: 'cleaning', name: 'Équipe nettoyage' },
-  { at: 250, service: 'baggage', name: 'Salle bagages' },
-  { at: 300, service: 'hangar', name: 'Hangar maintenance' },
-]);
+// R23 : les déblocages des services ne sont PLUS de simples seuils de pax.
+// Les CONDITIONS mesurables vivent dans src/infra/unlocks.mjs (le module de
+// règle, appelé par tickUnlocks) — ce fichier ne porte que les CHIFFRES et
+// les TEXTES de chaque règle (équilibrage, pas de logique) :
+//   fuel      : une offre de vol en vue (le carburant se débloque AVANT que
+//               l'activité ne rende le plein nécessaire — tiers 1) ;
+//   cleaning  : usure « sale » d'une porte ≥ wear (10 : l'usure a commencé à
+//               compter, GATE_WEAR_PER_SEC = 0,5/s → ~20 s amarré) ;
+//   hangar    : usure mécanique d'une porte ≥ wear (idem, GATE_MAINT_PER_SEC) ;
+//   baggage   : file check-in ≥ queue (90 = 75 % de la capacité 120 : le
+//               goulou de base se voit) OU carried pax transportés (400 :
+//               les volumes justifient le débit) ;
+//   catering  : carried pax transportés (300 : le confort de salle est
+//               justifié par les volumes — tiers 2).
+// Aucune condition ne fait référence à un service verrouillé (pas de
+// dépendance circulaire : on ne demande pas de maintenir un service pour le
+// débloquer).
+export const UNLOCK_RULES = Object.freeze({
+  fuel: { name: 'Station carburant',
+    benefit: 'pleins de carburant au décollage (pas de départ sec : billets moitiés)',
+    why: 'une offre de vol en vue — l’activité va servir des vols' },
+  cleaning: { name: 'Équipe nettoyage', wear: 10,
+    benefit: 'remet l’usure « sale » des portes à zéro (embarquements rapides)',
+    why: 'usure d’une porte ≥ 10 (la porte s’est usée pendant les vols)' },
+  hangar: { name: 'Hangar maintenance', wear: 10,
+    benefit: 'remet l’usure mécanique des portes à zéro (pleins rapides)',
+    why: 'usure mécanique d’une porte ≥ 10 (les pleins usent la porte)' },
+  baggage: { name: 'Salle bagages', queue: 90, carried: 400,
+    benefit: '+8 pax/s au check-in par salle (le goulou dépôt bagages s’ouvre)',
+    why: 'file check-in ≥ 90 pax (75 % de la capacité) ou 400 pax transportés' },
+  catering: { name: 'Salle de restauration', carried: 300,
+    benefit: 'confort de salle : la satisfaction remonte plus vite',
+    why: '300 pax transportés (les volumes justifient le confort)' },
+});
 
 // Décomposition du cycle avion (ordre d'exécution, l'état est la donnée).
 // AC18 (A9) : « docking » = amarrage physique du nœud de porte au centre de la

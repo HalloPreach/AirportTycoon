@@ -106,6 +106,15 @@ export function rebuildGraph(sim) {
   const liveSegs = new Set(nodes.map((n) => n.seg));
   for (const ac of sim.aircraft) {
     if (!ac.path) continue;
+    // Phases au SOL (docking/gate/refuel/ops/pushback) : l'avion est amarré à la
+    // porte (seg=null) — il n'UTILISE PAS de chemin (doRefuel/doPushback décident),
+    // donc le re-ancrage ne le concerne PAS. R23 (t_c992b7d6) : avant la fix, un
+    // avion EN PLEIN (phase refuel) gardait le chemin D'ARRIVÉE résiduel
+    // (doTaxi ne le vide qu'à la mise en docking) → le rebuild le passait en
+    // « blocked » SANS libérer sa lance → _refueling=true hors refuel (fuite
+    // R08, G1). Les phases sol ne sont jamais re-ancrées.
+    const GROUND = new Set(['docking', 'gate', 'refuel', 'disembark', 'ground', 'board', 'pushback']);
+    if (GROUND.has(ac.phase)) { ac.path = null; continue; } // chemin résiduel : inutile au sol
     // Segment actuel démolit → avion en dehors du réseau : blocage propre.
     if (ac.seg == null || !liveSegs.has(ac.seg)) {
       ac.path = null; ac.seg = null; ac.phase = 'blocked'; ac.timer = 0;

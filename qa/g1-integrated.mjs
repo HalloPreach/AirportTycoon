@@ -23,7 +23,7 @@ import { tick } from '../src/core/tick.mjs';
 import { decideFlight } from '../src/flights/flights.mjs';
 import { forceIncident } from '../src/sim/incidents.mjs';
 import { buildBuilding, demolishBuilding, hasService } from '../src/infra/infra.mjs';
-import { UNLOCKS } from '../src/data/catalog.mjs';
+import { unlockState } from '../src/infra/unlocks.mjs';
 import { periodStatement, onFlightCancelled } from '../src/economy/economy.mjs';
 import { saveToStorage, loadFromStorage } from '../src/persistence/save.mjs';
 import { START_FUNDS, newSimState } from '../src/core/sim-state.mjs';
@@ -76,12 +76,12 @@ events.sort((a, b) => a.at - b.at);
 let evIdx = 0;
 const applyDue = () => { while (evIdx < events.length && events[evIdx].at <= sim.time) { events[evIdx].fn(); evIdx++; } };
 
-// Construction des services dès leur seuil (la progression du jeu, comme le probe).
+// Construction des services dès que la sim LEUR PERMET (R23 : unlockState =
+// la MÊME règle que tickUnlocks, conditions mesurables — plus de seuil pax).
 const buildWanted = () => {
   for (const [type, spot] of Object.entries(SERVICE_SPOTS)) {
     if (hasService(sim, type)) continue;
-    const u = UNLOCKS.find((x) => x.service === type);
-    if (!u || sim.passengers.totalCarried < u.at) continue;
+    if (!unlockState(sim, type).unlocked) continue; // pas encore débloqué (règle sim)
     buildBuilding(sim, type, spot.x, spot.y);
   }
 };

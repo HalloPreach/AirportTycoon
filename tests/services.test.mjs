@@ -14,7 +14,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newSimState } from '../src/core/sim-state.mjs';
-import { buildBuilding, cleanGates } from '../src/infra/infra.mjs';
+import { buildBuilding, cleanGates, tickUnlocks } from '../src/infra/infra.mjs';
 import { rebuildGraph } from '../src/pathfinding/path.mjs';
 import { tickAircraft } from '../src/sim/aircraft.mjs';
 import { tickEconomy, tickPassengers, onGateDeparted } from '../src/economy/economy.mjs';
@@ -28,10 +28,20 @@ function buildSocle(sim) {
   rebuildGraph(sim);
 }
 
-// Débloque tous les services (seuil de passagers) et met assez d'argent.
+// Débloque tous les services (R23 : conditions MESURABLES, unlocks.mjs —
+// plus de seuil de pax) et met assez d'argent :
+//   fuel      : une offre de vol en vue (planning non vide) ;
+//   cleaning  : usure « sale » d'une porte ≥ 10 (g.cleaning) ;
+//   hangar    : usure mécanique d'une porte ≥ 10 (g.maintenance) ;
+//   baggage   : 400 pax transportés (les volumes justifient le débit) ;
+//   catering  : 300 pax transportés (les volumes justifient le confort).
 function unlock(sim) {
-  sim.passengers.totalCarried = 300;
   sim.economy.money = 100000;
+  sim.planning.push({ id: sim.nextAcId++, airline: 'atlantique', acType: 'medium',
+    pax: 100, planned: 60, status: 'planned' }); // fuel (offre en vue)
+  for (const g of sim.infra.gates) { g.cleaning = 10; g.maintenance = 10; } // cleaning + hangar
+  sim.passengers.totalCarried = 400; // baggage (carried) + catering (≥ 300)
+  tickUnlocks(sim);
 }
 
 // Sème UN avion « medium » (réf 110) DIRECTEMENT en phase « refuel » à une

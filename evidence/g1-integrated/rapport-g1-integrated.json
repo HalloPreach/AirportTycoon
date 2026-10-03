@@ -3,22 +3,22 @@
   "seed": 42,
   "hours": 48,
   "dt": 1,
-  "commit": "2369c67",
+  "commit": "(non connu)",
   "simTimeEnd": 172802,
   "bankrupt": false,
   "money": {
     "start": 12000,
-    "end": 3124942.6647597565,
+    "end": 3186250.2420096328,
     "debt": 0
   },
-  "net": 3112942.664759264,
-  "revenue": 6370874.96475,
-  "opex": 2914621.7999907364,
-  "fuel": 120310.5,
-  "compensation": 214000,
+  "net": 3174250.242009274,
+  "revenue": 6434538.041999999,
+  "opex": 2916647.2999907252,
+  "fuel": 121140.5,
+  "compensation": 213500,
   "invest": 9000,
   "passengers": {
-    "totalCarried": 240707
+    "totalCarried": 242281
   },
   "infra": {
     "runways": 2,
@@ -28,24 +28,24 @@
     "services": [
       "fuel",
       "cleaning",
-      "baggage",
       "hangar",
+      "baggage",
       "catering"
     ]
   },
   "save": {
     "at": 172800,
     "pre": {
-      "money": 3124976.4647597563,
+      "money": 3186284.0420096326,
       "time": 172800,
-      "ac": 3,
+      "ac": 4,
       "planning": 4,
       "auto": true,
       "seed": 42,
-      "counter": 9259
+      "counter": 9321
     },
     "post": {
-      "money": 3124942.6647597565,
+      "money": 3186250.2420096328,
       "time": 172802,
       "auto": true
     }
@@ -54,7 +54,7 @@
     "runway2": true,
     "demolished": {
       "type": "catering",
-      "id": 5
+      "id": 7
     },
     "fuelOutForced": true,
     "r11Deficit": {

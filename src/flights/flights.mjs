@@ -232,7 +232,17 @@ function markPlannedDelayed(sim, volId, why) {
 // reste consultable tant que le vol est en cours ; il disparaît quand il termine).
 // Les entrées planned/accepted n'ont PAS (encore) d'avion — on ne les purge pas :
 // ce n'est pas leur avion qui a disparu, c'est le vol qui n'est pas encore né.
+// R23 (fuite porte) : les avions purgés peuvent laisser une porte RÉSERVÉE à eux
+// (g.acId) — la libération sûre se fait au pushback, mais un vol qui PART ou
+// s'annule sans pushback réussi (bloque → annulation A-5, ou pathfind raté)
+// laisse le pointage. On balaye AVANT le filtre : jamais de référence périmée
+// (la validation de sauvegarde R10 lèverait, et un avion bloqué sur « la porte
+// d'un mort » resterait bloqué à jamais).
 function purge(sim) {
+  const dying = new Set(sim.aircraft.filter((a) => a.phase === 'cancelled' || a.phase === 'departed').map((a) => a.id));
+  if (dying.size) {
+    for (const g of sim.infra.gates) if (g.acId != null && dying.has(g.acId)) g.acId = null;
+  }
   sim.aircraft = sim.aircraft.filter((a) => a.phase !== 'cancelled' && a.phase !== 'departed');
   sim.planning = sim.planning.filter((e) =>
     e.status === 'planned' || e.status === 'accepted' || sim.aircraft.some((a) => a.id === e.id));

@@ -21,7 +21,10 @@ import { serialize, deserialize } from '../src/persistence/save.mjs';
 // Socle « bien conçu » + 1 station = 1 LANCE (la saturation est mesurable).
 function buildSocle(sim) {
   rebuildGraph(sim);
-  sim.passengers.totalCarried = 300; // débloque les services (seuil) AVANT la construction
+  // R23 : la station carburant se débloque par UNE OFFRE DE VOL EN VUE
+  // (plus de seuil de pax — unlocks.mjs).
+  sim.planning.push({ id: sim.nextAcId++, airline: 'atlantique', acType: 'medium',
+    pax: 160, planned: 300, status: 'planned' });
   sim.economy.money = 100000;
   buildBuilding(sim, 'runway', 750, 100);
   buildBuilding(sim, 'taxiway', 550, 1050);

@@ -147,8 +147,8 @@ export function boot(canvas) {
     'runway-closed': (e) => `Incident — ${e.why || 'fermeture piste'}`,
     'fuel-out': (e) => `Incident — ${e.why || 'panne station carburant'}`,
     'surge-start': (e) => `Pic de demande — ${e.why || 'plus de vols planifiés'}`,
-    'unlocked': (e) => `${e.name} débloqué(e) (construction possible)`,
-    'locked': (e) => `${e.name} : ${e.need} passagers transportés requis`,
+    'unlocked': (e) => `${e.name} débloqué(e) (construction possible)${e.detail ? ` — ${e.detail}` : ''}`,
+    'locked': (e) => `${e.name} : ${e.why || e.need || 'non débloqué'}`,
     'bankrupt': () => 'FAILLITE — les caisses sont vides',
   };
   // R14 : un tick qui lève (bug de règle, état corrompu) arrive ici via

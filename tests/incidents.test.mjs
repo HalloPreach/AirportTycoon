@@ -30,9 +30,14 @@ function buildSocle(sim) {
   buildBuilding(sim, 'terminal', 550, 900);
   rebuildGraph(sim);
 }
+// R23 : services DÉJÀ DÉBLOQUÉS (état mi-jeu) — le flag persistant sim._unlocked
+// court-circuite les conditions mesurables (unlocks.mjs). On n'atteste PAS les
+// conditions (planning/usure/pax) : ce test porte sur les INCIDENTS, pas sur les
+// déblocages. Le flag ne pollue ni le planning ni l'horloge ni le compteur d'ids
+// (le test « pic de demande » compte les vols via nextAcId).
 function unlock(sim) {
-  sim.passengers.totalCarried = 300;
   sim.economy.money = 100000;
+  sim._unlocked = { fuel: true, cleaning: true, hangar: true, baggage: true, catering: true };
 }
 
 // Sème un avion medium DIRECTEMENT en « approach » (on saute l'apparition).
