@@ -1,0 +1,77 @@
+{
+  "tool": "qa/g3-integrated.mjs",
+  "seed": 42,
+  "hours": 48,
+  "dt": 1,
+  "commit": "(non connu)",
+  "simTimeEnd": 172807,
+  "bankrupt": false,
+  "money": {
+    "start": 12000,
+    "end": 3687752.0017400137,
+    "debt": 0
+  },
+  "net": 3745952.0017551426,
+  "revenue": 5864114.901749999,
+  "opex": 1743191.3999948564,
+  "fuel": 114771.5,
+  "passengers": {
+    "totalCarried": 229543
+  },
+  "infra": {
+    "runways": 2,
+    "gates": 6,
+    "services": [
+      "fuel"
+    ]
+  },
+  "contracts": {
+    "settledInRun": 8,
+    "history": 8,
+    "models": [
+      "quality",
+      "quality",
+      "quality",
+      "quality",
+      "quality",
+      "quality",
+      "quality",
+      "quality"
+    ]
+  },
+  "objectives": [
+    {
+      "id": "o1-cycle",
+      "paid": true
+    },
+    {
+      "id": "o2-surge",
+      "paid": true
+    }
+  ],
+  "benefit": {
+    "dryDepartures": 249,
+    "largeCompatible": true,
+    "netNonNegative": true,
+    "lastPeriodNet": 2395.50000001397
+  },
+  "save": {
+    "at": 172800,
+    "pre": {
+      "money": 3687823.401740015,
+      "time": 172800,
+      "ac": 4,
+      "planning": 5,
+      "auto": true,
+      "seed": 42,
+      "counter": 7725,
+      "objPaid": [
+        true,
+        true
+      ],
+      "contractHistory": 8
+    }
+  },
+  "alertsMax": 500,
+  "steps": 172800
+}
