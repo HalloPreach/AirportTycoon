@@ -17,6 +17,7 @@ import { makeBankruptcyScreen, resumeCommand } from './ui/bankruptcy.mjs'; // R3
 import { drawNetworkOverlay } from './ui/overlay.mjs';
 import { clearSave } from './persistence/save.mjs';
 import { makeGameState } from './core/new-game.mjs';
+import { SCENARIOS, startScenario, scenarioObjective } from './scenarios.mjs'; // R38 : les 3 scénarios rejouables
 
 export function boot(canvas) {
   const state = newGame();
@@ -55,6 +56,11 @@ export function boot(canvas) {
     newGame: startNewGame,
     resume: resumeFromSave,
     canResume: () => savePanel.canResume(),
+    // R38 : les TROIS scénarios rejouables (boutons du menu) — le mode LIBRE
+    // (« Nouvelle partie ») est conservé : il reste makeGameState() sans
+    // scenario (pas de champ, pas d'objectif annoncé).
+    scenario: (mode) => startScenarioGame(mode),
+    scenarioModes: () => Object.entries(SCENARIOS).map(([id, c]) => ({ id, label: c.name })),
   };
   const renderer = makeRenderer(canvas, {
     overlays: [
@@ -116,6 +122,31 @@ export function boot(canvas) {
     clearSave(); // une nouvelle partie efface l'ancienne sauvegarde (« Reprendre » = la partie en cours)
     setScreen(state, SCREENS.GAME);
     toasts.toast('Nouvelle partie — aéroport fourni, étends-le (B)', 'ok');
+  }
+
+  // R38 : DÉMARRER UN SCÉNARIO (guide / saturation / redressement) — l'état
+  // frais est celui du SCÉNARIO (startScenario : seed imposée + config EXPLICITE
+  // sur la sim + le marqueur state.scenario). MÊME câblage qu'une nouvelle
+  // partie : Object.assign sur l'état suivi par la boucle, invalidation de
+  // l'inspection, reset du miroir DOM, effacement de la sauvegarde. L'objectif
+  // R22 annoncé est affiché en TOAST au lancement (l'UI n'affiche, la sim règle).
+  // « Nouvelle partie » (mode libre) reste makeGameState() sans scenario.
+  function startScenarioGame(mode) {
+    const fresh = startScenario(mode);
+    Object.assign(state, fresh); // mêmes références (state.sim = fresh.sim)
+    panels.invalidate();
+    planningPanel.setAuto(false);
+    state._alertSeen = 0;
+    clearSave(); // une partie scénario efface l'ancienne sauvegarde
+    setScreen(state, SCREENS.GAME);
+    // L'OBJECTIF ANNONCÉ (le R22 du scénario) en toast — lecture de l'état.
+    const o = scenarioObjective(state);
+    toasts.toast(
+      o
+        ? `Scénario ${fresh.scenario.name} — objectif : ${o.name} (${o.reward} $). ${o.text}`
+        : `Scénario ${fresh.scenario.name}`,
+      'ok',
+    );
   }
 
   // R06 (D1) : la préférence auto-accept a UNE seule source de vérité

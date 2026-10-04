@@ -1,0 +1,59 @@
+{
+  "tool": "qa/r38-scenarios.mjs",
+  "commit": "b8c6f9ed9f2819738d15338664dc1cc442bf898b",
+  "mode": "saturation",
+  "config": {
+    "seed": 7,
+    "funds": 12000,
+    "surge": {
+      "active": true,
+      "seconds": 600,
+      "note": "durée EXPLICITE du défi — la durée naturelle (90 s) n'est pas écrasée"
+    },
+    "loan": null,
+    "objective": {
+      "id": "o2-surge",
+      "name": "Pic de demande absorbé",
+      "reward": 1500,
+      "text": "Pendant un pic de demande, la ponctualité est restaurée (≥ 50 % des fins de vol récentes à l’heure)."
+    },
+    "dt": 1,
+    "hours": 1,
+    "policy": "acceptation des vols (comme la case auto-accept du jeu)"
+  },
+  "saturation": {
+    "activeAtStart": true,
+    "durationS": 600,
+    "note": "le pic est ACTIF dès le départ avec la fenêtre EXPLICITE du défi (600 s) — après 1 h de rejoue, un pic actif en fin de run serait un pic NATUREL (pas celui du défi)"
+  },
+  "redressement": null,
+  "objective": {
+    "announced": {
+      "id": "o2-surge",
+      "name": "Pic de demande absorbé",
+      "reward": 1500,
+      "text": "Pendant un pic de demande, la ponctualité est restaurée (≥ 50 % des fins de vol récentes à l’heure)."
+    },
+    "successReadFromSim": {
+      "done": true,
+      "label": "Pic de demande absorbé (récompense 1500 $)"
+    },
+    "note": "la réussite est décidée PAR LA SIM (tickObjectives, R22) — le harnais ne la force pas"
+  },
+  "money": {
+    "start": 12000,
+    "end": 104359.74750000793,
+    "bankrupt": false
+  },
+  "passengers": {
+    "totalCarried": 6913,
+    "satisfaction": 100
+  },
+  "invariants": "OK (money/satisfaction finies, pax monotones, positions finies, phases connues — un seul = ABORT)",
+  "determinism": {
+    "snapshotsByteIdentical": true,
+    "sha256RunA": "a238228928d6bb151fa8dded9858e192a8a05b63c08f0f5448d13ce3506bff56",
+    "sha256RunB": "a238228928d6bb151fa8dded9858e192a8a05b63c08f0f5448d13ce3506bff56",
+    "note": "R09 : même config + même politique = MÊME partie (EV-10 : le PRNG est sur la sim)"
+  }
+}

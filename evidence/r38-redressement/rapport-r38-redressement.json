@@ -1,0 +1,68 @@
+{
+  "tool": "qa/r38-scenarios.mjs",
+  "commit": "b8c6f9ed9f2819738d15338664dc1cc442bf898b",
+  "mode": "redressement",
+  "config": {
+    "seed": 42,
+    "funds": -3000,
+    "surge": null,
+    "loan": {
+      "availableBefore": true,
+      "taken": true,
+      "moneyAfter": 1750,
+      "principal": 5000,
+      "interest": 250
+    },
+    "objective": {
+      "id": "o1-cycle",
+      "name": "Premier cycle avec plein",
+      "reward": 1000,
+      "text": "Un vol complet sans départ sec (carburant plein au décollage) et une période close net ≥ 0."
+    },
+    "dt": 1,
+    "hours": 1,
+    "policy": "acceptation des vols + emprunt R35 une fois au départ (takeLoan, le levier DU JOUEUR)"
+  },
+  "saturation": null,
+  "redressement": {
+    "deficitAtStart": -3000,
+    "bankruptAtStart": false,
+    "loan": {
+      "availableBefore": true,
+      "taken": true,
+      "moneyAfter": 1750,
+      "principal": 5000,
+      "interest": 250
+    },
+    "backInGreen": true
+  },
+  "objective": {
+    "announced": {
+      "id": "o1-cycle",
+      "name": "Premier cycle avec plein",
+      "reward": 1000,
+      "text": "Un vol complet sans départ sec (carburant plein au décollage) et une période close net ≥ 0."
+    },
+    "successReadFromSim": {
+      "done": false,
+      "label": "Premier cycle avec plein (récompense 1000 $)"
+    },
+    "note": "la réussite est décidée PAR LA SIM (tickObjectives, R22) — le harnais ne la force pas"
+  },
+  "money": {
+    "start": -3000,
+    "end": 92432.0500000057,
+    "bankrupt": false
+  },
+  "passengers": {
+    "totalCarried": 6767,
+    "satisfaction": 100
+  },
+  "invariants": "OK (money/satisfaction finies, pax monotones, positions finies, phases connues — un seul = ABORT)",
+  "determinism": {
+    "snapshotsByteIdentical": true,
+    "sha256RunA": "b476d8b6211ac13b24ebefbc366e0ea919f11bc5dde401dc214da2372d5af2af",
+    "sha256RunB": "b476d8b6211ac13b24ebefbc366e0ea919f11bc5dde401dc214da2372d5af2af",
+    "note": "R09 : même config + même politique = MÊME partie (EV-10 : le PRNG est sur la sim)"
+  }
+}

@@ -134,11 +134,18 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null } = 
     ctx.font = '16px system-ui, sans-serif';
     ctx.fillText('Nouvelle partie (N) — un aéroport fourni : piste + terminal 2 portes', canvas.width / 2, canvas.height / 2 + 20);
     ctx.fillText('Reprendre (R) — recharger la dernière sauvegarde · sauvegarde aussi automatique', canvas.width / 2, canvas.height / 2 + 44);
+    // R38 : les TROIS scénarios rejouables (mêmes règles, config explicite +
+    // objectif R22 annoncé) — des BOUTONS (souris) comme les commandes du menu
+    // (R20). « Nouvelle partie » reste le MODE LIBRE (pas de champ scenario,
+    // pas d'objectif annoncé).
+    const scenarioBtnDefs = (onMenuCommands && onMenuCommands.scenarioModes)
+      ? onMenuCommands.scenarioModes()
+      : [];
     if (!menuBox) {
       menuBox = document.createElement('div');
       menuBox.className = 'menu-btns';
       menuBox.setAttribute('role', 'toolbar');
-      menuBox.setAttribute('aria-label', 'Commandes du menu (nouvelle partie, reprise de la sauvegarde)');
+      menuBox.setAttribute('aria-label', 'Commandes du menu (nouvelle partie, reprise de la sauvegarde, scénarios)');
       const btnNew = document.createElement('button');
       btnNew.className = 'tool';
       btnNew.textContent = 'Nouvelle partie (N)';
@@ -148,6 +155,13 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null } = 
       resumeBtn.textContent = 'Reprendre la sauvegarde (R)';
       resumeBtn.addEventListener('click', () => onMenuCommands.resume());
       menuBox.append(btnNew, resumeBtn);
+      for (const s of scenarioBtnDefs) {
+        const b = document.createElement('button');
+        b.className = 'tool';
+        b.textContent = s.label; // le nom du scénario (R38 : config explicite + objectif annoncé)
+        b.addEventListener('click', () => onMenuCommands.scenario(s.id));
+        menuBox.appendChild(b);
+      }
       document.body.appendChild(menuBox);
     }
     resumeBtn.style.display = onMenuCommands.canResume() ? '' : 'none';
