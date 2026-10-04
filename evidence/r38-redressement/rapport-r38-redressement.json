@@ -1,6 +1,6 @@
 {
   "tool": "qa/r38-scenarios.mjs",
-  "commit": "b8c6f9ed9f2819738d15338664dc1cc442bf898b",
+  "commit": "(non connu)",
   "mode": "redressement",
   "config": {
     "seed": 42,
@@ -61,8 +61,8 @@
   "invariants": "OK (money/satisfaction finies, pax monotones, positions finies, phases connues — un seul = ABORT)",
   "determinism": {
     "snapshotsByteIdentical": true,
-    "sha256RunA": "b476d8b6211ac13b24ebefbc366e0ea919f11bc5dde401dc214da2372d5af2af",
-    "sha256RunB": "b476d8b6211ac13b24ebefbc366e0ea919f11bc5dde401dc214da2372d5af2af",
+    "sha256RunA": "ed52c9f8f6d0d1e7e0b45229b8afcce3bcd6895a214ba38b5db0e52d3835792f",
+    "sha256RunB": "ed52c9f8f6d0d1e7e0b45229b8afcce3bcd6895a214ba38b5db0e52d3835792f",
     "note": "R09 : même config + même politique = MÊME partie (EV-10 : le PRNG est sur la sim)"
   }
 }

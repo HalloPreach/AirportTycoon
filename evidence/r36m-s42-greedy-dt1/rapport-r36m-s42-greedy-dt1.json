@@ -1,6 +1,6 @@
 {
   "tool": "qa/probe-scenario.mjs",
-  "commit": "2ecc93cfa5406613ecabc56e149fc0bcc04d3c6d",
+  "commit": "3232311380272209cb7f4e4266f9cf9ae9f73b46",
   "runId": "r36m-s42-greedy-dt1",
   "seed": 42,
   "scenario": "custom",
@@ -74,6 +74,47 @@
     "noFuel": 1825,
     "contractStarted": 0,
     "upgraded": 0
+  },
+  "objectives": [
+    {
+      "id": "o1-cycle",
+      "state": "à venir",
+      "paid": false
+    },
+    {
+      "id": "o2-surge",
+      "state": "payée",
+      "paid": true
+    }
+  ],
+  "quality": {
+    "q": 0.9459459459459459,
+    "tier": 2,
+    "tierName": "toutes tailles",
+    "sizes": [
+      "small",
+      "medium",
+      "large"
+    ],
+    "measured": 0.9459459459459459,
+    "measuredTotal": 37
+  },
+  "contracts": {
+    "accepted": 8,
+    "results": [
+      "failed",
+      "failed",
+      "failed",
+      "failed",
+      "failed",
+      "failed",
+      "failed",
+      "failed"
+    ],
+    "active": {
+      "model": "quality",
+      "result": null
+    }
   },
   "unlocked": [
     "fuel",

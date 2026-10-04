@@ -1,6 +1,6 @@
 {
   "tool": "qa/probe-scenario.mjs",
-  "commit": "2ecc93cfa5406613ecabc56e149fc0bcc04d3c6d",
+  "commit": "3232311380272209cb7f4e4266f9cf9ae9f73b46",
   "runId": "r36m-s99999-expansion-dt1",
   "seed": 99999,
   "scenario": "custom",
@@ -22,18 +22,18 @@
   "stoppedEarly": false,
   "money": {
     "start": 12000,
-    "end": 1780869.5000026189,
-    "min": 5222.39999999991,
+    "end": 2168862.500002224,
+    "min": 5906.89999999991,
     "atMin": 283,
     "debt": 0
   },
   "revenue": 3193712.5,
-  "opex": 1353523.499997815,
-  "opexPerHour": 56396.812499908956,
+  "opex": 965530.4999985502,
+  "opexPerHour": 40230.43749993959,
   "fuel": 61319.5,
   "compensation": 0,
   "invest": 10000,
-  "net": 1768869.500002185,
+  "net": 2156862.50000145,
   "bankruptcy": false,
   "bankruptAt": null,
   "passengers": {
@@ -75,6 +75,34 @@
     "contractStarted": 0,
     "upgraded": 0
   },
+  "objectives": [
+    {
+      "id": "o1-cycle",
+      "state": "payée",
+      "paid": true
+    },
+    {
+      "id": "o2-surge",
+      "state": "payée",
+      "paid": true
+    }
+  ],
+  "quality": {
+    "q": 0.6538461538461539,
+    "tier": 1,
+    "tierName": "petits + moyens",
+    "sizes": [
+      "small",
+      "medium"
+    ],
+    "measured": 0.6538461538461539,
+    "measuredTotal": 26
+  },
+  "contracts": {
+    "accepted": 0,
+    "results": [],
+    "active": null
+  },
   "unlocked": [
     "fuel",
     "cleaning",
@@ -95,7 +123,7 @@
       "baggage"
     ]
   },
-  "servicesOpexPerHour": 45000,
+  "servicesOpexPerHour": 28800,
   "determinism": {
     "note": "R09 (livré) : rejouer cette configuration (mêmes args, même commit) donne des fichiers IDENTIQUES en bytes. Les seeds différents DONNENT DES PARTIES DIFFÉRENTES (le seed est mélangé dans mulberry32 — preuve : evidence/r09-seed-42 vs r09-seed-99). Rejouer une config d’AVANT R09 avec seed 0 reste bit-à-bit la suite d’origine (migration).",
     "rngSeed": 99999,

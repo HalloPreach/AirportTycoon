@@ -38,9 +38,10 @@ récupérable. La configuration vivante (données, pas de logique) :
 - **Goulot.** File d'arrivées au plafond `MAX_PENDING = 4` (A-5 : au-delà, plus
   d'arrivées — c'est le premier goulot du jeu, pas un bug) + départs secs tant
   qu'aucune station.
-- **Investissement possible.** Station carburant (1 200 $, se débloque à
-  100 pax — le déverrouille *avant* que l'activité ne le rende indispensable,
-  critère R23) ; ou rien (départs secs acceptés — choix économique, pas une
+- **Investissement possible.** Station carburant (1 200 $, se débloque dès
+  qu'une offre de vol est en vue — R23 : condition mesurable, affichée à
+  l'avance ; elle déverrouille *avant* que l'activité ne le rende
+  indispensable) ; ou rien (départs secs acceptés — choix économique, pas une
   impasse).
 - **Succès (mesurable).** Cycle de vol complet avec plein **ET** au moins une
   période financière close `net ≥ 0` (`sim.economy.periods`, R16).
