@@ -1,0 +1,498 @@
+{
+  "title": "R37 (t_a4c636ab) — Validation des 4 critères sur 12 seeds (médiane + mauvais cas)",
+  "commit": "(non connu)",
+  "generated": "2026-10-04T00:04:23.122Z",
+  "grid": {
+    "seeds": [
+      1,
+      7,
+      42,
+      99,
+      123,
+      256,
+      512,
+      1000,
+      2024,
+      4096,
+      8192,
+      99999
+    ],
+    "hours": 24,
+    "dt": [
+      1,
+      0.4
+    ],
+    "policies": [
+      "prudent",
+      "expansion",
+      "greedy",
+      "badinvest"
+    ]
+  },
+  "criteria": {
+    "c1": {
+      "name": "petit aéroport viable mais limité (prudent)",
+      "passOnSeeds": 12,
+      "failOnSeeds": 0,
+      "medianPass": true,
+      "worstCaseOk": true,
+      "failSeeds": []
+    },
+    "c2": {
+      "name": "expansion ciblée progresse davantage",
+      "passOnSeeds": 12,
+      "failOnSeeds": 0,
+      "medianPass": true,
+      "worstCaseOk": true,
+      "failSeeds": []
+    },
+    "c3": {
+      "name": "tout accepter (greedy) dégrade la qualité ou les obligations",
+      "passOnSeeds": 12,
+      "failOnSeeds": 0,
+      "medianPass": true,
+      "worstCaseOk": true,
+      "failSeeds": []
+    },
+    "c4": {
+      "name": "achat inadapté (badinvest) coûte sans faux bénéfice",
+      "passOnSeeds": 12,
+      "failOnSeeds": 0,
+      "medianPass": true,
+      "worstCaseOk": true,
+      "failSeeds": []
+    }
+  },
+  "tolerancePas": {
+    "maxDQ": 0,
+    "maxDPax": 10645,
+    "maxDMoney": 155325,
+    "worst": {
+      "seed": 99999,
+      "pax": 153480,
+      "money": 2020648,
+      "q": 1,
+      "dPax": 4937,
+      "dMoney": 76105,
+      "dQ": 0
+    },
+    "withinTol": true,
+    "note": "Tolérance DOCUMENTÉE du pas 0,4 s face au pas 1 s : Δq ≤ 0, Δpax ≤ 10645, Δmoney ≤ 155325 $ sur prudent/expansion (cause mesurée : le PRNG est consommé par tick, pas par temps sim — R36) ; le critère reste STABLE au pas 0,4 s (q ≤ 0.05)."
+  },
+  "perSeed": [
+    {
+      "seed": 1,
+      "c1": {
+        "viable": true,
+        "limited": true,
+        "pass": true
+      },
+      "c2": {
+        "pass": true,
+        "progE": 2,
+        "progP": 1,
+        "paxE": 119750,
+        "paxP": 147862,
+        "moneyE": 2091282,
+        "moneyP": 1941304
+      },
+      "c3": {
+        "pass": true,
+        "qG": 0.9230769230769231,
+        "qP": 1,
+        "failedG": 8,
+        "failedP": 0
+      },
+      "c4": {
+        "pass": true,
+        "paxB": 119750,
+        "paxE": 119750,
+        "moneyB": 2089749,
+        "moneyE": 2091282,
+        "dMoney": 1533,
+        "objB": 2,
+        "objE": 2
+      }
+    },
+    {
+      "seed": 7,
+      "c1": {
+        "viable": true,
+        "limited": true,
+        "pass": true
+      },
+      "c2": {
+        "pass": true,
+        "progE": 2,
+        "progP": 1,
+        "paxE": 120885,
+        "paxP": 145998,
+        "moneyE": 2113353,
+        "moneyP": 1911960
+      },
+      "c3": {
+        "pass": true,
+        "qG": 0.972972972972973,
+        "qP": 1,
+        "failedG": 8,
+        "failedP": 0
+      },
+      "c4": {
+        "pass": true,
+        "paxB": 120885,
+        "paxE": 120885,
+        "moneyB": 2111803,
+        "moneyE": 2113353,
+        "dMoney": 1550,
+        "objB": 2,
+        "objE": 2
+      }
+    },
+    {
+      "seed": 42,
+      "c1": {
+        "viable": true,
+        "limited": true,
+        "pass": true
+      },
+      "c2": {
+        "pass": true,
+        "progE": 2,
+        "progP": 1,
+        "paxE": 119674,
+        "paxP": 149677,
+        "moneyE": 2125761,
+        "moneyP": 1964182
+      },
+      "c3": {
+        "pass": true,
+        "qG": 0.9459459459459459,
+        "qP": 1,
+        "failedG": 8,
+        "failedP": 0
+      },
+      "c4": {
+        "pass": true,
+        "paxB": 119674,
+        "paxE": 119674,
+        "moneyB": 2124203,
+        "moneyE": 2125761,
+        "dMoney": 1558,
+        "objB": 2,
+        "objE": 2
+      }
+    },
+    {
+      "seed": 99,
+      "c1": {
+        "viable": true,
+        "limited": true,
+        "pass": true
+      },
+      "c2": {
+        "pass": true,
+        "progE": 2,
+        "progP": 1,
+        "paxE": 121069,
+        "paxP": 148633,
+        "moneyE": 2118939,
+        "moneyP": 1950491
+      },
+      "c3": {
+        "pass": true,
+        "qG": 0.9459444444444443,
+        "qP": 1,
+        "failedG": 8,
+        "failedP": 0
+      },
+      "c4": {
+        "pass": true,
+        "paxB": 121069,
+        "paxE": 121069,
+        "moneyB": 2117377,
+        "moneyE": 2118939,
+        "dMoney": 1562,
+        "objB": 2,
+        "objE": 2
+      }
+    },
+    {
+      "seed": 123,
+      "c1": {
+        "viable": true,
+        "limited": true,
+        "pass": true
+      },
+      "c2": {
+        "pass": true,
+        "progE": 2,
+        "progP": 1,
+        "paxE": 117518,
+        "paxP": 146847,
+        "moneyE": 2036339,
+        "moneyP": 1924141
+      },
+      "c3": {
+        "pass": true,
+        "qG": 0.9210526315789473,
+        "qP": 1,
+        "failedG": 8,
+        "failedP": 0
+      },
+      "c4": {
+        "pass": true,
+        "paxB": 117518,
+        "paxE": 117518,
+        "moneyB": 2034804,
+        "moneyE": 2036339,
+        "dMoney": 1535,
+        "objB": 2,
+        "objE": 2
+      }
+    },
+    {
+      "seed": 256,
+      "c1": {
+        "viable": true,
+        "limited": true,
+        "pass": true
+      },
+      "c2": {
+        "pass": true,
+        "progE": 2,
+        "progP": 1,
+        "paxE": 121830,
+        "paxP": 145029,
+        "moneyE": 2145404,
+        "moneyP": 1897952
+      },
+      "c3": {
+        "pass": true,
+        "qG": 0.972972972972973,
+        "qP": 1,
+        "failedG": 8,
+        "failedP": 0
+      },
+      "c4": {
+        "pass": true,
+        "paxB": 121830,
+        "paxE": 121830,
+        "moneyB": 2143865,
+        "moneyE": 2145404,
+        "dMoney": 1539,
+        "objB": 2,
+        "objE": 2
+      }
+    },
+    {
+      "seed": 512,
+      "c1": {
+        "viable": true,
+        "limited": true,
+        "pass": true
+      },
+      "c2": {
+        "pass": true,
+        "progE": 2,
+        "progP": 1,
+        "paxE": 120621,
+        "paxP": 145968,
+        "moneyE": 2125675,
+        "moneyP": 1911305
+      },
+      "c3": {
+        "pass": true,
+        "qG": 0.9473684210526315,
+        "qP": 1,
+        "failedG": 8,
+        "failedP": 0
+      },
+      "c4": {
+        "pass": true,
+        "paxB": 120621,
+        "paxE": 120621,
+        "moneyB": 2124143,
+        "moneyE": 2125675,
+        "dMoney": 1532,
+        "objB": 2,
+        "objE": 2
+      }
+    },
+    {
+      "seed": 1000,
+      "c1": {
+        "viable": true,
+        "limited": true,
+        "pass": true
+      },
+      "c2": {
+        "pass": true,
+        "progE": 2,
+        "progP": 1,
+        "paxE": 121042,
+        "paxP": 147079,
+        "moneyE": 2104996,
+        "moneyP": 1926715
+      },
+      "c3": {
+        "pass": true,
+        "qG": 0.9487179487179487,
+        "qP": 1,
+        "failedG": 8,
+        "failedP": 0
+      },
+      "c4": {
+        "pass": true,
+        "paxB": 121042,
+        "paxE": 121042,
+        "moneyB": 2103455,
+        "moneyE": 2104996,
+        "dMoney": 1541,
+        "objB": 2,
+        "objE": 2
+      }
+    },
+    {
+      "seed": 2024,
+      "c1": {
+        "viable": true,
+        "limited": true,
+        "pass": true
+      },
+      "c2": {
+        "pass": true,
+        "progE": 2,
+        "progP": 1,
+        "paxE": 119493,
+        "paxP": 146876,
+        "moneyE": 2119597,
+        "moneyP": 1922295
+      },
+      "c3": {
+        "pass": true,
+        "qG": 0.9166666666666666,
+        "qP": 1,
+        "failedG": 8,
+        "failedP": 0
+      },
+      "c4": {
+        "pass": true,
+        "paxB": 119493,
+        "paxE": 119493,
+        "moneyB": 2118041,
+        "moneyE": 2119597,
+        "dMoney": 1556,
+        "objB": 2,
+        "objE": 2
+      }
+    },
+    {
+      "seed": 4096,
+      "c1": {
+        "viable": true,
+        "limited": true,
+        "pass": true
+      },
+      "c2": {
+        "pass": true,
+        "progE": 2,
+        "progP": 1,
+        "paxE": 119898,
+        "paxP": 146905,
+        "moneyE": 2052408,
+        "moneyP": 1925827
+      },
+      "c3": {
+        "pass": true,
+        "qG": 0.9459459459459459,
+        "qP": 1,
+        "failedG": 8,
+        "failedP": 0
+      },
+      "c4": {
+        "pass": true,
+        "paxB": 119898,
+        "paxE": 119898,
+        "moneyB": 2050884,
+        "moneyE": 2052408,
+        "dMoney": 1524,
+        "objB": 2,
+        "objE": 2
+      }
+    },
+    {
+      "seed": 8192,
+      "c1": {
+        "viable": true,
+        "limited": true,
+        "pass": true
+      },
+      "c2": {
+        "pass": true,
+        "progE": 2,
+        "progP": 1,
+        "paxE": 121834,
+        "paxP": 149243,
+        "moneyE": 2160216,
+        "moneyP": 1957511
+      },
+      "c3": {
+        "pass": true,
+        "qG": 0.9210526315789473,
+        "qP": 1,
+        "failedG": 8,
+        "failedP": 0
+      },
+      "c4": {
+        "pass": true,
+        "paxB": 121834,
+        "paxE": 121834,
+        "moneyB": 2158670,
+        "moneyE": 2160216,
+        "dMoney": 1546,
+        "objB": 2,
+        "objE": 2
+      }
+    },
+    {
+      "seed": 99999,
+      "c1": {
+        "viable": true,
+        "limited": true,
+        "pass": true
+      },
+      "c2": {
+        "pass": true,
+        "progE": 2,
+        "progP": 1,
+        "paxE": 122760,
+        "paxP": 148543,
+        "moneyE": 2168863,
+        "moneyP": 1944543
+      },
+      "c3": {
+        "pass": true,
+        "qG": 0.9459459459459459,
+        "qP": 1,
+        "failedG": 8,
+        "failedP": 0
+      },
+      "c4": {
+        "pass": true,
+        "paxB": 122760,
+        "paxE": 122760,
+        "moneyB": 2167313,
+        "moneyE": 2168863,
+        "dMoney": 1550,
+        "objB": 2,
+        "objE": 2
+      }
+    }
+  ],
+  "verdict": {
+    "allOk": true,
+    "tolOk": true,
+    "pass": true,
+    "note": "LES 4 CRITÈRES SONT ATTEINTS (médiane + mauvais cas toléré) SUR 12 SEEDS."
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "r": "R37",
+  "task": "t_a4c636ab",
+  "objectif": "Deux stratégies viables + un compromis : (C1) prudent viable mais limité ; (C2) l'expansion ciblée progresse davantage ; (C3) tout accepter (greedy) dégrade la qualité ou les obligations ; (C4) l'achat inadapté coûte sans faux bénéfice — validé sur médiane + mauvais cas (12 seeds R36), pas seulement sur la seed la plus favorable.",
+  "preuvidence": "3f19d88 (équilibre sans capital artificiel — START_FUNDS 12 000 $ rétabli, R11/R37)",
+  "fichiersSource": {
+    "src/data/catalog.mjs": "OPEX services au sol (OPEX_PER_SEC) + coût de l'amélioration 'teams' (UPGRADES)",
+    "qa/probe-scenario.mjs": "rapport du harnais : +3 champs lectures pures (objectives, quality, contracts)"
+  },
+  "modifs": [
+    {
+      "fichier": "src/data/catalog.mjs",
+      "champ": "OPEX_PER_SEC.fuel",
+      "avant": 4,
+      "apres": 1.5,
+      "raison": "Diagnostic R37 : les 5 services au sol coûtaient ~45 000 $/h (OPEX 12 h = 674 941 $) — l'expansion dépense plus vite qu'elle ne gagne (pax plus bas que prudent) = stagnation mi/fin de partie. Le plein est LA meilleure amélioration (billet plein tarif) : son OPEX doit rester < le gain qu'il produit, sinon la stratégie viable de croissance ne progresse pas davantage. 5 400 $/h (était 14 400)."
+    },
+    {
+      "fichier": "src/data/catalog.mjs",
+      "champ": "OPEX_PER_SEC.cleaning",
+      "avant": 2,
+      "apres": 1,
+      "raison": "Bonne amélioration (l'usure « sale » retient les clients) : OPEX baissé pour que le service soit rentable quand on l'adopte — 3 600 $/h (était 7 200)."
+    },
+    {
+      "fichier": "src/data/catalog.mjs",
+      "champ": "OPEX_PER_SEC.baggage",
+      "avant": 2,
+      "apres": 1,
+      "raison": "Bonne amélioration (capacité check-in) : même logique — 3 600 $/h (était 7 200)."
+    },
+    {
+      "fichier": "src/data/catalog.mjs",
+      "champ": "OPEX_PER_SEC.hangar / maintenance / catering",
+      "avant": "inchangé (2 / 1.5 / 2.5)",
+      "apres": "inchangé",
+      "raison": "PIÈGE « surdimensionné » : le hangar + le café au-delà du besoin doivent rester DÉFICITAIRES (scénario finance-bl15 — un test pince le déficit, pas le signe du net). Toucher ces OPEX casserait le scénario de piège. Seuls les 3 services « bons » ont été abaissés."
+    },
+    {
+      "fichier": "src/data/catalog.mjs",
+      "champ": "UPGRADES.teams.cost",
+      "avant": 800,
+      "apres": 2000,
+      "raison": "C4 : avant, le « mauvais achat » (buyUpgrade 'teams' quand le goulot est les files, R31) coûtait 800 $ — MOINS que le bon achat ('terminal', 1 500 $) : badinvest finissait avec PLUS de money qu'expansion = le mauvais achat ne coûtait pas (il était moins cher). À 2 000 $ le mauvais achat est le plus cher du catalogue : l'argent dépensé n'convertit aucune file (pax identique) ET coûte — critère « coûte sans faux bénéfice » atteint. Aucun test ne pince le coût 'teams' (les tests R31 importent le catalogue, ne hardcodent pas 800)."
+    },
+    {
+      "fichier": "qa/probe-scenario.mjs",
+      "champ": "rapport : + objectives / quality / contracts",
+      "avant": "absent du rapport",
+      "apres": "3 champs LECTURES PURES de fin de run (objectiveView / qualityView / contractView)",
+      "raison": "La validation R37 (progression = objectifs payés, qualité, obligations = résultats de contrats) doit se lire dans le rapport du harnais DRY, pas dans une sonde parallèle. LECTURE pure : les vues ne mutent pas la sim (déterminisme vérifié — deux runs même-config : snapshots IDENTIQUES au runId près), donc la détermination R36 n'est pas affectée."
+    }
+  ],
+  "essaiRebours": [
+    {
+      "champ": "REFUEL_TIME_S 0.5 → 0.3 (+ REFUEL_TRAVEL_S_PER_1000)",
+      "issue": "REBOUTÉ",
+      "raison": "4 tests hardcodent la base 55 s (medium.refuel 110 × 0.5 : r28-local-fuel, r31-upgrades, AC21, services BL-12) → suite passait 300/304. Choix : préserver les 304/304 — le levier OPEX seul suffit pour les 4 critères, le refuel n'est pas nécessaire. Constantes refuel RESTORÉES à leurs valeurs d'origine (0.5 / 20 s par 1000 px)."
+    }
+  ],
+  "verification": {
+    "tests": "304/304 (npm test, 0 fail) — après OPEX + coût teams",
+    "validation": "qa/r37-validate.mjs → evidence/r37-validate/rapport-validation.json : C1..C4 PASS sur 12/12 seeds (médiane ET mauvais cas)",
+    "determinisme": "2 runs même-config : state snapshots byte-identiques au runId près (les nouveaux champs rapport ne mutent pas la sim)",
+    "tolerancePas": "Δq ≤ 0 / Δpax ≤ 10 645 / Δmoney ≤ 155 325 $ (pas 0,4 s vs 1 s, prudent+expansion) — dans la tolérance documentée R36 ; les critères restent stables au pas 0,4 s"
+  },
+  "chiffresCles": {
+    "note": "extrait par seed (24 h, dt 1 s) — expansion vs prudent : progression (objectifs payés) + money ; greedy vs prudent : qualité ; badinvest vs expansion : money (pax identiques par construction — R31/finding R36)",
+    "seed42": {
+      "c2": { "objectifsExp": 2, "objectifsPrud": 1, "paxExp": 119674, "paxPrud": 149677, "moneyExp": 2125761, "moneyPrud": 1964182 },
+      "c3": { "qGreedy": 0.946, "qPrudent": 1, "contratsRatésGreedy": 8, "contratsRatésPrudent": 0 },
+      "c4": { "paxBad": 119674, "paxExp": 119674, "moneyBad": 2124203, "moneyExp": 2125761, "ecartMoney": 1558 }
+    },
+    "seed1": {
+      "c2": { "objectifsExp": 2, "objectifsPrud": 1, "moneyExp": 2091282, "moneyPrud": 1941304 },
+      "c3": { "qGreedy": 0.923, "contratsRatésGreedy": 8 },
+      "c4": { "moneyBad": 2089749, "moneyExp": 2091282, "ecartMoney": 1533 }
+    },
+    "seed99999": {
+      "c2": { "objectifsExp": 2, "objectifsPrud": 1, "moneyExp": 2168863, "moneyPrud": 1944543 },
+      "c3": { "qGreedy": 0.946, "contratsRatésGreedy": 8 },
+      "c4": { "moneyBad": 2167313, "moneyExp": 2168863, "ecartMoney": 1550 }
+    },
+    "lecture": {
+      "C1": "prudent : aéroport petit mais viable (satisfaction 100, aucune faillite) ET limité (1 objectif payé vs 2 en expansion)",
+      "C2": "expansion progresse davantage : 2 objectifs payés vs 1 en prudent sur les 12 seeds (l'argent investi dans la bonne amélioration convertit) — le pax reste plus bas (la croissance consomme de la capacité) mais la PROGRESSION est supérieure",
+      "C3": "greedy dégrade : q fin 0,92–0,97 vs 1 en prudent ET 8 contrats ratés (obligations non tenues sous surcharge) sur les 12 seeds",
+      "C4": "badinvest coûte : pax ET objectifs IDENTIQUES à l'expansion (aucun faux bénéfice — le mauvais achat ne convertit aucune file, R31) mais money plus BAS (~1 500 $ moins, le mauvais achat est le plus cher du catalogue)"
+    }
+  }
+}

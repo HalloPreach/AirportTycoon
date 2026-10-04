@@ -86,6 +86,15 @@ import { opexPerHour } from '../src/data/catalog.mjs';
 import { unlockState } from '../src/infra/unlocks.mjs';
 import { START_FUNDS } from '../src/core/sim-state.mjs';
 import { periodStatement } from '../src/economy/economy.mjs';
+// R37 (t_a4c636ab) : le rapport embarque la PROGRESSION + la QUALITÉ + les
+// RÉSULTATS de contrats (lectures pures de fin de run — la sim n'est jamais
+// touchée, la détermination n'est pas affectée) : la VALIDATION R37 (deux
+// stratégies viables + compromis : expansion progresse davantage, greedy
+// dégrade la qualité/les obligations, le mauvais achat coûte) se lit dans le
+// rapport du harnais, pas dans une sonde parallèle.
+import { objectiveView } from '../src/progression/objectives.mjs';
+import { qualityView } from '../src/progression/quality.mjs';
+import { contractView } from '../src/flights/contracts.mjs';
 
 // ---------- args (parse minimal, pas de dépendance) ----------
 const args = process.argv.slice(2);
@@ -352,6 +361,18 @@ const report = {
     plannedPending: sim.planning.filter((e) => e.status === 'planned').length,
   },
   counts,
+  // R37 : la PROGRESSION + la QUALITÉ + les CONTRATS (lectures pures, bornées
+  // — l'historique des contrats est lui-même borné à HISTORY_MAX, R14).
+  objectives: [ 'o1-cycle', 'o2-surge' ].map((id) => {
+    const v = objectiveView(sim, id);
+    return { id, state: v.state, paid: sim.objectives?.find((o) => o.id === id)?.paid === true };
+  }),
+  quality: qualityView(sim),
+  contracts: {
+    accepted: (contractView(sim).history || []).filter(Boolean).filter((h) => h.result).length,
+    results: (contractView(sim).history || []).filter(Boolean).map((h) => h.result).filter(Boolean),
+    active: contractView(sim).active ? { model: contractView(sim).active.model, result: null } : null,
+  },
   unlocked: sim._unlocked ? Object.keys(sim._unlocked) : [],
   infra: {
     runways: sim.infra.runways.length,

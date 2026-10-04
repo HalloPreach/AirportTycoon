@@ -1,0 +1,128 @@
+{
+  "tool": "qa/probe-scenario.mjs",
+  "commit": "(non connu)",
+  "runId": "r37-det-b",
+  "seed": 42,
+  "scenario": "custom",
+  "config": {
+    "policy": "prudent (acceptation seulement si capacité libre : aucun avion en holding)",
+    "services": "none",
+    "events": [],
+    "dt": 1,
+    "hours": 6
+  },
+  "strategy": {
+    "upgradesBought": 0,
+    "upgradesRefused": 0,
+    "contractsAccepted": 0,
+    "contractsRefused": 0
+  },
+  "forced": [],
+  "simTimeEnd": 21600,
+  "stoppedEarly": false,
+  "money": {
+    "start": 12000,
+    "end": 519497.63649982197,
+    "min": 11574.399999999903,
+    "atMin": 133,
+    "debt": 0
+  },
+  "revenue": 595969.1365,
+  "opex": 69119.99999997219,
+  "opexPerHour": 11519.999999995365,
+  "fuel": 19351.5,
+  "compensation": 0,
+  "invest": 0,
+  "net": 507497.63650002785,
+  "bankruptcy": false,
+  "bankruptAt": null,
+  "passengers": {
+    "totalCarried": 38703,
+    "satisfaction": 100
+  },
+  "wait": {
+    "queues": {
+      "checkin": {
+        "n": 0,
+        "cap": 120,
+        "occ": 0
+      },
+      "security": {
+        "n": 0,
+        "cap": 120,
+        "occ": 0
+      },
+      "board": {
+        "n": 0,
+        "cap": 160,
+        "occ": 0
+      }
+    },
+    "holding": 0,
+    "plannedPending": 1
+  },
+  "counts": {
+    "built": 0,
+    "flightIn": 370,
+    "flightOut": 368,
+    "flightCancelled": 0,
+    "unlocked": 5,
+    "bankrupt": 0,
+    "runwayClosed": 8,
+    "fuelOut": 0,
+    "surgeStart": 35,
+    "noFuel": 369,
+    "contractStarted": 0,
+    "upgraded": 0
+  },
+  "objectives": [
+    {
+      "id": "o1-cycle",
+      "state": "à venir",
+      "paid": false
+    },
+    {
+      "id": "o2-surge",
+      "state": "payée",
+      "paid": true
+    }
+  ],
+  "quality": {
+    "q": 1,
+    "tier": 2,
+    "tierName": "toutes tailles",
+    "sizes": [
+      "small",
+      "medium",
+      "large"
+    ],
+    "measured": 1,
+    "measuredTotal": 31
+  },
+  "contracts": {
+    "accepted": 0,
+    "results": [],
+    "active": null
+  },
+  "unlocked": [
+    "fuel",
+    "catering",
+    "baggage",
+    "cleaning",
+    "hangar"
+  ],
+  "infra": {
+    "runways": 1,
+    "taxiways": 1,
+    "terminals": 1,
+    "gates": 2,
+    "services": []
+  },
+  "servicesOpexPerHour": 0,
+  "determinism": {
+    "note": "R09 (livré) : rejouer cette configuration (mêmes args, même commit) donne des fichiers IDENTIQUES en bytes. Les seeds différents DONNENT DES PARTIES DIFFÉRENTES (le seed est mélangé dans mulberry32 — preuve : evidence/r09-seed-42 vs r09-seed-99). Rejouer une config d’AVANT R09 avec seed 0 reste bit-à-bit la suite d’origine (migration).",
+    "rngSeed": 42,
+    "rngCounterEnd": 1304,
+    "rngCounterStart": 0
+  }
+}

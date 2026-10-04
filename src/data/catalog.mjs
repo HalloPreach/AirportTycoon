@@ -27,16 +27,34 @@ export const BUILDINGS = Object.freeze({
 // servent les passagers qui ARRIVENT à son terminal.
 export const GROUND_SERVICE_TYPES = Object.freeze(['fuel', 'hangar', 'cleaning', 'baggage', 'catering', 'maintenance']);
 
+// R37 (t_a4c636ab) : l'OPEX des SERVICES AU SOL est recalibré.
+// Avant (R36) les 5 services coûtaient ~12,5 $/s (45 000 $/h) : construire
+// TOUS les services (la stratégie « expansion ») coûtait PLUS que son gain
+// (billets plein tarif + capacité) → l'expansion PERDAIT face au prudent
+// (120 531 pax vs 147 388, money 864 k$ vs 1 023 k$ sur 24 h). Les services
+// devaient être un INVESTISSEMENT rentable (le joueur choisit d'investir),
+// pas une perte garantie.
+// Deux familles, deux prix :
+//  - BONNES améliorations (carburant/nettoyage/bagages) : OPEX baissé — leur
+//    gain (billets plein tarif + usure « sale » nulle + capacité check-in)
+//    dépasse désormais leur coût → l'expansion est rentable.
+//  - PIÈGE « surdimensionné » (hangar/catering au-delà du besoin) : OPEX
+//    INCHANGÉ (hangar 2 + catering 2,5 = 4,5 $/s) — quand les files sont
+//    vides, leur utilité est marginale mais le coût reste → un aéroport
+//    SURDIMENSIONNÉ reste DÉFICITAIRE (finance-bl15 : hangar+café sans
+//    station carburant, déficit mesurable). L'achat inadapté COÛTE.
+// La piste/le taxiway/le terminal (le SOCLE, non-choix) restent intacts.
 export const OPEX_PER_SEC = Object.freeze({
-  runway: 1.2,     // piste : 72 $/min, 4 320 $/h
-  taxiway: 0.2,    // 12 $/min, 720 $/h
-  terminal: 1.8,   // 108 $/min, 6 480 $/h
-  fuel: 4,         // 240 $/min, 14 400 $/h
-  hangar: 2,       // 120 $/min, 7 200 $/h
-  maintenance: 1.5,
-  catering: 2.5,   // 150 $/min, 9 000 $/h
-  cleaning: 2,     // 120 $/min, 7 200 $/h
-  baggage: 2,      // 120 $/min, 7 200 $/h
+  runway: 1.2,     // piste : 72 $/min, 4 320 $/h (socle, inchangé)
+  taxiway: 0.2,    // 12 $/min, 720 $/h (socle, inchangé)
+  terminal: 1.8,   // 108 $/min, 6 480 $/h (socle, inchangé)
+  fuel: 1.5,       // R37 : 90 $/min, 5 400 $/h (était 14 400) — le plein est la
+                   //       meilleure amélioration (billets plein tarif), OPEX < gain
+  hangar: 2,       // PIÈGE : inchangé (7 200 $/h) — surdimensionné = déficit
+  maintenance: 1.5,// PIÈGE : inchangé
+  catering: 2.5,   // PIÈGE : inchangé (9 000 $/h) — surdimensionné = déficit
+  cleaning: 1,     // R37 : 60 $/min, 3 600 $/h (était 7 200) — usure « sale »
+  baggage: 1,      // R37 : 60 $/min, 3 600 $/h (était 7 200) — capacité check-in
 });
 // R15 : unités LISIBLES dérivées d'OPEX_PER_SEC (pas d'état parallèle) — le
 // « coût affiché par minute » d'un bâtiment = opexPerMin(type) = le débit
@@ -121,7 +139,7 @@ export const UPGRADES = Object.freeze({
     effect: '+60 % de capacité check-in/sécurité de ce terminal (file tolérée plus longue)' },
   fueling:  { name: 'Avitaillement rapide', cost: 1200, maxLevel: 3, timeMultPerLevel: 0.25,
     effect: '−25 % du temps de plein de ce terminal par niveau (la saturation des lances ne change pas)' },
-  teams:    { name: 'Équipement d\'équipe', cost: 800, maxLevel: 3, rateMultPerLevel: 1,
+  teams:    { name: 'Équipement d\'équipe', cost: 2000, maxLevel: 3, rateMultPerLevel: 1,
     effect: '×2 du débit nettoyage/remise à zéro par équipe de ce terminal par niveau' },
 });
 
