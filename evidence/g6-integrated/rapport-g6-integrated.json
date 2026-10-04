@@ -1,0 +1,160 @@
+{
+  "tool": "qa/g6-integrated.mjs",
+  "mode": "full",
+  "fullGate": true,
+  "commit": "(non connu)",
+  "criteria": {
+    "a": "MATRICE REPRODUCTIBLE (R36) : 12 seeds × 5 politiques × 2 pas rejouees + determinisme + tolerance pas 0,4 s + extension 48 h",
+    "b": "4 CRITERES R37 (equilibre des strategies) atteints SUR 12 seeds (mediane + mauvais cas)",
+    "c": "LES 3 SCENARIOS R38 REJOUABLES (guide / saturation / redressement) : determinisme + invariants + bornes + objectifs coherents",
+    "d": "COHERENCE R37 ↔ R36 : la tolerance du pas 0,4 s du layer strategique RESTE DANS la tolerance documentee du layer matrice"
+  },
+  "evidence": {
+    "r36": "evidence/r36-matrix/rapport-matrix.json",
+    "r37": "evidence/r37-validate/rapport-validation.json",
+    "r38": [
+      "evidence/r38-guide/rapport-r38-guide.json",
+      "evidence/r38-saturation/rapport-r38-saturation.json",
+      "evidence/r38-redressement/rapport-r38-redressement.json"
+    ]
+  },
+  "failures": 0,
+  "passed": 27,
+  "checks": [
+    {
+      "name": "(a) le harnais R36 REJOUe la matrice sans echec",
+      "ok": true,
+      "detail": "tolérance dt 1 s vs 0,4 s : Δpax ≤ 23292 | Δmoney ≤ 327504 $ | Δsat ≤ 0 | extension 48 h : money 4377132 $ | pax 330746 | faillite non | preuve : C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\r36-matrix\\rapport-matrix.json"
+    },
+    {
+      "name": "(a) la grille porte 12 seeds (la mediane R37 exige la grille COMPLETE)",
+      "ok": true,
+      "detail": "12 seeds"
+    },
+    {
+      "name": "(a) le DETERMINISME est revalide (paire byte-identique + seeds divergentes)",
+      "ok": true,
+      "detail": "paire=true divergentes=true"
+    },
+    {
+      "name": "(a) la TOLERANCE du pas 0,4 s est revalidee",
+      "ok": true,
+      "detail": "Δpax=23292 Δmoney=327504 $ Δsat=0"
+    },
+    {
+      "name": "(a) l'EXTENSION 48 h est rejouable sans faillite (croissance)",
+      "ok": true,
+      "detail": "money 12000 → 4377132 $ (min 11574, faillite=false) pax 330746"
+    },
+    {
+      "name": "(b) le harnais R37 REJOUe la validation des 4 criteres sans echec",
+      "ok": true,
+      "detail": "tolérance pas : Δq 0 / Δpax 10645 / Δmoney 155325 $ → DANS la tolérance | VERDICT : PASS (4 critères atteints) — LES 4 CRITÈRES SONT ATTEINTS (médiane + mauvais cas toléré) SUR 12 SEEDS. | écrit dans C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\r37-validate\\rapport-validation.json"
+    },
+    {
+      "name": "(b) c1 — petit aéroport viable mais limité (prudent) (mediane + mauvais cas)",
+      "ok": true,
+      "detail": "passOn=12/12 (12 seeds)"
+    },
+    {
+      "name": "(b) c2 — expansion ciblée progresse davantage (mediane + mauvais cas)",
+      "ok": true,
+      "detail": "passOn=12/12 (12 seeds)"
+    },
+    {
+      "name": "(b) c3 — tout accepter (greedy) dégrade la qualité ou les obligations (mediane + mauvais cas)",
+      "ok": true,
+      "detail": "passOn=12/12 (12 seeds)"
+    },
+    {
+      "name": "(b) c4 — achat inadapté (badinvest) coûte sans faux bénéfice (mediane + mauvais cas)",
+      "ok": true,
+      "detail": "passOn=12/12 (12 seeds)"
+    },
+    {
+      "name": "(b) la TOLERANCE du pas 0,4 s du layer strategique est revalidee",
+      "ok": true,
+      "detail": "Δq=0 Δpax=10645 Δmoney=155325 $"
+    },
+    {
+      "name": "(d) COHERENCE R37 ↔ R36 : tolerance strategique DANS la tolerance matrice",
+      "ok": true,
+      "detail": "R37 Δpax=10645 ≤ R36 23292 ; R37 Δmoney=155325 $ ≤ R36 327504 $"
+    },
+    {
+      "name": "(c) le harnais R38 REJOUe les 3 scenarios sans echec",
+      "ok": true,
+      "detail": "  rapport : C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\r38-redressement\\rapport-r38-redressement.json |  | === R38 VALIDATION : les 3 scénarios rejoués (guide, saturation, redressement) — guide, saturation, redressement ==="
+    },
+    {
+      "name": "(c) guide : REJOUABLE (snapshots byte-identiques)",
+      "ok": true,
+      "detail": "sha256 b0e9efc378d8…"
+    },
+    {
+      "name": "(c) guide : les INVARIANTS tiennent sur la rejoue",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "(c) guide : l'objectif porte BIENTOT l'id attendu (o1-cycle)",
+      "ok": true,
+      "detail": "announced=o1-cycle"
+    },
+    {
+      "name": "(c) saturation : REJOUABLE (snapshots byte-identiques)",
+      "ok": true,
+      "detail": "sha256 a238228928d6…"
+    },
+    {
+      "name": "(c) saturation : les INVARIANTS tiennent sur la rejoue",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "(c) saturation : l'objectif porte BIENTOT l'id attendu (o2-surge)",
+      "ok": true,
+      "detail": "announced=o2-surge"
+    },
+    {
+      "name": "(c) redressement : REJOUABLE (snapshots byte-identiques)",
+      "ok": true,
+      "detail": "sha256 b476d8b6211a…"
+    },
+    {
+      "name": "(c) redressement : les INVARIANTS tiennent sur la rejoue",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "(c) redressement : l'objectif porte BIENTOT l'id attendu (o1-cycle)",
+      "ok": true,
+      "detail": "announced=o1-cycle"
+    },
+    {
+      "name": "(c) saturation : le PIC est absorbe (objectif decide PAR LA SIM)",
+      "ok": true,
+      "detail": "Pic de demande absorbé (récompense 1500 $)"
+    },
+    {
+      "name": "(c) saturation : borne financiere + pas de faillite",
+      "ok": true,
+      "detail": "money 12000 → 104360 $"
+    },
+    {
+      "name": "(c) redressement : deficit de depart → emprunt → remonte dans le vert",
+      "ok": true,
+      "detail": "deficit=-3000 $ emprunt 5000 $ → remonte=true"
+    },
+    {
+      "name": "(c) redressement : borne financiere",
+      "ok": true,
+      "detail": "money -3000 → 92432 $"
+    },
+    {
+      "name": "(c) guide : rejouable + pax finis (le harnais ne force PAS l'objectif)",
+      "ok": true,
+      "detail": "pax=6767 done=false"
+    }
+  ]
+}
