@@ -62,7 +62,7 @@ const INCID = Object.freeze({
 // (appelée à chaque tick + au chargement) → PAS de référence orpheline.
 export function ensureIncidents(sim) {
   let i = sim.incidents;
-  i = i || {};
+  if (!i || typeof i !== 'object') i = sim.incidents = {}; // R41 : re-attach (sauvegarde pré-R32 : champ ABSENT ; sans ça l'état est construit sur un local jeté, jamais persisté sur sim.incidents)
   i.runway = i.runway || { closed: 0, acc: 0, last: 0 }; // horloge globale (survies)
   i.fuel = i.fuel || { out: 0, acc: 0, last: 0 };
   i.surge = i.surge || { active: false, remaining: 0, acc: 0, last: 0 };

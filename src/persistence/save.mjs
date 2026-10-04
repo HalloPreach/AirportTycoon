@@ -174,7 +174,21 @@ function validateSim(sim) {
       throw new Error(`Sauvegarde invalide : avion ${ac.id} → porte inexistante ${ac.gateId}`);
     }
   }
-  // R10 (référence des DEUX côtés) : une porte RÉSERVÉE (g.acId) doit viser un
+  // R41 : les incidents attachés aux actifs (sim.incidents, R32) — PRÉSENT doit
+  // être un objet (les sous-objets i.runways/i.fuels + horloges y vivent) : un
+  // type corrompu (null/chaîne) passerait la validation puis serait ÉCRASÉ par
+  // ensureIncidents au chargement (l'état incident perdu sans erreur lisible).
+  // ABSENT = sauvegarde pré-R32, tolérée (ensureIncidents le re-attache).
+  if ('incidents' in sim && sim.incidents != null && typeof sim.incidents !== 'object') {
+    throw new Error('Sauvegarde invalide : incidents (sim.incidents) illisibles');
+  }
+  // R41 : même classe de défaut pour les passagers (R30) : un champ PRÉSENT
+  // mais non-objet (chaîne, nombre) ferait crasher le 1er tick (ensurePassengers
+  // écrit les totaux sur la valeur). null = sauvegarde ancienne, tolérée.
+  if ('passengers' in sim && sim.passengers != null && typeof sim.passengers !== 'object') {
+    throw new Error('Sauvegarde invalide : passagers (sim.passengers) illisibles');
+  }
+  // R10 (références des DEUX côtés) : une porte RÉSERVÉE (g.acId) doit viser un
   // avion EXISTANT. Sans ça, une porte « occupée » par un avion disparu resterait
   // verrouillée à JAMAIS (demolish refuse « porte occupée ») → on la rejette.
   if (isObj(infra) && isArr(infra.gates)) for (const g of infra.gates) {

@@ -1,0 +1,74 @@
+{
+  "task": "R41 (t_2194baa9)",
+  "date": "2026-10-04T04:14:49.171Z",
+  "head": "8cc370d (R40)",
+  "suite": "node --test tests/*.test.mjs",
+  "checks": [
+    {
+      "name": "1a pré-R32 : sim.incidents est re-attachée (objet)",
+      "ok": true,
+      "detail": "sim.incidents = [\"runway\",\"fuel\",\"surge\",\"runways\",\"fuels\"]"
+    },
+    {
+      "name": "1b l'incident forcé est VISIBLE à l'appel suivant (pas perdu)",
+      "ok": true,
+      "detail": "runwayClosed(1) = true"
+    },
+    {
+      "name": "1c l'incident SURVIT au tick (état persiste sur la sim)",
+      "ok": true,
+      "detail": "apres 1 tick, runwayClosed(1) = true"
+    },
+    {
+      "name": "1d (PREUVE) le code AVANT perd l'état : sim.incidents reste undefined",
+      "ok": true,
+      "detail": "apres ensure AVANT, sim.incidents = undefined (l'état est perdu — le bug d'origine)"
+    },
+    {
+      "name": "2a pré-R30 : passagers migrent (satisfaction 100, totalCarried 0)",
+      "ok": true,
+      "detail": "satisfaction=100 totalCarried=0 queues=[]"
+    },
+    {
+      "name": "2b pré-R30 : le 1er tick passe sur la sim migrée",
+      "ok": true,
+      "detail": "tick(loaded) sans exception"
+    },
+    {
+      "name": "2c pré-R35 : l'emprunt migre à 0 + borne intacte",
+      "ok": true,
+      "detail": "principal=0 dispo=true"
+    },
+    {
+      "name": "2d pré-R35 : le 1er tick passe sur la sim migrée",
+      "ok": true,
+      "detail": "tick(loaded) sans exception"
+    },
+    {
+      "name": "2e pré-R32/BL-14 : l'état incident COMPLET est reconstruit",
+      "ok": true,
+      "detail": "runway/fuel/surge/runways/fuels = true,true,true,true,true"
+    },
+    {
+      "name": "2f pré-R32/BL-14 : le 1er tick passe sur la sim migrée",
+      "ok": true,
+      "detail": "tick(loaded) sans exception"
+    },
+    {
+      "name": "3a sim.incidents corrompue → rejet lisible",
+      "ok": true,
+      "detail": "rejetée : Sauvegarde invalide : incidents (sim.incidents) illisibles"
+    },
+    {
+      "name": "3b sim.passengers corrompue → rejet lisible",
+      "ok": true,
+      "detail": "rejetée : Sauvegarde invalide : passagers (sim.passengers) illisibles"
+    },
+    {
+      "name": "3c economy.loan corrompue → rejet lisible",
+      "ok": true,
+      "detail": "rejetée : Sauvegarde invalide : emprunt (economy.loan) illisible"
+    }
+  ],
+  "summary": "13/13 checks (tous OK)"
+}
