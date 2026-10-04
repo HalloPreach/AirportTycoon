@@ -1,0 +1,115 @@
+{
+  "task": "t_ffa69316",
+  "browser": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+  "started": true,
+  "page": "http://127.0.0.1:8680/",
+  "results": [
+    {
+      "name": "serveur local répond",
+      "ok": true,
+      "detail": "http://127.0.0.1:8680"
+    },
+    {
+      "name": "navigateur démarré (cible CDP page)",
+      "ok": true,
+      "detail": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe → ws://127.0.0.1:8454/devtools/page/0C22FD7A918C3D"
+    },
+    {
+      "name": "window.__game exposé",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A. stockage vide : aucune sauvegarde, menu affiché, « Reprendre » masqué",
+      "ok": true,
+      "detail": "localStorage.length=0 screen=menu"
+    },
+    {
+      "name": "B. nouvelle partie : bouton menu → jeu, aéroport fourni (A-2)",
+      "ok": true,
+      "detail": "screen=game pistes=1 taxiways=1 portes=2 solde=12000"
+    },
+    {
+      "name": "B. intro affichée puis désactivée (« Passer l’intro »)",
+      "ok": true,
+      "detail": "affichée=true passée=true"
+    },
+    {
+      "name": "C. première offre planifiée apparaît",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "C. auto-accept via la case (planningAuto ON → vol accepté)",
+      "ok": true,
+      "detail": "case=true planningAuto=true vol accepté/déployé=true"
+    },
+    {
+      "name": "D. 2e piste construite (bouton outil + clic carte, 2500 $ débités)",
+      "ok": true,
+      "detail": "pistes 1→2 débit=2503.3530399999927 $ (2500 ± opex x4) toast=« Station carburant débloqué(e) (construction possible) | Auto-accept ON | Piste construit (−2500 $) | built »"
+    },
+    {
+      "name": "E. contrat : offre (300 pax) puis ACCEPTATION via le panneau",
+      "ok": true,
+      "detail": "offre=true bouton=true contrat actif (light)"
+    },
+    {
+      "name": "F. incident : fermeture piste forcée → INTERVENTION via le bouton du panneau",
+      "ok": true,
+      "detail": "ligne=« Piste 1FERMÉE (120 s restants) — 1 » coût=601.3199999999906 $ (600 ± opex) réouverte=true"
+    },
+    {
+      "name": "G. pause gèle le temps, reprise + vitesse x1→x2 via les boutons",
+      "ok": true,
+      "detail": "gèle=true reprise=true label x2=true"
+    },
+    {
+      "name": "H. sauvegarde manuelle : bouton → localStorage",
+      "ok": true,
+      "detail": "localStorage=true canResume=true"
+    },
+    {
+      "name": "I. fermeture puis reprise : bouton « Reprendre la sauvegarde » restaure l’état",
+      "ok": true,
+      "detail": "screen=game pistes=2 auto=true pax=300"
+    },
+    {
+      "name": "J. faillite : écran ouvert (solde < -10000) → « Nouvelle partie » → retour MENU",
+      "ok": true,
+      "detail": "flag=true nouvelle partie (pistes=1) → menu=true"
+    },
+    {
+      "name": "K. aucune ressource HTTP en échec (hors /favicon.ico connu)",
+      "ok": true,
+      "detail": "toutes les ressources servies (200)"
+    },
+    {
+      "name": "K. aucune exception page non capturée",
+      "ok": true,
+      "detail": "0 exception"
+    },
+    {
+      "name": "K. aucun rejet de promesse non géré",
+      "ok": true,
+      "detail": "0 rejet"
+    },
+    {
+      "name": "K. console : aucune erreur inexpliquée",
+      "ok": true,
+      "detail": "1 message(s) console, 0 erreur"
+    }
+  ],
+  "failedResources": [
+    "404 http://127.0.0.1:8680/favicon.ico"
+  ],
+  "consoleLogs": [
+    {
+      "level": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    }
+  ],
+  "pageExceptions": [],
+  "rejections": [],
+  "pass": true
+}
