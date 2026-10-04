@@ -73,6 +73,13 @@ export function newSimState() {
       periods: [], _periodAcc: 0, _periodBase: { revenue: 0, opex: 0, fuel: 0,
         compensation: 0, construction: 0, debt: 0 } },
     alerts: [],      // événements lisibles pour l'UI (toasts/alertes)
+    _alertTotal: 0,  // R39 : compteur de seq des événements (pushEvent) — le
+    _alertSeq: 0,    // CURSEUR consommateur (main.mjs) vit ICI, sur la sim :
+                      // il voyage avec la sim (new game = sim fraîche à 0,
+                      // load = restauré depuis la sauvegarde) → jamais de
+                      // désynchro avec _alertTotal, et la fenêtre glissante
+                      // (splice ci-dessous) ne le brouille PAS (contrairement
+                      // à un index de tableau).
     // Incidents opérationnels (BL-14, A-7) : 3 incidents limités (piste fermée,
     // panne carburant, pic de demande) — état propre, sérialisable seul, tirés
     // par le rng semé (reproductible à la reprise). Voir src/sim/incidents.mjs.
@@ -99,7 +106,16 @@ export function newSimState() {
 const MAX_ALERTS = 500;
 
 // Événement lisible pour l'UI (toast/alerte). L'UI lit sim.alerts, elle ne pollue pas l'état.
+// R39 : chaque événement porte un seq MONOTONE (sim._alertTotal, sérialisé avec
+// la sim → survit à la sauvegarde/rechargement). Le consommateur (main.mjs)
+// pointe par seq, PAS par index de tableau : la fenêtre glissante (splice ci-
+// dessous) décale les indices, mais le seq ne change jamais — et il reste
+// cohérent après un load, car le compteur voyage DANS la sim. Sans seq, la
+// fenêtre max 500 fige le curseur index et plus aucun toast n'est lu après
+// 500 événements (le bug que cette seq corrige).
 export function pushEvent(sim, e) {
+  sim._alertTotal = (sim._alertTotal || 0) + 1;
+  e.seq = sim._alertTotal;
   sim.alerts.push(e);
   if (sim.alerts.length > MAX_ALERTS) sim.alerts.splice(0, sim.alerts.length - MAX_ALERTS);
 }

@@ -44,6 +44,7 @@
       transition: opacity 0.2s;
     }
     .toast--ok { border-left-color: #43a047; }
+    .toast--warn { border-left-color: #fbc02d; } /* R39 (t_1c21c88e) : tréso/emprunt, lisible sans couleur seule */
     .toast--err { border-left-color: #e53935; }
     .toast--out { opacity: 0; }
     /* Panneau planning (BL-16) : liste consultable des vols + accepter/refuser. */
@@ -118,6 +119,23 @@
     .bankruptcy-actions .tool {
       background: #37474f; color: #fff; border: 1px solid #546e7a;
       border-radius: 6px; padding: 6px 12px; cursor: pointer; font: 13px system-ui;
+    }
+    /* R39 (t_1c21c88e) : ÉCRANS ÉTROITS — la colonne de panneaux (360 px) et
+       les toasts (320 px) ne doivent plus COUCHER la carte ni se CHEVAUCHER :
+       pleine largeur (marge 8 px), la hauteur reste bornée (défilement) et la
+       zone d'atterrissage (canvas) reste jouable. Le reste est déjà fluide
+       (toolbar flex-wrap, toasts pointer-events:none).
+       ponytail : UN seuil (560 px) + pleine largeur ; on ne fera pas de
+       layout responsive multi-brisures tant que le jeu vise d'abord le desktop.
+       (À la FIN de la feuille : même spécificité que les règles de base,
+       mais après → il gagne.) */
+    @media (max-width: 560px) {
+      .panels {
+        left: 8px; right: 8px; bottom: 56px; max-width: none;
+        max-height: calc(100vh - 120px);
+      }
+      .toasts { left: 8px; right: 8px; bottom: auto; top: 8px; max-width: none; }
+      .menu-btns { max-width: 100vw; }
     }
   </style>
 </head>

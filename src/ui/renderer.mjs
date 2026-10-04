@@ -1,7 +1,19 @@
 // Rendu canvas 2D : LIT l'état, ne calcule rien de jeu (règle UI fine).
 // Sprites vectoriels simples — ponytail : à remplacer par de vrais assets une fois la boucle jouable.
 import { queueTotals } from '../sim/passengers.mjs'; // R30 : files par terminal → somme (HUD)
-export function makeRenderer(canvas, { overlays = [], onMenuCommands = null } = {}) {
+// R39 : piste fermée — LECTURE SEULE de l'état d'incident (règle dans la sim,
+// incidents.mjs) : la piste est fermée tant que l'incident attaché a un
+// remaining > 0. On ne PASSE PAS par runwayClosed() : elle appelle
+// ensureIncidents() qui L'INITIALISE sim.incidents (mutation — le renderer est
+// en lecture seule, il ne doit pas muter la sim). La lecture directe est le
+// même état, sans effet de bord.
+function runwayClosedRO(sim, runwayId) {
+  const i = sim.incidents;
+  if (!i || !i.runways) return false;
+  const rec = i.runways[runwayId];
+  return !!(rec && rec.remaining > 0);
+}
+export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, selectionOf = null } = {}) {
   const ctx = canvas.getContext('2d');
 
   function resize() {
@@ -72,37 +84,155 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null } = 
         ctx.textAlign = 'left'; ctx.textBaseline = 'top';
         ctx.fillText(kind, x + 4, y + 3);
       }
+      // R39 : les BLOCAGES sont lisibles autrement que par la couleur —
+      // symbole + texte (X sur piste fermée, « PANNE » sur station HS), la
+      // règle reste dans la sim (runwayClosed / svc.fuelOut, lecture seule).
+      if (kind === 'runway' && runwayClosedRO(sim, b.id)) {
+        ctx.strokeStyle = '#e53935';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x + w * 0.4, y + h * 0.4); ctx.lineTo(x + w * 0.6, y + h * 0.6);
+        ctx.moveTo(x + w * 0.6, y + h * 0.4); ctx.lineTo(x + w * 0.4, y + h * 0.6);
+        ctx.stroke();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 12px system-ui';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText('FERMÉE', x + w / 2, y + 6);
+      }
+      if (kind === 'fuel' && b.fuelOut) {
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 11px system-ui';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('PANNE', x + w / 2, y + h / 2);
+      }
     }
-    // Portes (gates) : petits carrés sur le bord des terminaux, colorés par taille,
-    // rouge quand un avion est à quai (lecture seule de sim.infra.gates).
+    // Portes (gates) : libres / réservées / occupées — TROIS états distincts,
+    // lisibles SANS couleur (libre = plein, réservée = hachures + « R »,
+    // occupée = plein + « O » ; la couleur aide, l'indicateur ne repose pas
+    // sur elle — critère R39). L'état vient de la sim : g.acId (réservation,
+    // aircraft.mjs A5) + la position réelle de l'avion (occupée = à quai).
     if (sim.infra.gates && sim.infra.gates.length) {
       const GATE_COLOR = { S: '#4caf50', M: '#ff9800', L: '#2196f3' };
+      const GROUND_PHASES = new Set(['docking', 'gate', 'refuel', 'disembark', 'ground', 'board', 'pushback']); // pushback : porte encore occupée (g.acId libérée AU DÉPART de pushback, aircraft.mjs doPushback)
+      const atGate = new Set(sim.aircraft
+        .filter((a) => a.gateId != null && GROUND_PHASES.has(a.phase))
+        .map((a) => a.gateId));
       for (const g of sim.infra.gates) {
         if (g.x === undefined) continue;
         const [x, y] = screenToCanvas(g.x, g.y, cam);
-        ctx.fillStyle = g.acId ? '#e53935' : (GATE_COLOR[g.size] || '#9e9e9e');
-        ctx.fillRect(x, y, g.w * cam.zoom, g.h * cam.zoom);
+        const w = g.w * cam.zoom, h = g.h * cam.zoom;
+        const occ = atGate.has(g.id);
+        const res = !occ && g.acId != null;
+        if (res) {
+          // réservée : hachures (motif noir et blanc — lisible en N&B)
+          ctx.fillStyle = GATE_COLOR[g.size] || '#9e9e9e';
+          ctx.fillRect(x, y, w, h);
+          ctx.save();
+          ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+          ctx.strokeStyle = 'rgba(0,0,0,0.55)';
+          ctx.lineWidth = 2;
+          for (let sx = -h; sx < w; sx += 6) {
+            ctx.beginPath(); ctx.moveTo(x + sx, y + h); ctx.lineTo(x + sx + h, y); ctx.stroke();
+          }
+          ctx.restore();
+        } else {
+          ctx.fillStyle = occ ? '#e53935' : (GATE_COLOR[g.size] || '#9e9e9e');
+          ctx.fillRect(x, y, w, h);
+        }
+        ctx.strokeStyle = occ ? '#fff' : 'rgba(0,0,0,0.35)';
+        ctx.lineWidth = occ ? 1.5 : 1;
+        ctx.strokeRect(x, y, w, h);
+        if (cam.zoom >= 0.7) {
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 9px system-ui';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(occ ? 'O' : res ? 'R' : '·', x + w / 2, y + h / 2 + 1);
+        }
+      }
+    }
+    // R39 : le BÂTIMENT SÉLECTIONNÉ (clic carte) est entouré — la sélection
+    // est lisible autrement que par la couleur (trait pointillé blanc).
+    if (selectionOf) {
+      const sel = selectionOf();
+      if (sel && sel.kind === 'bldg') {
+        const b = [...sim.infra.runways, ...sim.infra.taxiways, ...sim.infra.terminals, ...sim.infra.services]
+          .find((x) => x.id === sel.id);
+        if (b) {
+          const [x, y] = screenToCanvas(b.x, b.y, cam);
+          ctx.save();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 3]);
+          ctx.strokeRect(x - 2, y - 2, b.w * cam.zoom + 4, b.h * cam.zoom + 4);
+          ctx.restore();
+        }
       }
     }
   }
 
-  // Avions visibles et en mouvement (lecture seule de state.sim.aircraft).
-  // La sim stocke l'orientation comme une chaîne ('gate'/'runway') et pas des
-  // radians → on ne pivote qu'avec une vraie orientation numérique.
+  // R39 (t_1c21c88e) : les AVIONS sont distingués par TAILLE (AIRCRAFT,
+  // lecture seule — small < medium < large) et l'orientation suit le SENS DE
+  // DÉPLACEMENT réel : le nœud suivant du chemin (pathfinding, lecture seule)
+  // donne la direction ; sans chemin (stationné) → direction par phase. La
+  // tête (cône) pointe devant : le sens est lisible SANS couleur (critère
+  // R39 « indication accessible autrement que par la couleur seule »).
+  // ponytail : le sens = direction vers le nœud SUIVANT (pas une vitesse
+  // instantanée) ; le jeu a 3 tailles d'avion, pas de flotte mixte continue.
+  const AC_SCALE = Object.freeze({ small: 0.7, medium: 1, large: 1.6 });
+  function aircraftAngle(sim, a) {
+    // Chemin actif : direction vers le nœud SUIVANT (le graphe, lecture seule).
+    try {
+      const graph = sim._graph;
+      if (graph && Array.isArray(a.path) && a.path.length > 1) {
+        const idx = Math.min((a.pathPtr || 0) + 1, a.path.length - 1);
+        const n = graph.nodes[a.path[idx]];
+        if (n && (n.x !== a.x || n.y !== a.y)) return Math.atan2(n.y - a.y, n.x - a.x);
+      }
+    } catch { /* graphe pas encore construit (avant le 1er tick) */ }
+    // Stationné / téléport : direction par phase (descente → bas ; décollage → haut).
+    if (a.phase === 'approach' || a.phase === 'holding' || a.phase === 'landing' || a.phase === 'exit') return Math.PI / 2;
+    if (a.phase === 'pushback' || a.phase === 'departure') return -Math.PI / 2;
+    // À la porte : vers la piste (sortie par le haut) ; sinon neutre.
+    return -Math.PI / 2;
+  }
   function drawAircraft(state, cam) {
     const sim = state.sim;
     if (!sim || !sim.aircraft) return;
     for (const a of sim.aircraft) {
       if (a.x === undefined || a.y === undefined) continue; // pas encore positionné
       const [x, y] = screenToCanvas(a.x, a.y, cam);
+      const k = (AC_SCALE[a.acType] || 1) * cam.zoom; // échelle TAILLE (small < medium < large)
+      const ang = aircraftAngle(sim, a);
       ctx.save();
       ctx.translate(x, y);
-      if (typeof a.heading === 'number') ctx.rotate(a.heading);
+      ctx.rotate(ang + Math.PI / 2); // le sprite est dessiné « nez vers le haut »
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.fillRect(-2 * k - 1 + 2, -10 * k + 2, 4 * k, 20 * k); // ombre
       ctx.fillStyle = a.color || '#eceff1';
-      // Silhouette simple : fuselage + ailes (échelle monde, 20 px de long).
-      ctx.fillRect(-10 * cam.zoom, -2 * cam.zoom, 20 * cam.zoom, 4 * cam.zoom);
-      ctx.fillRect(-2 * cam.zoom, -8 * cam.zoom, 4 * cam.zoom, 16 * cam.zoom);
+      // Fuselage (long) + ailes (larges) — la TÊTE (cône) pointe devant.
+      ctx.fillRect(-2 * k, -10 * k, 4 * k, 20 * k);
+      ctx.fillRect(-8 * k, -4 * k, 16 * k, 3 * k);
+      // Tête (nez) : un cône en plus (le sens est lisible sans couleur).
+      ctx.beginPath();
+      ctx.moveTo(0, -13 * k); ctx.lineTo(3 * k, -8 * k); ctx.lineTo(-3 * k, -8 * k);
+      ctx.closePath();
+      ctx.fill();
       ctx.restore();
+      // R39 : l'avion SÉLECTIONNÉ (clic carte, panels.mjs) est entouré (trait
+      // pointillé blanc) — la sélection est lisible autrement que par couleur.
+      if (selectionOf) {
+        const sel = selectionOf();
+        if (sel && sel.kind === 'ac' && sel.id === a.id) {
+          ctx.save();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 3]);
+          ctx.beginPath();
+          ctx.arc(x, y, 16 * (AC_SCALE[a.acType] || 1) * cam.zoom, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
     }
   }
 

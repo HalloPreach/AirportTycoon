@@ -686,6 +686,9 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
     // ; la prochaine refreshInspect rend l'état par défaut (pas un « parti »
     // stale). Câblé par save-panel (onLoad) et startNewGame dans main.mjs.
     invalidate: () => { pick = null; },
+    // R39 (t_1c21c88e) : la sélection d'inspection est EXPOSÉE au renderer
+    // (l'entouré blanc pointillé suit l'objet) — lecture seule de `pick`.
+    selectionOf: () => pick,
     col,
   };
 }

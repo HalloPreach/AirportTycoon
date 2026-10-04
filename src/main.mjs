@@ -71,6 +71,10 @@ export function boot(canvas) {
       (ctx, cam, vs) => { if (state.networkOverlay && state.sim) drawNetworkOverlay(ctx, cam, vs, state.sim); },
     ],
     onMenuCommands: menuCommands,
+    // R39 (t_1c21c88e) : l'entouré de SÉLECTION suit le clic carte (panels.mjs)
+    // — le closure lit `panels` au moment du rendu (déclaré plus bas, initialisé
+    // avant la 1re frame) ; la règle reste dans panels (pick), le renderer lit.
+    selectionOf: () => (panels && panels.selectionOf ? panels.selectionOf() : null),
   });
   makeInputHandlers(canvas, bus, camera, renderer.viewSize);
   // Panneaux de consultation (NONMVP-5) : inspection / bilan / stats / alertes
@@ -118,7 +122,6 @@ export function boot(canvas) {
     // unique dans la factory). On ne fait que resynchroniser le miroir DOM
     // (la case auto-accept suit l'état) — pas un second reset parallèle.
     planningPanel.setAuto(false);
-    state._alertSeen = 0;
     clearSave(); // une nouvelle partie efface l'ancienne sauvegarde (« Reprendre » = la partie en cours)
     setScreen(state, SCREENS.GAME);
     toasts.toast('Nouvelle partie — aéroport fourni, étends-le (B)', 'ok');
@@ -136,7 +139,6 @@ export function boot(canvas) {
     Object.assign(state, fresh); // mêmes références (state.sim = fresh.sim)
     panels.invalidate();
     planningPanel.setAuto(false);
-    state._alertSeen = 0;
     clearSave(); // une partie scénario efface l'ancienne sauvegarde
     setScreen(state, SCREENS.GAME);
     // L'OBJECTIF ANNONCÉ (le R22 du scénario) en toast — lecture de l'état.
@@ -198,6 +200,15 @@ export function boot(canvas) {
     'treasury-critical': (e) => `URGENCE TRÉSORERIE : le déficit s'approfondit (${e.money} $, sous ${e.below} $) — empruntez ou la faillite arrive`,
     'loan-taken': (e) => `Emprunt obtenu : +${e.principal} $ de liquidités, ${e.interest} $ d'intérêts (compte dette)`,
     'bankruptcy-resumed': () => 'Reprise : la simulation continue depuis le bilan',
+    // R39 (t_1c21c88e) : les RETOURS d'action (intervention / récupération /
+    // objectif) sont TOASTS lisibles — l'UI affiche, la sim règle (règle
+    // inchangée). L'ACHAT déjà toasté par build-tool (succès ET motif d'échec)
+    // n'est PAS re-toasté ici (pas de doublon) : l'événement 'built' reste dans
+    // l'historique d'alertes, pas dans le flux de toasts.
+    'runway-reopen': (e) => `Piste de nouveau ouverte${e.why ? ` — ${e.why}` : ''}`,
+    'fuel-back': (e) => `Station carburant de nouveau en service${e.why ? ` — ${e.why}` : ''}`,
+    'planning-relief': (e) => `Allègement du planning : ${e.count} vol(s) refusé(s) — ${e.why || 'revenu perdu'}`,
+    'objective-paid': (e) => `OBJECTIF RÉUSSI : ${e.name} — récompense +${e.reward} $`,
   };
   // R14 : un tick qui lève (bug de règle, état corrompu) arrive ici via
   // 'sim-error' (voir loop.mjs) — erreur lisible en toast, le jeu ne crashe pas.
@@ -218,16 +229,45 @@ export function boot(canvas) {
   bus.on('frame', () => {
     const sim = state.sim;
     if (!sim || !sim.alerts) return;
-    if (state._alertSeen === undefined) state._alertSeen = 0;
-    for (let i = state._alertSeen; i < sim.alerts.length; i++) {
-      const a = sim.alerts[i];
-      if (!a || !a.kind) continue;
+    // R39 (t_1c21c88e) : les ALERTES SE REPÉTENT (arrivées/départs en rafale à
+    // x4, pics de demande) — on GROUPE les événements IDENTIQUES d'une même
+    // fournée (même kind) en UN toast « (×n) » : moins de spam, même contenu.
+    // L'historique (panneau) garde les événements bruts — c'est le flux de
+    // toasts qui est résumé, pas la règle.
+    // R39 (t_1c21c88e) : on consomme par SEQ (sim._alertSeq / sim._alertTotal,
+    // définis sur la sim dans sim-state.mjs), PAS par index de tableau — la
+    // fenêtre glissante (max 500) décale les indices, mais le seq ne change
+    // jamais : les toasts ne s'arrêtent JAMAIS après 500 événements (bug
+    // index : le curseur index fige à la longueur plafonnée et plus aucun
+    // événement n'était lu). Le curseur vit SUR LA SIM (pas sur `state`) : il
+    // voyage avec elle (new game = sim fraîche à 0, load = restauré de la
+    // sauvegarde) → zéro désynchro avec le compteur, sans reset manuel.
+    if (sim._alertSeq == null) sim._alertSeq = 0;
+    let pendingKind = null;
+    let pendingText = null;
+    let pendingKindClass = 'info';
+    let pendingCount = 0;
+    const flush = () => {
+      if (pendingCount) toasts.toast(pendingCount > 1 ? `${pendingText} (×${pendingCount})` : pendingText, pendingKindClass);
+      pendingKind = null; pendingText = null; pendingCount = 0;
+    };
+    for (const a of sim.alerts) {
+      // seq null = événement d'une sauvegarde PRÉ-R39 (sans seq) → considéré déjà consommé
+      // (sinon les 500 événements restaurés seraient re-toastés à chaque frame).
+      if (!a || !a.kind || a.seq == null || a.seq <= sim._alertSeq) continue;
+      sim._alertSeq = a.seq; // curseur : le dernier seq CONNU (pas seulement lu-en-fine)
       const text = (ALERT_MSG[a.kind] || ((e) => a.why || a.kind))(a);
-      toasts.toast(text, a.kind === 'bankrupt' || a.kind === 'treasury-critical'
+      const cls = a.kind === 'bankrupt' || a.kind === 'treasury-critical'
         ? 'err' : a.kind === 'treasury-warn' || a.kind === 'loan-taken'
-        ? 'warn' : a.kind.startsWith('ac-') || a.kind === 'flight-cancelled' ? 'err' : 'info');
+        ? 'warn' : a.kind.startsWith('ac-') || a.kind === 'flight-cancelled' ? 'err' : 'info';
+      if (a.kind === pendingKind) { pendingCount++; continue; } // identique → on compte
+      flush();
+      pendingKind = a.kind;
+      pendingText = text;
+      pendingKindClass = cls;
+      pendingCount = 1;
     }
-    state._alertSeen = sim.alerts.length;
+    flush();
   });
 
   // Planificateur : la case « auto-accept » (politique joueur, BL-16) s'applique
