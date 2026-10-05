@@ -139,8 +139,9 @@ const SNAPSHOT_EXPR = `(() => {
   const mem = performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null;
   return {
     t: sim.time, money: Math.round(sim.economy.money), pax: sim.passengers.totalCarried,
+    speedIndex: g.state.speedIndex, // 0=x1 1=x2 2=x4 (le maintien de la charge)
     alerts: sim.alerts.length, periods: (sim.economy.periods || []).length,
-    contractHistory: h.length, punctuality: (sim.passengers.punctuality?.recent || []).length,
+    contractHistory: h.length, punctuality: (sim.punctuality?.recent || []).length,
     planning: sim.planning.length, aircraft: sim.aircraft.length,
     heapMB: mem, nonFinite: bad.slice(0, 5), orphanGates: orphans, contractDupes: dupeCount, activeSettled,
     bankrupt: sim.economy.bankrupt,
@@ -163,6 +164,7 @@ const FPS_EXPR = `(async () => {
 // par un tick long le retarde ; un clic réactif ≈ 1 frame ≈ 16 ms). Le label
 // est lu génériquement (startsWith 'Vitesse') : indépendant de la valeur xN.
 const CLICK_LATENCY_EXPR = `(async () => {
+  const g = window.__game;
   const btn = [...document.querySelectorAll('.toolbar button')].find((b) => b.textContent.startsWith('Vitesse'));
   if (!btn) return { ok: false, why: 'bouton vitesse introuvable' };
   const oldLabel = btn.textContent;
@@ -170,10 +172,14 @@ const CLICK_LATENCY_EXPR = `(async () => {
   btn.click(); // action synchro (cycleSpeed) ; le label suit à la frame
   for (let i = 0; i < 200 && btn.textContent === oldLabel; i++) await new Promise((r) => setTimeout(r, 5));
   const latency = Math.round(performance.now() - t0);
-  // retour à x4 (la charge de la session) : clics jusqu'au label « Vitesse x4 »
-  for (let i = 0; i < 3 && !btn.textContent.includes('x4'); i++) btn.click();
-  await new Promise((r) => setTimeout(r, 100));
-  return { ok: true, latencyMs: latency };
+  // retour à x4 (la charge de la session) : clics DETERMINISTES — on se fie à
+  // l'INDEX de vitesse (SPEEDS[state.speedIndex], game-state.mjs:41, synchrone),
+  // PAS au label (stale jusqu'à la frame RAF suivante). L'ancien « 3 clics
+  // aveugles » atterrissait à x1 (le label ne suivait pas entre les clics) →
+  // la session cyclait x1/x2/x4 et ne maintenait PAS x4 (audit t_26ae6729).
+  for (let i = 0; i < 3 && g.state.speedIndex !== 2; i++) btn.click(); // cycle de 3 : max 2 clics
+  await new Promise((r) => setTimeout(r, 50));
+  return { ok: true, latencyMs: latency, speedX4: g.state.speedIndex === 2 };
 })()`;
 
 async function main() {
@@ -315,11 +321,16 @@ async function main() {
   // latence de clic. On VÉRIFIE, on n'optimise pas : la carte dit « optimiser
   // UNIQUEMENT les points mesurés comme problématiques » → les mesures vont au
   // rapport, un point = un problème mesuré.
+  // t_2acb3479 : la durée est contrôlée par l'HORLOGE DE SIMULATION (sim.time),
+  // PAS par un timer réel : on échantillonne jusqu'à ce que sim.time atteigne
+  // GAME_SECONDS. Un budget RÉEL borné coupe la boucle si le navigateur est
+  // trop lent (throttlé) → le check « durée atteinte » échoue alors explicitement.
   const samples = [];
-  const N_SAMPLES = Math.max(2, Math.ceil(GAME_SECONDS / 4 / (SAMPLE_EVERY_MS / 1000))); // x4 : jeu-sec = réel*4
+  const REAL_BUDGET_MS = Math.round((GAME_SECONDS / SPEED) * 3 * 1000); // 3× l'espéré (x4)
+  const sessionStartReal = Date.now();
   let lastSamplePax = null;
   let clickLat = null;
-  for (let i = 0; i < N_SAMPLES; i++) {
+  for (let i = 0; i < 999; i++) {
     // Le palier de JEU est écoulé : on attend la durée RÉELLE du palier.
     await new Promise((r) => setTimeout(r, SAMPLE_EVERY_MS));
     const snap = await evaluate(SNAPSHOT_EXPR);
@@ -338,8 +349,29 @@ async function main() {
     if (snap.orphanGates > 0) { console.log(`palier ${i} : réservation orpheline`); }
     if (lastSamplePax != null && snap.pax < lastSamplePax) { console.log(`palier ${i} : pax non monotone (${lastSamplePax}→${snap.pax})`); }
     lastSamplePax = snap.pax;
+    // Fin de session : l'horloge de SIMULATION a atteint la cible (pas un timer réel).
+    if (snap.t >= GAME_SECONDS) break;
+    // Budget réel dépassé (navigateur trop lent / throttlé) : on s'arrête et la
+    // vérification « durée atteinte » échouera explicitement (pas de boucle infinie).
+    if (Date.now() - sessionStartReal > REAL_BUDGET_MS) {
+      console.log(`budget réel ${Math.round(REAL_BUDGET_MS / 1000)} s dépassé (sim.t=${Math.round(snap.t)}/${GAME_SECONDS})`);
+      break;
+    }
   }
+  // --- C2. VITESSE MAINTENUE + DURÉE ATTEINTE (mesuré sur l'horloge de sim) --------
+  // t_2acb3479 : la session doit tourner x4 ET couvrir GAME_SECONDS de JEU. Deux
+  // échecs explicites et distincts (pas de faux positif si l'un ou l'autre échoue),
+  // et la durée est lue sur l'horloge de SIM, pas un timer système.
   const endSnap = samples[samples.length - 1];
+  const realElapsedS = Math.round((Date.now() - sessionStartReal) / 1000);
+  const speedOff = samples.filter((s) => s.speedIndex !== 2);
+  check('C. vitesse maintenue à x4 pendant toute la session',
+    speedOff.length === 0,
+    speedOff.length === 0 ? `tous paliers x4 (${samples.length} paliers)`
+      : `hors-x4 : ${speedOff.map((s) => `palier ${s.sample}=x${['1','2','4'][s.speedIndex] ?? '?'}`).join(', ')}`);
+  check('C. durée cible atteinte sur l\'horloge de simulation (pas un timer réel)',
+    endSnap.t >= GAME_SECONDS,
+    `sim.time=${Math.round(endSnap.t)}/${GAME_SECONDS} s de jeu (réel=${realElapsedS} s, x4 attendu≈${Math.round(GAME_SECONDS / SPEED)} s)`);
   const invariantsOk = samples.every((s) => s.nonFinite.length === 0 && s.orphanGates === 0
     && s.contractDupes === 0 && !s.activeSettled
     && s.alerts <= 500 && s.periods <= 4 && s.contractHistory <= 8 && (s.punctuality ?? 0) <= 50);
