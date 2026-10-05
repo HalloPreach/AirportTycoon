@@ -2,17 +2,17 @@
   "task": "t_ffa69316",
   "browser": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
   "started": true,
-  "page": "http://127.0.0.1:8516/",
+  "page": "http://127.0.0.1:8642/",
   "results": [
     {
       "name": "serveur local répond",
       "ok": true,
-      "detail": "http://127.0.0.1:8516"
+      "detail": "http://127.0.0.1:8642"
     },
     {
       "name": "navigateur démarré (cible CDP page)",
       "ok": true,
-      "detail": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe → ws://127.0.0.1:8246/devtools/page/91DB7A6FA3DE6B"
+      "detail": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe → ws://127.0.0.1:8345/devtools/page/2EB1CCEC2099DC"
     },
     {
       "name": "window.__game exposé",
@@ -47,7 +47,7 @@
     {
       "name": "D. 2e piste construite (bouton outil + clic carte, 2500 $ débités)",
       "ok": true,
-      "detail": "pistes 1→2 débit=2503.2803199999908 $ (2500 ± opex x4) toast=« Station carburant débloqué(e) (construction possible) | Auto-accept ON | Piste construit (−2500 $) | built »"
+      "detail": "pistes 1→2 débit=2503.3335599999846 $ (2500 ± opex x4) toast=« Station carburant débloqué(e) (construction possible) | Auto-accept ON | Piste construit (−2500 $) | built »"
     },
     {
       "name": "E. contrat : offre (300 pax) puis ACCEPTATION via le panneau",
@@ -57,7 +57,7 @@
     {
       "name": "F. incident : fermeture piste forcée → INTERVENTION via le bouton du panneau",
       "ok": true,
-      "detail": "ligne=« Piste 1FERMÉE (120 s restants) — 1 » coût=601.3930399999972 $ (600 ± opex) réouverte=true"
+      "detail": "ligne=« Piste 1FERMÉE (120 s restants) — 1 » coût=601.3199999999961 $ (600 ± opex) réouverte=true"
     },
     {
       "name": "G. pause gèle le temps, reprise + vitesse x1→x2 via les boutons",
@@ -101,7 +101,7 @@
     }
   ],
   "failedResources": [
-    "404 http://127.0.0.1:8516/favicon.ico"
+    "404 http://127.0.0.1:8642/favicon.ico"
   ],
   "consoleLogs": [
     {
