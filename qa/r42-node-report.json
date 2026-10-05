@@ -1,6 +1,6 @@
 {
   "task": "t_2e6ad3c0",
-  "at": "2026-10-04T06:24:51.344Z",
+  "at": "2026-10-05T07:17:41.135Z",
   "config": {
     "hours": 24,
     "dt": 2,
@@ -26,7 +26,7 @@
         "terminal": 0,
         "services": 0
       },
-      "wallMs": 279,
+      "wallMs": 273,
       "ticks": 43200,
       "msPerTick": 0.006,
       "msPerHour": 10,
@@ -54,7 +54,8 @@
           "planning": 0,
           "aircraft": 0,
           "pax": 0,
-          "money": 9091
+          "money": 9091,
+          "injected": 0
         },
         {
           "h": 1,
@@ -66,7 +67,8 @@
           "planning": 5,
           "aircraft": 4,
           "pax": 5315,
-          "money": 69620
+          "money": 69620,
+          "injected": 5456
         },
         {
           "h": 2,
@@ -78,7 +80,8 @@
           "planning": 5,
           "aircraft": 4,
           "pax": 10277,
-          "money": 121704
+          "money": 121704,
+          "injected": 10381
         },
         {
           "h": 3,
@@ -90,7 +93,8 @@
           "planning": 5,
           "aircraft": 4,
           "pax": 14694,
-          "money": 163548
+          "money": 163548,
+          "injected": 14835
         },
         {
           "h": 4,
@@ -102,7 +106,8 @@
           "planning": 5,
           "aircraft": 4,
           "pax": 20119,
-          "money": 223688
+          "money": 223688,
+          "injected": 20212
         },
         {
           "h": 5,
@@ -114,7 +119,8 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 24767,
-          "money": 267704
+          "money": 267704,
+          "injected": 24845
         },
         {
           "h": 6,
@@ -126,11 +132,12 @@
           "planning": 6,
           "aircraft": 4,
           "pax": 29813,
-          "money": 321428
+          "money": 321428,
+          "injected": 29941
         },
         {
           "h": 7,
-          "heapMB": 9,
+          "heapMB": 10,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -138,11 +145,12 @@
           "planning": 6,
           "aircraft": 4,
           "pax": 34717,
-          "money": 369424
+          "money": 369424,
+          "injected": 34790
         },
         {
           "h": 8,
-          "heapMB": 9,
+          "heapMB": 10,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -150,11 +158,12 @@
           "planning": 6,
           "aircraft": 4,
           "pax": 40532,
-          "money": 434024
+          "money": 434024,
+          "injected": 40671
         },
         {
           "h": 9,
-          "heapMB": 9,
+          "heapMB": 10,
           "alerts": 0,
           "periods": 4,
           "contracts": 8,
@@ -162,11 +171,12 @@
           "planning": 4,
           "aircraft": 3,
           "pax": 46176,
-          "money": 496572
+          "money": 496572,
+          "injected": 46176
         },
         {
           "h": 10,
-          "heapMB": 9,
+          "heapMB": 10,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -174,7 +184,8 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 50650,
-          "money": 538072
+          "money": 538072,
+          "injected": 50730
         },
         {
           "h": 11,
@@ -186,11 +197,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 54407,
-          "money": 568404
+          "money": 568404,
+          "injected": 54512
         },
         {
           "h": 12,
-          "heapMB": 10,
+          "heapMB": 9,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -198,11 +210,12 @@
           "planning": 5,
           "aircraft": 4,
           "pax": 59807,
-          "money": 624564
+          "money": 624564,
+          "injected": 59899
         },
         {
           "h": 13,
-          "heapMB": 9,
+          "heapMB": 10,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -210,7 +223,8 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 63514,
-          "money": 653456
+          "money": 653456,
+          "injected": 63583
         },
         {
           "h": 14,
@@ -222,11 +236,12 @@
           "planning": 6,
           "aircraft": 4,
           "pax": 68162,
-          "money": 696876
+          "money": 696876,
+          "injected": 68245
         },
         {
           "h": 15,
-          "heapMB": 10,
+          "heapMB": 9,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -234,11 +249,12 @@
           "planning": 4,
           "aircraft": 3,
           "pax": 73925,
-          "money": 760700
+          "money": 760700,
+          "injected": 73925
         },
         {
           "h": 16,
-          "heapMB": 11,
+          "heapMB": 10,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -246,11 +262,12 @@
           "planning": 5,
           "aircraft": 4,
           "pax": 79699,
-          "money": 820936
+          "money": 820936,
+          "injected": 79699
         },
         {
           "h": 17,
-          "heapMB": 11,
+          "heapMB": 13,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -258,11 +275,12 @@
           "planning": 6,
           "aircraft": 4,
           "pax": 84354,
-          "money": 865352
+          "money": 865352,
+          "injected": 84470
         },
         {
           "h": 18,
-          "heapMB": 11,
+          "heapMB": 12,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -270,11 +288,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 89788,
-          "money": 922096
+          "money": 922096,
+          "injected": 89932
         },
         {
           "h": 19,
-          "heapMB": 10,
+          "heapMB": 11,
           "alerts": 3,
           "periods": 4,
           "contracts": 8,
@@ -282,11 +301,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 96017,
-          "money": 992696
+          "money": 992696,
+          "injected": 96141
         },
         {
           "h": 20,
-          "heapMB": 12,
+          "heapMB": 9,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -294,11 +314,12 @@
           "planning": 4,
           "aircraft": 3,
           "pax": 99569,
-          "money": 1021428
+          "money": 1021428,
+          "injected": 99569
         },
         {
           "h": 21,
-          "heapMB": 12,
+          "heapMB": 9,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -306,11 +327,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 104756,
-          "money": 1074912
+          "money": 1074912,
+          "injected": 104871
         },
         {
           "h": 22,
-          "heapMB": 10,
+          "heapMB": 12,
           "alerts": 0,
           "periods": 4,
           "contracts": 8,
@@ -318,11 +340,12 @@
           "planning": 4,
           "aircraft": 4,
           "pax": 110947,
-          "money": 1142044
+          "money": 1142044,
+          "injected": 110947
         },
         {
           "h": 23,
-          "heapMB": 10,
+          "heapMB": 11,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -330,11 +353,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 116365,
-          "money": 1198672
+          "money": 1198672,
+          "injected": 116467
         },
         {
           "h": 24,
-          "heapMB": 10,
+          "heapMB": 11,
           "alerts": 3,
           "periods": 4,
           "contracts": 8,
@@ -342,7 +366,8 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 121736,
-          "money": 1253812
+          "money": 1253812,
+          "injected": 121817
         }
       ],
       "saveMid": {
@@ -392,7 +417,7 @@
       "heapSamples": [
         {
           "h": 0,
-          "heapMB": 11,
+          "heapMB": 13,
           "alerts": 0,
           "periods": 0,
           "contracts": 0,
@@ -400,11 +425,12 @@
           "planning": 0,
           "aircraft": 0,
           "pax": 0,
-          "money": 9091
+          "money": 9091,
+          "injected": 0
         },
         {
           "h": 1,
-          "heapMB": 10,
+          "heapMB": 12,
           "alerts": 2,
           "periods": 4,
           "contracts": 1,
@@ -412,11 +438,12 @@
           "planning": 5,
           "aircraft": 4,
           "pax": 4411,
-          "money": 54272
+          "money": 54272,
+          "injected": 4524
         },
         {
           "h": 2,
-          "heapMB": 12,
+          "heapMB": 14,
           "alerts": 1,
           "periods": 4,
           "contracts": 2,
@@ -424,11 +451,12 @@
           "planning": 5,
           "aircraft": 3,
           "pax": 9840,
-          "money": 114160
+          "money": 114160,
+          "injected": 9919
         },
         {
           "h": 3,
-          "heapMB": 13,
+          "heapMB": 11,
           "alerts": 1,
           "periods": 4,
           "contracts": 4,
@@ -436,11 +464,12 @@
           "planning": 5,
           "aircraft": 3,
           "pax": 15819,
-          "money": 180448
+          "money": 180448,
+          "injected": 15954
         },
         {
           "h": 4,
-          "heapMB": 13,
+          "heapMB": 11,
           "alerts": 2,
           "periods": 4,
           "contracts": 5,
@@ -448,11 +477,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 20820,
-          "money": 234900
+          "money": 234900,
+          "injected": 20963
         },
         {
           "h": 5,
-          "heapMB": 13,
+          "heapMB": 11,
           "alerts": 2,
           "periods": 4,
           "contracts": 7,
@@ -460,11 +490,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 25916,
-          "money": 286292
+          "money": 286292,
+          "injected": 26022
         },
         {
           "h": 6,
-          "heapMB": 14,
+          "heapMB": 12,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -472,11 +503,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 32196,
-          "money": 358416
+          "money": 358416,
+          "injected": 32303
         },
         {
           "h": 7,
-          "heapMB": 12,
+          "heapMB": 14,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -484,11 +516,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 37724,
-          "money": 414060
+          "money": 414060,
+          "injected": 37833
         },
         {
           "h": 8,
-          "heapMB": 12,
+          "heapMB": 10,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -496,11 +529,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 42977,
-          "money": 468084
+          "money": 468084,
+          "injected": 43103
         },
         {
           "h": 9,
-          "heapMB": 12,
+          "heapMB": 10,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -508,11 +542,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 48548,
-          "money": 526500
+          "money": 526500,
+          "injected": 48642
         },
         {
           "h": 10,
-          "heapMB": 12,
+          "heapMB": 11,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -520,11 +555,12 @@
           "planning": 6,
           "aircraft": 4,
           "pax": 53429,
-          "money": 575628
+          "money": 575628,
+          "injected": 53547
         },
         {
           "h": 11,
-          "heapMB": 11,
+          "heapMB": 13,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -532,11 +568,12 @@
           "planning": 6,
           "aircraft": 4,
           "pax": 59475,
-          "money": 643948
+          "money": 643948,
+          "injected": 59565
         },
         {
           "h": 12,
-          "heapMB": 13,
+          "heapMB": 12,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -544,11 +581,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 63496,
-          "money": 677132
+          "money": 677132,
+          "injected": 63562
         },
         {
           "h": 13,
-          "heapMB": 11,
+          "heapMB": 13,
           "alerts": 0,
           "periods": 4,
           "contracts": 8,
@@ -556,11 +594,12 @@
           "planning": 4,
           "aircraft": 4,
           "pax": 67318,
-          "money": 711236
+          "money": 711236,
+          "injected": 67318
         },
         {
           "h": 14,
-          "heapMB": 13,
+          "heapMB": 12,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -568,11 +607,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 71113,
-          "money": 740304
+          "money": 740304,
+          "injected": 71218
         },
         {
           "h": 15,
-          "heapMB": 14,
+          "heapMB": 13,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -580,11 +620,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 75347,
-          "money": 780324
+          "money": 780324,
+          "injected": 75432
         },
         {
           "h": 16,
-          "heapMB": 11,
+          "heapMB": 13,
           "alerts": 0,
           "periods": 4,
           "contracts": 8,
@@ -592,11 +633,12 @@
           "planning": 4,
           "aircraft": 4,
           "pax": 80170,
-          "money": 829080
+          "money": 829080,
+          "injected": 80170
         },
         {
           "h": 17,
-          "heapMB": 12,
+          "heapMB": 11,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -604,11 +646,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 84560,
-          "money": 866456
+          "money": 866456,
+          "injected": 84663
         },
         {
           "h": 18,
-          "heapMB": 12,
+          "heapMB": 11,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -616,11 +659,12 @@
           "planning": 6,
           "aircraft": 4,
           "pax": 89794,
-          "money": 920480
+          "money": 920480,
+          "injected": 89881
         },
         {
           "h": 19,
-          "heapMB": 12,
+          "heapMB": 11,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -628,11 +672,12 @@
           "planning": 5,
           "aircraft": 5,
           "pax": 94805,
-          "money": 971760
+          "money": 971760,
+          "injected": 94805
         },
         {
           "h": 20,
-          "heapMB": 13,
+          "heapMB": 12,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -640,11 +685,12 @@
           "planning": 5,
           "aircraft": 4,
           "pax": 99076,
-          "money": 1010388
+          "money": 1010388,
+          "injected": 99076
         },
         {
           "h": 21,
-          "heapMB": 14,
+          "heapMB": 13,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -652,11 +698,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 104282,
-          "money": 1066024
+          "money": 1066024,
+          "injected": 104399
         },
         {
           "h": 22,
-          "heapMB": 14,
+          "heapMB": 13,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -664,11 +711,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 109377,
-          "money": 1115176
+          "money": 1115176,
+          "injected": 109451
         },
         {
           "h": 23,
-          "heapMB": 14,
+          "heapMB": 13,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -676,11 +724,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 114173,
-          "money": 1162472
+          "money": 1162472,
+          "injected": 114281
         },
         {
           "h": 24,
-          "heapMB": 14,
+          "heapMB": 13,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -688,7 +737,8 @@
           "planning": 6,
           "aircraft": 4,
           "pax": 119784,
-          "money": 1221284
+          "money": 1221284,
+          "injected": 119890
         }
       ],
       "saveMid": {
@@ -718,7 +768,7 @@
         "terminal": 0,
         "services": 0
       },
-      "wallMs": 191,
+      "wallMs": 196,
       "ticks": 43200,
       "msPerTick": 0.004,
       "msPerHour": 7,
@@ -738,7 +788,7 @@
       "heapSamples": [
         {
           "h": 0,
-          "heapMB": 11,
+          "heapMB": 14,
           "alerts": 0,
           "periods": 0,
           "contracts": 0,
@@ -746,11 +796,12 @@
           "planning": 0,
           "aircraft": 0,
           "pax": 0,
-          "money": 9091
+          "money": 9091,
+          "injected": 0
         },
         {
           "h": 1,
-          "heapMB": 14,
+          "heapMB": 13,
           "alerts": 2,
           "periods": 4,
           "contracts": 1,
@@ -758,11 +809,12 @@
           "planning": 5,
           "aircraft": 4,
           "pax": 4981,
-          "money": 63712
+          "money": 63712,
+          "injected": 5123
         },
         {
           "h": 2,
-          "heapMB": 12,
+          "heapMB": 11,
           "alerts": 1,
           "periods": 4,
           "contracts": 2,
@@ -770,11 +822,12 @@
           "planning": 4,
           "aircraft": 3,
           "pax": 9567,
-          "money": 110584
+          "money": 110584,
+          "injected": 9567
         },
         {
           "h": 3,
-          "heapMB": 13,
+          "heapMB": 12,
           "alerts": 1,
           "periods": 4,
           "contracts": 4,
@@ -782,7 +835,8 @@
           "planning": 4,
           "aircraft": 4,
           "pax": 14415,
-          "money": 157800
+          "money": 157800,
+          "injected": 14415
         },
         {
           "h": 4,
@@ -794,11 +848,12 @@
           "planning": 5,
           "aircraft": 3,
           "pax": 18841,
-          "money": 202952
+          "money": 202952,
+          "injected": 18955
         },
         {
           "h": 5,
-          "heapMB": 11,
+          "heapMB": 14,
           "alerts": 2,
           "periods": 4,
           "contracts": 7,
@@ -806,7 +861,8 @@
           "planning": 6,
           "aircraft": 4,
           "pax": 23665,
-          "money": 251580
+          "money": 251580,
+          "injected": 23731
         },
         {
           "h": 6,
@@ -818,7 +874,8 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 28364,
-          "money": 299772
+          "money": 299772,
+          "injected": 28492
         },
         {
           "h": 7,
@@ -830,7 +887,8 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 32470,
-          "money": 334784
+          "money": 334784,
+          "injected": 32600
         },
         {
           "h": 8,
@@ -842,11 +900,12 @@
           "planning": 6,
           "aircraft": 4,
           "pax": 37528,
-          "money": 386480
+          "money": 386480,
+          "injected": 37646
         },
         {
           "h": 9,
-          "heapMB": 14,
+          "heapMB": 13,
           "alerts": 0,
           "periods": 4,
           "contracts": 8,
@@ -854,7 +913,8 @@
           "planning": 4,
           "aircraft": 3,
           "pax": 42669,
-          "money": 439588
+          "money": 439588,
+          "injected": 42669
         },
         {
           "h": 10,
@@ -866,7 +926,8 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 47862,
-          "money": 492768
+          "money": 492768,
+          "injected": 47947
         },
         {
           "h": 11,
@@ -878,7 +939,8 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 54284,
-          "money": 564940
+          "money": 564940,
+          "injected": 54365
         },
         {
           "h": 12,
@@ -890,7 +952,8 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 60012,
-          "money": 625108
+          "money": 625108,
+          "injected": 60107
         },
         {
           "h": 13,
@@ -902,7 +965,8 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 64247,
-          "money": 663724
+          "money": 663724,
+          "injected": 64319
         },
         {
           "h": 14,
@@ -914,11 +978,12 @@
           "planning": 4,
           "aircraft": 4,
           "pax": 70069,
-          "money": 728588
+          "money": 728588,
+          "injected": 70069
         },
         {
           "h": 15,
-          "heapMB": 11,
+          "heapMB": 12,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -926,7 +991,8 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 75285,
-          "money": 780252
+          "money": 780252,
+          "injected": 75374
         },
         {
           "h": 16,
@@ -938,11 +1004,12 @@
           "planning": 6,
           "aircraft": 4,
           "pax": 79346,
-          "money": 816644
+          "money": 816644,
+          "injected": 79428
         },
         {
           "h": 17,
-          "heapMB": 11,
+          "heapMB": 12,
           "alerts": 0,
           "periods": 4,
           "contracts": 8,
@@ -950,7 +1017,8 @@
           "planning": 4,
           "aircraft": 4,
           "pax": 83292,
-          "money": 849884
+          "money": 849884,
+          "injected": 83292
         },
         {
           "h": 18,
@@ -962,11 +1030,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 88173,
-          "money": 896284
+          "money": 896284,
+          "injected": 88254
         },
         {
           "h": 19,
-          "heapMB": 12,
+          "heapMB": 13,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -974,7 +1043,8 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 93291,
-          "money": 948412
+          "money": 948412,
+          "injected": 93420
         },
         {
           "h": 20,
@@ -986,11 +1056,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 97874,
-          "money": 993112
+          "money": 993112,
+          "injected": 98012
         },
         {
           "h": 21,
-          "heapMB": 14,
+          "heapMB": 15,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -998,11 +1069,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 102098,
-          "money": 1033216
+          "money": 1033216,
+          "injected": 102227
         },
         {
           "h": 22,
-          "heapMB": 14,
+          "heapMB": 15,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -1010,7 +1082,8 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 107822,
-          "money": 1091944
+          "money": 1091944,
+          "injected": 107960
         },
         {
           "h": 23,
@@ -1022,11 +1095,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 113286,
-          "money": 1147864
+          "money": 1147864,
+          "injected": 113375
         },
         {
           "h": 24,
-          "heapMB": 11,
+          "heapMB": 12,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -1034,7 +1108,8 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 117596,
-          "money": 1188148
+          "money": 1188148,
+          "injected": 117664
         }
       ],
       "saveMid": {
@@ -1064,10 +1139,10 @@
         "terminal": 0,
         "services": 0
       },
-      "wallMs": 195,
+      "wallMs": 193,
       "ticks": 43200,
       "msPerTick": 0.004,
-      "msPerHour": 8,
+      "msPerHour": 7,
       "flightsIn": 1404,
       "flightsOut": 1107,
       "flightsCancelled": 293,
@@ -1084,7 +1159,7 @@
       "heapSamples": [
         {
           "h": 0,
-          "heapMB": 12,
+          "heapMB": 13,
           "alerts": 0,
           "periods": 0,
           "contracts": 0,
@@ -1092,7 +1167,8 @@
           "planning": 0,
           "aircraft": 0,
           "pax": 0,
-          "money": 9091
+          "money": 9091,
+          "injected": 0
         },
         {
           "h": 1,
@@ -1104,11 +1180,12 @@
           "planning": 5,
           "aircraft": 4,
           "pax": 4556,
-          "money": 57112
+          "money": 57112,
+          "injected": 4660
         },
         {
           "h": 2,
-          "heapMB": 13,
+          "heapMB": 14,
           "alerts": 2,
           "periods": 4,
           "contracts": 2,
@@ -1116,11 +1193,12 @@
           "planning": 5,
           "aircraft": 4,
           "pax": 10063,
-          "money": 118336
+          "money": 118336,
+          "injected": 10139
         },
         {
           "h": 3,
-          "heapMB": 12,
+          "heapMB": 13,
           "alerts": 0,
           "periods": 4,
           "contracts": 4,
@@ -1128,11 +1206,12 @@
           "planning": 4,
           "aircraft": 4,
           "pax": 13616,
-          "money": 146712
+          "money": 146712,
+          "injected": 13616
         },
         {
           "h": 4,
-          "heapMB": 12,
+          "heapMB": 13,
           "alerts": 1,
           "periods": 4,
           "contracts": 5,
@@ -1140,11 +1219,12 @@
           "planning": 5,
           "aircraft": 4,
           "pax": 19070,
-          "money": 207600
+          "money": 207600,
+          "injected": 19190
         },
         {
           "h": 5,
-          "heapMB": 13,
+          "heapMB": 14,
           "alerts": 2,
           "periods": 4,
           "contracts": 7,
@@ -1152,11 +1232,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 24820,
-          "money": 268040
+          "money": 268040,
+          "injected": 24945
         },
         {
           "h": 6,
-          "heapMB": 14,
+          "heapMB": 15,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -1164,11 +1245,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 30078,
-          "money": 323948
+          "money": 323948,
+          "injected": 30183
         },
         {
           "h": 7,
-          "heapMB": 15,
+          "heapMB": 12,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -1176,11 +1258,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 34408,
-          "money": 362408
+          "money": 362408,
+          "injected": 34524
         },
         {
           "h": 8,
-          "heapMB": 12,
+          "heapMB": 13,
           "alerts": 0,
           "periods": 4,
           "contracts": 8,
@@ -1188,11 +1271,12 @@
           "planning": 4,
           "aircraft": 4,
           "pax": 39697,
-          "money": 417884
+          "money": 417884,
+          "injected": 39697
         },
         {
           "h": 9,
-          "heapMB": 11,
+          "heapMB": 13,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -1200,11 +1284,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 44756,
-          "money": 468860
+          "money": 468860,
+          "injected": 44845
         },
         {
           "h": 10,
-          "heapMB": 12,
+          "heapMB": 13,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -1212,11 +1297,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 49291,
-          "money": 512408
+          "money": 512408,
+          "injected": 49404
         },
         {
           "h": 11,
-          "heapMB": 15,
+          "heapMB": 12,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -1224,11 +1310,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 55423,
-          "money": 581004
+          "money": 581004,
+          "injected": 55551
         },
         {
           "h": 12,
-          "heapMB": 15,
+          "heapMB": 12,
           "alerts": 0,
           "periods": 4,
           "contracts": 8,
@@ -1236,11 +1323,12 @@
           "planning": 5,
           "aircraft": 4,
           "pax": 60602,
-          "money": 633804
+          "money": 633804,
+          "injected": 60668
         },
         {
           "h": 13,
-          "heapMB": 13,
+          "heapMB": 15,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -1248,11 +1336,12 @@
           "planning": 6,
           "aircraft": 4,
           "pax": 63918,
-          "money": 655948
+          "money": 655948,
+          "injected": 63988
         },
         {
           "h": 14,
-          "heapMB": 14,
+          "heapMB": 12,
           "alerts": 0,
           "periods": 4,
           "contracts": 8,
@@ -1260,11 +1349,12 @@
           "planning": 4,
           "aircraft": 3,
           "pax": 68533,
-          "money": 701556
+          "money": 701556,
+          "injected": 68533
         },
         {
           "h": 15,
-          "heapMB": 15,
+          "heapMB": 13,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -1272,11 +1362,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 73237,
-          "money": 745324
+          "money": 745324,
+          "injected": 73306
         },
         {
           "h": 16,
-          "heapMB": 12,
+          "heapMB": 14,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -1284,11 +1375,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 77548,
-          "money": 785004
+          "money": 785004,
+          "injected": 77676
         },
         {
           "h": 17,
-          "heapMB": 12,
+          "heapMB": 13,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -1296,11 +1388,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 82936,
-          "money": 840248
+          "money": 840248,
+          "injected": 83035
         },
         {
           "h": 18,
-          "heapMB": 13,
+          "heapMB": 15,
           "alerts": 0,
           "periods": 4,
           "contracts": 8,
@@ -1308,11 +1401,12 @@
           "planning": 4,
           "aircraft": 4,
           "pax": 86881,
-          "money": 876392
+          "money": 876392,
+          "injected": 86881
         },
         {
           "h": 19,
-          "heapMB": 14,
+          "heapMB": 12,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -1320,11 +1414,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 91492,
-          "money": 918940
+          "money": 918940,
+          "injected": 91611
         },
         {
           "h": 20,
-          "heapMB": 15,
+          "heapMB": 13,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -1332,11 +1427,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 95896,
-          "money": 960172
+          "money": 960172,
+          "injected": 96023
         },
         {
           "h": 21,
-          "heapMB": 12,
+          "heapMB": 14,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -1344,11 +1440,12 @@
           "planning": 5,
           "aircraft": 5,
           "pax": 100138,
-          "money": 1000196
+          "money": 1000196,
+          "injected": 100138
         },
         {
           "h": 22,
-          "heapMB": 13,
+          "heapMB": 15,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -1356,11 +1453,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 104723,
-          "money": 1042356
+          "money": 1042356,
+          "injected": 104788
         },
         {
           "h": 23,
-          "heapMB": 14,
+          "heapMB": 13,
           "alerts": 1,
           "periods": 4,
           "contracts": 8,
@@ -1368,11 +1466,12 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 109199,
-          "money": 1082768
+          "money": 1082768,
+          "injected": 109285
         },
         {
           "h": 24,
-          "heapMB": 13,
+          "heapMB": 12,
           "alerts": 2,
           "periods": 4,
           "contracts": 8,
@@ -1380,7 +1479,8 @@
           "planning": 6,
           "aircraft": 5,
           "pax": 115144,
-          "money": 1148004
+          "money": 1148004,
+          "injected": 115222
         }
       ],
       "saveMid": {

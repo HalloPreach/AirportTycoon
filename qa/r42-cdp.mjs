@@ -108,6 +108,16 @@ const GAME_SECONDS = 1200;       // 20 min de jeu à x4 = 300 s réelles (≈ 5 
                                  // layout chargé, l'endurance multi-seeds est côté Node.
 const SAMPLE_EVERY_MS = 15000;   // palier de mesure invariants/mémoire/fluidité
 const FPS_WINDOW_MS = 5000;      // fenêtre de mesure du FPS (la fluidité)
+// Tolérance de CONSERVATION (t_2bd031ae) : le pax est une grandeur conservée —
+// il est CRÉÉ à l'injection (injectedTotal += pax, file checkin += pax) et
+// DISPARAît par comptage (countCarried → totalCarried, une fois) ou retrait
+// d'annulation (removePassengers). Loi : totalCarried + paxEncoreEnFiles ≤
+// totalInjecté. Les files portent des pax FRACTIONNAIRES (débit rate*dt,
+// arrondis au millipax dans le snapshot) → la tolérance n'absorbe QUE le bruit
+// flottant, PAS un double-comptage (qui est ≥ 1 pax). ponytail: 0,002 pax
+// (arrondi millipax + epsilon flottant) — un écart réel est ≥ 1 pax, 500× au-
+// dessus ; si les files deviennent entières ou le pas de tick grossit, re-caler.
+const CONSERVATION_TOL = 0.002;
 const PHASES = ['approach','holding','landing','exit','taxi','docking','gate','refuel','disembark','ground','board','pushback','departure','blocked','cancelled','departed'];
 
 // Snapshot d'invariants exécuté DANS LA PAGE (la sim n'est pas re-implémentée) :
@@ -137,6 +147,22 @@ const SNAPSHOT_EXPR = `(() => {
   for (const c of h) { if (dupes.has(c.id)) dupeCount++; dupes.add(c.id); }
   const activeSettled = sim.contracts.active && h.some((c) => c.id === sim.contracts.active.id);
   const mem = performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : null;
+  // GRANDEURS CONSERVÉES (conservation des passagers, D2 de l'audit) : le pax
+  // est CRÉÉ à l'injection (injectedTotal[term] += pax, file checkin += pax) et
+  // DISPARAît par comptage (countCarried → totalCarried, une fois) ou retrait
+  // d'annulation (removePassengers). Le snapshot EXPOSE les grandeurs ; le TEST
+  // de conservation (avec sa tolérance) passe à Node, section C3.
+  // NB : on vérifie la conservation au SENS FORT sûr — totalCarried ≤ injecté
+  // (un pax ne peut être TRANSPORTÉ s'il n'a pas été INJECTÉ d'abord). On ne
+  // somme PAS les files au numérateur : la file d'attente (board) se vide par
+  // débit (boardRate*dt) ET les pax d'un vol ANNULÉ en attente restent dans la
+  // file d'embarquement sans être injectés → transportés+files pourrait
+  // légitimement dépasser l'injection au palier (faux positif, la stabilité
+  // des cas nominaux serait cassée). Les files sont EXPOSÉES (inQueues) pour
+  // le rapport, pas assertées.
+  const pp = sim.passengers;
+  const injected = Object.values(pp.injectedTotal || {}).reduce((s, v) => s + (v || 0), 0);
+  const inQueues = Object.values(pp.queues || {}).reduce((s, q) => s + (q.checkin || 0) + (q.security || 0) + (q.board || 0), 0);
   return {
     t: sim.time, money: Math.round(sim.economy.money), pax: sim.passengers.totalCarried,
     speedIndex: g.state.speedIndex, // 0=x1 1=x2 2=x4 (le maintien de la charge)
@@ -144,6 +170,11 @@ const SNAPSHOT_EXPR = `(() => {
     contractHistory: h.length, punctuality: (sim.punctuality?.recent || []).length,
     planning: sim.planning.length, aircraft: sim.aircraft.length,
     heapMB: mem, nonFinite: bad.slice(0, 5), orphanGates: orphans, contractDupes: dupeCount, activeSettled,
+    // conservation : total injecté / pax encore en files (exposés, arrondis au
+    // millipax — les pax transportés étant entiers, l'arrondi reste au-dessus
+    // du bruit) ; écart strict (transportés − injectés) : > TOL = violation.
+    injected: Math.round(injected * 1000) / 1000, inQueues: Math.round(inQueues * 1000) / 1000,
+    carriedDelta: Math.round(((pp.totalCarried || 0) - injected) * 1000) / 1000, // > TOL = violation
     bankrupt: sim.economy.bankrupt,
   };
 })()`;
@@ -329,6 +360,8 @@ async function main() {
   const REAL_BUDGET_MS = Math.round((GAME_SECONDS / SPEED) * 3 * 1000); // 3× l'espéré (x4)
   const sessionStartReal = Date.now();
   let lastSamplePax = null;
+  const paxNonMono = [];   // t_2bd031ae : paliers où totalCarried RÉGRESSE (comptés 1× = jamais)
+  const conservationBad = []; // paliers où (pax+files) > injecté + TOL (pax créés sans injection)
   let clickLat = null;
   for (let i = 0; i < 999; i++) {
     // Le palier de JEU est écoulé : on attend la durée RÉELLE du palier.
@@ -347,8 +380,21 @@ async function main() {
     // Invariants vérifiés AU PALIER (le point problématique se situe ici, pas à la fin)
     if (snap.nonFinite.length) { console.log(`palier ${i} : valeurs non finies ${snap.nonFinite.join(',')}`); }
     if (snap.orphanGates > 0) { console.log(`palier ${i} : réservation orpheline`); }
-    if (lastSamplePax != null && snap.pax < lastSamplePax) { console.log(`palier ${i} : pax non monotone (${lastSamplePax}→${snap.pax})`); }
+    // Conservation des passagers (t_2bd031ae) : on RÉCOLTE les violations ici
+    // (le check dur passe à la fin, avec un message précis et actionnable) et on
+    // les log au palier pour la traçabilité live. Loi STRICTE (0 faux positif) :
+    // totalCarried ≤ injecté — un pax ne peut être transporté s'il n'a pas été
+    // injecté d'abord. On ne somme PAS les files (board annulée + débit : voir
+    // le commentaire du snapshot) → la loi reste vraie à CHAQUE palier.
+    if (lastSamplePax != null && snap.pax < lastSamplePax) {
+      paxNonMono.push(`palier ${i} : ${lastSamplePax}→${snap.pax}`);
+      console.log(`palier ${i} : pax non monotone (${lastSamplePax}→${snap.pax})`);
+    }
     lastSamplePax = snap.pax;
+    if ((snap.carriedDelta ?? 0) > CONSERVATION_TOL) {
+      conservationBad.push(`palier ${i} : transportés=${snap.pax} > injectés=${snap.injected} (+${snap.carriedDelta.toFixed(3)})`);
+      console.log(`palier ${i} : conservation violée — pax transportés=${snap.pax} > injectés=${snap.injected}`);
+    }
     // Fin de session : l'horloge de SIMULATION a atteint la cible (pas un timer réel).
     if (snap.t >= GAME_SECONDS) break;
     // Budget réel dépassé (navigateur trop lent / throttlé) : on s'arrête et la
@@ -372,6 +418,30 @@ async function main() {
   check('C. durée cible atteinte sur l\'horloge de simulation (pas un timer réel)',
     endSnap.t >= GAME_SECONDS,
     `sim.time=${Math.round(endSnap.t)}/${GAME_SECONDS} s de jeu (réel=${realElapsedS} s, x4 attendu≈${Math.round(GAME_SECONDS / SPEED)} s)`);
+  // --- C3. CONSERVATION DES GRANDEURS (t_2bd031ae) — échecs explicites --------
+  // Le pax est une grandeur conservée : un passager ne peut être TRANSPORTÉ
+  // (totalCarried, compté UNE fois — AC40) s'il n'a pas été INJECTÉ d'abord
+  // (arrivePassengers : injectedTotal += pax). Deux violations, chacune avec un
+  // message PRECIS et ACTIONNABLE (critère : « R42 échoue si conservation
+  // violée ») :
+  //   (a) totalCarried NON MONOTONE — un pax compté deux fois puis « retiré »
+  //       (ou total ré-écrit) : comptabilité cassée, AC40 (comptés 1×).
+  //   (b) totalCarried > injecté — des pax ont été COMPTÉS sans injection
+  //       (bug de comptage : double countCarried, injection manquée).
+  // Loi STRICTE (0 faux positif) : on ne somme PAS les files au numérateur
+  // (la file board se vide par débit + les pax d'un vol annulé en attente ne
+  // sont pas injectés → un bilan totalCarried+files dépasserait l'injection
+  // sans violation réelle). Tolérance CONSERVATION_TOL (bruit flottant) ; un
+  // écart réel est ≥ 1 pax.
+  check('C. passagers comptés UNE fois (totalCarried monotone non-décroissante)',
+    paxNonMono.length === 0,
+    paxNonMono.length === 0 ? `monotone sur ${samples.length} paliers (pax finale=${endSnap.pax})`
+      : `VIOLATION — régression(s) : ${paxNonMono.join('; ')} (AC40 : chaque pax compté une fois)`);
+  check('C. conservation des passagers (transportés ≤ injectés — pax non créés de nulle part)',
+    conservationBad.length === 0,
+    conservationBad.length === 0
+      ? `tenue (pax finale=${endSnap.pax} ≤ injecté=${endSnap.injected}, tol=${CONSERVATION_TOL})`
+      : `VIOLATION — pax créés sans injection : ${conservationBad.join('; ')}`);
   const invariantsOk = samples.every((s) => s.nonFinite.length === 0 && s.orphanGates === 0
     && s.contractDupes === 0 && !s.activeSettled
     && s.alerts <= 500 && s.periods <= 4 && s.contractHistory <= 8 && (s.punctuality ?? 0) <= 50);

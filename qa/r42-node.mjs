@@ -147,6 +147,30 @@ function finiteViolations(sim) {
   return v;
 }
 
+// CONSERVATION DES PASSAGERS (t_2bd031ae, D2 de l'audit) : le pax est une
+// grandeur conservée — un passager ne peut être TRANSPORTÉ (countCarried)
+// s'il n'a pas été INJECTÉ d'abord (arrivePassengers : injectedTotal[term]
+// += pax). Loi : totalCarried (pax comptés UNE fois, AC40) ≤ total injecté.
+// Un dépassement = des pax ont été comptés SANS injection (bug de comptage :
+// double countCarried, injection manquée) — la conservation est rompue.
+// NB : on ne somme PAS les files (inQueues) au numérateur : la file d'attente
+// (board) se vide par débit (boardRate*dt) ET les pax d'un vol ANNULE en
+// attente restent dans `board` sans être injectés → totalCarried+inQueues
+// pourrait légitimement dépasser l'injection au palier. On vérifie donc la
+// conservation au SENS FORT sûr : transportés ≤ injectés (monotone, jamais
+// de pax créés de nulle part). ponytail: loi conservatrice sûre (0 faux
+// positif) ; si on veut le bilan global (transportés+files ≤ injectés), il
+// faudrait retrancher les pax d'attente des vols annulés — upgrade optionnel.
+function passengerConservationViolations(sim) {
+  const p = sim.passengers;
+  const injected = Object.values(p.injectedTotal || {}).reduce((s, v) => s + (v || 0), 0);
+  const carried = p.totalCarried || 0;
+  if (carried > injected + 1e-9) {
+    return [`conservation passagers : transportés (${carried}) > injectés (${injected}) — pax comptés sans injection`];
+  }
+  return [];
+}
+
 // Sauvegarde « encore utilisable » : on SÉRIALISE le state courant (le cache
 // dérivé _graph est retiré, comme au chargement réel), on DÉSÉRIALISE (la
 // validation A10 relève toute incohérence), on fait ADVANCER le clone de
@@ -296,7 +320,8 @@ function runSeed(seed) {
       const mem = process.memoryUsage();
       const heapMB = Math.round(mem.heapUsed / 1048576);
       const v = [...finiteViolations(sim), ...contractSettlementViolations(sim).map((x) => `contrats : ${x}`),
-        ...orphanGateReservations(sim).map((o) => `réservation orpheline porte ${o.gate} → avion ${o.acId} (${o.phase})`)];
+        ...orphanGateReservations(sim).map((o) => `réservation orpheline porte ${o.gate} → avion ${o.acId} (${o.phase})`),
+        ...passengerConservationViolations(sim)]; // t_2bd031ae : transportés ≤ injectés
       if (v.length) throw new Error(`seed ${seed} t=${Math.floor(sim.time)} : invariants violés : ${v.join(' ; ').slice(0, 300)}`);
       if (sim.passengers.totalCarried < prevCarried) throw new Error(`seed ${seed} t=${Math.floor(sim.time)} : passagers NON monotones (comptés deux fois ?)`);
       prevCarried = sim.passengers.totalCarried;
@@ -309,6 +334,10 @@ function runSeed(seed) {
         contracts: sim.contracts.history.length, punctuality: (sim.punctuality?.recent ?? []).length,
         planning: sim.planning.length, aircraft: sim.aircraft.length,
         pax: sim.passengers.totalCarried, money: Math.round(sim.economy.money),
+        // conservation (t_2bd031ae) : grandeur conservée exposée — total injecté
+        // (le plafond des transportés) ; l'écart transportés−injectés doit
+        // rester ≤ 0 à chaque palier (la loi, vérifiée ci-dessus par throw).
+        injected: Math.round(Object.values(sim.passengers.injectedTotal || {}).reduce((s, v) => s + (v || 0), 0)),
       });
       // Sauvegarde mid-run (au 1er palier : t=4 h) : la partie en cours est
       // SÉRIALISABLE ET RECHARGEABLE à tout moment, pas seulement à la fin.
