@@ -12,8 +12,11 @@ Ce rapport **régénère** le rapport final au commit final. Le rapport précéd
 > **l'observation d'une 1re session navigateur réelle de 20-30 min traversant les
 > 3 paliers** (criterium G7-e) n'est pas close ici : la session navigateur chargée
 > observée couvre **20 min de jeu** (R42 CDP, `x4`, 300 s réelles) et les 3 paliers
-> sont validés **par le cœur de production** (R38/G6). La version est donc livrée
-> comme candidate avec cette limite explicitée — ce que la carte R43 autorise.
+> sont validés **par le cœur de production** (R38/G6). G7-e exécuté le 2026-10-05 :
+> la session 20 min a traversé la simulation (palier 3 PASS) mais n'a **pas** traversé
+> les 3 paliers (palier 1 FAIL carburant, palier 2 NON EXERCÉ) — verdict NON EXERCÉ
+> (palier 2), 7/9, sans faux vert (`qa/g7-session-report.json`). La version est donc
+> livrée comme candidate avec cette limite explicitée — ce que la carte R43 autorise.
 
 ---
 
@@ -88,7 +91,16 @@ tolérées : champ absent → migré au chargement ; champ présent illisible �
 
 - **Session navigateur réelle 20-30 min traversant les 3 paliers** (criterium G7-e) :
   **non close ici**. Session chargée observée = 20 min de jeu (R42 CDP) ; les 3 paliers
-  validés par le cœur de production (R38/G6). **À clore (ou accepter) à G7.**
+  validés par le cœur de production (R38/G6). **G7-e exécuté le 2026-10-05**
+  (`qa/g7-session.mjs`, Edge headless + CDP, `qa/g7-session-report.json`) : verdict
+  honnête **NON EXERCÉ (palier 2) — 7/9**. Palier 1 **FAIL** (carburant=0 au t=305 s :
+  départ sec malgré la station posée avant le besoin), palier 2 **NON EXERCÉ** (le pic de
+  file au plafond ne s'est pas déclenché dans la borne de 20 min), palier 3 **PASS**
+  (contrat c1 accepté + upgrade « fueling » achetés AVANT l'échéance, pax=2340, net=15120).
+  Sauvegarde/recharge **PASS** (localStorage + « Reprendre », état intact), F PASS
+  (0 ressource HTTP en échec hors /favicon.ico, 0 exception, 0 erreur console). Le
+  critère « traverser les 3 paliers » reste donc non complété dans la borne (paliers 1/2)
+  ; les paliers sont validés par le cœur de production (R38/G6). **À clore (ou accepter) à G7.**
 - **Graphique** : sprites vectoriels simples (silhouettes + rectangles) — à remplacer
   par de vrais assets sans toucher la sim.
 - **Équilibrage** : chiffres des `UNLOCK_RULES` / `UPGRADES` / paliers sont des **cibles**
