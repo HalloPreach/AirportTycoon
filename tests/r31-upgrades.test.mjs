@@ -2,15 +2,18 @@
 // Coût FIXE + résultat attendu (catalog.mjs UPGRADES) ; les NIVEAUX vivent dans
 // l'état sim.upgrades (sérialisé — la reprise RESTITUE niveau ET coût payé, on ne
 // re-débite JAMAIS au chargement). Mêmes socles que R29/R28 (sim seule, zéro DOM).
+// T33 (t_88aee6d5) : 3 NOUVEAUX CHOIX (boarding / marketing / confort) — tests
+// (8) à (11) : les effets sont MESURABLES (temps de porte, recette billets,
+// récupération satisfaction, débit sécurité du nouveau service « sécurité »).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { newSimState } from '../src/core/sim-state.mjs';
 import { buildBuilding, cleanGates, tickUnlocks } from '../src/infra/infra.mjs';
 import { rebuildGraph } from '../src/pathfinding/path.mjs';
-import { buyUpgrade, upgradeLevel, upgradeView } from '../src/infra/upgrades.mjs';
+import { buyUpgrade, upgradeLevel, upgradeView, gateOpsMult, marketingMult, comfortRecoverMult } from '../src/infra/upgrades.mjs';
 import { tickPassengers, passengerSummary } from '../src/sim/passengers.mjs';
 import { tickAircraft } from '../src/sim/aircraft.mjs';
-import { tickEconomy } from '../src/economy/economy.mjs';
+import { tickEconomy, onGateArrived, onGateDeparted, DUTYFREE_PER_PAX } from '../src/economy/economy.mjs';
 import { serialize, deserialize } from '../src/persistence/save.mjs';
 
 // Socle : piste + taxiway + UN terminal (R29) + UNE station carburant (R28).
@@ -221,4 +224,118 @@ test('R31 (7) : le goulot est nommé avant achat (mauvais achat compréhensible)
   assert.equal(v2.bottleneck, 'usure', 'goulot = l\'usure (140 points > files 0)');
   assert.equal(v2.choices.find((c) => c.kind === 'teams').useful, true, '« équipes » (débit de nettoyage) est le choix utile');
   assert.equal(v2.choices.find((c) => c.kind === 'terminal').useful, false, '« terminal » est INUTILE ici (le goulot n\'est pas les files)');
+});
+
+// (8) T33 AMÉLIORATION « BOARDING » : les 3 étapes d'opérations AU SOL de la
+// porte sont ×0,75 PAR NIVEAU (gateOpsMult — la porte se libère PLUS VITE, le
+// goulot « plein » est amélioré). Niveau 0 = ×1 (comportement EXISTANT).
+test('R31/T33 (8) : l\'amélioration boarding raccourcit les opérations porte (0,75 par niveau)', () => {
+  const sim = newSimState(); buildSocle(sim);
+  const [t] = sim.infra.terminals;
+  const [g1] = M_GATES(sim);
+  const mkAc = () => {
+    const ac = { id: sim.nextAcId++, airline: 'atlantique', color: '#1e88e5', acType: 'medium', pax: 0,
+      phase: 'disembark', x: 0, y: 0, gateId: g1.id, runwayId: sim.infra.runways[0].id,
+      delayed: 0, timer: 0, path: null, pathPtr: 0, seg: null, heading: 'gate' };
+    sim.aircraft.push(ac);
+    return ac;
+  };
+  // Niveau 0 : étape = 60/3 = 20 s — à 19,9 s l'étape n'est PAS terminée.
+  assert.equal(gateOpsMult(sim, t.id), 1, 'niveau 0 = ×1 (comportement EXISTANT)');
+  const a0 = mkAc();
+  tickAircraft(sim, 19.9);
+  assert.equal(a0.phase, 'disembark', 'niveau 0 : 19,9 s < 20 s → l\'étape n\'est pas terminée');
+  // Niveau 1 : étape = 20 × 0,75 = 15 s — la porte se libère PLUS VITE.
+  assert.equal(buyUpgrade(sim, t.id, 'boarding').ok, true, 'achat boarding accepté');
+  assert.equal(gateOpsMult(sim, t.id), 0.75, 'niveau 1 = ×0,75');
+  const a1 = mkAc();
+  tickAircraft(sim, 14.9);
+  assert.equal(a1.phase, 'disembark', 'niveau 1 : 14,9 s < 15 s → l\'étape n\'est pas terminée');
+  tickAircraft(sim, 0.2); // 15,1 s ≥ 15 s
+  assert.equal(a1.phase, 'ground', 'niveau 1 : 15,1 s ≥ 15 s → l\'étape EST terminée (PLUS VITE qu\'au niveau 0)');
+});
+
+// (9) T33 REVENUES : « marketing » — la recette BILLET est ×1,1 PAR NIVEAU
+// (le terminal de DÉPART, onGateDeparted — pleine ou sèche) ; « dutyfree » —
+// les boutiques AFFECTÉES au terminal d'arrivée rendent DUTYFREE_PER_PAX par
+// pax débarqué PAR boutique (compte dédié « dutyfree », jamais de recette
+// négative — même discipline que le carburant).
+test('R31/T33 (9) : le marketing booste la recette billets et les boutiques dutyfree gagnent par pax', () => {
+  const sim = newSimState(); buildSocle(sim);
+  const [t] = sim.infra.terminals;
+  const [g1] = M_GATES(sim);
+  const ac = { pax: 100, gateId: g1.id };
+  // Niveau 0 : le billet est INCHANGÉ (100 pax × 25 $ — la recette R-existante).
+  onGateDeparted(sim, ac);
+  assert.equal(sim.economy.revenue.pax, 2500, 'niveau 0 : recette billets inchangée (100 × 25 $)');
+  // Niveau 1 : la recette est ×1,1 (l\'amélioration « marketing » DU terminal de départ).
+  assert.equal(buyUpgrade(sim, t.id, 'marketing').ok, true, 'achat marketing accepté');
+  assert.equal(marketingMult(sim, t.id), 1 + 0.1, 'niveau 1 = ×1,1');
+  onGateDeparted(sim, ac);
+  assert.ok(Math.abs(sim.economy.revenue.pax - 5250) < 1e-6, 'niveau 1 : +2750 $ (2500 × 1,1 — la recette est BOOSTÉE)');
+  // Départ SEC (billet moitié, 12,5 $) : le marketing s'applique AUSSI (le pax
+  // sec gagne des billets — le choix « revenu » sert les 2 recettes).
+  onGateDeparted(sim, { pax: 100, gateId: g1.id, _dryDeparture: true });
+  assert.ok(Math.abs(sim.economy.revenue.pax - (5250 + 1375)) < 1e-6, 'départ sec : +1375 $ (100 × 12,5 × 1,1)');
+  // Dutyfree : SANS boutique construite → AUCUNE recette dutyfree (comportement
+  // EXISTANT : onGateArrived ne rend que landing + gate).
+  onGateArrived(sim, ac);
+  assert.ok(!sim.economy.revenue.dutyfree, 'sans boutique : pas de recette dutyfree (comportement EXISTANT)');
+  // Une boutique AFFECTÉE au terminal (R27 auto — le seul terminal du socle)
+  // rend DUTYFREE_PER_PAX PAR pax débarqué, PAR boutique (compte dédié).
+  buildBuilding(sim, 'dutyfree', 350, 950);
+  onGateArrived(sim, ac);
+  assert.equal(sim.economy.revenue.dutyfree, 100 * 1 * DUTYFREE_PER_PAX, '1 boutique : 100 pax × 8 $ (compte « dutyfree » dédié)');
+  buildBuilding(sim, 'dutyfree', 450, 950); // une 2e boutique (case SANS recouvrement — la recette DOUBLE)
+  onGateArrived(sim, ac);
+  assert.equal(sim.economy.revenue.dutyfree, 100 * 1 * DUTYFREE_PER_PAX + 100 * 2 * DUTYFREE_PER_PAX, '2 boutiques : 800 + 1600 $');
+});
+
+// (10) T33 AMÉLIORATION « CONFORT » : la RÉCUPÉRATION de satisfaction est
+// ×1,5 PAR NIVEAU (comfortRecoverMult — le MEILLEUR terminal équipé, effet
+// GLOBAL comme la famille confort ; les bâtiments confort posent, le niveau
+// MULTIPLIE). Niveau 0 = ×1 (la récupération EXISTANTE est inchangée).
+test('R31/T33 (10) : l\'amélioration confort multiplie la récupération de satisfaction', () => {
+  const sim = newSimState(); buildSocle(sim);
+  const [t] = sim.infra.terminals;
+  sim.passengers.totalCarried = 500; // salon VIP débloqué (T33 : seuil 500)
+  tickUnlocks(sim);
+  buildBuilding(sim, 'lounge', 350, 950); // le salon est POSÉ (famille confort)
+  assert.ok(sim.infra.services.some((s) => s.type === 'lounge'), 'le salon VIP est posé');
+  // Récupération : 0,5 (base) + 0,3 (lounge) = 0,8/s — niveau 0 = ×1.
+  sim.passengers.satisfaction = 50;
+  assert.equal(comfortRecoverMult(sim), 1, 'niveau 0 = ×1 (comportement EXISTANT)');
+  tickPassengers(sim, 10);
+  const sat0 = sim.passengers.satisfaction;
+  assert.ok(Math.abs(sat0 - 58) < 0.01, `niveau 0 : 50 + 0,8 × 10 s ≈ 58 (${sat0})`);
+  // Niveau 1 : ×1,5 → 1,2/s — la satisfaction REMONTE PLUS VITE.
+  assert.equal(buyUpgrade(sim, t.id, 'comfort').ok, true, 'achat confort accepté');
+  assert.equal(comfortRecoverMult(sim), 1.5, 'niveau 1 = ×1,5');
+  sim.passengers.satisfaction = 50;
+  tickPassengers(sim, 10);
+  const sat1 = sim.passengers.satisfaction;
+  assert.ok(Math.abs(sat1 - 62) < 0.01, `niveau 1 : 50 + 1,2 × 10 s ≈ 62 (${sat1})`);
+  assert.ok(sat1 > sat0, 'la récupération est PLUS VITE au niveau 1 (le confort est MESURABLE)');
+});
+
+// (11) T33 SERVICE « SÉCURITÉ » : les salles AFFECTÉES au terminal BOOSTENT le
+// DÉBIT sécurité DE CE TERMINAL (+4 pax/s PAR salle — même pattern R27 que
+// les bagages). Le service est CONSTRUCTIBLE (catalog) et SON effet est
+// MESURABLE dans les files (le goulot sécurité est amélioré).
+test('R31/T33 (11) : le service sécurité booste le débit de la file sécurité (+4 pax/s par salle)', () => {
+  const sim = newSimState(); buildSocle(sim);
+  const [t] = sim.infra.terminals;
+  const q = sim.passengers.queues[String(t.id)] = { checkin: 0, security: 100, board: 0 };
+  // Sans salle sécurité : débit de base 16 pax/s — en 3 s, 48 pax passent.
+  tickPassengers(sim, 3);
+  assert.equal(q.security, 52, `niveau service 0 : 100 − 48 (16 pax/s × 3 s) = 52 en file sécurité`);
+  assert.equal(q.board, 48 - 30, 'le passage sécurité remplit la salle d\'attente (puis son propre débit la vide)');
+  // Une salle AFFECTÉE : débit 20 pax/s — PLUS DE pax passent la même durée.
+  sim.passengers.totalCarried = 600; // sécurité débloquée (T33 : seuil 600)
+  tickUnlocks(sim);
+  buildBuilding(sim, 'security', 350, 950); // affectée au seul terminal (R27 auto)
+  assert.ok(sim.infra.services.some((s) => s.type === 'security'), 'la salle sécurité est POSÉE (constructible = débloquée)');
+  sim.passengers.queues[String(t.id)] = { checkin: 0, security: 100, board: 0 };
+  tickPassengers(sim, 3);
+  assert.equal(sim.passengers.queues[String(t.id)].security, 40, 'avec la salle : 100 − 60 (20 pax/s × 3 s) = 40 (le goulot est AMÉLIORÉ)');
 });

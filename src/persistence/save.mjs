@@ -44,7 +44,7 @@
 //     rendrait les files NaN).
 // ponytail: version de schéma entière (un chiffre). Si un futur champ casse le
 // format, on bump SAVE_VERSION et on rejette l'ancienne au lieu de crasher.
-import { AIRCRAFT } from '../data/catalog.mjs';
+import { AIRCRAFT, UPGRADES } from '../data/catalog.mjs'; // T33 : la validation des améliorations suit le catalogue (6 choix)
 import { buildGrid } from '../infra/infra.mjs';
 import { ensureAssignments } from '../infra/assignments.mjs'; // R27 : migration des affectations
 import { ensureUpgrades } from '../infra/upgrades.mjs'; // R31 : migration des améliorations (niveau 0 absent)
@@ -238,14 +238,16 @@ function validateSim(sim) {
     }
   }
   // R31 (t_7a512737) : améliorations de capacité PAR TERMINAL —
-  // sim.upgrades[terminalId] = { terminal, fueling, teams } (niveaux entiers).
+  // sim.upgrades[terminalId] = { terminal, fueling, teams, … } (niveaux
+  // entiers) — T33 (t_88aee6d5) : la liste suit le CATALOGUE (UPGRADES,
+  // 6 choix — plus de clé en dur : un choix nouveau est validé automatiquement).
   // ABSENTE = sauvegarde ancienne (tolérée, ensureUpgrades au chargement) ;
   // PRÉSENTE mais de mauvais type (objet non lisible, niveau non numérique)
   // → REJETÉE (les multiplicateurs feraient NaN dans la sim au 1er tick).
   if (isObj(sim.upgrades)) {
     for (const [tid, t] of Object.entries(sim.upgrades)) {
       if (!isObj(t)) throw new Error(`Sauvegarde invalide : améliorations du terminal ${tid} illisibles`);
-      for (const k of ['terminal', 'fueling', 'teams']) {
+      for (const k of Object.keys(UPGRADES)) {
         if (k in t && !Number.isInteger(t[k])) {
           throw new Error(`Sauvegarde invalide : niveau d'amélioration « ${k} » (terminal ${tid}) non entier`);
         }

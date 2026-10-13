@@ -19,6 +19,7 @@ import { makeJuice, juiceForAlert } from './ui/juice.mjs'; // Juice (t_5065be95)
 import { makeAudioEngine, sfxForAlert, normalizeAudioState } from './audio.mjs'; // R44 (t_ebbb202e) : synthèse audio (0 asset) + SFX par alerte
 import { drawNetworkOverlay } from './ui/overlay.mjs';
 import { clearSave } from './persistence/save.mjs';
+import { BUILDINGS } from './data/catalog.mjs'; // T33 (t_88aee6d5) : la liste clavier des bâtiments suit le catalogue
 import { makeGameState } from './core/new-game.mjs';
 import { DIFFICULTIES, DIFFICULTY_IDS, normalizeDifficulty } from './core/difficulty.mjs'; // T2-1 : la difficulté
 import { SCENARIOS, startScenario, scenarioObjective } from './scenarios.mjs'; // R38 : les 3 scénarios rejouables
@@ -455,7 +456,10 @@ export function boot(canvas) {
 
   // Clavier global : les touches de déplacement restent dans input.mjs ;
   // ici les commandes UI (construire, sauvegarder, vitesse).
-  const KINDS = ['runway', 'taxiway', 'terminal', 'fuel', 'hangar', 'catering', 'cleaning', 'baggage'];
+  // T33 (t_88aee6d5) : la liste est la MÊME que le build-tool (catalogue
+  // BUILDINGS) — les 8 d'origine gardent leurs touches 1-8, les nouveaux
+  // prennent 9+ (borné aux touches simples ; le reste passe par la barre).
+  const KINDS = Object.keys(BUILDINGS);
   window.addEventListener('keydown', (e) => {
     const k = e.key.toLowerCase();
     if (k === 'n') { if (state.screen === SCREENS.MENU) startNewGame(); }
@@ -488,7 +492,9 @@ export function boot(canvas) {
       syncAudioMute();
       toasts.toast(on ? 'Son réactivé (M)' : 'Muet activé (M)', 'info');
     }
-    else if (k >= '1' && k <= '8') buildTool.setKind(KINDS[Number(k) - 1]);
+    // T33 : 9 = dernière touche simple (la liste du catalogue dépasse 9 —
+    // les bâtiments 10/11 se choisissent à la barre d'outils).
+    else if (k >= '1' && k <= '9' && Number(k) <= KINDS.length) buildTool.setKind(KINDS[Number(k) - 1]);
   });
 
   // Sauvegarde AUTOMATIQUE raisonnable (brief) : en quittant la page et toutes

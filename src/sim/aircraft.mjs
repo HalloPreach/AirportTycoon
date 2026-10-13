@@ -33,7 +33,7 @@ import { servicesServingGate } from '../infra/assignments.mjs'; // R27 : lances 
 import { onGateArrived, onGateDeparted, onFlightCancelled } from '../economy/economy.mjs';
 import { countContractFlight } from '../flights/contracts.mjs';
 import { arrivePassengers, countCarried, boardDelay, groupComplete, removePassengers } from './passengers.mjs';
-import { refuelTimeMult } from '../infra/upgrades.mjs'; // R31 : temps de plein par terminal (amelioration)
+import { refuelTimeMult, gateOpsMult } from '../infra/upgrades.mjs'; // R31 : temps de plein par terminal ; T33 (t_88aee6d5) : temps des ops au sol (amélioration « boarding »)
 import { runwayClosed } from './incidents.mjs';
 import { weatherEffect } from './weather.mjs'; // T3 : l'effet météo ACTIF (vitesse + retard d'attente)
 
@@ -441,7 +441,9 @@ function doDocking(sim, ac, dt) {
 }
 
 // GATE : l'avion est amarré à la porte (au CENTRE, vu doDocking). Opérations au sol :
-// carburant (BL-12) → débarquement → sol → embarquement. Chaque étape dure GATE_OPS_S/3.
+// carburant (BL-12) → débarquement → sol → embarquement. Chaque étape dure
+// GATE_OPS_S/3 — T33 (t_88aee6d5) × gateOpsMult du terminal de la porte
+// (amélioration « boarding », 0.75^niveau ; niveau 0 = ×1, durée inchangée).
 // On compte les passagers transportés à l'embarquement (critère 7).
 function doGate(sim, ac, dt) {
   // R05 : arrivePassengers est IDEMPOTENT par vol — un avion qui RE-ENTRE en gate
@@ -617,8 +619,14 @@ function fuelLancesForGate(sim, ac) {
 // l'étape « board », à travers le module passagers (countCarried).
 function doOps(sim, ac, dt) {
   ac.timer += dt;
-  const step = GATE_OPS_S / 3;
-  if (ac.timer < step) return; // l'étape en cours dure GATE_OPS_S/3
+  // T33 (t_88aee6d5) : l'amélioration « boarding » du terminal de la porte
+  // (gateOpsMult, upgrades.mjs — 0.75^niveau, niveau 0 = ×1) RACCOURCIT les
+  // 3 étapes au sol : la porte se libère plus vite. La ponctualité (R17) est
+  // mesurée contre le nominal INCHANGÉ : le vol amarré est plus PUNCTUEL,
+  // c'est le bénéfice affiché du choix.
+  const g0 = sim.infra.gates.find((x) => x.id === ac.gateId);
+  const step = GATE_OPS_S / 3 * (g0 ? gateOpsMult(sim, g0.terminalId) : 1);
+  if (ac.timer < step) return; // l'étape en cours dure GATE_OPS_S/3 (× boarding)
   if (ac.phase === 'disembark') {
     ac.phase = 'ground';
     ac.timer = 0;

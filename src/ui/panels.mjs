@@ -48,7 +48,7 @@ import { incidentResponse, respondIncident } from '../sim/incidents.mjs';
 // — le panneau l'affiche via queueTotals (somme des terminaux, lecture seule).
 import { queueTotals, satisfactionCauses } from '../sim/passengers.mjs';
 // R31 (t_7a512737) : améliorations de capacité CIBLÉE par terminal — LECTURE
-// (upgradeView : les 3 choix + goulot courant du terminal) + COMMANDE
+// (upgradeView : les 6 choix du catalogue + goulot courant du terminal) + COMMANDE
 // (buyUpgrade : la sim règle le coût/l'effet, le panneau émet l'intention —
 // UI fine, même pattern que setAssignment).
 import { upgradeView, buyUpgrade } from '../infra/upgrades.mjs';

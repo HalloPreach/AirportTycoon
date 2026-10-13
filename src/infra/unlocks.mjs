@@ -16,6 +16,12 @@
 //              400 pax transportés (les volumes cumulés).
 //   catering  : le confort de salle : 300 pax transportés (les volumes
 //              justifient la dépense de confort ; tiers 2).
+//   security  : T33 (t_88aee6d5) : la file sécurité se VOIT (≥ 96 pax =
+//              80 % de la capacité) ou 600 pax transportés (filet volumes) ;
+//   dutyfree  : T33 : 400 pax transportés (le commerce est justifié par les
+//              volumes — tiers 2, comme catering) ;
+//   lounge    : T33 : 500 pax transportés (le confort haut de gamme est
+//              justifié par les volumes — tiers 2).
 //
 // Déclenchement : tickUnlocks (core/tick.mjs, UNE fois par tick) — le service
 // se débloque au premier tick où la condition est vraie ; le build-tool et la
@@ -68,6 +74,30 @@ const CONDS = Object.freeze({
   },
   catering(sim) {
     return sim.passengers.totalCarried >= UNLOCK_RULES.catering.carried;
+  },
+  // T33 (t_88aee6d5) : 3 nouvelles règles — même motif « le besoin se voit /
+  // les volumes justifient » (aucune ne référence un service verrouillé :
+  // les files et le compteur totalCarried préexistent à tout service).
+  security(sim) {
+    // R30 : la file sécurité GLOBALE = somme des files PAR TERMINAL
+    // (queueTotals, même agrégat de lecture que baggage). Seuil 96 = 80 % de
+    // la capacité base (120 par terminal — PAX.securityCapPerTerminal) : le
+    // goulot sécurité se voit avant le déblocage. La branche 600 pax est le
+    // filet volumes (comme baggage) : un aéroport sans file ne se bloque
+    // jamais.
+    return queueTotals(sim).security >= UNLOCK_RULES.security.queue
+      || sim.passengers.totalCarried >= UNLOCK_RULES.security.carried;
+  },
+  dutyfree(sim) {
+    // Volumes : 400 pax transportés — le commerce au sol est justifié par
+    // l'activité (tiers 2, même motif que catering).
+    return sim.passengers.totalCarried >= UNLOCK_RULES.dutyfree.carried;
+  },
+  lounge(sim) {
+    // Volumes : 500 pax transportés — le confort haut de gamme est justifié
+    // par l'activité (tiers 2 ; le seuil est au-dessus de catering : un salon
+    // VIP est le confort LE PLUS cher du catalogue).
+    return sim.passengers.totalCarried >= UNLOCK_RULES.lounge.carried;
   },
 });
 

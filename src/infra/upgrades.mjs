@@ -3,6 +3,9 @@
 // débit équipes) vivent ICI, jamais ailleurs (un seul endroit, comme
 // countTypeServing pour les services). Les CHIFFRES (coûts, % par niveau,
 // max) sont dans catalog.mjs UPGRADES (équilibrage, pas de logique).
+// T33 (t_88aee6d5) : 3 NOUVEAUX CHOIX (boarding / marketing / comfort) —
+// mêmes principes : le niveau est la source (sim.upgrades, sérialisé), les
+// multiplieurs purs vivent ICI, les chiffres dans UPGRADES (catalog.mjs).
 //
 // L'ÉTAT : sim.upgrades[terminalId] = { terminal: n, fueling: n, teams: n }
 // (clés CHAÎNES — comme sim.passengers.queues, R30). Le niveau est la source
@@ -32,7 +35,7 @@ export function upgradeLevel(sim, terminalId, kind) {
 }
 
 // --- MULTIPLICATEURS — les UNIQES lecteurs du niveau. La sim ne lit JAMAIS
-// sim.upgrades directement : elle passe par ces 3 fonctions (un seul point
+// sim.upgrades directement : elle passe par ces 6 fonctions (un seul point
 // d'effet, testable ; la même règle côté sim et… c'est tout).
 
 // (1) Terminal : le multiplicateur de CAPACITÉ check-in/sécurité du terminal
@@ -60,6 +63,43 @@ export function teamRateMult(sim, terminalId) {
   return Math.pow(1 + spec.rateMultPerLevel, upgradeLevel(sim, terminalId, 'teams'));
 }
 
+// T33 (t_88aee6d5) : 3 nouveaux multiplicateurs (mêmes principes R31 :
+// multiplicateur PUR lu à chaque tick, niveau 0 = ×1 — comportement
+// EXISTANT inchangé).
+// (4) Boarding : le facteur TEMPS des 3 étapes d'opérations AU SOL du
+// terminal (0.75^niveau) — appliqué à l'étape (GATE_OPS_S/3 × ce facteur,
+// aircraft.mjs doOps) : la porte se libère plus vite (le goulot « plein »
+// inclut l'occupation porte, l'amélioration est lisible dans la mesure).
+export function gateOpsMult(sim, terminalId) {
+  const spec = UPGRADES.boarding;
+  return Math.pow(1 - spec.timeMultPerLevel, upgradeLevel(sim, terminalId, 'boarding'));
+}
+
+// (5) Marketing : le facteur REVENUE de CE terminal (1 + 0,1 × niveau) —
+// la recette BILLET (pleine ou sèche) est gagnée au décollage pour le
+// terminal de la porte de départ (economy.mjs onGateDeparted). Le choix
+// « revenu » (contrairement aux 4 précédents, il n'accélère RIEN — il
+// augmente l'argent par pax ; utile quand du pax passe, y compris sec).
+export function marketingMult(sim, terminalId) {
+  const spec = UPGRADES.marketing;
+  return 1 + spec.revenueMultPerLevel * upgradeLevel(sim, terminalId, 'marketing');
+}
+
+// (6) Confort : le facteur GLOBAL de récupération de satisfaction
+// (1 + 0,5 × niveau). Comme la FAMILLE CONFORT des bâtiments (catering/
+// lounge — un bâtiment pose, l'effet sert tout l'aéroport), le niveau pris
+// en compte est celui du MEILLEUR terminal équipé : les aménagements du
+// terminal le plus soigné servent les files de tous les terminaux (pas
+// per-terminal : une file au terminal B n'est pas servie par le confort du
+// terminal A — c'est la famille confort, documentée dans le catalogue).
+export function comfortRecoverMult(sim) {
+  let best = 0;
+  for (const tid of Object.keys(ensureUpgrades(sim))) {
+    best = Math.max(best, upgradeLevel(sim, tid, 'comfort'));
+  }
+  return 1 + UPGRADES.comfort.recoverMultPerLevel * best;
+}
+
 // --- ACHAT — commande métier (l'UI envoie l'intention, la règle décide).
 // Coût FIXE (UPGRADES[kind].cost par niveau) ; refus lisible (niveau max,
 // pas d'argent, terminal inconnu). L'effet est IMMÉDIAT (les multiplicateurs
@@ -83,9 +123,10 @@ export function buyUpgrade(sim, terminalId, kind) {
   return { ok: true, level: lvl + 1, cost: spec.cost };
 }
 
-// --- VUE LISIBLE (lecture seule) — l'UI affiche les 3 choix + le GOUTLE
+// --- VUE LISIBLE (lecture seule) — l'UI affiche les 6 choix + le GOUTLE
 // COURANT du terminal AVANT achat. « Mauvais achat compréhensible » :
-// le goulot nommé est le motif (acheter l'autre capacité ne sert rien).
+// le goulot nommé est le motif (acheter la mauvaise amélioration ne sert
+// rien — les 3 T33 suivent CHACUNE leur mesure, voir le mapping « useful »).
 export function upgradeView(sim, terminalId) {
   const term = sim.infra.terminals.find((t) => String(t.id) === String(terminalId));
   if (!term) return null;
@@ -114,9 +155,23 @@ export function upgradeView(sim, terminalId) {
     return {
       kind, name: spec.name, cost: spec.cost, level: lvl, maxLevel: spec.maxLevel,
       effect: spec.effect, affordable: sim.economy.money >= spec.cost,
+      // T33 (t_88aee6d5) : les 3 nouveaux choix ont CHACUN leur mesure
+      // lisible (le « mauvais achat compréhensible » R31 s'étend sans
+      // casser les 3 existants) :
+      //   boarding  : la porte est OCCUPÉE (temps d'ops au sol) — même
+      //               situation que l'avitaillement (goulot « plein », ou
+      //               rien ne presse) : l'avion amarré se libère plus vite ;
+      //   marketing : le choix REVENUE — utile dès que du pax passe (des
+      //               pax en file = du trafic qui va gagner des billets),
+      //               y compris sec (l'amélioration sert les 2 recettes) ;
+      //   comfort   : le confort sert la SATISFACTION — utile quand elle
+      //                n'est pas maximale (famille confort, global).
       useful: kind === 'terminal' && bottleneck === 'files'
         || kind === 'teams' && bottleneck === 'usure'
-        || kind === 'fueling' && (bottleneck === 'plein' || inQueue === 0),
+        || kind === 'fueling' && (bottleneck === 'plein' || inQueue === 0)
+        || kind === 'boarding' && (bottleneck === 'plein' || inQueue === 0)
+        || kind === 'marketing' && (inQueue > 0 || wear > 0)
+        || kind === 'comfort' && (sim.passengers?.satisfaction ?? 100) < 100,
     };
   });
   return {

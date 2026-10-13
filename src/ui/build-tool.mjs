@@ -1,4 +1,4 @@
-// Outil de construction UI : barre d'outils (B, touches 1-8), fantôme au survol
+// Outil de construction UI : barre d'outils (B, touches 1-9), fantôme au survol
 // (vert = posable, rouge = refus), clic = placer, X = démolir (clic sur un bâtiment).
 // La décision de pose/vraie démolition est la sim (infra.mjs) : l'UI ne fait que
 // le DOM, la souris et un aperçu « est-ce que ça tient ? » (grille + fonds).
@@ -6,7 +6,11 @@
 import { BUILDINGS } from '../data/catalog.mjs';
 import { unlockState } from '../infra/unlocks.mjs';
 
-const KINDS = ['runway', 'taxiway', 'terminal', 'fuel', 'hangar', 'catering', 'cleaning', 'baggage'];
+// T33 (t_88aee6d5) : dérivé du CATALOGUE (BUILDINGS) — la liste grandit avec
+// les bâtiments. Les 8 d'origine gardent leurs touches 1-8 ; les nouveaux
+// prennent 9+ (9 = dernière touche simple ; 10/11 se choisissent à la
+// barre d'outils, la liste clavier est bornée aux touches simples).
+const KINDS = Object.keys(BUILDINGS);
 
 export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced, onDemolished, controls = [] }) {
   const tool = { mode: false, kind: 'runway', demolishMode: false, ghost: null };
@@ -15,7 +19,7 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
   const bar = document.createElement('div');
   bar.className = 'toolbar';
   bar.setAttribute('role', 'toolbar');
-  bar.setAttribute('aria-label', 'Outils de construction (B activer, 1-8 choisir, X démolir)');
+  bar.setAttribute('aria-label', `Outils de construction (B activer, 1-${KINDS.length} choisir, X démolir)`);
   const buttons = {};
   for (let n = 0; n < KINDS.length; n++) {
     const k = KINDS[n];
@@ -50,7 +54,7 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
   }
   const hint = document.createElement('span');
   hint.className = 'toolbar-hint';
-  hint.textContent = 'B : construire · 1-8 : bâtiment · X : démolir · A : auto-accept vols · Échap : annuler';
+  hint.textContent = `B : construire · 1-${KINDS.length} : bâtiment · X : démolir · A : auto-accept vols · Échap : annuler`;
   bar.appendChild(hint);
   document.body.appendChild(bar);
 
@@ -75,7 +79,11 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
     sync();
   };
   tool.cancel = () => { tool.mode = false; tool.demolishMode = false; tool.ghost = null; sync(); };
-  tool.setKind = (k) => { tool.kind = k; };
+  // T33 (t_88aee6d5) : la SÉLECTION clavier (1-9) doit être VISIBLE —
+  // sync() met à jour la classe active (avant : seule la barre la mettait à
+  // jour, la touche choisissait « en sourdine » — le choix était actif dans
+  // le fantôme mais le bouton ne s'allumait jamais).
+  tool.setKind = (k) => { tool.kind = k; sync(); };
   tool.isActive = () => !!(tool.mode || tool.demolishMode);
 
   // Aperçu de pose (lecture seule) : tient dans le terrain ? chevauche-t-il une

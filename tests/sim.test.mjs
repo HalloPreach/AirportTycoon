@@ -176,13 +176,13 @@ test('progression : les services se débloquent par CONDITION MESURABLE (R23, cr
   sim2.planning.push({ id: sim2.nextAcId++, airline: 'solaire', acType: 'small',
     pax: 5, planned: 60, status: 'planned' }); // fuel (offre en vue)
   sim2.passengers.queues['t1'] = { checkin: 90, security: 0, board: 0 }; // baggage (file ≥ 90, R30 : PAR TERMINAL)
-  sim2.passengers.totalCarried = 400;            // baggage (carried) + catering (≥ 300)
+  sim2.passengers.totalCarried = 400;            // baggage (carried) + catering (≥ 300) + dutyfree (≥ 400, T33)
   tickUnlocks(sim2);
   tickUnlocks(sim2);
   const unlocked = sim2.alerts.filter((a) => a.kind === 'unlocked');
-  assert.equal(unlocked.length, 5, 'cinq services débloqués (fuel + cleaning + hangar + baggage + catering), chacun signalé une fois');
-  assert.ok(unlocked.every((a) => ['fuel', 'cleaning', 'hangar', 'baggage', 'catering'].includes(a.service)),
-    'les services débloqués sont bien fuel, cleaning, hangar, baggage et catering');
+  assert.equal(unlocked.length, 6, 'six services débloqués (fuel + cleaning + hangar + baggage + catering + dutyfree T33), chacun signalé une fois');
+  assert.ok(unlocked.every((a) => ['fuel', 'cleaning', 'hangar', 'baggage', 'catering', 'dutyfree'].includes(a.service)),
+    'les services débloqués sont bien fuel, cleaning, hangar, baggage, catering et dutyfree');
 });
 
 test('retards si l\'aéroport est mal conçu (critère 6)', () => {

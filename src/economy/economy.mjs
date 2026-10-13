@@ -6,6 +6,8 @@
 // Recettes : atterrissage/porte au SOL, billets au DÉCOLLAGE.
 import { pushEvent } from '../core/sim-state.mjs';
 import { OPEX_PER_SEC } from '../data/catalog.mjs';
+import { countTypeServing } from '../infra/assignments.mjs'; // T33 (t_88aee6d5) : boutiques AFFECTÉES au terminal (R27)
+import { marketingMult } from '../infra/upgrades.mjs'; // T33 : facteur recette billets (amélioration « marketing »)
 
 export const FUEL_COST_PER_PAX = 0.5;   // carburant : coûté au départ (critère carburant)
 // R19 : les montants UNITAIRES du cycle avion (billets, droits, carburant) sont
@@ -15,6 +17,7 @@ export const FUEL_COST_PER_PAX = 0.5;   // carburant : coûté au départ (crit�
 // départ est SEC (ac._dryDeparture) → billets MOITIÉS (PAX_REVENUE_DRY).
 export const PAX_REVENUE = 25;
 export const PAX_REVENUE_DRY = 12.5;  // billets moitiés (départ sec, BL-12)
+export const DUTYFREE_PER_PAX = 8;    // T33 (t_88aee6d5) : recette boutique libre-service PAR pax débarqué (par boutique AFFECTÉE au terminal)
 export const LANDING_FEE = 200;       // droits d'atterrissage (onGateArrived)
 export const GATE_FEE = 100;          // redevance porte (onGateArrived)
 const BANKRUPT_LIMIT = -10000;   // solde sous ce seuil = faillite
@@ -94,6 +97,15 @@ export function earn(sim, amount, cat) {
 export function onGateArrived(sim, ac) {
   earn(sim, LANDING_FEE, 'landing');
   earn(sim, GATE_FEE, 'gate');
+  // T33 (t_88aee6d5) : les boutiques libre-service AFFECTÉES au terminal de
+  // la porte d'arrivée (R27 : s.target — comme tout service au sol) rendent
+  // DUTYFREE_PER_PAX PAR pax débarqué PAR boutique (compte dédié « dutyfree »
+  // — même discipline que le carburant : earn, jamais de recette négative).
+  const g = sim.infra.gates.find((x) => x.id === ac.gateId);
+  if (g) {
+    const shops = countTypeServing(sim, 'dutyfree', g.terminalId);
+    if (shops > 0) earn(sim, ac.pax * shops * DUTYFREE_PER_PAX, 'dutyfree');
+  }
 }
 
 // Départ : recettes passagers (billets), puis carburant en DÉPENSE dédiée.
@@ -105,7 +117,12 @@ export function onGateArrived(sim, ac) {
 // billets MOITIÉS : l'absence du service a un coût ÉCONOMIQUE visible (et non
 // bloquant — le vol part, l'événement « no-fuel » l'explique).
 export function onGateDeparted(sim, ac) {
-  earn(sim, ac.pax * (ac._dryDeparture ? 12.5 : 25), 'pax');
+  // T33 (t_88aee6d5) : l'amélioration « marketing » (marketingMult — niveau
+  // du terminal de DÉPART, upgrades.mjs) augmente la recette billets
+  // (pleine ou sèche) — niveau 0 = ×1 (comportement EXISTANT).
+  const g = sim.infra.gates.find((x) => x.id === ac.gateId);
+  const m = g ? marketingMult(sim, g.terminalId) : 1;
+  earn(sim, ac.pax * (ac._dryDeparture ? 12.5 : 25) * m, 'pax');
   charge(sim, ac.pax * FUEL_COST_PER_PAX, 'fuel');
 }
 

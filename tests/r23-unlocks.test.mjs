@@ -13,6 +13,8 @@
 //      lue via SON champ sérialisé (pas d'état parallèle).
 //   5. volumes : file check-in ≥ 90 OU 400 pax transportés → « baggage » ;
 //      300 pax transportés → « catering ».
+//   5bis (T33, t_88aee6d5) : file sécurité ≥ 96 OU 600 pax transportés →
+//      « security » ; 400 pax → « dutyfree » ; 500 pax → « lounge ».
 //   6. buildBuilding refuse un service verrouillé (événement « locked » avec
 //      le bénéfice + la condition) et l'accepte une fois débloqué — la
 //      décision est le MÊME code des deux côtés (unlockState).
@@ -57,7 +59,7 @@ test('R23 : état neuf — les 5 services sont verrouillés, bénéfice + condit
     assert.equal(unlockState(sim, s).unlocked, false, `${s} verrouillé au départ`);
   }
   const view = unlockView(sim);
-  assert.equal(view.length, 5, 'les 5 services verrouillés sont listés');
+  assert.equal(view.length, 8, 'les 8 services verrouillés sont listés');
   for (const s of SERVICES) {
     const line = view.find((l) => l.startsWith(UNLOCK_RULES[s].name));
     assert.ok(line, `${UNLOCK_RULES[s].name} est affiché`);
@@ -120,6 +122,30 @@ test('R23 : les VOLUMES justifient le débit (baggage) et le confort (catering)'
   assert.equal(unlockState(sim3, 'catering').unlocked, false, 'sous 300 pax : restauration verrouillée');
 });
 
+test('R23/T33 : les 3 NOUVEAUX services se débloquent par volumes (sécurité / boutiques / salon)', () => {
+  const sim = freshSim();
+  assert.equal(unlockState(sim, 'security').unlocked, false, 'sécurité verrouillée au départ');
+  assert.equal(unlockState(sim, 'dutyfree').unlocked, false, 'boutiques verrouillées au départ');
+  assert.equal(unlockState(sim, 'lounge').unlocked, false, 'salon verrouillé au départ');
+
+  // La branche « carried » : les VOLUMES cumulés justifient chaque service.
+  sim.passengers.totalCarried = 400; // → boutiques (400)
+  assert.equal(unlockState(sim, 'dutyfree').unlocked, true, '400 pax transportés → boutiques');
+  assert.equal(unlockState(sim, 'lounge').unlocked, false, 'le salon attend 500 pax');
+  assert.equal(unlockState(sim, 'security').unlocked, false, 'la sécurité attend 600 pax (ou file)');
+  sim.passengers.totalCarried = 500; // → salon (500)
+  assert.equal(unlockState(sim, 'lounge').unlocked, true, '500 pax transportés → salon VIP');
+  sim.passengers.totalCarried = 600; // → sécurité (600)
+  assert.equal(unlockState(sim, 'security').unlocked, true, '600 pax transportés → sécurité');
+
+  // OU la file sécurité ≥ 96 (queueTotals global, R30) sans volume :
+  const sim2 = freshSim();
+  sim2.passengers.queues['t1'] = { checkin: 0, security: 96, board: 0 };
+  assert.equal(unlockState(sim2, 'security').unlocked, true, 'file sécurité 96 → sécurité débloquée');
+  sim2.passengers.queues['t1'].security = 95;
+  assert.equal(unlockState(sim2, 'security').unlocked, false, 'file sécurité 95 < 96 → verrouillée');
+});
+
 test('R23 : buildBuilding refuse (bénéfice + condition) puis accepte après déverrouillage', () => {
   const sim = freshSim();
   assert.equal(buildBuilding(sim, 'catering', 300, 300), null, 'refusé tant que verrouillé');
@@ -132,18 +158,18 @@ test('R23 : buildBuilding refuse (bénéfice + condition) puis accepte après d�
   assert.ok(sim.infra.services.some((s) => s.type === 'catering'), 'la salle est posée');
 });
 
-test('R23 : les 5 services débloqués en un tick — UN événement par service', () => {
+test('R23 : les 8 services débloqués en un tick — UN événement par service', () => {
   const sim = freshSim();
   addOffer(sim); // fuel (offre en vue)
   wornGate(sim, 10, 10); // cleaning + hangar
   sim.passengers.queues['t1'] = { checkin: 90, security: 0, board: 0 }; // baggage (R30 : file PAR TERMINAL)
-  sim.passengers.totalCarried = 400; // baggage (carried) + catering (≥ 300)
+  sim.passengers.totalCarried = 600; // T33 : les 8 volumes (baggage/catering/dutyfree/lounge/security)
   tickUnlocks(sim);
   for (const s of SERVICES) assert.equal(unlockState(sim, s).unlocked, true, `${s} débloqué`);
   tickUnlocks(sim); tickUnlocks(sim); // idempotent
   const evts = sim.alerts.filter((a) => a.kind === 'unlocked');
-  assert.equal(evts.length, 5, 'cinq événements, UN par service (pas de double toast)');
-  assert.deepEqual(evts.map((e) => e.service).sort(), [...SERVICES].sort(), 'les 5 services signalés');
+  assert.equal(evts.length, 8, 'huit événements, UN par service (pas de double toast)');
+  assert.deepEqual(evts.map((e) => e.service).sort(), [...SERVICES].sort(), 'les 8 services signalés');
   // Pas de « locked » émis par tickUnlocks (ce n'est pas son rôle).
   assert.equal(sim.alerts.filter((a) => a.kind === 'locked').length, 0, 'tickUnlocks ne verrouille pas');
 });
@@ -152,20 +178,20 @@ test('R23 : la reprise de sauvegarde ne re-notifie PAS (flag persistant, EV-10)'
   const sim = freshSim();
   addOffer(sim); // fuel
   wornGate(sim, 10, 10); // cleaning + hangar
-  sim.passengers.totalCarried = 400; // baggage (carried) + catering (≥ 300)
-  tickUnlocks(sim); // 5 services débloqués
+  sim.passengers.totalCarried = 600; // T33 : les 8 volumes
+  tickUnlocks(sim); // 8 services débloqués
   const before = sim.alerts.filter((a) => a.kind === 'unlocked').length;
-  assert.equal(before, 5, 'cinq événements avant la sauvegarde');
+  assert.equal(before, 8, 'huit événements avant la sauvegarde');
   const state = { screen: 'game', time: 0, terrain: null, camera: null, sim };
   const sim2 = deserialize(serialize(state)).sim;
   for (const s of SERVICES) assert.equal(sim2._unlocked[s], true, `${s} persiste dans la sauvegarde`);
   tickUnlocks(sim2); // le tick post-reprise
-  assert.equal(sim2.alerts.filter((a) => a.kind === 'unlocked').length, 5,
-    'la reprise ne re-notifie pas (les 5 événements viennent de la sim d’origine)');
+  assert.equal(sim2.alerts.filter((a) => a.kind === 'unlocked').length, 8,
+    'la reprise ne re-notifie pas (les 8 événements viennent de la sim d’origine)');
 });
 
 test('R23 : aucune condition ne fait référence à un service non débloqué (pas de cercle)', () => {
-  // Les 5 conditions s’évaluent sur une sim SANS AUCUN service construit :
+  // Les 8 conditions s’évaluent sur une sim SANS AUCUN service construit :
   // le joueur n’est jamais tenu de « maintenir un service verrouillé » pour
   // en débloquer un autre (critère de la carte R23).
   const sim = freshSim();
@@ -173,7 +199,7 @@ test('R23 : aucune condition ne fait référence à un service non débloqué (p
   addOffer(sim);
   wornGate(sim, 10, 10);
   sim.passengers.queues['t1'] = { checkin: 90, security: 0, board: 0 }; // R30 : file PAR TERMINAL
-  sim.passengers.totalCarried = 400;
+  sim.passengers.totalCarried = 600; // T33 : les 8 volumes
   for (const s of SERVICES) {
     assert.equal(unlockState(sim, s).unlocked, true, `${s} : condition atteignable sans autre service`);
   }

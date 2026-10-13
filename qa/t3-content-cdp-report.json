@@ -1,0 +1,104 @@
+{
+  "ok": true,
+  "ts": "20261013211544",
+  "results": [
+    {
+      "name": "serveur local répond",
+      "ok": true,
+      "detail": "http://127.0.0.1:9100"
+    },
+    {
+      "name": "navigateur démarré (cible CDP page)",
+      "ok": true,
+      "detail": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
+    },
+    {
+      "name": "window.__game exposé",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "NOUVELLE PARTIE : jeu démarré + aéroport de départ fourni (piste + 2 portes M)",
+      "ok": true,
+      "detail": "{\"screen\":\"game\",\"runway\":1,\"gates\":2,\"money\":11997.396160000002}"
+    },
+    {
+      "name": "BARRE : 11 types de construction (8 d’origine + 3 T33) rendus depuis le catalogue",
+      "ok": true,
+      "detail": "{\"count\":11}"
+    },
+    {
+      "name": "BARRE : les 3 nouveaux services T33 sont VISIBLES (libellé + coût du catalogue)",
+      "ok": true,
+      "detail": "{\"hasSecurity\":true,\"hasDutyfree\":true,\"hasLounge\":true}"
+    },
+    {
+      "name": "BARRE : l’aria-label est DÉRIVÉ (1-11)",
+      "ok": true,
+      "detail": "Outils de construction (B activer, 1-11 choisir, X démolir)"
+    },
+    {
+      "name": "CLAVIER : la touche 9 active le 9e bouton (NOUVELLE salle sécurité — liste dérivée du catalogue)",
+      "ok": true,
+      "detail": "{\"activeIdx\":8,\"label9\":\"9 · Salle de sécurité (1200 $)\"}"
+    },
+    {
+      "name": "CATALOGUE : les 2 NOUVELLES compagnies T33 sont dans la table du jeu (additif)",
+      "ok": true,
+      "detail": "[\"solaire\",\"atlantique\",\"pacific\",\"boreal\",\"horizon\"]"
+    },
+    {
+      "name": "CATALOGUE : les 3 NOUVELLES améliorations T33 sont dans la table du jeu (6 choix)",
+      "ok": true,
+      "detail": "[\"terminal\",\"fueling\",\"teams\",\"boarding\",\"marketing\",\"comfort\"]"
+    },
+    {
+      "name": "OPEX (R37) : les 3 nouveaux services ont leur DÉBIT DANS LA TABLE (bonne amélioration vs PIÈGE)",
+      "ok": true,
+      "detail": "{\"security\":1,\"dutyfree\":1,\"lounge\":2.5}"
+    },
+    {
+      "name": "OFFRE : le générateur EXISTANT pioche la NOUVELLE compagnie Horizon Express (vol « medium » — bornes M du départ)",
+      "ok": true,
+      "detail": "{\"acType\":\"medium\",\"airline\":\"horizon\",\"pax\":136,\"status\":\"planned\"}"
+    },
+    {
+      "name": "DÉBLOCAGE : les 3 NOUVEAUX services T33 se DÉVERROUILLent via la MÊME règle que le build-tool",
+      "ok": true,
+      "detail": "{\"security\":true,\"dutyfree\":true,\"lounge\":true,\"flag\":true}"
+    },
+    {
+      "name": "CONSTRUCTION : la NOUVELLE salle sécurité est CONSTRUITE (débit OPEX + coût du catalogue)",
+      "ok": true,
+      "detail": "{\"built\":true,\"services\":1,\"moneyDelta\":3000,\"buyOk\":true,\"level\":1,\"gateOps\":0.75}"
+    },
+    {
+      "name": "AMÉLIORATION : le NOUVEAU choix « boarding » est ACHETÉ (niveau 1 → ops au sol ×0,75)",
+      "ok": true,
+      "detail": "{\"level\":1,\"gateOps\":0.75}"
+    },
+    {
+      "name": "PERSISTANCE : la salle sécurité T33 + le niveau boarding sont SÉRIALISÉS dans la sauvegarde",
+      "ok": true,
+      "detail": "{\"savedSecurity\":true,\"savedBoarding\":1,\"savedFlag\":true}"
+    },
+    {
+      "name": "RECHARGEMENT : la salle sécurité T33 + le niveau boarding SONT RESTAURÉS (« Reprendre »)",
+      "ok": true,
+      "detail": "{\"screen\":\"game\",\"securityRestored\":true,\"boardingRestored\":1,\"flag\":true}"
+    },
+    {
+      "name": "aucune exception de page",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "diag": {
+    "browser": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "spawnError": "\r\nDevTools listening on ws://127.0.0.1:9125/devtools/browser/63dea010-c556-4af6-85fa-61354604510b\r\n[24096:7160:1013/231546.572:ERROR:chrome\\browser\\task_manager\\providers\\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a \"Renderer\" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.\r\n[24096:44164:1013/231547.049:ERROR:chrome\\elevation_service\\edge_elevation_service_browser_helper.cc:94] LaunchUpdateCmdElevatedAndWait:  hr = 80070002 with exit code: 32\r\n",
+    "cdpTarget": "ws://127.0.0.1:9125/devtools/page/E59E6E8D263C1747B9C2562C9620F6E1",
+    "started": true,
+    "page": "http://127.0.0.1:9100/"
+  },
+  "pageExceptions": []
+}

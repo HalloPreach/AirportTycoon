@@ -19,6 +19,9 @@ export const PALETTES = Object.freeze({
       runway: '#455a64', taxiway: '#78909c', terminal: '#1e88e5',
       fuel: '#fdd835', hangar: '#ef6c00', catering: '#9c27b0',
       cleaning: '#26c6da', baggage: '#7cb342',
+      // T33 (t_88aee6d5) : les 3 nouveaux — couleurs DISTINCTES des 8
+      // existantes (l'étiquette + le numéro restent la garantie, R43).
+      security: '#7c4dff', dutyfree: '#ff5252', lounge: '#ff8f00',
     }),
     gates: Object.freeze({ S: '#4caf50', M: '#ff9800', L: '#2196f3', occupied: '#e53935' }),
     alert: '#e53935',          // X piste fermée, lise d'alerte
@@ -35,6 +38,9 @@ export const PALETTES = Object.freeze({
       runway: '#37474f', taxiway: '#b0bec5', terminal: '#0072B2',
       fuel: '#F0E442', hangar: '#E69F00', catering: '#CC79A7',
       cleaning: '#56B4E9', baggage: '#009E73',
+      // T33 (t_88aee6d5) : 3 nouveaux dans le spectre Wong étendu
+      // (luminance + l'étiquette — jamais la couleur seule, principe R43).
+      security: '#332288', dutyfree: '#999999', lounge: '#7F7F7F',
     }),
     // S (vert-bleu) / M (orange) / L (bleu) : les TROIS restent distincts en
     // luminance + taille, et les lettres S/M/L sont déjà peintes (zoom ≥ 0.7).

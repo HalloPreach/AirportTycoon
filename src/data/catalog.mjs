@@ -11,6 +11,15 @@ export const BUILDINGS = Object.freeze({
   catering: { name: 'Salle de restauration', cost: 1000, w: 100, h: 80, sellRefund: 0.5 },
   cleaning: { name: 'Équipe nettoyage', cost: 900, w: 100, h: 80, sellRefund: 0.5 },
   baggage:  { name: 'Salle bagages', cost: 900, w: 100, h: 80, sellRefund: 0.5 },
+  // T33 (t_88aee6d5) : 3 NOUVEAUX services au sol — la barre d'outils et le
+  // clavier lisent CE TABLEAU (build-tool.mjs / main.mjs) : du contenu
+  // ADDITIF ici ne demande AUCUNE ligne de code ailleurs (les 8 d'origine
+  // gardent leurs touches 1-8 ; les nouveaux prennent 9+).
+  // R27 : l'effet est AFFECTÉ au terminal (s.target) — une salle posée pour A
+  // ne sert JAMAIS B (comme la salle bagages).
+  security: { name: 'Salle de sécurité', cost: 1200, w: 100, h: 80, sellRefund: 0.5 },
+  dutyfree: { name: 'Boutique libre-service', cost: 1000, w: 100, h: 80, sellRefund: 0.5 },
+  lounge:   { name: 'Salon VIP', cost: 800, w: 80, h: 60, sellRefund: 0.5 },
 });
 
 // Exploitation (A12 : l'argent diminue MÊME sans vol) + services construits.
@@ -25,7 +34,7 @@ export const BUILDINGS = Object.freeze({
 // sert les pleins des portes de son terminal, le nettoyage/hangar remette à
 // zéro l'usure des portes de son terminal, bagages/cafétéria/maintenance
 // servent les passagers qui ARRIVENT à son terminal.
-export const GROUND_SERVICE_TYPES = Object.freeze(['fuel', 'hangar', 'cleaning', 'baggage', 'catering', 'maintenance']);
+export const GROUND_SERVICE_TYPES = Object.freeze(['fuel', 'hangar', 'cleaning', 'baggage', 'catering', 'maintenance', 'security', 'dutyfree', 'lounge']);
 
 // R37 (t_a4c636ab) : l'OPEX des SERVICES AU SOL est recalibré.
 // Avant (R36) les 5 services coûtaient ~12,5 $/s (45 000 $/h) : construire
@@ -55,6 +64,16 @@ export const OPEX_PER_SEC = Object.freeze({
   catering: 2.5,   // PIÈGE : inchangé (9 000 $/h) — surdimensionné = déficit
   cleaning: 1,     // R37 : 60 $/min, 3 600 $/h (était 7 200) — usure « sale »
   baggage: 1,      // R37 : 60 $/min, 3 600 $/h (était 7 200) — capacité check-in
+  // T33 (t_88aee6d5) : les 3 nouveaux services — famille R37 :
+  //   security/dutyfree = BONNES améliorations (OPEX < gain, comme R37 a
+  //   recalibré cleaning/baggage) ; lounge = famille CONFORT (comme la
+  //   restauration : un PIÈGE documenté — si l'aéroport est bien tenu
+  //   (satisfaction 100), sa valeur marginale est nulle : son OPEX reste
+  //   supérieur à son gain, le joueur doit le COMPRENDRE, pas le subir).
+  security: 1,     // 60 $/min, 3 600 $/h — +4 pax/s au contrôle sécurité
+  dutyfree: 1,     // 60 $/min, 3 600 $/h — 8 $/pax/boutique : rentable dès
+                   //       ~450 pax/h (0,125 pax/s) — un vol medium toutes les ~3,3 min
+  lounge: 2.5,     // PIÈGE (famille confort, calibrée comme la restauration : 9 000 $/h)
 });
 // R15 : unités LISIBLES dérivées d'OPEX_PER_SEC (pas d'état parallèle) — le
 // « coût affiché par minute » d'un bâtiment = opexPerMin(type) = le débit
@@ -78,10 +97,18 @@ export const AIRCRAFT = Object.freeze({
 export const TERMINAL_GATE_SIZES = Object.freeze(['S', 'M', 'M', 'L']);
 
 // Compagnies : une couleur + la taille d'avion qu'elles opèrent (les contraintes viennent de la catégorie).
+// T33 (t_88aee6d5) : 2 NOUVELLES compagnies — l'offre de vol pioche la
+// compagnie PARMELLES (flights.mjs, déterministe par seed) : du contenu
+// ADDITIF, AUCUNE règle ne change (les types opérés restent ceux du vol —
+// la servabilité est contrainte par la taille, pas par le nom de la marque).
+// Sauvegarde : un ID inconnu (ancienne sauvegarde sans ces lignes) retombe
+// sur AIRLINES[0] (airlineOf) — aucune migration nécessaire.
 export const AIRLINES = Object.freeze([
   { id: 'solaire', name: 'Solaire Air', color: '#f0a', types: ['small'] },
   { id: 'atlantique', name: 'Atlantique', color: '#1e88e5', types: ['medium'] },
   { id: 'pacific', name: 'PacificCargo', color: '#43a047', types: ['large'] },
+  { id: 'boreal', name: 'Boréal Régions', color: '#ff7043', types: ['small', 'medium'] },
+  { id: 'horizon', name: 'Horizon Express', color: '#7e57c2', types: ['medium', 'large'] },
 ]);
 
 // R23 : les déblocages des services ne sont PLUS de simples seuils de pax.
@@ -97,6 +124,15 @@ export const AIRLINES = Object.freeze([
 //               goulou de base se voit) OU carried pax transportés (400 :
 //               les volumes justifient le débit) ;
 //   catering  : carried pax transportés (300 : le confort de salle est
+//               justifié par les volumes — tiers 2).
+// T33 (t_88aee6d5) : 3 nouvelles règles (mêmes motifs « file visible /
+// volumes justifiés » — aucune référence à un service verrouillé, pas de
+// dépendance circulaire) :
+//   security  : file sécurité ≥ queue (96 = 80 % de la capacité 120 : le
+//               goulot sécurité se voit) OU carried pax transportés (600) ;
+//   dutyfree  : carried pax transportés (400 : le commerce est justifié par
+//               les volumes — tiers 2) ;
+//   lounge    : carried pax transportés (500 : le confort haut de gamme est
 //               justifié par les volumes — tiers 2).
 // Aucune condition ne fait référence à un service verrouillé (pas de
 // dépendance circulaire : on ne demande pas de maintenir un service pour le
@@ -117,6 +153,17 @@ export const UNLOCK_RULES = Object.freeze({
   catering: { name: 'Salle de restauration', carried: 300,
     benefit: 'confort de salle : la satisfaction remonte plus vite',
     why: '300 pax transportés (les volumes justifient le confort)' },
+  // T33 (t_88aee6d5) : les 3 nouvelles règles (les CHIFFRES sont ici, la
+  // condition mesurable dans src/infra/unlocks.mjs — CONDS).
+  security: { name: 'Salle de sécurité', queue: 96, carried: 600,
+    benefit: '+4 pax/s au contrôle sécurité de la salle AFFECTÉE (le goulot sécurité s’ouvre)',
+    why: 'file sécurité ≥ 96 pax (80 % de la capacité) ou 600 pax transportés' },
+  dutyfree: { name: 'Boutique libre-service', carried: 400,
+    benefit: '8 $ de recette boutique par pax débarqué, par boutique AFFECTÉE (compte dédié)',
+    why: '400 pax transportés (les volumes justifient le commerce)' },
+  lounge: { name: 'Salon VIP', carried: 500,
+    benefit: 'confort : la satisfaction remonte plus vite (+0,3 %/s)',
+    why: '500 pax transportés (les volumes justifient le confort haut de gamme)' },
 });
 
 // R31 (t_7a512737) : 3 CHOIX D'AMÉLIORATION DE CAPACITÉ CIBLÉE, par terminal —
@@ -128,6 +175,15 @@ export const UNLOCK_RULES = Object.freeze({
 //              la SATURATION des lances ne change pas — c'est le débit) ;
 //   teams    : ×2 du débit de nettoyage/remise à zéro par équipe DU terminal
 //              (l'usure s'accumule moins vite RELATIVEMENT : moins de délai).
+// T33 (t_88aee6d5) : 3 NOUVEAUX CHOIX (mêmes principes R31 : coût fixe,
+// effet ATTENDU affiché, niveau vécu dans sim.upgrades) :
+//   boarding : −25 % du temps des 3 OPS AU SOL de ce terminal par niveau
+//              (démêlage/sol/embarquement — la porte se libère plus vite) ;
+//   marketing: +10 % de recette billets (pleines ET sèches) par niveau de
+//              CE terminal (le choix REVENUE — utile quand du pax passe) ;
+//   comfort  : ×1,5 de la récupération de satisfaction PAR NIVEAU — GLOBAL
+//              comme la famille confort (meilleur terminal équipé : les
+//              aménagements servent tout l'aéroport).
 // Le « mauvais achat » reste COMPRÉHENSIBLE : l'UI montre le goulot courant
 // du terminal (src/infra/upgrades.mjs, bottleneckView) — acheter « terminal »
 // quand le goulot est le PLEIN est inutile, et l'écran l'explique.
@@ -141,6 +197,15 @@ export const UPGRADES = Object.freeze({
     effect: '−25 % du temps de plein de ce terminal par niveau (la saturation des lances ne change pas)' },
   teams:    { name: 'Équipement d\'équipe', cost: 2000, maxLevel: 3, rateMultPerLevel: 1,
     effect: '×2 du débit nettoyage/remise à zéro par équipe de ce terminal par niveau' },
+  // T33 (t_88aee6d5) : 3 nouveaux choix — même contrat R31 (coût FIXE par
+  // niveau, niveau vécu dans sim.upgrades, multiplieurs purs — aucun coût
+  // récurrent, AUCUN état supplémentaire : le niveau est la source).
+  boarding: { name: 'Embarquement rapide', cost: 1800, maxLevel: 3, timeMultPerLevel: 0.25,
+    effect: '−25 % du temps des 3 opérations au sol de ce terminal par niveau (démêlage, sol, embarquement)' },
+  marketing: { name: 'Campagne marketing', cost: 2000, maxLevel: 3, revenueMultPerLevel: 0.1,
+    effect: '+10 % de recette billets par niveau de ce terminal (billets pleins et secs)' },
+  comfort: { name: 'Confort passagers', cost: 1600, maxLevel: 3, recoverMultPerLevel: 0.5,
+    effect: '×1,5 de la récupération de satisfaction (files vides) par niveau — global, comme la famille confort' },
 });
 
 // Décomposition du cycle avion (ordre d'exécution, l'état est la donnée).

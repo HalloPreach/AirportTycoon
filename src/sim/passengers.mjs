@@ -33,7 +33,7 @@
 // L'état de la sim (sim-state.mjs) reste la source ; l'UI ne lit que cet objet.
 import { pushEvent } from '../core/sim-state.mjs';
 import { countTypeServing } from '../infra/assignments.mjs';
-import { capMult } from '../infra/upgrades.mjs'; // R31 : capacité check-in/sécurité par terminal (amélioration)
+import { capMult, comfortRecoverMult } from '../infra/upgrades.mjs'; // R31 : capacité check-in/sécurité par terminal ; T33 : facteur GLOBAL de récupération satisfaction (meilleur terminal équipé)
 
 // Équilibrage (ponytail : constantes fixes, calées sur les tests saturation —
 // pas de table par type d'avion ; le débit des files ne dépend pas du vol).
@@ -46,12 +46,14 @@ const PAX = Object.freeze({
   checkinRate: 12,          // pax/s : guéridon check-in (débit de BASE, sans service bagages)
   baggageBoostPer: 8,       // pax/s ADDITIONNEL par salle bagages AFFECTÉE au terminal (AC22/R27)
   securityRate: 16,         // pax/s : filière sécurité
+  securityBoostPer: 4,      // T33 (t_88aee6d5) : pax/s ADDITIONNEL par salle sécurité AFFECTÉE au terminal (même pattern R27 que les bagages)
   boardRate: 10,           // pax/s : porte d'embarquement
   satLossPerWait10: 0.02,   // %/s : par 10 pax en file AU-DESSUS de la capacité (PAR TERMINAL)
   satLossPerSat: 0.15,      // %/s : par étape SATURÉE (file pleine, PAR TERMINAL)
   recoverRate: 0.5,        // %/s : la satisfaction REMONTE quand les files sont vides
   comfortCatering: 0.2,    // services de confort (soutien de la satisfaction)
   comfortMaintenance: 0.1, // — mêmes taux que l'ancienne logique économie
+  comfortLounge: 0.3,      // T33 (t_88aee6d5) : salon VIP : confort (famille confort — soutien de la satisfaction, effet global comme la restauration)
 });
 
 // Démarre l'état passagers (les sauvegardes M1 n'ont pas ces champs — tolérées).
@@ -304,7 +306,15 @@ export function tickPassengers(sim, dt) {
     // renforce JAMAIS B (critère R27/R30 — plus de service global).
     const baggageCount = countTypeServing(sim, 'baggage', tid);
     const checkinRate = PAX.checkinRate + baggageCount * PAX.baggageBoostPer;
-    const rates = { checkin: checkinRate, security: PAX.securityRate, board: PAX.boardRate };
+    // T33 (t_88aee6d5) : même pattern R27 que les bagages — les salles de
+    // sécurité AFFECTÉES à CE terminal boostent le débit sécurité DE CE
+    // terminal. Un service affecté à A ne renforce JAMAIS B.
+    const securityCount = countTypeServing(sim, 'security', tid);
+    const rates = {
+      checkin: checkinRate,
+      security: PAX.securityRate + securityCount * PAX.securityBoostPer,
+      board: PAX.boardRate,
+    };
     for (const [stage, to] of [['checkin', 'security'], ['security', 'board']]) {
       const pass = Math.min(q[stage], caps[stage], rates[stage] * dt);
       q[stage] -= pass; q[to] += pass;
@@ -337,7 +347,14 @@ export function tickPassengers(sim, dt) {
     let gain = PAX.recoverRate;
     if (sim.infra.services.some((s) => s.type === 'catering')) gain += PAX.comfortCatering;
     if (sim.infra.services.some((s) => s.type === 'maintenance')) gain += PAX.comfortMaintenance;
-    p.satisfaction = Math.min(100, p.satisfaction + gain * dt);
+    // T33 (t_88aee6d5) : le salon VIP (famille confort, même que la
+    // restauration — un bâtiment POSÉ, l'effet GLOBAL sert toute la
+    // satisfaction de l'aéroport, pas un terminal).
+    if (sim.infra.services.some((s) => s.type === 'lounge')) gain += PAX.comfortLounge;
+    // T33 : l'amélioration « confort » (upgrades.mjs comfortRecoverMult — le
+    // MEILLEUR terminal équipé, effet global comme la famille confort)
+    // MULTIPLIE la récupération — niveau 0 = ×1 (comportement EXISTANT).
+    p.satisfaction = Math.min(100, p.satisfaction + gain * comfortRecoverMult(sim) * dt);
   }
 }
 
