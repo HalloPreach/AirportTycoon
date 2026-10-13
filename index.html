@@ -46,7 +46,23 @@
     .toast--ok { border-left-color: #43a047; }
     .toast--warn { border-left-color: #fbc02d; } /* R39 (t_1c21c88e) : tréso/emprunt, lisible sans couleur seule */
     .toast--err { border-left-color: #e53935; }
-    .toast--out { opacity: 0; }
+    .toast--out { opacity: 0; transform: translateY(4px); }
+    /* Juice (t_5065be95) : animations légères des panneaux — entrées à la
+       création/affichage (keyframe rejouée) et sorties des toasts (glissade).
+       Le DÉCLENCHEMENT des entrées re-affichées est géré par juice.fx
+       (src/ui/juice.mjs, testé) ; le CSS fait seulement l'animation. */
+    @keyframes fx-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes fx-out {
+      from { opacity: 1; }
+      to { opacity: 0; transform: translateY(4px); }
+    }
+    .panel, .planning, .intro, .toast { animation: fx-in 0.18s ease-out; }
+    .toast { transition: opacity 0.2s ease, transform 0.2s ease; }
+    .fx-enter { animation: fx-in 0.18s ease-out; }
+    .fx-exit { animation: fx-out 0.18s ease-in forwards; }
     /* Panneau planning (BL-16) : liste consultable des vols + accepter/refuser. */
     .planning {
       position: fixed; right: 12px; top: 12px; z-index: 10; max-width: 360px;

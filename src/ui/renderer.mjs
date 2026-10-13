@@ -14,7 +14,7 @@ function runwayClosedRO(sim, runwayId) {
   const rec = i.runways[runwayId];
   return !!(rec && rec.remaining > 0);
 }
-export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, selectionOf = null, paletteOf = null } = {}) {
+export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, selectionOf = null, paletteOf = null, juice = null } = {}) {
   const ctx = canvas.getContext('2d');
 
   function resize() {
@@ -348,10 +348,17 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
     if (state.screen === 'menu') {
       drawMenu(pal);
     } else {
-      if (menuBox) menuBox.style.display = 'none'; // R20 : les boutons SOURIS ne se superposent jamais au jeu
+      if (menuBox) menuBox.style.display = 'none'; // R20 : les boutons du menu ne se superposent pas au jeu
+      // Juice (t_5065be95) : le SHAKE (incident majeur) décale le monde entier
+      // (particules + overlay compris) — le HUD, lui, reste stable (UI ≠ monde).
+      ctx.save();
+      const off = juice ? juice.shakeOffset() : { x: 0, y: 0 };
+      ctx.translate(off.x, off.y);
       drawGame(state, cam, pal);
-      // Les overlays (R18) + le HUD restent DEDANS — ils sont de l'UI, pas du monde.
+      // Superpositions (fantôme de construction…) — la logique de pose reste dans la sim/UI.
       for (const overlay of overlays) overlay(ctx, cam, viewSize());
+      if (juice) juice.draw(ctx, cam, viewSize());
+      ctx.restore();
       drawHud(state);
     }
     // Exposition pour les tests/CDP sans exposer les règles de jeu

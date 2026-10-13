@@ -8,7 +8,7 @@ import { unlockState } from '../infra/unlocks.mjs';
 
 const KINDS = ['runway', 'taxiway', 'terminal', 'fuel', 'hangar', 'catering', 'cleaning', 'baggage'];
 
-export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced, controls = [] }) {
+export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced, onDemolished, controls = [] }) {
   const tool = { mode: false, kind: 'runway', demolishMode: false, ghost: null };
 
   // Barre d'outils (DOM, en bas à gauche) — accessible : boutons <button> réels.
@@ -146,6 +146,7 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
       const { demolishBuilding } = await import('../infra/infra.mjs').catch(() => ({ demolishBuilding: null }));
       if (!demolishBuilding) { toast('Simulation non prête', 'err'); return; }
       const r = demolishBuilding(sim, hit.id);
+      if (r.ok && onDemolished) onDemolished(hit, r); // Juice (t_5065be95) : avant la suppression, l'objet porte sa position
       toast(r.ok ? `${BUILDINGS[hit.type] ? BUILDINGS[hit.type].name : hit.type} démoli (+${r.refund} $)` : r.why, r.ok ? 'ok' : 'err');
       return;
     }

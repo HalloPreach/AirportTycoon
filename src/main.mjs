@@ -15,6 +15,7 @@ import { makePlanningPanel } from './ui/planning-panel.mjs';
 import { makePanels } from './ui/panels.mjs';
 import { makeIntro } from './ui/intro.mjs';
 import { makeBankruptcyScreen, resumeCommand } from './ui/bankruptcy.mjs'; // R35 : écran de faillite (bilan + décisions)
+import { makeJuice, juiceForAlert } from './ui/juice.mjs'; // Juice (t_5065be95) : feedback visuel léger (UI, lecture seule)
 import { drawNetworkOverlay } from './ui/overlay.mjs';
 import { clearSave } from './persistence/save.mjs';
 import { makeGameState } from './core/new-game.mjs';
@@ -73,11 +74,27 @@ export function boot(canvas) {
     { label: 'Charger la sauvegarde (L)', key: 'L',
       action: () => savePanel.loadNow() },
   ];
+  // Juice (t_5065be95) : feedback visuel léger — particules, nombres €, shake,
+  // animations de panneaux. Module UI pur : lecture seule sur la sim (zéro règle),
+  // avancé à chaque frame (bus 'frame'), rendu par le renderer.
+  const juice = makeJuice();
   const buildTool = makeBuildTool({
     canvas, state,
     camera,
     viewSize: () => ({ width: canvas.width, height: canvas.height }),
     toast: toasts.toast,
+    // Juice : éclats + € perdus au point de pose (la sim a déjà débité le coût —
+    // on l'APRÈS-CHOC, jamais avant).
+    onPlaced: (b) => {
+      juice.burst(b.x + b.w / 2, b.y + b.h / 2);
+      if (b.cost > 0) juice.float(b.x + b.w / 2, b.y + b.h / 2, `−${b.cost} $`, 'loss');
+    },
+    // Juice : démolition — la position est lue AVANT la suppression (objet `hit`),
+    // le remboursement est lu SUR LE VERDICT de la sim (r.refund, jamais recalculé).
+    onDemolished: (hit, r) => {
+      juice.burst(hit.x + hit.w / 2, hit.y + hit.h / 2);
+      if (r.refund > 0) juice.float(hit.x + hit.w / 2, hit.y + hit.h / 2, `+${r.refund} $`, 'gain');
+    },
     controls,
   });
   // R20 : commandes du MENU en boutons souris (N nouvelle partie / R reprise)
@@ -113,6 +130,8 @@ export function boot(canvas) {
     // R43 : la palette suit l'option daltonienne (miroir live state.options,
     // lu à chaque frame) — le renderer ne décide rien, il LIT la palette.
     paletteOf: () => (state.options ? state.options.colorBlind : false),
+    // Juice (t_5065be95) : shake (translate monde) + rendu particules/nombres €.
+    juice,
   });
   makeInputHandlers(canvas, bus, camera, renderer.viewSize);
   // Panneaux de consultation (NONMVP-5) : inspection / bilan / stats / alertes
@@ -303,6 +322,10 @@ export function boot(canvas) {
       // (sinon les 500 événements restaurés seraient re-toastés à chaque frame).
       if (!a || !a.kind || a.seq == null || a.seq <= sim._alertSeq) continue;
       sim._alertSeq = a.seq; // curseur : le dernier seq CONNU (pas seulement lu-en-fine)
+      // Juice (t_5065be95) : feedback visuel par événement NOUVEAU (même porte
+      // seq que le toast) — particules/€ lu sur la sim, shake incident majeur.
+      // Lecture seule : la sim n'est jamais modifiée ici.
+      juiceForAlert(juice, sim, a, camera);
       const text = (ALERT_MSG[a.kind] || ((e) => a.why || a.kind))(a);
       const cls = a.kind === 'bankrupt' || a.kind === 'treasury-critical'
         ? 'err' : a.kind === 'treasury-warn' || a.kind === 'loan-taken'
@@ -320,7 +343,8 @@ export function boot(canvas) {
   // Planificateur : la case « auto-accept » (politique joueur, BL-16) s'applique
   // avant le tick — les vols acceptés ici sont DÉPLOIÉS par la sim au prochain
   // passage de son horaire (la sim ne décide jamais elle-même).
-  bus.on('frame', () => {
+  bus.on('frame', (dt) => {
+    juice.update(dt); // Juice (t_5065be95) : particules/nombres/shake avancent au temps réel
     if (state.planningAuto) planningPanel.tickAuto();
     planningPanel.refresh(); // reconstruction des lignes seulement si le planning a changé
     panels.refresh(); // idem (signature) : DOM stable tant que l'état ne change pas
@@ -330,6 +354,36 @@ export function boot(canvas) {
     bankruptcyScreen.refresh(); // R35 : l'écran suit le flag de la sim (open/fermé + peinture)
     optionsPage.refresh(); // R43 : la page options suit l'état (valeurs des boutons)
     buildTool.refreshControls();
+  });
+
+  // Juice (t_5065be95) : animations légères des panneaux (ENTRÉES re-affichées) —
+  // l'écran de faillite et la carte d'intro sont masqués puis REAFFICHÉS : une
+  // animation CSS seule ne se rejoue pas, donc la machine juice.fx (testée dans
+  // tests/juice.test.mjs) suit la transition et relance la classe .fx-enter.
+  // Les SORTIES animées : les toasts (transition CSS .toast--out, index.html).
+  // S'exécute APRÈS le handler ci-dessus (ordre des bus.on) : le display est déjà
+  // l'état de cette frame.
+  const fx = juice.fx;
+  const bankEl = document.querySelector('.bankruptcy');
+  const introEl = document.querySelector('.intro');
+  let bankOpen = false;
+  let introOpen = false;
+  function fxEnter(el, name) {
+    if (!el) return;
+    el.classList.remove('fx-enter');
+    void el.offsetWidth; // reflow forcé : la keyframe fx-in se rejoue
+    el.classList.add('fx-enter');
+    fx.enter(name);
+  }
+  bus.on('frame', () => {
+    const bOpen = state.screen === 'game' && !!state.sim && !!state.sim.economy.bankrupt;
+    if (bOpen && !bankOpen) fxEnter(bankEl, 'bankruptcy');
+    bankOpen = bOpen;
+    if (bankOpen === false && fx.phase('bankruptcy') !== 'idle') fx.clear('bankruptcy');
+    const iOpen = state.screen === 'game' && !!state.intro && !state.intro.done && !state.intro.skipped;
+    if (iOpen && !introOpen) fxEnter(introEl, 'intro');
+    introOpen = iOpen;
+    if (introOpen === false && fx.phase('intro') !== 'idle') fx.clear('intro');
   });
 
   // Clavier global : les touches de déplacement restent dans input.mjs ;
@@ -397,6 +451,7 @@ export function boot(canvas) {
     bankruptcyScreen, // R35 : l'écran de faillite (tests CDP : ouvert sur bankrupt, boutons)
     options, // R43 : les options persistantes (volume / daltonien / vitesse)
     optionsPage, // R43 : la page options (tests CDP : open/close/apply + localStorage)
+    juice, // Juice (t_5065be95) : les effets canvas (stats() : particules, nombres, shake, fx)
   };
 }
 
