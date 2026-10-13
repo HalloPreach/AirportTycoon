@@ -6,6 +6,7 @@ import { EventBus } from './core/events.mjs';
 import { Camera } from './ui/camera.mjs';
 import { makeInputHandlers } from './ui/input.mjs';
 import { makeRenderer } from './ui/renderer.mjs';
+import { makeOptionsPage, loadOptions, saveOptionsToStorage, normalizeOptions } from './ui/options.mjs'; // R43 : options persistantes
 import { startLoop } from './core/loop.mjs';
 import { makeToasts } from './ui/toast.mjs';
 import { makeBuildTool } from './ui/build-tool.mjs';
@@ -21,9 +22,39 @@ import { SCENARIOS, startScenario, scenarioObjective } from './scenarios.mjs'; /
 
 export function boot(canvas) {
   const state = newGame();
+
+  // R43 : options PERSISTANTES (volume / mode daltonien / vitesse) — une clé
+  // localStorage DEDICACE (separée de la sauvegarde de jeu) : elles survivent
+  // à une nouvelle partie et à une suppression de save. `state.options` est le
+  // miroir VIVANT que le renderer lit (palette) et que la page options édite ;
+  // main.mjs est le SEUL PONT : persistance (options.mjs) + synchro du
+  // state.speedIndex (les vitesses EXISTANTES SPEEDS, jamais réinventées).
+  const options = normalizeOptions(loadOptions());
+  state.options = options;
+  state.speedIndex = options.speedIndex; // la vitesse enregistrée s'applique au démarrage
+  // Le volume (0-100) est PERSISTÉ mais le jeu n'a pas (encore) de moteur
+  // audio — la valeur est prête pour le prochain cycle (ponytail : pas de
+  // WebAudio inventé ici, comme le reste du projet).
   const bus = new EventBus();
   const camera = new Camera(state);
   const toasts = makeToasts(document.body);
+  // R43 : page OPTIONS (volume / daltonien / vitesse) — UI fine : elle édite
+  // l'objet options VIVANT (state.options, le miroir lu par le renderer) et,
+  // à la validation, émet onApply : main.mjs persiste (clé dédiée) +
+  // synchronise la VITESSE LIVE (state.speedIndex, les SPEEDS existantes) +
+  // toast. « Retour au menu » referme la page — closure comme l'écran de
+  // faillite : le clic n'arrive qu'après l'initialisation complète.
+  const optionsPage = makeOptionsPage(state, options, {
+    onApply: (o) => {
+      state.speedIndex = o.speedIndex; // vitesse appliquée LIVE (x1/x2/x4 existantes)
+      if (!saveOptionsToStorage(o)) {
+        toasts.toast('Options appliquées mais non enregistrées (stockage indisponible)', 'warn');
+        return;
+      }
+      toasts.toast('Options enregistrées', 'ok');
+    },
+    onBack: () => optionsPage.close(),
+  });
   // R20 : boutons SOURIS des commandes du jeu (les raccourcis clavier P/F/S/L
   // restent — la souris est la voie première, les touches complètent). Les
   // actions référencent `savePanel` (déclaré plus bas dans boot) par closure :
@@ -61,6 +92,10 @@ export function boot(canvas) {
     // scenario (pas de champ, pas d'objectif annoncé).
     scenario: (mode) => startScenarioGame(mode),
     scenarioModes: () => Object.entries(SCENARIOS).map(([id, c]) => ({ id, label: c.name })),
+    // R43 : la page options (volume / daltonien / vitesse) s'ouvre aussi en
+    // BOUTON dans le menu (clavier : V — la touche O est déjà l'overlay
+    // réseau R18, non modifiée).
+    openOptions: () => optionsPage.open(),
   };
   const renderer = makeRenderer(canvas, {
     overlays: [
@@ -75,6 +110,9 @@ export function boot(canvas) {
     // — le closure lit `panels` au moment du rendu (déclaré plus bas, initialisé
     // avant la 1re frame) ; la règle reste dans panels (pick), le renderer lit.
     selectionOf: () => (panels && panels.selectionOf ? panels.selectionOf() : null),
+    // R43 : la palette suit l'option daltonienne (miroir live state.options,
+    // lu à chaque frame) — le renderer ne décide rien, il LIT la palette.
+    paletteOf: () => (state.options ? state.options.colorBlind : false),
   });
   makeInputHandlers(canvas, bus, camera, renderer.viewSize);
   // Panneaux de consultation (NONMVP-5) : inspection / bilan / stats / alertes
@@ -123,6 +161,7 @@ export function boot(canvas) {
     // (la case auto-accept suit l'état) — pas un second reset parallèle.
     planningPanel.setAuto(false);
     clearSave(); // une nouvelle partie efface l'ancienne sauvegarde (« Reprendre » = la partie en cours)
+    state.speedIndex = options.speedIndex; // R43 : la vitesse ENREGISTRÉE s'applique (la préférence persiste entre les parties)
     setScreen(state, SCREENS.GAME);
     toasts.toast('Nouvelle partie — aéroport fourni, étends-le (B)', 'ok');
   }
@@ -140,6 +179,7 @@ export function boot(canvas) {
     panels.invalidate();
     planningPanel.setAuto(false);
     clearSave(); // une partie scénario efface l'ancienne sauvegarde
+    state.speedIndex = options.speedIndex; // R43 : idem nouvelle partie — la vitesse enregistrée s'applique
     setScreen(state, SCREENS.GAME);
     // L'OBJECTIF ANNONCÉ (le R22 du scénario) en toast — lecture de l'état.
     const o = scenarioObjective(state);
@@ -177,7 +217,14 @@ export function boot(canvas) {
     // SIM (disparu après le load) — panels.invalidate() le vide pour qu'elle
     // n'affiche plus un avion fantôme (sinon le DOM du panneau restait « parti
     // — plus en simulation » de la partie précédente).
-    onLoad: () => panels.invalidate(),
+    onLoad: () => {
+      panels.invalidate();
+      // R43 : le load peut porter un champ options (sauvegarde post-R43) — on
+      // RE-ATTACHE le miroir VIVANT (l'objet `options` du boot) : source unique
+      // de vérité des options (clé dédiée, pas du champ de la sauvegarde).
+      // La page options et le renderer (palette) restent donc synchrones.
+      state.options = options;
+    },
   });
 
   // Alertes de la sim → toasts lisibles (on consomme les NOUVELLES seulement).
@@ -281,6 +328,7 @@ export function boot(canvas) {
     // (vitesse/pause reflètent l'état courant) suivent à chaque frame.
     intro.refresh();
     bankruptcyScreen.refresh(); // R35 : l'écran suit le flag de la sim (open/fermé + peinture)
+    optionsPage.refresh(); // R43 : la page options suit l'état (valeurs des boutons)
     buildTool.refreshControls();
   });
 
@@ -304,6 +352,11 @@ export function boot(canvas) {
       toasts.toast(state.networkOverlay
         ? 'Overlay réseau ON (O pour couper) — segments occupés + portes coupées'
         : 'Overlay réseau OFF', 'info');
+    }
+    else if (k === 'v') {
+      // R43 : la page OPTIONS (volume / daltonien / vitesse) — clavier V
+      // (O est déjà l'overlay réseau R18 ; le menu a aussi un BOUTON).
+      optionsPage.open();
     }
     else if (k >= '1' && k <= '8') buildTool.setKind(KINDS[Number(k) - 1]);
   });
@@ -342,6 +395,8 @@ export function boot(canvas) {
     panels,
     intro, // R20 : l'introduction (tests CDP : étape courante, done/skipped)
     bankruptcyScreen, // R35 : l'écran de faillite (tests CDP : ouvert sur bankrupt, boutons)
+    options, // R43 : les options persistantes (volume / daltonien / vitesse)
+    optionsPage, // R43 : la page options (tests CDP : open/close/apply + localStorage)
   };
 }
 

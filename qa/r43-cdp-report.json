@@ -1,0 +1,93 @@
+{
+  "ok": true,
+  "results": [
+    {
+      "name": "serveur local répond",
+      "ok": true,
+      "detail": "http://127.0.0.1:8431"
+    },
+    {
+      "name": "navigateur démarré (cible CDP page)",
+      "ok": true,
+      "detail": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
+    },
+    {
+      "name": "window.__game exposé",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "options par défaut câblées (volume 50, daltonien OFF, x1)",
+      "ok": true,
+      "detail": "{\"volume\":50,\"colorBlind\":false,\"speedIndex\":0}"
+    },
+    {
+      "name": "page options exposée + bouton menu « Options (V) »",
+      "ok": true,
+      "detail": "page=object bouton=true"
+    },
+    {
+      "name": "bouton menu « Options (V) » ouvre la page",
+      "ok": true,
+      "detail": "{\"open\":true,\"card\":true,\"visible\":true}"
+    },
+    {
+      "name": "volume 80 + daltonien ON + vitesse x2 appliqués LIVE (miroir + state.speedIndex)",
+      "ok": true,
+      "detail": "{\"volume\":80,\"colorBlind\":true,\"speedIndex\":1}"
+    },
+    {
+      "name": "persistence CLÉ DÉDIÉE (airport-tycoon-options), sauvegarde de jeu INTACTE",
+      "ok": true,
+      "detail": "{\"v\":1,\"options\":{\"volume\":80,\"colorBlind\":true,\"speedIndex\":1}}"
+    },
+    {
+      "name": "toast de confirmation « Options enregistrées »",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "« Retour au menu » referme la page",
+      "ok": true,
+      "detail": "{\"open\":false,\"hidden\":true}"
+    },
+    {
+      "name": "clavier V ouvre la page options",
+      "ok": true,
+      "detail": "{\"openV\":true,\"overlayToggled\":true}"
+    },
+    {
+      "name": "la touche O reste l'overlay réseau R18 (non modifiée)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "jeu en cours : capture daltonienne prise avec l'option ON, puis inversion standard/ON visible",
+      "ok": true,
+      "detail": "{\"volume\":80,\"colorBlind\":true,\"speedIndex\":1}"
+    },
+    {
+      "name": "RECHARGEMENT : les options survivent (volume 80, daltonien ON, x2)",
+      "ok": true,
+      "detail": "{\"volume\":80,\"colorBlind\":true,\"speedIndex\":1}"
+    },
+    {
+      "name": "SÉPARATION : le slot de sauvegarde de jeu ne porte JAMAIS le payload d'options",
+      "ok": true,
+      "detail": "slot = sauvegarde de jeu (champ state)"
+    },
+    {
+      "name": "aucune exception de page",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "diag": {
+    "browser": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "spawnError": "\r\nDevTools listening on ws://127.0.0.1:8590/devtools/browser/93f304f9-16b9-4860-9367-d365424619f6\r\n[10736:3440:1013/155321.313:ERROR:chrome\\browser\\task_manager\\providers\\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a \"Renderer\" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.\r\n[10736:34124:1013/155321.987:ERROR:chrome\\elevation_service\\edge_elevation_service_browser_helper.cc:94] LaunchUpdateCmdElevatedAndWait:  hr = 80070002 with exit code: 32\r\n",
+    "cdpTarget": "ws://127.0.0.1:8590/devtools/page/010334F57FA08D68C246DB2722E677E3",
+    "started": true,
+    "page": "http://127.0.0.1:8431/"
+  },
+  "pageExceptions": []
+}

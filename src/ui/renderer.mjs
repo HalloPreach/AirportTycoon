@@ -1,6 +1,7 @@
 // Rendu canvas 2D : LIT l'état, ne calcule rien de jeu (règle UI fine).
 // Sprites vectoriels simples — ponytail : à remplacer par de vrais assets une fois la boucle jouable.
 import { queueTotals } from '../sim/passengers.mjs'; // R30 : files par terminal → somme (HUD)
+import { getPalette } from './palette.mjs'; // R43 : palette standard / daltonienne
 // R39 : piste fermée — LECTURE SEULE de l'état d'incident (règle dans la sim,
 // incidents.mjs) : la piste est fermée tant que l'incident attaché a un
 // remaining > 0. On ne PASSE PAS par runwayClosed() : elle appelle
@@ -13,7 +14,7 @@ function runwayClosedRO(sim, runwayId) {
   const rec = i.runways[runwayId];
   return !!(rec && rec.remaining > 0);
 }
-export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, selectionOf = null } = {}) {
+export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, selectionOf = null, paletteOf = null } = {}) {
   const ctx = canvas.getContext('2d');
 
   function resize() {
@@ -33,13 +34,15 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
   }
 
   // Fond de terrain minimal : quadrillage + limites du terrain.
-  function drawTerrain(state, cam) {
+  // R43 : les couleurs viennent de la palette (standard/daltonienne) — les
+  // shapes sont identiques, seul le rempli change (le rendu ne casse pas).
+  function drawTerrain(state, cam, pal) {
     const { w, h } = state.terrain;
     const [x0, y0] = screenToCanvas(0, 0, cam);
     const [x1, y1] = screenToCanvas(w, h, cam);
-    ctx.fillStyle = '#3d5a3a'; // herbe
+    ctx.fillStyle = pal.terrain; // herbe (standard) / fond neutre (daltonien)
     ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.strokeStyle = pal.gridLine;
     const step = 100 * cam.zoom; // quadrillage 100 px monde
     ctx.lineWidth = 1;
     for (let gx = 0; gx <= w; gx += 100) {
@@ -50,18 +53,16 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
       const [, cy] = screenToCanvas(0, gy, cam);
       ctx.beginPath(); ctx.moveTo(x0, cy); ctx.lineTo(x1, cy); ctx.stroke();
     }
-    ctx.strokeStyle = '#cfd8dc';
+    ctx.strokeStyle = pal.terrainBorder;
     ctx.lineWidth = 2;
     ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
   }
 
-  // Bâtiments posés (lecture seule de state.sim.infra). Couleurs par type.
-  const BLD_COLOR = {
-    runway: '#455a64', taxiway: '#78909c', terminal: '#1e88e5',
-    fuel: '#fdd835', hangar: '#ef6c00', catering: '#9c27b0',
-    cleaning: '#26c6da', baggage: '#7cb342',
-  };
-  function drawInfra(state, cam) {
+  // Bâtiments posés (lecture seule de state.sim.infra). Couleurs par type :
+  // R43 — les cartes viennent de la palette (pal.buildings) ; les ÉTIQUETTES
+  // (kind peintes au zoom près) sont inchangées : la lisibilité ne repose pas
+  // sur la couleur (R39), le mode daltonien ne casse donc rien.
+  function drawInfra(state, cam, pal) {
     const sim = state.sim;
     if (!sim || !sim.infra) return;
     const all = [
@@ -72,7 +73,7 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
       const kind = b.type || b.kind; // la sim pose `type` ; les sauvegardes M1 `kind`
       const [x, y] = screenToCanvas(b.x, b.y, cam);
       const w = b.w * cam.zoom, h = b.h * cam.zoom;
-      ctx.fillStyle = BLD_COLOR[kind] || '#90a4ae';
+      ctx.fillStyle = pal.buildings[kind] || '#90a4ae';
       ctx.fillRect(x, y, w, h);
       ctx.strokeStyle = 'rgba(0,0,0,0.35)';
       ctx.lineWidth = 1;
@@ -88,7 +89,7 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
       // symbole + texte (X sur piste fermée, « PANNE » sur station HS), la
       // règle reste dans la sim (runwayClosed / svc.fuelOut, lecture seule).
       if (kind === 'runway' && runwayClosedRO(sim, b.id)) {
-        ctx.strokeStyle = '#e53935';
+        ctx.strokeStyle = pal.alert; // X lisible en daltonien (symbole + FERMÉE, R39)
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(x + w * 0.4, y + h * 0.4); ctx.lineTo(x + w * 0.6, y + h * 0.6);
@@ -112,7 +113,9 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
     // sur elle — critère R39). L'état vient de la sim : g.acId (réservation,
     // aircraft.mjs A5) + la position réelle de l'avion (occupée = à quai).
     if (sim.infra.gates && sim.infra.gates.length) {
-      const GATE_COLOR = { S: '#4caf50', M: '#ff9800', L: '#2196f3' };
+      // R43 : couleurs de portes de la palette (S/M/L distincts en luminance
+      // ; les lettres ·/R/O déjà peintes garantissent la lecture sans couleur).
+      const GATE_COLOR = pal.gates;
       const GROUND_PHASES = new Set(['docking', 'gate', 'refuel', 'disembark', 'ground', 'board', 'pushback']); // pushback : porte encore occupée (g.acId libérée AU DÉPART de pushback, aircraft.mjs doPushback)
       const atGate = new Set(sim.aircraft
         .filter((a) => a.gateId != null && GROUND_PHASES.has(a.phase))
@@ -136,7 +139,7 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
           }
           ctx.restore();
         } else {
-          ctx.fillStyle = occ ? '#e53935' : (GATE_COLOR[g.size] || '#9e9e9e');
+          ctx.fillStyle = occ ? GATE_COLOR.occupied : (GATE_COLOR[g.size] || '#9e9e9e');
           ctx.fillRect(x, y, w, h);
         }
         ctx.strokeStyle = occ ? '#fff' : 'rgba(0,0,0,0.35)';
@@ -237,11 +240,11 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
   }
 
   // Écran de jeu : terrain + infra + avions sous la caméra.
-  function drawGame(state, cam) {
+  function drawGame(state, cam, pal) {
     ctx.fillStyle = '#263238';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    drawTerrain(state, cam);
-    drawInfra(state, cam);
+    drawTerrain(state, cam, pal);
+    drawInfra(state, cam, pal);
     drawAircraft(state, cam);
   }
 
@@ -249,12 +252,15 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
   // R20 : les commandes du menu sont DES BOUTONS (souris) — les touches N/R
   // restent en raccourci (le texte l'indique). Le bouton « Reprendre »
   // n'existe QUE s'il y a une sauvegarde (savePanel.canResume).
+  // R43 : le menu propose AUSSI « Options (V) » (page options persistante :
+  // volume, mode daltonien, vitesse) — présent dès que onMenuCommands.openOptions
+  // est câblé (main.mjs) ; le bouton n'est pas créé si l'action est absente.
   // Le bloc DOM est créé UNE FOIS (render est appelé à chaque frame) et
   // seulement mis à jour de façon idempotente.
   let menuBox = null;
   let resumeBtn = null;
-  function drawMenu() {
-    ctx.fillStyle = '#1a237e';
+  function drawMenu(pal) {
+    ctx.fillStyle = pal.menuBg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#fff';
     ctx.font = '48px system-ui, sans-serif';
@@ -275,7 +281,7 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
       menuBox = document.createElement('div');
       menuBox.className = 'menu-btns';
       menuBox.setAttribute('role', 'toolbar');
-      menuBox.setAttribute('aria-label', 'Commandes du menu (nouvelle partie, reprise de la sauvegarde, scénarios)');
+      menuBox.setAttribute('aria-label', 'Commandes du menu (nouvelle partie, reprise de la sauvegarde, options, scénarios)');
       const btnNew = document.createElement('button');
       btnNew.className = 'tool';
       btnNew.textContent = 'Nouvelle partie (N)';
@@ -284,7 +290,11 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
       resumeBtn.className = 'tool';
       resumeBtn.textContent = 'Reprendre la sauvegarde (R)';
       resumeBtn.addEventListener('click', () => onMenuCommands.resume());
-      menuBox.append(btnNew, resumeBtn);
+      const btnOpts = document.createElement('button');
+      btnOpts.className = 'tool';
+      btnOpts.textContent = 'Options (V)'; // V — clavier (O reste l'overlay réseau R18)
+      btnOpts.addEventListener('click', () => onMenuCommands.openOptions());
+      menuBox.append(btnNew, resumeBtn, btnOpts);
       for (const s of scenarioBtnDefs) {
         const b = document.createElement('button');
         b.className = 'tool';
@@ -331,12 +341,16 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
 
   function render(state) {
     const cam = state.camera;
+    // R43 : la palette suit l'option daltonienne (état live, lue à chaque
+    // frame) — getPalette est en lecture seule : unknown → standard (jamais
+    // de rendu cassé).
+    const pal = getPalette(paletteOf ? paletteOf() : false);
     if (state.screen === 'menu') {
-      drawMenu();
+      drawMenu(pal);
     } else {
-      if (menuBox) menuBox.style.display = 'none'; // R20 : les boutons du menu ne se superposent pas au jeu
-      drawGame(state, cam);
-      // Superpositions (fantôme de construction…) — la logique de pose reste dans la sim/UI.
+      if (menuBox) menuBox.style.display = 'none'; // R20 : les boutons SOURIS ne se superposent jamais au jeu
+      drawGame(state, cam, pal);
+      // Les overlays (R18) + le HUD restent DEDANS — ils sont de l'UI, pas du monde.
       for (const overlay of overlays) overlay(ctx, cam, viewSize());
       drawHud(state);
     }
