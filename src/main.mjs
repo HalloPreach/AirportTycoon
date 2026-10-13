@@ -16,6 +16,7 @@ import { makePanels } from './ui/panels.mjs';
 import { makeIntro } from './ui/intro.mjs';
 import { makeBankruptcyScreen, resumeCommand } from './ui/bankruptcy.mjs'; // R35 : écran de faillite (bilan + décisions)
 import { makeJuice, juiceForAlert } from './ui/juice.mjs'; // Juice (t_5065be95) : feedback visuel léger (UI, lecture seule)
+import { makeAudioEngine, sfxForAlert, normalizeAudioState } from './audio.mjs'; // R44 (t_ebbb202e) : synthèse audio (0 asset) + SFX par alerte
 import { drawNetworkOverlay } from './ui/overlay.mjs';
 import { clearSave } from './persistence/save.mjs';
 import { makeGameState } from './core/new-game.mjs';
@@ -33,9 +34,17 @@ export function boot(canvas) {
   const options = normalizeOptions(loadOptions());
   state.options = options;
   state.speedIndex = options.speedIndex; // la vitesse enregistrée s'applique au démarrage
-  // Le volume (0-100) est PERSISTÉ mais le jeu n'a pas (encore) de moteur
-  // audio — la valeur est prête pour le prochain cycle (ponytail : pas de
-  // WebAudio inventé ici, comme le reste du projet).
+  // R44 (t_ebbb202e) : le moteur de SYNTHESE audio (Web Audio, 0 asset) — la
+  // ponytail R43 est morte : le VOLUME (option R43, 0-100) pilote setVolume
+  // en LIVE et le MUTE persiste via la SAUVEGARDE (state.audio = { muted },
+  // sérialisé avec l'état entier par save.mjs). Sans AudioContext (Node, CI)
+  // le moteur est en mode « dry » : play() journalise, jamais d'erreur.
+  const audio = makeAudioEngine();
+  audio.setVolume(options.volume / 100);
+  // Commande UNIQUE de synchro : le mute suit l'ÉTAT (nouvelle partie,
+  // scénario, load) — un seul point de vérité (state.audio).
+  function syncAudioMute() { audio.setMuted(!!(state.audio && state.audio.muted)); }
+  syncAudioMute();
   const bus = new EventBus();
   const camera = new Camera(state);
   const toasts = makeToasts(document.body);
@@ -47,6 +56,10 @@ export function boot(canvas) {
   // faillite : le clic n'arrive qu'après l'initialisation complète.
   const optionsPage = makeOptionsPage(state, options, {
     onApply: (o) => {
+      // R44 (t_ebbb202e) : retour sonore du clic (chaque bouton de la page
+      // options passe par onApply) + le volume PERSISTÉ (R43) pilote le moteur.
+      audio.play('uiClick');
+      audio.setVolume(o.volume / 100);
       state.speedIndex = o.speedIndex; // vitesse appliquée LIVE (x1/x2/x4 existantes)
       if (!saveOptionsToStorage(o)) {
         toasts.toast('Options appliquées mais non enregistrées (stockage indisponible)', 'warn');
@@ -182,6 +195,7 @@ export function boot(canvas) {
     clearSave(); // une nouvelle partie efface l'ancienne sauvegarde (« Reprendre » = la partie en cours)
     state.speedIndex = options.speedIndex; // R43 : la vitesse ENREGISTRÉE s'applique (la préférence persiste entre les parties)
     setScreen(state, SCREENS.GAME);
+    syncAudioMute(); // R44 (t_ebbb202e) : le mute suit l'état FRAIS (nouvelle partie)
     toasts.toast('Nouvelle partie — aéroport fourni, étends-le (B)', 'ok');
   }
 
@@ -200,6 +214,7 @@ export function boot(canvas) {
     clearSave(); // une partie scénario efface l'ancienne sauvegarde
     state.speedIndex = options.speedIndex; // R43 : idem nouvelle partie — la vitesse enregistrée s'applique
     setScreen(state, SCREENS.GAME);
+    syncAudioMute(); // R44 (t_ebbb202e) : le mute suit l'état FRAIS (scénario)
     // L'OBJECTIF ANNONCÉ (le R22 du scénario) en toast — lecture de l'état.
     const o = scenarioObjective(state);
     toasts.toast(
@@ -243,6 +258,11 @@ export function boot(canvas) {
       // de vérité des options (clé dédiée, pas du champ de la sauvegarde).
       // La page options et le renderer (palette) restent donc synchrones.
       state.options = options;
+      // R44 (t_ebbb202e) : le mute SUIVANT l'état chargé (persisté dans la
+      // sauvegarde) ; une sauvegarde PRÉ-R44 n'a pas le champ → normalisation
+      // défensive (non muet, jamais de crash — même pattern que R35/ensureLoan).
+      state.audio = normalizeAudioState(state.audio);
+      syncAudioMute();
     },
   });
 
@@ -314,7 +334,15 @@ export function boot(canvas) {
     let pendingKindClass = 'info';
     let pendingCount = 0;
     const flush = () => {
-      if (pendingCount) toasts.toast(pendingCount > 1 ? `${pendingText} (×${pendingCount})` : pendingText, pendingKindClass);
+      if (pendingCount) {
+        toasts.toast(pendingCount > 1 ? `${pendingText} (×${pendingCount})` : pendingText, pendingKindClass);
+        // R44 (t_ebbb202e) : la contrepartie AUDIO du toast groupé — MÊME porte
+        // (un son par GROUPE de frame, « ×n ») : une rafale (vols en rafale à
+        // x4, pic de demande) ne CASCADERA pas 10 sons (pas de murail sonore).
+        // Le mapping est PUR (kind → SFX) : un kind inconnu sonne le SILENCE.
+        const sfx = sfxForAlert(pendingKind);
+        if (sfx) audio.play(sfx);
+      }
       pendingKind = null; pendingText = null; pendingCount = 0;
     };
     for (const a of sim.alerts) {
@@ -412,6 +440,15 @@ export function boot(canvas) {
       // (O est déjà l'overlay réseau R18 ; le menu a aussi un BOUTON).
       optionsPage.open();
     }
+    else if (k === 'm') {
+      // R44 (t_ebbb202e) : le MUTE (M) — il VIT sur l'état (sérialisé avec la
+      // sauvegarde : il survit au rechargement) ; le VOLUME (R43) n'est jamais
+      // perdu : le dé-mute restitue la préférence d'origine.
+      const on = !!(state.audio && state.audio.muted);
+      state.audio = { muted: !on };
+      syncAudioMute();
+      toasts.toast(on ? 'Son réactivé (M)' : 'Muet activé (M)', 'info');
+    }
     else if (k >= '1' && k <= '8') buildTool.setKind(KINDS[Number(k) - 1]);
   });
 
@@ -452,6 +489,7 @@ export function boot(canvas) {
     options, // R43 : les options persistantes (volume / daltonien / vitesse)
     optionsPage, // R43 : la page options (tests CDP : open/close/apply + localStorage)
     juice, // Juice (t_5065be95) : les effets canvas (stats() : particules, nombres, shake, fx)
+    audio, // R44 (t_ebbb202e) : le moteur audio (play/setVolume/setMuted + stats : dry/muted/ambient)
   };
 }
 

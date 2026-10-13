@@ -22,6 +22,10 @@ export function newGame() {
     time: 0,       // temps de jeu écoulé (secondes)
     terrain: { w: 1600, h: 1200 }, // terrain vide du M1
     camera: { x: 800, y: 600, zoom: 1 }, // coordonnées monde du centre écran
+    // R44 (t_ebbb202e) : le MUTE vit sur l'ÉTAT (sérialisé avec la sauvegarde
+    // entière par save.mjs → il persiste au rechargement). Une nouvelle
+    // partie repart NON muet — même pattern que state.intro / planningAuto.
+    audio: { muted: false },
   };
 }
 

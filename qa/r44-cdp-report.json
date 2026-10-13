@@ -1,0 +1,78 @@
+{
+  "ok": true,
+  "results": [
+    {
+      "name": "serveur local répond",
+      "ok": true,
+      "detail": "http://127.0.0.1:8652"
+    },
+    {
+      "name": "navigateur démarré (cible CDP page)",
+      "ok": true,
+      "detail": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
+    },
+    {
+      "name": "window.__game exposé",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "moteur audio exposé (API play/setVolume/setMuted/stats)",
+      "ok": true,
+      "detail": "{\"dry\":true,\"ctxState\":null,\"muted\":false,\"volume\":0.5,\"ambient\":false,\"plays\":0,\"last\":null}"
+    },
+    {
+      "name": "boot : volume R43 (50) appliqué au moteur (0.5), non muet, ambiance OFF",
+      "ok": true,
+      "detail": "{\"dry\":true,\"ctxState\":null,\"muted\":false,\"volume\":0.5,\"ambient\":false,\"plays\":0,\"last\":null}"
+    },
+    {
+      "name": "vol forcé : les alertes de la sim SONNENT (SFX par groupe, portée seq)",
+      "ok": true,
+      "detail": "départs=1 plays=6 dernier=event (le mapping exact kind→SFX est verrouillé Node : tests/audio.test.mjs)"
+    },
+    {
+      "name": "contexte Web Audio réel créé au 1er play (plus de dry, 0 exception)",
+      "ok": true,
+      "detail": "ctxState=suspended"
+    },
+    {
+      "name": "touche M : mute activé (état + moteur), toast, volume intact (0.5)",
+      "ok": true,
+      "detail": "{\"stateMuted\":true,\"engineMuted\":true,\"volumeKept\":0.5,\"toast\":true}"
+    },
+    {
+      "name": "touche M : dé-mute (état + moteur repassent au volume courant)",
+      "ok": true,
+      "detail": "{\"stateMuted\":false,\"engineMuted\":false,\"toast\":true}"
+    },
+    {
+      "name": "PERSISTANCE : le mute est SÉRIALISÉ dans la sauvegarde (state.audio)",
+      "ok": true,
+      "detail": "{\"savedMuted\":true}"
+    },
+    {
+      "name": "PERSISTANCE : après rechargement, état + moteur retrouvent le mute (volume intact)",
+      "ok": true,
+      "detail": "{\"state\":true,\"engine\":true}"
+    },
+    {
+      "name": "jeu vivant après le cycle mute/rechargement (sim avance)",
+      "ok": true,
+      "detail": "temps=121s screen=game"
+    },
+    {
+      "name": "aucune exception de page",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "diag": {
+    "browser": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "spawnError": "\r\nDevTools listening on ws://127.0.0.1:8682/devtools/browser/b824670e-73c5-444b-b576-b71b2ac3bb27\r\n[17480:26848:1013/163750.328:ERROR:chrome\\browser\\task_manager\\providers\\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a \"Renderer\" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.\r\n[17480:36728:1013/163750.973:ERROR:chrome\\elevation_service\\edge_elevation_service_browser_helper.cc:94] LaunchUpdateCmdElevatedAndWait:  hr = 80070002 with exit code: 32\r\n",
+    "cdpTarget": "ws://127.0.0.1:8682/devtools/page/96DD88495D7C6D4EB83E62096DDF48F1",
+    "started": true,
+    "page": "http://127.0.0.1:8652/"
+  },
+  "pageExceptions": []
+}
