@@ -1,0 +1,83 @@
+{
+  "ok": true,
+  "results": [
+    {
+      "name": "serveur local répond",
+      "ok": true,
+      "detail": "http://127.0.0.1:8516"
+    },
+    {
+      "name": "navigateur démarré (cible CDP page)",
+      "ok": true,
+      "detail": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
+    },
+    {
+      "name": "window.__game exposé",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "menu : rangée difficulté (Facile / Normal / Difficile) affichée",
+      "ok": true,
+      "detail": "[\"Facile\",\"Normal\",\"Difficile\"]"
+    },
+    {
+      "name": "menu : la sélection par défaut est « Normal » (aria-pressed + commande)",
+      "ok": true,
+      "detail": "pressed=[false,true,false] difficulty=normal"
+    },
+    {
+      "name": "menu : le clic « Difficile » change la sélection (commande + aria-pressed)",
+      "ok": true,
+      "detail": "difficulty=hard pressed=[false,false,true]"
+    },
+    {
+      "name": "« Nouvelle partie » : le profil hard SÉRIALISE (state.difficulty complet)",
+      "ok": true,
+      "detail": "{\"id\":\"hard\",\"name\":\"Difficile\",\"startFunds\":6000,\"incidentScale\":0.6,\"opexFactor\":1.25}"
+    },
+    {
+      "name": "« Nouvelle partie » : capital 6000 $ + facteurs du tick sur la sim",
+      "ok": true,
+      "detail": "money=6000 sim={\"incidentScale\":0.6,\"opexFactor\":1.25}"
+    },
+    {
+      "name": "toast d'annonce de la difficulté (lisible sans jouer)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "RECHARGEMENT : le choix de difficulté SÉRIALISÉ dans la sauvegarde (slot)",
+      "ok": true,
+      "detail": "slot=hard"
+    },
+    {
+      "name": "« Reprendre » : la partie RECHARGÉE garde sa difficulté hard (state + sim)",
+      "ok": true,
+      "detail": "{\"screen\":\"game\",\"difficulty\":\"hard\",\"menuDifficulty\":\"hard\",\"simDifficulty\":{\"incidentScale\":0.6,\"opexFactor\":1.25}}"
+    },
+    {
+      "name": "le SÉLECTEUR DU MENU suit la partie chargée (hard — le choix n'est pas perdu)",
+      "ok": true,
+      "detail": "menuDifficulty=hard"
+    },
+    {
+      "name": "« Facile » (même câblage) : capital 18000 $ + fenêtres ×1.6 + OPEX ×0.85",
+      "ok": true,
+      "detail": "{\"difficulty\":\"easy\",\"money\":18000,\"simDifficulty\":{\"incidentScale\":1.6,\"opexFactor\":0.85},\"menuDifficulty\":\"easy\"}"
+    },
+    {
+      "name": "aucune exception de page",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "diag": {
+    "browser": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "spawnError": "\r\nDevTools listening on ws://127.0.0.1:8512/devtools/browser/9ed7a0eb-c4cd-408d-8c4c-ee1de2a6b4da\r\n[25864:38164:1013/165359.713:ERROR:chrome\\browser\\task_manager\\providers\\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a \"Renderer\" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.\r\n[25864:28868:1013/165400.522:ERROR:chrome\\elevation_service\\edge_elevation_service_browser_helper.cc:94] LaunchUpdateCmdElevatedAndWait:  hr = 80070002 with exit code: 32\r\n",
+    "cdpTarget": "ws://127.0.0.1:8512/devtools/page/DF005F45F31DA65B3D3D2F1BA494E991",
+    "started": true,
+    "page": "http://127.0.0.1:8516/"
+  },
+  "pageExceptions": []
+}

@@ -20,6 +20,7 @@ import { makeAudioEngine, sfxForAlert, normalizeAudioState } from './audio.mjs';
 import { drawNetworkOverlay } from './ui/overlay.mjs';
 import { clearSave } from './persistence/save.mjs';
 import { makeGameState } from './core/new-game.mjs';
+import { DIFFICULTIES, DIFFICULTY_IDS, normalizeDifficulty } from './core/difficulty.mjs'; // T2-1 : la difficulté
 import { SCENARIOS, startScenario, scenarioObjective } from './scenarios.mjs'; // R38 : les 3 scénarios rejouables
 
 export function boot(canvas) {
@@ -112,6 +113,13 @@ export function boot(canvas) {
   });
   // R20 : commandes du MENU en boutons souris (N nouvelle partie / R reprise)
   // — les touches restent en raccourci (le texte du menu les note).
+  // T2-1 (t_d5da994c) : la DIFFICULTÉ du menu — PARAMÈTRE DU PROCHAIN SPAWN
+  // (jamais une règle) : le choix vit ici (sélecteur du menu principal),
+  // part à la création de la partie via makeGameState(undefined, menuDifficulty)
+  // et SÉRIALISE sur state.difficulty (il survit à la sauvegarde/rechargement,
+  // core/difficulty.mjs). Un load (onLoad ci-dessous) le synchronise sur la
+  // partie chargée ; une valeur corrompue retombe au référentiel normal.
+  let menuDifficulty = 'normal';
   function resumeFromSave() { if (state.screen === SCREENS.MENU && savePanel.loadNow()) state.screen = SCREENS.GAME; }
   const menuCommands = {
     newGame: startNewGame,
@@ -126,6 +134,13 @@ export function boot(canvas) {
     // BOUTON dans le menu (clavier : V — la touche O est déjà l'overlay
     // réseau R18, non modifiée).
     openOptions: () => optionsPage.open(),
+    // T2-1 (t_d5da994c) : la SÉLECTION DE DIFFICULTÉ du menu (boutons Facile /
+    // Normal / Difficile, renderer.mjs) — les profils viennent de
+    // core/difficulty.mjs ; le choix (menuDifficulty) est le paramètre du
+    // prochain startNewGame et se normalise (inconnu/corrompu → normal).
+    difficultyModes: () => DIFFICULTY_IDS.map((id) => ({ id, label: DIFFICULTIES[id].name })),
+    difficulty: () => menuDifficulty,
+    setDifficulty: (id) => { menuDifficulty = normalizeDifficulty(id); },
   };
   const renderer = makeRenderer(canvas, {
     overlays: [
@@ -181,7 +196,10 @@ export function boot(canvas) {
   // 2 portes + taxiway, réseau physiquement valide). makeGameState est synchrone :
   // Object.assign remplace tout l'état sur l'objet suivi par la boucle de jeu.
   function startNewGame() {
-    const fresh = makeGameState();
+    // T2-1 (t_d5da994c) : la DIFFICULTÉ choisie au menu est le PARAMÈTRE DU
+    // SPAWN (jamais une règle) : makeGameState l'applique (capital + facteurs
+    // du tick) et la SÉRIALISE sur state.difficulty.
+    const fresh = makeGameState(undefined, menuDifficulty);
     Object.assign(state, fresh); // mêmes références (state.sim = fresh.sim)
     // R07 : la sélection d'inspection (pick) pointe vers les objets de l'ANCIENNE
     // sim — elle doit disparaître à la nouvelle partie (sinon le panneau « inspection »
@@ -196,7 +214,10 @@ export function boot(canvas) {
     state.speedIndex = options.speedIndex; // R43 : la vitesse ENREGISTRÉE s'applique (la préférence persiste entre les parties)
     setScreen(state, SCREENS.GAME);
     syncAudioMute(); // R44 (t_ebbb202e) : le mute suit l'état FRAIS (nouvelle partie)
-    toasts.toast('Nouvelle partie — aéroport fourni, étends-le (B)', 'ok');
+    // T2-1 : le toast annonce la DIFFICULTÉ et son capital de départ (lecture
+    // de l'état — l'UI n'affiche, la sim règle).
+    const diff = DIFFICULTIES[menuDifficulty];
+    toasts.toast(`Nouvelle partie — ${diff.name} : capital ${fresh.sim.economy.money} $ (aéroport fourni, étends-le (B))`, 'ok');
   }
 
   // R38 : DÉMARRER UN SCÉNARIO (guide / saturation / redressement) — l'état
@@ -263,6 +284,15 @@ export function boot(canvas) {
       // défensive (non muet, jamais de crash — même pattern que R35/ensureLoan).
       state.audio = normalizeAudioState(state.audio);
       syncAudioMute();
+      // T2-1 (t_d5da994c) : la partie CHARGÉE porte SA difficulté
+      // (state.difficulty, migrée par ensureDifficulty dans save.mjs si absente
+      // — une sauvegarde PRÉ-T2-1 retombe au référentiel normal, sans crash) :
+      // le SÉLECTEUR DU MENU la suit (la prochaine « Nouvelle partie »
+      // repart de cette difficulté — le choix du joueur n'est pas perdu au
+      // chargement). Normalisation défensive (pattern options : repli normal).
+      if (state.difficulty && state.difficulty.id) {
+        menuDifficulty = normalizeDifficulty(state.difficulty.id);
+      }
     },
   });
 
@@ -490,6 +520,10 @@ export function boot(canvas) {
     optionsPage, // R43 : la page options (tests CDP : open/close/apply + localStorage)
     juice, // Juice (t_5065be95) : les effets canvas (stats() : particules, nombres, shake, fx)
     audio, // R44 (t_ebbb202e) : le moteur audio (play/setVolume/setMuted + stats : dry/muted/ambient)
+    // T2-1 (t_d5da994c) : la DIFFICULTÉ du menu (tests CDP : lecture du choix,
+    // changement, puis startNewGame → state.difficulty / sim.economy.money).
+    difficulty: () => menuDifficulty,
+    setDifficulty: (id) => { menuDifficulty = normalizeDifficulty(id); },
   };
 }
 

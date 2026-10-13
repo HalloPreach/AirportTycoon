@@ -259,6 +259,7 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
   // seulement mis à jour de façon idempotente.
   let menuBox = null;
   let resumeBtn = null;
+  let diffBtns = []; // T2-1 (t_d5da994c) : les boutons de difficulté (rangée du menu)
   function drawMenu(pal) {
     ctx.fillStyle = pal.menuBg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -302,9 +303,42 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
         b.addEventListener('click', () => onMenuCommands.scenario(s.id));
         menuBox.appendChild(b);
       }
+      // T2-1 (t_d5da994c) : SÉLECTION DE DIFFICULTÉ dans le menu — 3 boutons
+      // (Facile / Normal / Difficile), MÊME style .menu-btns .tool que les
+      // commandes du menu (pas de CSS duplicaté) ; la sélection est marquée
+      // par aria-pressed (pattern R43) et mise à jour à chaque frame (repeint
+      // idempotent, comme resumeBtn ci-dessous). Le clic émet
+      // onMenuCommands.setDifficulty — le choix vit dans main.mjs (paramètre
+      // du prochain startNewGame, SÉRIALISÉ via state.difficulty).
+      const diffBtnDefs = (onMenuCommands && onMenuCommands.difficultyModes)
+        ? onMenuCommands.difficultyModes()
+        : [];
+      const diffRow = document.createElement('div');
+      diffRow.className = 'menu-diff';
+      const diffLabel = document.createElement('span');
+      diffLabel.className = 'menu-diff-label';
+      diffLabel.textContent = 'Difficulté :';
+      diffRow.appendChild(diffLabel);
+      diffBtns = diffBtnDefs.map((d) => {
+        const b = document.createElement('button');
+        b.className = 'tool';
+        b.textContent = d.label; // le nom du profil (core/difficulty.mjs)
+        b.setAttribute('aria-pressed', 'false');
+        b.addEventListener('click', () => onMenuCommands.setDifficulty(d.id));
+        diffRow.appendChild(b);
+        return b;
+      });
+      menuBox.appendChild(diffRow);
       document.body.appendChild(menuBox);
     }
     resumeBtn.style.display = onMenuCommands.canResume() ? '' : 'none';
+    // T2-1 : la sélection de difficulté suit la commande (aria-pressed) —
+    // idempotent : la valeur ne change que sur setDifficulty.
+    const curDiff = (onMenuCommands.difficulty && onMenuCommands.difficulty()) || 'normal';
+    diffBtns.forEach((b, i) => {
+      const def = (onMenuCommands.difficultyModes || (() => []))()[i];
+      if (def) b.setAttribute('aria-pressed', String(def.id === curDiff));
+    });
   }
 
   // Bandeau HUD : temps, vitesse, pause + (si sim) fonds, passagers, satisfaction.

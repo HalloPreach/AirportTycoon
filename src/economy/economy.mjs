@@ -128,6 +128,13 @@ export function tickEconomy(sim, dt) {
   for (const t of sim.infra.terminals) opex += (OPEX_PER_SEC.terminal ?? 0) * dt;
   for (const s of sim.infra.services) opex += (OPEX_PER_SEC[s.type] ?? 0) * dt;
   if (opex) {
+    // T2-1 (t_d5da994c) : la DIFFICULTÉ (paramètre de spawn, sim.difficulty —
+    // core/difficulty.mjs) multiplie l'OPEX : la RÈGLE est inchangée
+    // (OPEX_PER_SEC du catalogue, débit dans le MÊME canal spent.opex →
+    // l'identité trésorerie EV-9 tient), seul le paramètre du spawn change.
+    // Sauvegarde PRÉ-T2-1 (champ absent) → ×1 : le référentiel ne bouge pas.
+    const f = (sim.difficulty && sim.difficulty.opexFactor) || 1;
+    opex *= f;
     sim.economy.money -= opex;
     sim.economy.spent.opex = (sim.economy.spent.opex ?? 0) + opex;
   }

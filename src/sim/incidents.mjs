@@ -34,7 +34,10 @@
 import { pushEvent } from '../core/sim-state.mjs';
 import { charge } from '../economy/economy.mjs'; // R33 : l'intervention PAYANTE débite le solde (catégorie spent.intervention)
 
-const INCID = Object.freeze({
+// T2-1 (t_d5da994c) : la table est EXPORTÉE — la couche de difficulté
+// (core/difficulty.mjs) ÉCHELONNE ces fenêtres par profil (× incidentScale) ;
+// les tests la comparent au référentiel. Valeurs inchangées (référentiel).
+export const INCID = Object.freeze({
   RUNWAY_EVERY_S: 900,   // tirage « fermeture piste » toutes les ~15 min sim
   RUNWAY_CLOSE_S: 120,   // durée de la fermeture (les atterrissages patientent)
   FUEL_EVERY_S: 720,     // tirage « panne station » toutes les ~12 min sim
@@ -151,6 +154,12 @@ function startFuelIncident(sim, i, stId, cause) {
 export function tickIncidents(sim, dt, rng) {
   if (!rng) rng = () => 0; // déterministe : sans rng semé, aucun tirage (pas d'incident)
   const i = ensureIncidents(sim);
+  // T2-1 (t_d5da994c) : la DIFFICULTÉ (paramètre de spawn, sim.difficulty —
+  // core/difficulty.mjs) ÉCHELONNE les FENÊTRES de tirage : le mécanisme est
+  // inchangé (même cadence par fenêtre, même tirage rng semé, mêmes cibles,
+  // mêmes effets) — seule la fenêtre change (× incidentScale). Sauvegarde
+  // PRÉ-T2-1 (sim.difficulty absente) → ×1 : le référentiel normal, intact.
+  const scale = (sim.difficulty && sim.difficulty.incidentScale) || 1;
 
   // 1) FERMETURE PISTE (R32 : ATTACHÉE à UNE piste) : le compte à rebours de
   //    CHAQUE piste ferme finit → réouverture (récupération, mesurée).
@@ -164,7 +173,7 @@ export function tickIncidents(sim, dt, rng) {
   }
   if (Object.keys(i.runways).length === 0) {
     i.runway.acc += dt; // cadence : UN tirage par fenêtre (pas une loterie par tick)
-    if (i.runway.acc >= INCID.RUNWAY_EVERY_S) {
+    if (i.runway.acc >= INCID.RUNWAY_EVERY_S * scale) {
       i.runway.acc = 0;
       if (rng() < 0.5) {
         const rwId = pickRunwayTarget(sim);
@@ -189,7 +198,7 @@ export function tickIncidents(sim, dt, rng) {
   }
   if (Object.keys(i.fuels).length === 0) {
     i.fuel.acc += dt;
-    if (i.fuel.acc >= INCID.FUEL_EVERY_S) {
+    if (i.fuel.acc >= INCID.FUEL_EVERY_S * scale) {
       i.fuel.acc = 0;
       if (rng() < 0.5) {
         const stId = pickFuelTarget(sim);
@@ -213,7 +222,7 @@ export function tickIncidents(sim, dt, rng) {
     }
   } else {
     i.surge.acc += dt;
-    if (i.surge.acc >= INCID.SURGE_EVERY_S) {
+    if (i.surge.acc >= INCID.SURGE_EVERY_S * scale) {
       i.surge.acc = 0;
       if (rng() < 0.5) {
         i.surge.active = true;

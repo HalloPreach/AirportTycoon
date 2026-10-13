@@ -50,6 +50,7 @@ import { ensureAssignments } from '../infra/assignments.mjs'; // R27 : migration
 import { ensureUpgrades } from '../infra/upgrades.mjs'; // R31 : migration des améliorations (niveau 0 absent)
 import { ensureIncidents } from '../sim/incidents.mjs'; // R32 : migration + purge des incidents attachés
 import { ensureLoan } from '../economy/economy.mjs'; // R35 : migration de l'emprunt borné (champ absent)
+import { ensureDifficulty } from '../core/difficulty.mjs'; // T2-1 : migration de la difficulté (champs absents)
 
 export const SAVE_KEY = 'airport-tycoon-save';
 export const SAVE_VERSION = 1;
@@ -328,6 +329,11 @@ export function deserialize(json) {
     // pré-R35 ont le champ ABSENT (comme upgrades/incidents : toléré, la
     // factory le met par défaut ; on ne réinvente pas la migration ici).
     ensureLoan(out.sim);
+    // T2-1 (t_d5da994c) : la DIFFICULTÉ — les sauvegardes PRÉ-T2-1 ont
+    // state.difficulty ET sim.difficulty ABSENTS : ensureDifficulty replace
+    // le profil normal (référentiel ×1) — une partie ancienne reprend
+    // EXACTEMENT comme avant (comportement inchangé), pas de crash.
+    ensureDifficulty(out, out.sim);
   }
   return out;
 }

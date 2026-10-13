@@ -7,6 +7,7 @@
 import { newGame } from './game-state.mjs';
 import { newSimState } from './sim-state.mjs';
 import { placeBuilding } from '../infra/infra.mjs';
+import { DIFFICULTIES, normalizeDifficulty } from './difficulty.mjs';
 
 // Plan de départ (A-2) : la géométrie prouvée du test « bien conçu » — les
 // segments se TOUCHENT physiquement (règle BL-02) : la sortie de piste (800,1100)
@@ -18,9 +19,29 @@ const START_LAYOUT = Object.freeze([
   { type: 'terminal', x: 550, y: 900, w: 200, h: 150 },
 ]);
 
-export function makeGameState(seed = undefined) {
+export function makeGameState(seed = undefined, difficultyId = 'normal') {
   const state = newGame();
   state.sim = newSimState();
+  // T2-1 (t_d5da994c) : la DIFFICULTÉ est une couche de paramètres AU SPAWN
+  // (jamais de règle modifiée) : le profil choisi (easy/normal/hard,
+  // DIFFICULTIES) pose le solde de départ (sim.economy.money) et les facteurs
+  // du tick (sim.difficulty : incidentScale/opexFactor, lus par
+  // incidents.mjs / economy.mjs avec repli référentiel). Le CHOIX vit sur
+  // `state.difficulty` — sérialisé avec l'état entier (save.mjs) → il survit à
+  // la sauvegarde/rechargement (comme state.intro / audio / scenario).
+  // `difficultyId` corrompue/inconnue → normal (référentiel, pattern options).
+  const diffId = normalizeDifficulty(difficultyId);
+  const diff = DIFFICULTIES[diffId];
+  state.difficulty = {
+    id: diffId, name: diff.name, startFunds: diff.startFunds,
+    incidentScale: diff.incidentScale, opexFactor: diff.opexFactor,
+  };
+  if (diff.startFunds !== state.sim.economy.money) {
+    state.sim.economy.money = diff.startFunds; // solde de départ du profil
+  }
+  state.sim.difficulty = {
+    incidentScale: diff.incidentScale, opexFactor: diff.opexFactor,
+  };
   // R09 (D3, tranché) : le seed de la partie est généré à la FRONTIÈRE DE
   // CRÉATION : entier 32 bits ALEATOIRE (31 bits + signe — Math.random × 2^31,
   // borné aux entiers 32 bits → sérialise proprement en JSON) pour qu'aucune
