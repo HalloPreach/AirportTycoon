@@ -11,14 +11,15 @@ import { tickAircraft } from '../sim/aircraft.mjs';
 import { tickEconomy, tickPassengers } from '../economy/economy.mjs';
 import { tickUnlocks, cleanGates } from '../infra/infra.mjs';
 import { tickIncidents } from '../sim/incidents.mjs';
+import { tickEvents } from '../sim/events.mjs'; // T3 : couche d'événements dynamiques
 import { tickQuality } from '../progression/quality.mjs'; // R26 : la qualité des offres converge vers la mesure (inertie)
 import { tickObjectives } from '../progression/objectives.mjs';
 import { tickContracts } from '../flights/contracts.mjs';
 import { tickCampaign } from '../progression/campaign.mjs'; // T2-2 : la campagne (victoire)
 import { tickStats } from '../progression/stats.mjs'; // T2-2 : les stats persistantes
 import { tickAchievements } from '../progression/achievements.mjs'; // T2-2 : les succès
-import { tickEvents } from '../sim/events.mjs'; // T3 : couche d'événements dynamiques
 import { makeSimRng } from './rng.mjs';
+import { tickWeather } from '../sim/weather.mjs'; // T3 (t_9b665a8b) : le cycle météo (délais + capacité)
 
 export function tick(state, dt, rng) {
   if (state.screen !== 'game' || state.paused || !state.sim) return;
@@ -26,6 +27,7 @@ export function tick(state, dt, rng) {
   if (sim.economy.bankrupt) return; // la sim est stoppée une fois la faillite déclarée
   if (!rng) rng = makeSimRng(sim); // pas de Math.random à l'état : le générateur est SÉMÉ + sérialisé (EV-10)
   tickPlanner(sim, dt, rng); // horloge de la sim (sim.time) est pilotée PAR le planificateur
+  tickWeather(sim, dt, rng); // T3 (t_9b665a8b) : la MÉTÉO (cycle déterministe) — AVANT les avions (le temps du tick courant pilote leurs retards/capacité)
   tickAircraft(sim, dt);
   tickQuality(sim, dt); // R26 : APRÈS les avions (leur fin de vol alimente la fenêtre de ponctualité)
   cleanGates(sim, dt); // t_2179387d : nettoyage (g.cleaning) + hangar (g.maintenance)

@@ -35,6 +35,7 @@ import { countContractFlight } from '../flights/contracts.mjs';
 import { arrivePassengers, countCarried, boardDelay, groupComplete, removePassengers } from './passengers.mjs';
 import { refuelTimeMult } from '../infra/upgrades.mjs'; // R31 : temps de plein par terminal (amelioration)
 import { runwayClosed } from './incidents.mjs';
+import { weatherEffect } from './weather.mjs'; // T3 : l'effet météo ACTIF (vitesse + retard d'attente)
 
 const V = { approach: 220, landing: 130, taxi: 60, pushback: 30, departure: 150 };
 const GATE_OPS_S = 60;   // débarquement+sol+embarquement : durée d'occupation porte
@@ -121,6 +122,7 @@ export const DELAY_CAUSE_FR = Object.freeze({
   piste: 'piste (fermée/occupée)', porte: 'porte (réservée/usure)',
   segment: 'segment (taxi occupé)', carburant: 'carburant (lance/panne)',
   passagers: 'passagers (file saturée)',
+  meteo: 'météo (temps dégradé)', // T3 : retard FIXE d'entrée en holding par temps dégradé
 });
 
 // R17 (t_fc0d1920, D7 tranchée) : la CAUSE DU RETARD vit en TÊTE de la sim —
@@ -142,6 +144,7 @@ export const DELAY_CAUSE_FR = Object.freeze({
 // lue — jamais additionnée ni dupliquée par module.
 const CAUSES = Object.freeze({
   piste: 'piste', porte: 'porte', segment: 'segment', carburant: 'carburant', passagers: 'passagers',
+  meteo: 'meteo', // T3
 });
 function noteCause(ac, cause) { ac._delayCause = CAUSES[cause]; }
 export function causeAt(sim, ac) {
@@ -213,15 +216,25 @@ function doApproach(sim, ac, dt, spec) {
   // occupation + ordre stable) — la MEILLEURE piste compatible ET LIBRE : la 1re
   // n'est plus CHOISIE par défaut (sondée : 2e libre choisie si 1re prise).
   const rw = pickRunway(sim, spec.minRunway, ac.id);
+  // T3 MÉTÉO : l'effet météo ACTIF (weatherEffect, weather.mjs — LA règle
+  // unique : état courant, majoré à la ligne « orage » si l'incident météo est
+  // actif) : vitesse d'approche RÉDUITE (arrivée plus lente) + retard FIXE
+  // ajouté UNE FOIS à l'entrée en holding (pas de cumul — le retard d'attente
+  // propre reste le += dt de doHolding).
+  const wx = weatherEffect(sim);
   // BL-14 : piste FERMÉE (incident) → aucun atterrissage (le départ, lui,
   // continue) : l'avion patiente en holding, son retard s'accumule (la
   // conséquence est MESURABLE, la récupération = réouverture).
   // Aucune piste compatible / toutes occupées → HOLDING (A4), doHolding prend
   // le relais (le compteur d'attente bornée R04 ne tourne QUE sur blocage).
-  if (!rw || (rw && runwayClosed(sim, rw.id))) { ac.phase = 'holding'; ac.timer = 0; return; }
+  if (!rw || (rw && runwayClosed(sim, rw.id))) {
+    ac.phase = 'holding'; ac.timer = 0;
+    if (wx.delay > 0) { ac.delayed += wx.delay; noteCause(ac, 'meteo'); } // T3 : le temps dégradé rajoute UN retard fixe à l'entrée en attente (cause « météo »)
+    return;
+  }
   ac.runwayId = rw.id;
   const topY = rw.y; // haut de la piste (arrivée de l'approche)
-  const speed = V.approach * dt;
+  const speed = V.approach * wx.speed * dt; // T3 : la vitesse d'approche est multipliée par le facteur météo (1 par temps clair — comportement inchangé)
   if (ac.y < topY) {
     ac.y = Math.min(topY, ac.y + speed);
   } else {
@@ -271,7 +284,7 @@ function doHolding(sim, ac, dt, spec, occupied) {
   if (!rw) return; // toutes occupées (congestion) : on patiente sans annulation
   const topY = rw.y;
   if (ac.y < topY) {
-    ac.y = Math.min(topY, ac.y + V.approach * dt); // toujours en descente
+    ac.y = Math.min(topY, ac.y + V.approach * weatherEffect(sim).speed * dt); // T3 : la descente continue à la vitesse météo (toujours en descente)
   } else {
     ac.x += Math.sin(ac.timer * 0.4) * 20 * dt; // survol / attente
   }
@@ -298,7 +311,13 @@ function doHolding(sim, ac, dt, spec, occupied) {
 // l'approche.
 function doLanding(sim, ac, dt, spec) {
   const rw = sim.infra.runways.find((r) => r.id === ac.runwayId);
-  if (!rw) { ac.phase = 'holding'; return; }
+  if (!rw) {
+    // Piste disparue en vol (démolition R3) : retour en holding. Le retard
+    // FIXE météo n'est PAS rajouté ici : il est posé UNE FOIS à l'entrée en
+    // attente (doApproach) — pas de double-comptage à la re-entrée.
+    ac.phase = 'holding'; ac.timer = 0;
+    return;
+  }
   const bottomY = rw.y + rw.h;
   const axis = rw.x + rw.w / 2; // axe de la piste
   if (ac.x !== axis) {
@@ -306,7 +325,11 @@ function doLanding(sim, ac, dt, spec) {
     const lat = V.taxi * dt; // roulage latéral borné (pas de téléportation)
     ac.x += d > 0 ? Math.min(d, lat) : Math.max(d, -lat);
   }
-  ac.y = Math.min(bottomY, ac.y + V.landing * dt);
+  // T3 MÉTÉO : la descente est MULTIPLIÉE par le facteur météo (weatherEffect —
+  // LA règle unique) : l'occupation piste est PROLONGÉE par temps dégradé →
+  // la CAPACITÉ d'atterrissages est réduite (émergent, mesurée — pas de 2e
+  // règle). Par temps clair le facteur est 1 : comportement inchangé.
+  ac.y = Math.min(bottomY, ac.y + V.landing * weatherEffect(sim).speed * dt);
   if (ac.y >= bottomY - 1) {
     // fin de piste → sortie de piste (exit) : on cherche le chemin taxi vers une porte
     ac.phase = 'exit';

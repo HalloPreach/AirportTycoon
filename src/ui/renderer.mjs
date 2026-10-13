@@ -2,6 +2,7 @@
 // Sprites vectoriels simples — ponytail : à remplacer par de vrais assets une fois la boucle jouable.
 import { queueTotals } from '../sim/passengers.mjs'; // R30 : files par terminal → somme (HUD)
 import { getPalette } from './palette.mjs'; // R43 : palette standard / daltonienne
+import { weatherView } from '../sim/weather.mjs'; // T3 (t_9b665a8b) : la MÉTÉO (lecture pure — le renderer reste en lecture seule, pas d'ensure)
 // R39 : piste fermée — LECTURE SEULE de l'état d'incident (règle dans la sim,
 // incidents.mjs) : la piste est fermée tant que l'incident attaché a un
 // remaining > 0. On ne PASSE PAS par runwayClosed() : elle appelle
@@ -13,6 +14,18 @@ function runwayClosedRO(sim, runwayId) {
   if (!i || !i.runways) return false;
   const rec = i.runways[runwayId];
   return !!(rec && rec.remaining > 0);
+}
+// T3 MÉTÉO (t_9b665a8b) : la teinte du monde PAR ÉTAT (zéro asset, un
+// rempli) : pluie = bleuté, neige = voile blanc, orage OU incident météo
+// actif = nuage sombre. « clair »/« nuageux » : null (pas de bruit).
+// Lecture SEULE (weatherView — pas d'ensure : le renderer ne mute jamais la sim).
+function weatherTint(sim) {
+  if (!sim) return null;
+  const wv = weatherView(sim);
+  if (wv.incident || wv.state === 'storm') return 'rgba(30, 40, 70, 0.16)';
+  if (wv.state === 'rain') return 'rgba(70, 90, 140, 0.10)';
+  if (wv.state === 'snow') return 'rgba(220, 230, 245, 0.14)';
+  return null;
 }
 export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, selectionOf = null, paletteOf = null, juice = null } = {}) {
   const ctx = canvas.getContext('2d');
@@ -362,6 +375,18 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
       const q = queueTotals(sim);
       lines.push(`Files : check-in ${Math.round(q.checkin)} · sécurité ${Math.round(q.security)} · attente ${Math.round(q.board)}`);
     }
+    if (sim) {
+      // T3 MÉTÉO (t_9b665a8b) : l'état + l'effet MESURABLE en cours (lecture
+      // pure weatherView — pas de mutation ; l'incident météo majore les
+      // effets à la ligne « orage », weatherEffect, weather.mjs). « clear »
+      // si le champ n'existe pas encore (nouvelle partie, 1er tick).
+      const wv = weatherView(sim);
+      lines.push(
+        `Météo : ${wv.fr}${wv.incident ? ' — incident (effets orage)' : ''}` +
+        (wv.speed < 1 ? ` · arrivée ${Math.round((1 - wv.speed) * 100)} % plus lente` : '') +
+        (wv.delay > 0 && !wv.incident ? ` · +${wv.delay} s en attente` : '')
+      );
+    }
     if (state.paused) lines.push('PAUSE (P pour reprendre)');
     const w = 240;
     ctx.fillStyle = 'rgba(0,0,0,0.55)';
@@ -392,6 +417,12 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
       // Superpositions (fantôme de construction…) — la logique de pose reste dans la sim/UI.
       for (const overlay of overlays) overlay(ctx, cam, viewSize());
       if (juice) juice.draw(ctx, cam, viewSize());
+      // T3 MÉTÉO (t_9b665a8b) : teinte SUBLIME sur le monde (zéro asset —
+      // un seul rempli) : pluie = bleuté, neige = voile blanc, orage/incident
+      // = nuage sombre. « clair »/« nuageux » : rien (le nuageux est trop
+      // léger pour exister — pas de bruit). Le HUD reste stable (après restore).
+      const tint = weatherTint(state.sim);
+      if (tint) { ctx.fillStyle = tint; ctx.fillRect(-16, -16, canvas.width + 32, canvas.height + 32); }
       ctx.restore();
       drawHud(state);
     }

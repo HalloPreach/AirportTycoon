@@ -16,6 +16,12 @@
 //             second module — pas de perte directe qui se « compense »
 //             artificiellement avec la récupération constante) ; fin du pic →
 //             la cadence revient.
+//   weather : incident MÉTÉO (T3, t_9b665a8b) — BIAISÉ par l'état météo
+//             (weather.mjs, LA table WEATHER_EFFECTS.incident) : le temps
+//             clair ne tire JAMAIS (p = 0), l'orage tire souvent (p = 0,7) ;
+//             pendant qu'il est ACTIF, les effets météo sont majorés à la
+//             ligne « orage » (weatherEffect — la règle unique lue par
+//             aircraft.mjs : retards d'arrivées + capacité piste réduite).
 // R32 : un incident = UN OBJET { id, type, asset, remaining, severity, cause }
 // ATTACHÉ à un ACTIF (une piste, une station) — l'actif est l'id de l'actif ;
 // « la fréquence dépend de l'usure ou d'une table bornée » : la table bornée
@@ -33,6 +39,7 @@
 // veut des incidents plus variés.
 import { pushEvent } from '../core/sim-state.mjs';
 import { charge } from '../economy/economy.mjs'; // R33 : l'intervention PAYANTE débite le solde (catégorie spent.intervention)
+import { weatherOf, WEATHER_EFFECTS, WEATHER_FR } from './weather.mjs'; // T3 : le biais météo + l'état courant (l'incident MÉTÉO)
 
 // T2-1 (t_d5da994c) : la table est EXPORTÉE — la couche de difficulté
 // (core/difficulty.mjs) ÉCHELONNE ces fenêtres par profil (× incidentScale) ;
@@ -54,6 +61,12 @@ export const INCID = Object.freeze({
   // pas un goulot financier (START_FUNDS 12 000 inchangé).
   INTERVENE_RUNWAY_COST: 600, // réouverture immédiate d'une piste fermée
   INTERVENE_FUEL_COST: 450,   // remise en service immédiate d'une station
+  // T3 (t_9b665a8b) : l'incident MÉTÉO — fenêtre de tirage BORNÉE (× scale) ;
+  // le tirage lui-même est BIAISÉ par l'état météo (WEATHER_EFFECTS.incident,
+  // weather.mjs — LA table : 0 par temps clair, 0,7 par orage).
+  WEATHER_EVERY_S: 480,      // tirage « incident météo » toutes les ~8 min sim
+  WEATHER_OUT_S: 240,       // durée de l'incident météo (effets majorés)
+  INTERVENE_WEATHER_COST: 750, // T3 : intervention MÉTÉO (effets ramenés immédiatement à l'état météo)
 });
 
 // État des incidents sur la sim (sérialisable seul — sans état dérivé) :
@@ -69,6 +82,7 @@ export function ensureIncidents(sim) {
   i.runway = i.runway || { closed: 0, acc: 0, last: 0 }; // horloge globale (survies)
   i.fuel = i.fuel || { out: 0, acc: 0, last: 0 };
   i.surge = i.surge || { active: false, remaining: 0, acc: 0, last: 0 };
+  i.weather = i.weather || { active: false, remaining: 0, acc: 0, last: 0 }; // T3 : incident MÉTÉO (biaisé par l'état météo)
   i.runways = i.runways || {}; // R32 : fermeture PISTE par id de piste
   i.fuels = i.fuels || {};     // R32 : panne STATION par id de station
   purgeOrphanIncidents(sim, i);
@@ -232,6 +246,34 @@ export function tickIncidents(sim, dt, rng) {
       }
     }
   }
+
+  // 4) INCIDENT MÉTÉO (T3) : le tirage de fenêtre est BIAISÉ par l'ÉTAT MÉTÉO
+  //    (WEATHER_EFFECTS.incident, weather.mjs — LA table) : le temps clair ne
+  //    tire JAMAIS (p = 0 — pas d'incident météo quand il fait beau), l'orage
+  //    tire souvent (p = 0,7). Pendant qu'il est ACTIF, les effets météo sont
+  //    majorés à la ligne « orage » (weatherEffect — la règle unique lue par
+  //    aircraft.mjs : retards d'arrivées + capacité piste réduite) ; fin →
+  //    les effets reviennent à l'état météo courant (récupération mesurée).
+  if (i.weather.active) {
+    i.weather.remaining = Math.max(0, i.weather.remaining - dt);
+    if (i.weather.remaining === 0) {
+      i.weather.active = false;
+      pushEvent(sim, { kind: 'weather-incident-end', why: 'incident météo terminé — effets revenus à l’état météo courant' });
+    }
+  } else {
+    i.weather.acc += dt;
+    if (i.weather.acc >= INCID.WEATHER_EVERY_S * scale) {
+      i.weather.acc = 0;
+      const st = weatherOf(sim);
+      const p = WEATHER_EFFECTS[st].incident;
+      if (p > 0 && rng() < p) {
+        i.weather.active = true;
+        i.weather.remaining = INCID.WEATHER_OUT_S;
+        i.weather.last = sim.time ?? 0;
+        pushEvent(sim, { kind: 'weather-incident-start', state: st, why: `incident météo (${WEATHER_FR[st]}) — retards d’arrivées + capacité piste réduite` });
+      }
+    }
+  }
 }
 
 // Le planificateur regarde le pic : cadence doublée (une fenêtre = 2 vols).
@@ -271,6 +313,16 @@ export function fuelOut(sim) {
   return Object.values(i.fuels).some((f) => f && f.remaining > 0);
 }
 
+// T3 : l'incident MÉTÉO est-il ACTIF ? (l'état est lu par weatherEffect,
+// weather.mjs — la règle unique ; le panneau diagnostic affiche l'incident +
+// ses réponses). Lecture seule (pas d'ensure : le champ est créé au 1er
+// tickIncidents/forceIncident — guardé, jamais de crash).
+export function weatherIncidentActive(sim) {
+  const i = sim && sim.incidents;
+  const w = i && i.weather;
+  return !!(w && w.active && w.remaining > 0);
+}
+
 // La piste regarde la fermeture (doApproach/doHolding, aircraft.mjs) : aucun
 // atterrissage sur CETTE piste tant qu'elle est fermée (l'AUTRE reste utilisable,
 // R32). Sans id : au moins UNE piste fermée (lecture globale planificateur/HUD).
@@ -306,6 +358,11 @@ export function forceIncident(sim, which) {
     i.surge.remaining = INCID.SURGE_S;
     i.surge.last = sim.time ?? 0;
     pushEvent(sim, { kind: 'surge-start', why: 'pic de demande (forçage) — plus de vols planifiés' });
+  } else if (which === 'weather') { // T3 : incident MÉTÉO (forçage déterministe)
+    i.weather.active = true;
+    i.weather.remaining = INCID.WEATHER_OUT_S;
+    i.weather.last = sim.time ?? 0;
+    pushEvent(sim, { kind: 'weather-incident-start', state: weatherOf(sim), why: 'incident météo (forçage) — retards d’arrivées + capacité piste réduite' });
   } else {
     throw new Error(`incident inconnu : ${which}`);
   }
@@ -324,8 +381,9 @@ export function forceIncident(sim, which) {
 // allègement refuse TOUS les vols planifiés (2e appel → plus rien à
 // refuser). Aucune 3e option : les deux réponses offrent déjà un vrai
 // arbitrage (argent vs temps, revenu vs files) — une 3e serait un faux choix.
-// which : 'runway:<pisteId>' | 'fuel:<stationId>' | 'surge' (sans id : l'actif
-// unique en incident est dérivé ; plusieurs actifs touchés → id explicite).
+// which : 'runway:<pisteId>' | 'fuel:<stationId>' | 'surge' | 'weather'
+// (sans id : l'actif unique en incident est dérivé ; plusieurs actifs touchés
+// → id explicite).
 
 function resolveIncident(sim, which) {
   const i = ensureIncidents(sim);
@@ -349,6 +407,10 @@ function resolveIncident(sim, which) {
   if (type === 'surge') {
     if (!i.surge.active || i.surge.remaining <= 0) return { ok: false, reason: 'aucun pic de demande' };
     return { ok: true, type: 'surge' };
+  }
+  if (type === 'weather') { // T3 : l'incident MÉTÉO (unique — pas d'actif)
+    if (!i.weather.active || i.weather.remaining <= 0) return { ok: false, reason: 'aucun incident météo' };
+    return { ok: true, type: 'weather' };
   }
   return { ok: false, reason: `incident inconnu : ${which}` };
 }
@@ -380,6 +442,17 @@ export function incidentResponse(sim, which) {
           effect: `départs secs (billets moitiés) pendant ${Math.ceil(rec.remaining)} s jusqu'au retour du service` },
         { id: 'intervene', name: "Intervention d'urgence", cost: INCID.INTERVENE_FUEL_COST,
           effect: `station de nouveau ACTIVE immédiatement — pleins normaux (coût ${INCID.INTERVENE_FUEL_COST} $)` },
+      ],
+    };
+  }
+  if (t.type === 'weather') { // T3 : l'incident MÉTÉO (les effets sont majorés à la ligne « orage » tant qu'il est ACTIF)
+    return {
+      ok: true, type: 'weather', remaining: Math.ceil(i.weather.remaining),
+      responses: [
+        { id: 'wait', name: 'Attendre (gratuit)', cost: 0,
+          effect: `effets majorés (orage) pendant ${Math.ceil(i.weather.remaining)} s jusqu'à la fin naturelle — retards + capacité réduite` },
+        { id: 'intervene', name: "Intervention d'urgence", cost: INCID.INTERVENE_WEATHER_COST,
+          effect: `effets ramenés IMMÉDIATEMENT à l’état météo courant (coût ${INCID.INTERVENE_WEATHER_COST} $)` },
       ],
     };
   }
@@ -419,6 +492,15 @@ export function respondIncident(sim, which, response) {
     delete i.fuels[t.key];
     pushEvent(sim, { kind: 'fuel-back', station: t.key, why: `intervention — station de nouveau en service (payante, ${INCID.INTERVENE_FUEL_COST} $)` });
     return { ok: true, effect: `station ${t.key} de nouveau active (coût ${INCID.INTERVENE_FUEL_COST} $)` };
+  }
+  if (t.type === 'weather') { // T3 : l'intervention termine l'incident (les effets reviennent à l'état météo courant)
+    if (response === 'wait') return { ok: true, effect: 'attente — fin naturelle de l’incident météo (aucun coût)' };
+    if (response !== 'intervene') return { ok: false, reason: `réponse inconnue : ${response}` };
+    charge(sim, INCID.INTERVENE_WEATHER_COST, 'intervention');
+    i.weather.active = false;
+    i.weather.remaining = 0; // la fin NORMALE (tickIncidents) ne se rejoue pas — l'incident EST terminé
+    pushEvent(sim, { kind: 'weather-incident-end', why: `intervention — effets ramenés immédiatement à l’état météo courant (payant, ${INCID.INTERVENE_WEATHER_COST} $)` });
+    return { ok: true, effect: 'incident météo terminé — effets revenus à l’état météo courant (coût 750 $)' };
   }
   // surge : allègement du planning = refuser TOUS les vols planifiés (la
   // ressource consommée est leur revenu — l'action ne se répète PAS : après,

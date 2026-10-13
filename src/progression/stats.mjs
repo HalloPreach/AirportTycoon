@@ -19,14 +19,16 @@ import { lastPeriod } from '../economy/economy.mjs';
 
 // Nombre d'incidents ACTIFS (lecture seule, incidents.mjs est la source) :
 // chaque piste FERMÉE (remaining > 0) + chaque station EN PANNE (remaining >
-// 0) + le pic (surge) actif. Un incident « survécu » = un actif qui a
-// REPRIS (remaining → 0) ou le pic qui est passé — le JEU a continué.
+// 0) + le pic (surge) actif + l'incident MÉTÉO (T3). Un incident « survécu »
+// = un actif qui a REPRIS (remaining → 0) ou le pic/l'incident météo qui est
+// passé — le JEU a continué.
 export function activeIncidentCount(sim) {
   const i = sim.incidents || {};
   let n = 0;
   for (const r of Object.values(i.runways || {})) if (r && r.remaining > 0) n += 1;
   for (const f of Object.values(i.fuels || {})) if (f && f.remaining > 0) n += 1;
   if (i.surge?.active) n += 1;
+  if (i.weather?.active && i.weather.remaining > 0) n += 1; // T3 : l'incident MÉTÉO
   return n;
 }
 

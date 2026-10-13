@@ -1,0 +1,99 @@
+{
+  "ok": true,
+  "ts": "20261013203542",
+  "results": [
+    {
+      "name": "serveur local répond",
+      "ok": true,
+      "detail": "http://127.0.0.1:9125"
+    },
+    {
+      "name": "navigateur démarré (cible CDP page)",
+      "ok": true,
+      "detail": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
+    },
+    {
+      "name": "window.__game exposé",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Nouvelle partie : sim.weather est VIF sur la sim (état « clear » né, compteurs bornés)",
+      "ok": true,
+      "detail": "{\"state\":\"clear\",\"remaining\":899.1900999999995,\"acc\":0.8099000000000002}"
+    },
+    {
+      "name": "Cycle : forceWeather(orage) est ADOPTE (état + alerte weather-change lisible dans sim.alerts)",
+      "ok": true,
+      "detail": "{\"state\":\"clear\",\"remaining\":720,\"alerte\":true,\"view\":{\"state\":\"clear\",\"fr\":\"clair\",\"remaining\":720,\"incident\":false,\"incidentRemaining\":0,\"speed\":1,\"delay\":0}}"
+    },
+    {
+      "name": "Cycle : la transition est DÉTERMINISTE (320 s, tirage 0 → « clear », durée bornée 720–1080 s)",
+      "ok": true,
+      "detail": "{\"state\":\"clear\",\"remaining\":720}"
+    },
+    {
+      "name": "Cycle : weatherView est LISIBLE (état + FR + effet — lues par le HUD/panneau)",
+      "ok": true,
+      "detail": "{\"state\":\"clear\",\"fr\":\"clair\",\"remaining\":720,\"incident\":false,\"incidentRemaining\":0,\"speed\":1,\"delay\":0}"
+    },
+    {
+      "name": "Effets : la pluie ralentit l'approche (speed 0,7) + retard d'attente 30 s (règle unique de weatherEffect)",
+      "ok": true,
+      "detail": "{\"speed\":0.7,\"delay\":30,\"incident\":0.3}"
+    },
+    {
+      "name": "Incident : l'état ACTIF est lisible (i.weather, durée WEATHER_OUT_S) et la ligne « Météo » du panneau est affichée",
+      "ok": true,
+      "detail": "{\"row\":\"Météopluie — incident météo (effets orage, 240 s restants)\"}"
+    },
+    {
+      "name": "Incident : le panneau offre les DEUX réponses (attendre 0 $ / intervention 750 $ — arbitrage réel)",
+      "ok": true,
+      "detail": "[\"Attendre (gratuit)\",\"Intervention d'urgence — 750 $\"]"
+    },
+    {
+      "name": "Incident : le CLIC BOUTON (intervention) débite 750 $ (compteur exact) et REFERME l'incident",
+      "ok": true,
+      "detail": "{\"interventionCost\":750,\"active\":false,\"remaining\":0}"
+    },
+    {
+      "name": "Incident : les effets reviennent à l'état courant (PLUIE — speed 0,7, pas le « clair »)",
+      "ok": true,
+      "detail": "{\"effectNow\":{\"speed\":0.7,\"delay\":30,\"incident\":0.3},\"incident\":false}"
+    },
+    {
+      "name": "Persistence : sim.weather (état + compteurs) est SÉRIALISÉ dans la sauvegarde",
+      "ok": true,
+      "detail": "{\"state\":\"rain\",\"remaining\":479.2755000000002}"
+    },
+    {
+      "name": "Persistence : l'incident météo (i.weather) est SÉRIALISÉ (fin d'incident : active = false)",
+      "ok": true,
+      "detail": "{\"active\":false}"
+    },
+    {
+      "name": "Rechargement : la météo REPREND (état + durée restaurés — la suite reste reproductible, EV-10)",
+      "ok": true,
+      "detail": "{\"state\":\"rain\",\"remaining\":478.66210000000024}"
+    },
+    {
+      "name": "Rechargement : l'état météo courant pilote l'effet ACTIF (pas d'effet fantôme de l'incident terminé)",
+      "ok": true,
+      "detail": "{\"speed\":0.7,\"delay\":30,\"incident\":0.3}"
+    },
+    {
+      "name": "aucune exception de page",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "diag": {
+    "browser": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "spawnError": "\r\nDevTools listening on ws://127.0.0.1:8950/devtools/browser/28a1172c-38fa-45ce-a5f4-660dee2527a5\r\n[45880:4852:1013/223545.844:ERROR:chrome\\browser\\task_manager\\providers\\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a \"Renderer\" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.\r\n[45880:5412:1013/223546.219:ERROR:chrome\\elevation_service\\edge_elevation_service_browser_helper.cc:94] LaunchUpdateCmdElevatedAndWait:  hr = 80070002 with exit code: 32\r\n",
+    "cdpTarget": "ws://127.0.0.1:8950/devtools/page/BA72F4A7072CAC61A46DFC21B8B26FEC",
+    "started": true,
+    "page": "http://127.0.0.1:9125/"
+  },
+  "pageExceptions": []
+}

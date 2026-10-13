@@ -31,6 +31,7 @@ import { unlockView } from '../infra/unlocks.mjs';
 // source) + COMMANDE (setAssignment : le joueur change l'affectation, la règle
 // est dans la sim, le panneau émet l'intention).
 import { assignmentView, setAssignment } from '../infra/assignments.mjs';
+import { weatherView } from '../sim/weather.mjs'; // T3 (t_9b665a8b) : la MÉTÉO (état + incident — lecture pure)
 // T2-2 (t_6344db94) : la SAISON (victoire) + stats persistantes + succès —
 // LECTURE seule (campaignView / statsView / achievementsView / unlockedCount) :
 // la sim décide (tickCampaign / tickStats / tickAchievements), le panneau
@@ -655,11 +656,13 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         const nClosedRw = Object.values(i.runways || {}).filter((r) => r && r.remaining > 0).length;
         const nOutSt = Object.values(i.fuels || {}).filter((f) => f && f.remaining > 0).length;
         const nPlanned = (sim.planning || []).filter((e) => e.status === 'planned').length; // R33 : la conséquence « allègement » (nombre de vols à refuser) suit la décision
+        const wv = weatherView(sim); // T3 MÉTÉO : la ligne « Météo » + l'incident suivent la signature (le panneau se reconstruit à la transition)
         return [
           sim._graph ? sim._graph.nodes.length : null, sim._graphDirty ? 1 : 0,
           sim.infra.runways.length, sim.infra.gates.length,
           pending, pendingCap(sim), nClosedRw, nOutSt, i.surge?.active ? 1 : 0,
           q.tier, q.q.toFixed(2), nPlanned,
+          wv.state, wv.incident ? 1 : 0, // T3 : la MÉTÉO (état + incident actif)
         ].join('|');
       },
       (body) => {
@@ -700,6 +703,18 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         if (i.surge?.active) {
           line(body, 'Demande', `pic actif (cadence doublée, ${Math.ceil(i.surge.remaining)} s restants)`, 'warn');
           addResponses(body, sim, 'surge');
+        }
+        // T3 MÉTÉO (t_9b665a8b) : l'état météo + l'incident MÉTÉO (les
+        // réponses — attendre / intervention payante — sont le même pattern
+        // que piste/station/pic : incidentResponse lit, respondIncident règle).
+        const wv = weatherView(sim);
+        if (wv.incident) {
+          line(body, 'Météo', `${wv.fr} — incident météo (effets orage, ${wv.incidentRemaining} s restants)`, 'bad');
+          addResponses(body, sim, 'weather');
+        } else if (wv.state !== 'clear') {
+          line(body, 'Météo',
+            wv.fr + (wv.speed < 1 ? ` — arrivée ${Math.round((1 - wv.speed) * 100)} % plus lente` : '') + (wv.delay > 0 ? ` · +${wv.delay} s en attente` : ''),
+            'warn');
         }
         // COUPÉ : lecture SEULE du graphe — JAMAIS de rebuildGraph ici (avant le
         // 1er tick le graphe est null et c'est voulu : on l'affiche, on ne le
