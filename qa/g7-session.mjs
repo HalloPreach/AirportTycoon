@@ -165,7 +165,8 @@ async function startBrowser() {
   const shot = async (name) => {
     try {
       const r = await send('Page.captureScreenshot', { format: 'png' });
-      const p = join(process.cwd(), 'evidence', 'g7-session', `${name}.png`);
+      // Nom horodaté (convention racine) : chaque run régénère ses captures.
+      const p = join(process.cwd(), 'evidence', 'g7-session', `${name}-${TS}.png`);
       const { mkdirSync } = await import('node:fs');
       mkdirSync(join(process.cwd(), 'evidence', 'g7-session'), { recursive: true });
       writeFileSync(p, Buffer.from(r.data, 'base64'));
@@ -186,6 +187,15 @@ async function startBrowser() {
   diag.page = url;
   return { evaluate, shot, send, close: () => ws.close() };
 }
+
+// Horodatage des captures (convention racine — qa/root-delivery.mjs) :
+// les captures evidence/ sont régénérées à chaque run, nom horodaté.
+function pad(n) { return String(n).padStart(2, '0'); }
+function stamp() {
+  const d = new Date();
+  return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
+const TS = stamp();
 
 // --- 3. session G7 : la chaîne des 3 PALIERS (la session JOUEUSE observée) -----
 // Paramètres de la session (la charge demandée, mesurable) :
@@ -356,16 +366,76 @@ async function main() {
 
   // --- PALIER 1 « Lancer l'aéroport » : offre → accepter → carburant AVANT ----
   // La DÉCISION du palier 1 : construire la station carburant (1 200 $) AVANT
-  // le besoin — on la pose immédiatement PAR L'UI (bouton outil + clic carte),
-  // comme le joueur le ferait en voyant les offres se dérouler. Puis on attend
-  // un cycle de vol COMPLET (revenue > 0 sur une période close, sans départ
-  // sec) + période net ≥ 0 — le succès du palier 1 (tiers.mjs).
+  // le besoin — comme le joueur le ferait en voyant les offres se dérouler.
+  // MAIS le service « fuel » ne se DEBLOQUE qu'à la CONDITION MESURABLE R23
+  // (src/infra/unlocks.mjs) : offre de vol en vue + période close net ≥ 0.
+  // Posé avant déverrouillage, le build est REFUSÉ EN SILENCE (canPlacePreview
+  // renvoie le toast et le clic ne construit rien — src/ui/build-tool.mjs) :
+  // c'était le FAIL du 1er run (fuelStations=0 à la borne). Le harnais attend
+  // donc le déverrouillage — en interrogeant le MÊME code de règle que le jeu
+  // (unlockState, importé DANS LA PAGE ; fallback : le flag sim._unlocked posé
+  // par tickUnlocks) — AVANT de cliquer. Le déblocage R23 EST le « avant le
+  // besoin » du jeu (l'offre est en vue et l'activité se justifie, AVANT tout
+  // déficit de carburant). Puis on attend un cycle de vol COMPLET (revenue > 0
+  // sur une période close, sans départ sec) + période net ≥ 0 — le succès du
+  // palier 1 (tiers.mjs).
+  const FUEL_UNLOCK_DEADLINE = TIER_END[1] - 60; // la pose reste DANS le palier
+  const unlockWait = await evaluate(`(async () => {
+    const g = window.__game;
+    const sim = () => g.state.sim;
+    let mod = null;
+    try { mod = await import('/src/infra/unlocks.mjs'); } catch (e) { /* fallback : flag */ }
+    const isUnlocked = () => {
+      const s = sim();
+      if (!s) return false;
+      if (mod && mod.unlockState) { const st = mod.unlockState(s, 'fuel'); return st.unlocked === true; }
+      return s._unlocked ? s._unlocked.fuel === true : false; // flag posé par tickUnlocks
+    };
+    const t0 = sim().time;
+    const polls = [];
+    for (;;) {
+      if (isUnlocked()) break;
+      const s = sim();
+      polls.push({
+        t: Math.round(s.time * 10) / 10,
+        offering: (s.planning || []).some((p) => p.status === 'planned') || s.aircraft.length > 0,
+        periodNet: (s.economy.periods.slice(-1)[0] || { net: 0 }).net,
+      });
+      if (s.time >= ${FUEL_UNLOCK_DEADLINE}) break; // borne : la borne de palier − 60 s
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    const s = sim();
+    return {
+      unlocked: isUnlocked(),
+      rule: mod ? 'unlockState (R23, même code que le build-tool)' : 'flag sim._unlocked',
+      tStart: Math.round(t0 * 10) / 10,
+      tUnlock: Math.round(s.time * 10) / 10,
+      waitS: Math.round((s.time - t0) * 10) / 10,
+      deadline: ${FUEL_UNLOCK_DEADLINE},
+      lastPoll: polls.length ? polls[polls.length - 1] : null,
+    };
+  })()`, true);
   let s1pre = await evaluate(TIER_STATE_EXPR);
-  if (s1pre && s1pre.fuelStations === 0) {
-    // Station CARBURANT à (920, 980) : zone libre (terminal 550-750×900-1050,
-    // taxiway 550-750×1050-1090) ; autoAssign (R27) la cible vers le terminal.
-    const build = await buildViaTool(evaluate, 'fuel', 920, 980);
-    TIER_LOG.push({ tier: 1, action: 'construction station carburant (bouton outil + clic carte) — AVANT le besoin', at: s1pre.time, result: build });
+  let fuelBuild = null;
+  if (unlockWait.unlocked && s1pre && s1pre.fuelStations === 0) {
+    // Déverrouillé → station CARBURANT à (920, 980) : zone libre (terminal
+    // 550-750×900-1050, taxiway 550-750×1050-1090) ; autoAssign (R27) la
+    // cible vers le terminal. Lecture RETOUR (la sim décide, jamais le
+    // harnais — R16) : si le build est refusé (fonds / zone), le toast est
+    // consigné et le palier FAIL en toute honnêteté — pas de faux positif.
+    fuelBuild = await buildViaTool(evaluate, 'fuel', 920, 980);
+    s1pre = await evaluate(TIER_STATE_EXPR); // lecture retour : services posés
+  }
+  TIER_LOG.push({
+    tier: 1,
+    action: 'station carburant (déverrouillage R23 attendu, puis bouton outil + clic carte) — AVANT le besoin',
+    at: unlockWait.tUnlock,
+    unlockWait,
+    build: fuelBuild,
+    readBack: s1pre ? { fuelStations: s1pre.fuelStations } : null,
+  });
+  if (!unlockWait.unlocked) {
+    console.log('palier 1 : fuel non déverrouillé à la borne — build écarté (pas de faux positif, R16)');
   }
   const p1 = await waitTier(evaluate, TIER_END[1],
     `(() => {
