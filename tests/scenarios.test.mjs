@@ -56,8 +56,8 @@ function play(state, sim, rng, seconds, policy = 'accept') {
   return state;
 }
 
-test('R46 : le module expose les SIX scénarios (les 3 R38 + les 3 R46 — une entrée de table par défi, pas de paramétrage)', () => {
-  assert.deepEqual(Object.keys(SCENARIOS), ['guide', 'saturation', 'redressement', 'crise', 'difficile', 'facile']);
+test('R46 : le module expose les SEPT scénarios (les 3 R38 + les 3 R46 + le Cap Nord T3 — une entrée de table par défi, pas de paramétrage)', () => {
+  assert.deepEqual(Object.keys(SCENARIOS), ['guide', 'saturation', 'redressement', 'crise', 'difficile', 'facile', 'capNord']);
   for (const [id, c] of Object.entries(SCENARIOS)) {
     assert.ok(Number.isInteger(c.seed), `(${id}) la seed est EXPLICITE et entière (rejouabilité R09)`);
     assert.ok(['o1-cycle', 'o2-surge'].includes(c.objective), `(${id}) l'objectif annoncé est un OBJECTIF R22 (pas un faux objectif)`);

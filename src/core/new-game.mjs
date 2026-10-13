@@ -9,18 +9,17 @@ import { newSimState } from './sim-state.mjs';
 import { placeBuilding } from '../infra/infra.mjs';
 import { DIFFICULTIES, normalizeDifficulty } from './difficulty.mjs';
 import { ensureClock } from '../sim/clock.mjs'; // T3 (t_76744b22) : l'horloge de jeu (jour/nuit + saisons)
+import { AIRPORTS, DEFAULT_AIRPORT } from './layouts.mjs'; // T3 stretch (t_79820790) : multi-aéroports
 
-// Plan de départ (A-2) : la géométrie prouvée du test « bien conçu » — les
-// segments se TOUCHENT physiquement (règle BL-02) : la sortie de piste (800,1100)
-// touche le taxiway (550..750, 1050..1090) et le taxiway touche le terminal
+// Plan de départ (A-2) : le layout de l'aéroport « central » de la table
+// AIRPORTS (T3 stretch, t_79820790 — additif : bit-à-bit IDENTIQUE au
+// START_LAYOUT legacy, le spawn par défaut reste invariant). Les segments se
+// TOUCHENT physiquement (règle BL-02) : la sortie de piste (800,1100) touche
+// le taxiway (550..750, 1050..1090) et le taxiway touche le terminal
 // (550..750, 900..1050) → findPath relie piste et portes dès le départ.
-const START_LAYOUT = Object.freeze([
-  { type: 'runway', x: 750, y: 100, w: 100, h: 1000 },
-  { type: 'taxiway', x: 550, y: 1050, w: 200, h: 40 },
-  { type: 'terminal', x: 550, y: 900, w: 200, h: 150 },
-]);
+export const START_LAYOUT = AIRPORTS[DEFAULT_AIRPORT].layout;
 
-export function makeGameState(seed = undefined, difficultyId = 'normal') {
+export function makeGameState(seed = undefined, difficultyId = 'normal', airportId = DEFAULT_AIRPORT) {
   const state = newGame();
   state.sim = newSimState();
   // T2-1 (t_d5da994c) : la DIFFICULTÉ est une couche de paramètres AU SPAWN
@@ -76,14 +75,20 @@ export function makeGameState(seed = undefined, difficultyId = 'normal') {
   // étape 1, non désactivée). Les deux états désactivants (done/skipped)
   // survivent au save/load : l'intro ne se re-suit pas après une reprise.
   state.intro = { step: 0, done: false, skipped: false };
-  for (const spec of START_LAYOUT) {
+  // Aéroport choisi (T3 stretch t_79820790) : le layout de l'aéroport est posé
+  // par le placeBuilding EXISTANT (pas de règle de construction nouvelle) —
+  // `airportId` inconnue/absente → « central » (spawn par défaut inchangé,
+  // additif). Les tailles de portes par aéroport (Cap Nord : L, M, M, L —
+  // profil DIFFÉRENT de l'aéroport central, 2 portes M).
+  const airport = AIRPORTS[airportId] || AIRPORTS[DEFAULT_AIRPORT];
+  for (const spec of airport.layout) {
     // Aéroport fourni : placement gratuit (pas de débit, pas de test de fonds).
     // Terminal minimal = 2 portes M (l'offre ne génère que des vols medium au
     // départ : porte S → vol bloqué en permanence = aéroport qui ne sert à rien).
     placeBuilding(state.sim, {
       id: state.sim.infra.nextId++, type: spec.type,
       x: spec.x, y: spec.y, w: spec.w, h: spec.h, cost: 0,
-    }, spec.type === 'terminal' ? ['M', 'M'] : undefined);
+    }, spec.type === 'terminal' ? (airport.gateSizes || ['M', 'M']) : undefined);
   }
   return state;
 }

@@ -1,0 +1,94 @@
+{
+  "ok": true,
+  "ts": "20261013215155",
+  "results": [
+    {
+      "name": "serveur local répond",
+      "ok": true,
+      "detail": "http://127.0.0.1:9295"
+    },
+    {
+      "name": "navigateur démarré (cible CDP page)",
+      "ok": true,
+      "detail": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
+    },
+    {
+      "name": "window.__game exposé (boot complet)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "MENU : le bouton « Cap Nord — aéroport du nord » est VISIBLE (déduit du catalogue SCENARIOS)",
+      "ok": true,
+      "detail": "libellés : Nouvelle partie (N) | Reprendre la sauvegarde (R) | Options (V) | Démarrage guidé | Défi saturation | Défi redressement | Défi crise totale | Défi difficile | Défi facile | Cap Nord — aéroport du nord | Facile | Normal | Difficile"
+    },
+    {
+      "name": "LANCEMENT : le scénario capNord est sur la sim (marqueur additif state.scenario)",
+      "ok": true,
+      "detail": "{\"id\":\"capNord\",\"name\":\"Cap Nord — aéroport du nord\",\"objective\":\"o1-cycle\",\"difficulty\":\"normal\",\"airport\":\"cap-nord\"}"
+    },
+    {
+      "name": "LANCEMENT : le profil DIFFÉRENT (2 pistes 500/800 + 3 taxiways + 4 portes L/M/M/L)",
+      "ok": true,
+      "detail": "runways=[500,800] gates=[\"L\",\"M\",\"M\",\"L\"]"
+    },
+    {
+      "name": "LANCEMENT : la piste L-capable (800, critère lu du catalogue) EST servable par la sim (runwayFor)",
+      "ok": true,
+      "detail": "largeMin=800 mediumMin=500"
+    },
+    {
+      "name": "LANCEMENT : budget EXPLICITE (CAP_NORD_FUNDS, mesuré par le replay 48 h) + seed imposée",
+      "ok": true,
+      "detail": "money=12000 seed=24"
+    },
+    {
+      "name": "LANCEMENT : l’objectif R22 du scénario est ANNONCÉ en toast (le câblage EXISTANT)",
+      "ok": true,
+      "detail": "toast « Scénario Cap Nord — objectif : … »"
+    },
+    {
+      "name": "VIVANT : le planificateur CRÉE des offres sur le second aéroport (fenêtres 60 s sim, x4 réel)",
+      "ok": true,
+      "detail": "statuts : {\"accepted\":1} (t=81 s sim)"
+    },
+    {
+      "name": "VIVANT : les offres sont TRAITÉES (auto-accept réelle par la case du panneau, aucun forçage)",
+      "ok": true,
+      "detail": "auto-accept=true toast=false géré=1 aircraft=0 carried=0"
+    },
+    {
+      "name": "VIVANT : la vitesse x4 EST appliquée LIVE (le geste du joueur est réversible)",
+      "ok": true,
+      "detail": "bouton « Vitesse x4 » du panneau options"
+    },
+    {
+      "name": "VIVANT : l’état sim reste COHÉRENT (valeurs finies, passagers comptés)",
+      "ok": true,
+      "detail": "aircraft=0 carried=0 money=11611"
+    },
+    {
+      "name": "PERSISTANCE : le profil Cap Nord est SÉRIALISÉ (marqueur + 2 pistes + 4 portes)",
+      "ok": true,
+      "detail": "{\"savedAirport\":\"cap-nord\",\"savedRunways\":2,\"savedGates\":4,\"savedMoney\":11610.653280000062}"
+    },
+    {
+      "name": "RECHARGEMENT : « Reprendre » RESTAURE le profil (2 pistes, 4 portes, marqueur, seed)",
+      "ok": true,
+      "detail": "{\"screen\":\"game\",\"airport\":\"cap-nord\",\"runways\":2,\"gates\":4,\"seed\":24,\"money\":11599}"
+    },
+    {
+      "name": "aucune exception de page",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "diag": {
+    "browser": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "spawnError": "\r\nDevTools listening on ws://127.0.0.1:8993/devtools/browser/a0092e97-1c97-44c9-81fa-00f46933c55d\r\n[36240:25904:1013/235157.403:ERROR:chrome\\browser\\task_manager\\providers\\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a \"Renderer\" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.\r\n[36240:31176:1013/235157.695:ERROR:chrome\\elevation_service\\edge_elevation_service_browser_helper.cc:94] LaunchUpdateCmdElevatedAndWait:  hr = 80070002 with exit code: 32\r\n",
+    "cdpTarget": "ws://127.0.0.1:8993/devtools/page/1B05CD18B0E182116C63586BA1FDEC2D",
+    "started": true,
+    "page": "http://127.0.0.1:9295/"
+  },
+  "pageExceptions": []
+}

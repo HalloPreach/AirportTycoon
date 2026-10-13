@@ -45,6 +45,13 @@ export const REDRESSEMENT_FUNDS = -3000;
 // l'intervention PAYANTE R33 (réouvrir la piste : 600 $) ou l'attente.
 export const CRISIS_SURGE_S = 900; // 15 min sim : le temps d'absorber la crise
 export const CRISIS_RUNWAY_CLOSE_S = 120; // = la durée R32 (la règle reste, on la force au départ)
+// T3 stretch (t_79820790) — le SECOND AÉROPORT (scénario « Cap Nord »,
+// layout src/core/layouts.mjs : 2 pistes L/M + terminal 4 portes) : le
+// budget de départ FIXÉ par un replay 48 h passif MESURÉ (rejoué dans
+// tests/r49-airports.mjs, seed 24, solde de départ 12 000 $) : le MINIMUM
+// de solde sur 48 h est 11 357 $ — le solde reste POSITIF tout le long
+// (pas de faillite, pas de chiffre inventé : mesuré sur la sim réelle).
+export const CAP_NORD_FUNDS = 12000;
 
 export const SCENARIOS = Object.freeze({
   guide: Object.freeze({
@@ -91,6 +98,22 @@ export const SCENARIOS = Object.freeze({
     difficulty: 'easy', // T2-1 : capital confort 18 000 $ + incidents ×1.6 + OPEX ×0.85
     objective: 'o1-cycle', // R22 : premier cycle sans départ sec + période net ≥ 0 (1000 $)
   }),
+  // T3 stretch (t_79820790) — le SECOND AÉROPORT (objectif « a second
+  // airport ») : le layout Cap Nord (src/core/layouts.mjs — 2 pistes, une
+  // CAPABLE L + une M, terminal 4 portes L/M/M/L) — MÊMES règles du jeu
+  // (aucune n'est modifiée : l'aéroport est un PARAMÈTRE DE SPAWN, la sim
+  // décide), profil DIFFÉRENT de tous les autres scénarios (2 pistes vs 1,
+  // 4 portes vs 2) + budget FIXÉ par replay 48 h passif (pas de faillite).
+  // ADDITIF : l'absence du champ `airport` sur les entrées R38/R46 = le
+  // layout « central » (comportement R38/R46 intact — pas de ligne
+  // modifiée pour les 6 scénarios existants).
+  capNord: Object.freeze({
+    name: 'Cap Nord — aéroport du nord',
+    seed: 24, // rejouable (EV-10) : même seed + mêmes décisions = même partie
+    funds: CAP_NORD_FUNDS, // budget EXPLICITE du second aéroport (mesuré, cf. tests/r49)
+    airport: 'cap-nord', // NOUVEAU champ additif (absent → layout « central »)
+    objective: 'o1-cycle', // R22 : premier cycle sans départ sec + période net ≥ 0 (1000 $)
+  }),
 });
 
 // Démarre un scénario : état frais (seed imposée) + la configuration EXPLICITE
@@ -106,8 +129,10 @@ export function startScenario(mode) {
   const cfg = SCENARIOS[mode];
   if (!cfg) throw new Error(`scénario inconnu : ${mode} (les modes : ${Object.keys(SCENARIOS).join(', ')})`);
   const diffId = cfg.difficulty || 'normal'; // R46 : le profil T2-1 du défi (référentiel sinon)
-  const state = makeGameState(cfg.seed, diffId);
-  state.scenario = { id: mode, name: cfg.name, objective: cfg.objective, difficulty: diffId };
+  // T3 stretch (t_79820790) : l'aéroport du scénario (champ ADDITIF, absent
+  // des entrées R38/R46 → « central » = comportement R38/R46 intact).
+  const state = makeGameState(cfg.seed, diffId, cfg.airport);
+  state.scenario = { id: mode, name: cfg.name, objective: cfg.objective, difficulty: diffId, airport: cfg.airport };
   // Budget EXPLICITE du défi (absent pour les défis de difficulté : le
   // CAPITAL DU PROFIL T2-1 posé par makeGameState EST la config du défi —
   // pas de chiffre dupliqué).
