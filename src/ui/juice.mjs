@@ -242,6 +242,15 @@ export function juiceForAlert(juice, sim, alert, cam = { x: 0, y: 0 }) {
       juice.float(cam.x, cam.y, `Succès : ${alert.name}`, 'gain');
       push('burst', 'float');
       break;
+    // T3 (t_4c9baadc) : un événement dynamique se déclenche (signal central —
+    // éclat doré, PAS de shake : un événement n'est pas une PANNE, les
+    // incidents majeurs gardent le shake ; le pic touristique n'ajoute rien
+    // au shake du « surge-start » s'il coïncide avec un pic en cours).
+    case 'event-start':
+      juice.burst(cam.x, cam.y, { colors: GOLD, count: 24 });
+      juice.float(cam.x, cam.y, `Événement : ${alert.name || alert.event || ''}`, 'gain');
+      push('burst', 'float');
+      break;
   }
   return effects;
 }

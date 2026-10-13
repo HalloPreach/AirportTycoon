@@ -12,6 +12,7 @@
 // (onAutoChange, câblée par main.mjs) et se resynchronise via setAuto.
 import { decideFlight, planNote } from '../flights/flights.mjs';
 import { AIRCRAFT, AIRLINES } from '../data/catalog.mjs';
+import { EVENTS } from '../sim/events.mjs'; // T3 : le NOM de l'événement (table pure, lecture)
 
 const STATUS = Object.freeze({
   planned: 'prévu', accepted: 'accepté', 'in-flight': 'en vol',
@@ -100,8 +101,12 @@ export function makePlanningPanel({ state, toast, onAutoChange }) {
     row.className = 'planning-row';
     const ac = AIRCRAFT[e.acType];
     const info = document.createElement('span');
+    // T3 (t_4c9baadc) : l'offre injectée par un événement dynamique porte le
+    // marqueur `event` — le NOM de l'événement est affiché (table EVENTS,
+    // lecture seule) : le joueur sait d'où vient l'offre à décider.
+    const evName = e.event ? (EVENTS[e.event] ? EVENTS[e.event].name : e.event) : null;
     info.textContent = `${airlineName(e.airline)} · ${ac ? ac.name : e.acType} · ${e.pax} pax · ${fmtClock(e.planned)} · ${STATUS[e.status] || e.status}` +
-      (e.why ? ` (${e.why})` : '');
+      (e.why ? ` (${e.why})` : '') + (evName ? ` · ⚡ ${evName}` : '');
     row.appendChild(info);
     if (e.status === 'planned') {
       renderNote(sim, e, row); // R19 : obstacle/risque/revenu estimé AVANT la décision

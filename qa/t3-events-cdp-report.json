@@ -1,0 +1,84 @@
+{
+  "ok": true,
+  "ts": "20261013202747",
+  "results": [
+    {
+      "name": "serveur local répond",
+      "ok": true,
+      "detail": "http://127.0.0.1:8995"
+    },
+    {
+      "name": "navigateur démarré (cible CDP page)",
+      "ok": true,
+      "detail": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
+    },
+    {
+      "name": "window.__game exposé",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Nouvelle partie : sim.events est VIF sur la sim (compteurs acc/last/seq/fired)",
+      "ok": true,
+      "detail": "{\"acc\":0.8093999999999998,\"last\":0,\"seq\":0,\"fired\":{}}"
+    },
+    {
+      "name": "CONFÉRENCE : l’événement est DÉCLENCHÉ (sérialisé sur sim.events, compteur tenu)",
+      "ok": true,
+      "detail": "{\"seq\":1,\"fired\":{\"conference\":1}}"
+    },
+    {
+      "name": "CONFÉRENCE : le vol PLEIN est INJECTÉ via planOneFlight (offre du planning, 100 % des sièges)",
+      "ok": true,
+      "detail": "{\"acType\":\"medium\",\"pax\":160,\"status\":\"planned\",\"planned\":60.8094,\"seats\":160}"
+    },
+    {
+      "name": "CONFÉRENCE : l’alerte est CONSOMMÉE par le câblage EXISTANT (toast « Événement — … » + marqueur ⚡ du planning)",
+      "ok": true,
+      "detail": "{\"alert\":true,\"toast\":true,\"panelTag\":true}"
+    },
+    {
+      "name": "CONFÉRENCE : le JUICE s’est exécuté (burst/float de l’alerte — les stats montent)",
+      "ok": true,
+      "detail": "avant={\"particles\":0,\"floats\":0,\"shake\":false,\"fx\":[]} après={\"particles\":24,\"floats\":1,\"shake\":false,\"fx\":[]}"
+    },
+    {
+      "name": "PIC : l’incident de DEMANDE est INJECTÉ via incidents.mjs (état i.surge ACTIF, durée explicite)",
+      "ok": true,
+      "detail": "{\"fired\":{\"conference\":1,\"tourism\":1},\"surgeActive\":true,\"surgeRemaining\":599.4025999999996,\"toast\":true,\"sat\":100}"
+    },
+    {
+      "name": "PIC : le feedback EXISTANT a tourné (toast « Événement — Pic touristique » lisible)",
+      "ok": true,
+      "detail": "{\"toast\":true}"
+    },
+    {
+      "name": "PERSISTANCE : sim.events (seq + fired conférence/pic) est SÉRIALISÉ dans la sauvegarde",
+      "ok": true,
+      "detail": "{\"acc\":1.8850999999999736,\"last\":1.1824,\"seq\":2,\"fired\":{\"conference\":1,\"tourism\":1}}"
+    },
+    {
+      "name": "RECHARGEMENT : la couche REPREND (seq/fired/compteur du dernier événement restaurés)",
+      "ok": true,
+      "detail": "{\"screen\":\"game\",\"seq\":2,\"fired\":{\"conference\":1,\"tourism\":1},\"surgeActive\":true,\"last\":1.1824}"
+    },
+    {
+      "name": "RECHARGEMENT : le pic (incident de l’événement) SURVIT à la reprise",
+      "ok": true,
+      "detail": "{\"surgeActive\":true}"
+    },
+    {
+      "name": "aucune exception de page",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "diag": {
+    "browser": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "spawnError": "\r\nDevTools listening on ws://127.0.0.1:9173/devtools/browser/4bae5e27-3149-44fe-bdcf-2acb060e5fc4\r\n[41392:30040:1013/222749.116:ERROR:chrome\\browser\\task_manager\\providers\\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a \"Renderer\" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.\r\n[41392:38768:1013/222749.671:ERROR:chrome\\elevation_service\\edge_elevation_service_browser_helper.cc:94] LaunchUpdateCmdElevatedAndWait:  hr = 80070002 with exit code: 32\r\n",
+    "cdpTarget": "ws://127.0.0.1:9173/devtools/page/155CC63F8E76DFE75B7CB3ACF78152E2",
+    "started": true,
+    "page": "http://127.0.0.1:8995/"
+  },
+  "pageExceptions": []
+}

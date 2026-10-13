@@ -86,6 +86,11 @@ export function newSimState() {
     incidents: { runway: { closed: 0, acc: 0, last: 0 },
                 fuel: { out: 0, acc: 0, last: 0 },
                 surge: { active: false, remaining: 0, acc: 0, last: 0 } },
+    // T3 (t_4c9baadc) : couche d'événements dynamiques (sim/events.mjs) —
+    // compteurs de tirage (fenêtre bornée, rng semé) SÉRIALISÉS : la reprise
+    // est reproductible (comme incidents/rng, EV-10). Sauvegarde pré-T3 :
+    // champ absent, toléré (ensureEvents au chargement, save.mjs).
+    events: { acc: 0, last: 0, seq: 0, fired: {} },
     time: 0,         // horloge de la sim (pilotée par le planificateur : sim.time += dt)
     _spawnAcc: 0,
     _graph: null,     // graphe pathfinding (reconstruit, pas sérialisé)

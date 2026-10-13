@@ -51,6 +51,8 @@ import { ensureUpgrades } from '../infra/upgrades.mjs'; // R31 : migration des a
 import { ensureIncidents } from '../sim/incidents.mjs'; // R32 : migration + purge des incidents attachés
 import { ensureLoan } from '../economy/economy.mjs'; // R35 : migration de l'emprunt borné (champ absent)
 import { ensureDifficulty } from '../core/difficulty.mjs'; // T2-1 : migration de la difficulté (champs absents)
+import { ensureEvents } from '../sim/events.mjs'; // T3 : migration de la couche d'événements dynamiques (champ absent)
+import { ensureWeather } from '../sim/weather.mjs'; // T3 (t_9b665a8b) : migration du champ MÉTÉO (champ absent sur les sauvegardes PRÉ-T3)
 
 export const SAVE_KEY = 'airport-tycoon-save';
 export const SAVE_VERSION = 1;
@@ -188,6 +190,14 @@ function validateSim(sim) {
   // écrit les totaux sur la valeur). null = sauvegarde ancienne, tolérée.
   if ('passengers' in sim && sim.passengers != null && typeof sim.passengers !== 'object') {
     throw new Error('Sauvegarde invalide : passagers (sim.passengers) illisibles');
+  }
+  // T3 (t_4c9baadc) : la couche d'événements dynamiques (sim.events) — PRÉSENT
+  // doit être un objet (les compteurs acc/last/seq/fired y vivent) : un type
+  // corrompu (chaîne/nombre) passerait la validation puis serait ÉCRASÉ par
+  // ensureEvents au chargement (l'état perdu sans erreur lisible — pattern R41).
+  // ABSENT = sauvegarde pré-T3, tolérée (ensureEvents le re-attache).
+  if ('events' in sim && sim.events != null && typeof sim.events !== 'object') {
+    throw new Error('Sauvegarde invalide : événements dynamiques (sim.events) illisibles');
   }
   // R10 (références des DEUX côtés) : une porte RÉSERVÉE (g.acId) doit viser un
   // avion EXISTANT. Sans ça, une porte « occupée » par un avion disparu resterait
@@ -334,6 +344,18 @@ export function deserialize(json) {
     // le profil normal (référentiel ×1) — une partie ancienne reprend
     // EXACTEMENT comme avant (comportement inchangé), pas de crash.
     ensureDifficulty(out, out.sim);
+    // T3 (t_4c9baadc) : la COUCHE D'ÉVÉNEMENTS DYNAMIQUES (sim.events) — les
+    // sauvegardes PRÉ-T3 n'ont PAS le champ (toléré, comme upgrades/incidents :
+    // la factory le met par défaut ; ensureEvents le re-attache + normalise
+    // les compteurs corrompus — pas de crash au 1er tick, pas de crash au
+    // tirage : la fenêtre démarre à 0, l'état de relecture est le même).
+    ensureEvents(out.sim);
+    // T3 MÉTÉO (t_9b665a8b) : le CHAMP MÉTÉO (sim.weather) — les sauvegardes
+    // PRÉ-T3 l'ont ABSENT (toléré, comme upgrades/incidents) : ensureWeather
+    // l'adopte en « clear » neuf (comportement inchangé à la reprise) et
+    // répare un champ corrompu (état inconnu / durée hors bornes) — sans
+    // toucher les autres champs (migration ADDITIVE, EV-10).
+    ensureWeather(out.sim);
   }
   return out;
 }

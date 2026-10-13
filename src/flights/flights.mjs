@@ -223,7 +223,12 @@ function servableTypes(sim) {
   });
 }
 
-export function planOneFlight(sim, rng) {
+// T3 (t_4c9baadc) : opts ADDITIF (reproductible — sans opts le comportement
+// est inchangé) : la couche d'événements dynamiques (sim/events.mjs) injecte
+// des vols à caractéristiques EXPLICITES (paxRatio = fraction des sièges,
+// planned = heure prévue imposée, event = marqueur lisible). MÊME entrée,
+// MÊME mécanisme de décision (planning) — pas de 2e règle de vol.
+export function planOneFlight(sim, rng, opts = {}) {
   const servable = servableTypes(sim);
   if (!servable.length) return null; // aucune infra servable → pas de vol
   // Tirer d'abord un type SERVABLE, puis une compagnie qui l'opère : chaque
@@ -236,10 +241,13 @@ export function planOneFlight(sim, rng) {
     airline: airline.id,
     color: airline.color,
     acType,
-    pax: Math.max(0, Math.round(ac.seats * (0.4 + 0.5 * rng()))), // remplissage variable
-    planned: (sim.time ?? 0) + SPAWN_EVERY_S, // heure prévue d'arrivée (visible à l'avance)
+    pax: opts.paxRatio != null
+      ? Math.max(0, Math.round(ac.seats * opts.paxRatio)) // T3 : remplissage explicite (événement)
+      : Math.max(0, Math.round(ac.seats * (0.4 + 0.5 * rng()))), // remplissage variable
+    planned: opts.planned != null ? opts.planned : (sim.time ?? 0) + SPAWN_EVERY_S, // T3 : heure imposée (événement)
     status: 'planned',                         // planned → accepted (déploiement à l'heure prévue)
   };
+  if (opts.event) e.event = opts.event; // T3 : marqueur d'événement (lecture lisible)
   sim.planning.push(e);
   return e;
 }

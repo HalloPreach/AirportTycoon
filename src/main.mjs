@@ -328,6 +328,10 @@ export function boot(canvas) {
     // T2-2 (t_6344db94) : la campagne (victoire) + les succès (la sim émet,
     // l'UI affiche — même règle qu'objective-paid R22).
     'campaign-won': (e) => `SAISON REMPORTÉE — ${e.wins}/${e.target} contrats réussis : prime +${e.reward} $`,
+    // T3 (t_4c9baadc) : la couche d'événements dynamiques — l'événement
+    // (nom + raison) ; sa conséquence est lisible dans l'outil concerné
+    // (offre du planning, cadence du planificateur), l'UI ne règle rien.
+    'event-start': (e) => `Événement — ${e.name || e.event || ''}${e.why ? ` : ${e.why}` : ''}`,
     'campaign-lost': (e) => `Saison échouée — ${e.wins}/${e.target} contrats avant l'échéance (le jeu continue)`,
     'achievement-unlocked': (e) => `SUCCÈS DÉBLOQUÉ : ${e.name} — ${e.desc}`,
   };

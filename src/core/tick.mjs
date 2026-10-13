@@ -17,6 +17,7 @@ import { tickContracts } from '../flights/contracts.mjs';
 import { tickCampaign } from '../progression/campaign.mjs'; // T2-2 : la campagne (victoire)
 import { tickStats } from '../progression/stats.mjs'; // T2-2 : les stats persistantes
 import { tickAchievements } from '../progression/achievements.mjs'; // T2-2 : les succès
+import { tickEvents } from '../sim/events.mjs'; // T3 : couche d'événements dynamiques
 import { makeSimRng } from './rng.mjs';
 
 export function tick(state, dt, rng) {
@@ -31,6 +32,7 @@ export function tick(state, dt, rng) {
   tickEconomy(sim, dt);
   tickPassengers(sim, dt);
   tickIncidents(sim, dt, rng); // BL-14 : incidents opérationnels limités (après la passe)
+  tickEvents(sim, dt, rng); // T3 : événements dynamiques (conférence/charter/pic) — injection via les modules existants
   tickObjectives(sim); // R22 : objectifs de progression — récompense payée UNE fois (condition mesurée)
   tickContracts(sim, dt); // R24 : contrats de compagnie — prime/pénalité réglées UNE fois (mesure de période)
   tickCampaign(sim); // T2-2 : la campagne (victoire) — APRÈS le règlement des contrats (les réussis comptent)

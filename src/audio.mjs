@@ -134,6 +134,9 @@ const ALERT_SFX = Object.freeze({
   'campaign-won': 'cashGain',
   'campaign-lost': 'cashLoss',
   'achievement-unlocked': 'cashGain',
+  // T3 (t_4c9baadc) : la couche d'événements dynamiques — l'alerte
+  // « event-start » sonne le SFX NOTABLE (le même que les incidents)
+  'event-start': 'event',
   // silencieux : 'flight-offer-expired', 'contract-offered',
   // 'contract-started', 'contract-refused', 'contract-expired',
   // 'bankruptcy-resumed', 'ac-blocked' non → ci-dessus, tout le reste = null.
