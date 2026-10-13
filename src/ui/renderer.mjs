@@ -2,6 +2,8 @@
 // Sprites vectoriels simples — ponytail : à remplacer par de vrais assets une fois la boucle jouable.
 import { queueTotals } from '../sim/passengers.mjs'; // R30 : files par terminal → somme (HUD)
 import { getPalette } from './palette.mjs'; // R43 : palette standard / daltonienne
+import { THEME } from './theme.mjs'; // T4 (t_eb78478e) : design tokens (écran-titre + HUD)
+import { drawIcon, iconCanvas } from './icons.mjs'; // T4 : glyphes vectoriels (écran-titre : avion, boutons ; menu animé)
 import { weatherView } from '../sim/weather.mjs'; // T3 (t_9b665a8b) : la MÉTÉO (lecture pure — le renderer reste en lecture seule, pas d'ensure)
 import { clockView, phaseTint } from '../sim/clock.mjs'; // T3 (t_76744b22) : l'HORLOGE jour/nuit (la phase pilote la teinte du monde)
 import { seasonTint, seasonView } from '../core/seasons.mjs'; // T3 (t_76744b22) : l'habillage de saison (teinte + affichage)
@@ -280,33 +282,120 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
     drawAircraft(state, cam);
   }
 
-  // Menu de départ : le jeu n'est pas encore commencé.
-  // R20 : les commandes du menu sont DES BOUTONS (souris) — les touches N/R
-  // restent en raccourci (le texte l'indique). Le bouton « Reprendre »
-  // n'existe QUE s'il y a une sauvegarde (savePanel.canResume).
-  // R43 : le menu propose AUSSI « Options (V) » (page options persistante :
-  // volume, mode daltonien, vitesse) — présent dès que onMenuCommands.openOptions
-  // est câblé (main.mjs) ; le bouton n'est pas créé si l'action est absente.
-  // Le bloc DOM est créé UNE FOIS (render est appelé à chaque frame) et
-  // seulement mis à jour de façon idempotente.
+  // Menu de départ : T4 (t_eb78478e) — ÉCRAN-TITRE animé « l'aéroport la
+  // nuit » (zéro asset, ~150 ops canvas) : ciel dégradé + lune + 90 étoiles
+  // scintillantes (positions DÉTERMINISTES — pas de tirage) + piste en
+  // perspective + terminal aux fenêtres allumées + avion en transit + titre.
+  // Horloge d'animation LOCALE (menuT, comptée par frame — le menu n'a pas
+  // de sim, donc pas de time de jeu à lire). Les commandes du menu restent
+  // des BOUTONS DOM (R20 ; les touches N/R en raccourci) ; T4 : chaque
+  // bouton reçoie une ICÔNE vectorielle (icons.mjs) — les 13 boutons-
+  // scénarios un accent coloré PAR SCÉNARIO (distingusables sans lire le nom).
   let menuBox = null;
   let resumeBtn = null;
   let diffBtns = []; // T2-1 (t_d5da994c) : les boutons de difficulté (rangée du menu)
+  let menuT = 0; // T4 : horloge d'animation du titre (frames)
+  // T4 passe PERF : le dégradé du ciel + la table des 90 étoiles sont en
+  // CACHE par (W,H) — recalculés UNIQUEMENT au redimensionnement (zéro
+  // allocation par frame : le budget de frame rAF est intact, le menu est la
+  // seule « anim » hors jeu).
+  const SCENARIO_HUES = Object.freeze([199, 262, 330, 15, 45, 110, 160, 210, 250, 300, 60, 130, 350]);
+  let menuCacheKey = 0;
+  let menuSkyGrad = null;
+  let menuStarPos = [];
   function drawMenu(pal) {
-    ctx.fillStyle = pal.menuBg;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#fff';
-    ctx.font = '48px system-ui, sans-serif';
+    menuT += 1;
+    const W = canvas.width, H = canvas.height;
+    // Cache par (W,H) — un resize change la clé et recalcule tout.
+    const ck = W * 512 + H;
+    if (ck !== menuCacheKey) {
+      menuCacheKey = ck;
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, THEME.skyTop); g.addColorStop(1, THEME.skyBottom);
+      menuSkyGrad = g;
+      menuStarPos = Array.from({ length: 90 }, (_, i) => ({
+        x: (i * 733 + 57) % Math.max(1, W),
+        y: (i * 389 + 131) % Math.max(1, Math.floor(H * 0.5)),
+      }));
+    }
+    // Ciel : dégradé nuit (tokens, EN CACHE) + lune (halo + disque).
+    ctx.fillStyle = menuSkyGrad;
+    ctx.fillRect(0, 0, W, H);
+    const mx = W * 0.78, my = H * 0.18, mr = Math.min(W, H) * 0.035;
+    ctx.save();
+    ctx.fillStyle = THEME.moon;
+    ctx.globalAlpha = 0.15;
+    ctx.beginPath(); ctx.arc(mx, my, mr * 2.4, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.beginPath(); ctx.arc(mx, my, mr, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    // Étoiles : table en CACHE (positions déterministes) + scintillement.
+    for (let i = 0; i < menuStarPos.length; i++) {
+      ctx.globalAlpha = 0.25 + 0.4 * (0.5 + 0.5 * Math.sin(menuT * 0.02 + i * 1.7));
+      ctx.fillStyle = THEME.moon;
+      ctx.fillRect(menuStarPos[i].x, menuStarPos[i].y, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+    // Sol + piste en perspective (trapèze) + ligne de centre en pointillés.
+    const gy = H * 0.62;
+    ctx.fillStyle = THEME.ground;
+    ctx.fillRect(0, gy, W, H - gy);
+    const cx = W * 0.5, rwY0 = gy + 12, rwY1 = H - 26;
+    const rwW0 = W * 0.04, rwW1 = W * 0.22;
+    ctx.fillStyle = THEME.runway;
+    ctx.beginPath();
+    ctx.moveTo(cx - rwW0 / 2, rwY0); ctx.lineTo(cx + rwW0 / 2, rwY0);
+    ctx.lineTo(cx + rwW1 / 2, rwY1); ctx.lineTo(cx - rwW1 / 2, rwY1);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = THEME.runwayLine;
+    for (let i = 0; i < 7; i++) {
+      const f = i / 6; // 0 (fond) → 1 (avant) : la perspective s'élargit
+      const y = rwY0 + (rwY1 - rwY0) * f;
+      const half = ((rwW0 + (rwW1 - rwW0) * f) / 2) * 0.06;
+      const len = 4 + 10 * f;
+      ctx.fillRect(cx - half, y - len / 2, Math.max(2, half * 2), len);
+    }
+    // Terminal : silhouette à gauche + 3 fenêtres allumées (doré).
+    const tw = W * 0.16, tx = W * 0.1, tyTop = gy - Math.min(46, H * 0.07);
+    ctx.fillStyle = THEME.surface;
+    ctx.fillRect(tx, tyTop, tw, gy - tyTop);
+    ctx.fillStyle = THEME.gold;
+    for (let c = 0; c < 3; c++) {
+      ctx.fillRect(tx + tw * (0.15 + c * 0.3), tyTop + (gy - tyTop) * 0.55, tw * 0.14, (gy - tyTop) * 0.22);
+    }
+    // Avion en transit (boucle ~80 frames) + feu rouge clignotant.
+    const tt = (menuT % 80) / 80;
+    const px = cx + (tt - 0.5) * rwW1 * 3.2;
+    const py = rwY1 - 16 - Math.sin(tt * Math.PI) * 14;
+    const acs = Math.max(26, H * 0.045);
+    ctx.save();
+    ctx.translate(px - acs / 2, py - acs / 2);
+    drawIcon(ctx, 'plane', acs, { color: THEME.text, accent: THEME.accent });
+    ctx.restore();
+    ctx.globalAlpha = (menuT % 30) < 15 ? 1 : 0.3;
+    ctx.fillStyle = THEME.err;
+    ctx.beginPath(); ctx.arc(px - acs * 0.3, py, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+    // Titre + sous-titre (ombre portée — lisible sur tout fond) + version.
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Airport Tycoon', canvas.width / 2, canvas.height / 2 - 40);
-    ctx.font = '16px system-ui, sans-serif';
-    ctx.fillText('Nouvelle partie (N) — un aéroport fourni : piste + terminal 2 portes', canvas.width / 2, canvas.height / 2 + 20);
-    ctx.fillText('Reprendre (R) — recharger la dernière sauvegarde · sauvegarde aussi automatique', canvas.width / 2, canvas.height / 2 + 44);
+    ctx.font = `bold ${THEME.titleSize}px ${THEME.fontUi}`;
+    ctx.fillStyle = 'rgba(5,9,20,0.6)';
+    ctx.fillText('AIRPORT TYCOON', W / 2 + 3, H * 0.4 + 3);
+    ctx.fillStyle = THEME.text;
+    ctx.fillText('AIRPORT TYCOON', W / 2, H * 0.4);
+    ctx.font = `${THEME.subtitleSize}px ${THEME.fontUi}`;
+    ctx.fillStyle = THEME.textDim;
+    ctx.fillText('Un aéroport la nuit : du bitume au départ.', W / 2, H * 0.4 + THEME.titleSize * 0.8);
+    ctx.font = `11px ${THEME.fontUi}`;
+    ctx.textAlign = 'right';
+    ctx.fillText(`v${THEME.versionTag}`, W - 12, H - 12);
+    // --- BOUTONS DOM (créés UNE FOIS, idempotent — pattern R20) -------------
     // R38 : les TROIS scénarios rejouables (mêmes règles, config explicite +
-    // objectif R22 annoncé) — des BOUTONS (souris) comme les commandes du menu
-    // (R20). « Nouvelle partie » reste le MODE LIBRE (pas de champ scenario,
-    // pas d'objectif annoncé).
+    // objectif R22 annoncé) — des BOUTONS (souris) comme les commandes du
+    // menu. « Nouvelle partie » reste le MODE LIBRE (pas de champ scenario,
+    // pas d'objectif annoncé). T4 : icônes vectorielles (icons.mjs) — les
+    // boutons-scénarios reçoivent un accent par index (SCENARIO_HUES).
     const scenarioBtnDefs = (onMenuCommands && onMenuCommands.scenarioModes)
       ? onMenuCommands.scenarioModes()
       : [];
@@ -319,22 +408,30 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
       btnNew.className = 'tool';
       btnNew.textContent = 'Nouvelle partie (N)';
       btnNew.addEventListener('click', () => onMenuCommands.newGame());
+      const icNew = iconCanvas('plane', 18, { color: THEME.text, accent: THEME.accent });
+      if (icNew) btnNew.prepend(icNew);
       resumeBtn = document.createElement('button');
       resumeBtn.className = 'tool';
       resumeBtn.textContent = 'Reprendre la sauvegarde (R)';
       resumeBtn.addEventListener('click', () => onMenuCommands.resume());
+      const icResume = iconCanvas('info', 18, { color: THEME.text, accent: THEME.gold });
+      if (icResume) resumeBtn.prepend(icResume);
       const btnOpts = document.createElement('button');
       btnOpts.className = 'tool';
       btnOpts.textContent = 'Options (V)'; // V — clavier (O reste l'overlay réseau R18)
       btnOpts.addEventListener('click', () => onMenuCommands.openOptions());
+      const icOpts = iconCanvas('gear', 18, { color: THEME.text, accent: THEME.accent });
+      if (icOpts) btnOpts.prepend(icOpts);
       menuBox.append(btnNew, resumeBtn, btnOpts);
-      for (const s of scenarioBtnDefs) {
+      scenarioBtnDefs.forEach((s, i) => {
         const b = document.createElement('button');
         b.className = 'tool';
         b.textContent = s.label; // le nom du scénario (R38 : config explicite + objectif annoncé)
         b.addEventListener('click', () => onMenuCommands.scenario(s.id));
+        const ic = iconCanvas('plane', 18, { color: THEME.text, accent: `hsl(${SCENARIO_HUES[i % SCENARIO_HUES.length]} 70% 62%)` });
+        if (ic) b.prepend(ic);
         menuBox.appendChild(b);
-      }
+      });
       // T2-1 (t_d5da994c) : SÉLECTION DE DIFFICULTÉ dans le menu — 3 boutons
       // (Facile / Normal / Difficile), MÊME style .menu-btns .tool que les
       // commandes du menu (pas de CSS duplicaté) ; la sélection est marquée
@@ -414,14 +511,21 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
     }
     if (state.paused) lines.push('PAUSE (P pour reprendre)');
     const w = 240;
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillStyle = 'rgba(10,18,32,0.82)'; // T4 : surface « nuit » (tokens)
     ctx.fillRect(12, 12, w, 24 * lines.length + 16);
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = THEME.text;
     ctx.font = '16px system-ui, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     lines.forEach((t, i) => ctx.fillText(t, 24, 24 + i * 24 + 12));
   }
+
+  // T4 (t_eb78478e) : transition d'écran (MENU ↔ JEU) — fondu depuis le noir
+  // sur ~0,35 s quand l'écran change (horloge par frame, ~21 frames à 60 fps).
+  // Un seul état local au renderer (zéro règle de jeu, zéro DOM).
+  let transScreen = null;
+  let transT = 0;
+  const TRANS_DUR = 0.35;
 
   function render(state) {
     const cam = state.camera;
@@ -429,6 +533,8 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
     // frame) — getPalette est en lecture seule : unknown → standard (jamais
     // de rendu cassé).
     const pal = getPalette(paletteOf ? paletteOf() : false);
+    if (state.screen !== transScreen) { transScreen = state.screen; transT = 0; }
+    if (transT < TRANS_DUR) transT += 1 / 60;
     if (state.screen === 'menu') {
       drawMenu(pal);
     } else {
@@ -458,6 +564,16 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
       if (st) { ctx.fillStyle = st; ctx.fillRect(-16, -16, canvas.width + 32, canvas.height + 32); }
       ctx.restore();
       drawHud(state);
+    }
+    // T4 : fondu de transition (MENU ↔ JEU) — voile noir à alpha DÉCROISSANT
+    // (1 → 0) après un changement d'écran ; les deux écrans en dessous sont
+    // déjà peints (menu ou jeu) : un seul rempli, pas de couche DOM.
+    if (transT < TRANS_DUR) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - transT / TRANS_DUR);
+      ctx.fillStyle = THEME.skyTop;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
     }
     // Exposition pour les tests/CDP sans exposer les règles de jeu
     return {

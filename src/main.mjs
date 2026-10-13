@@ -14,6 +14,7 @@ import { makeSavePanel } from './ui/save-panel.mjs';
 import { makePlanningPanel } from './ui/planning-panel.mjs';
 import { makePanels } from './ui/panels.mjs';
 import { makeIntro } from './ui/intro.mjs';
+import { makeTips } from './ui/tips.mjs'; // T4 (t_eb78478e) : les 5 astuces d'onboarding (une fois, persistées)
 import { makeBankruptcyScreen, resumeCommand } from './ui/bankruptcy.mjs'; // R35 : écran de faillite (bilan + décisions)
 import { makeJuice, juiceForAlert } from './ui/juice.mjs'; // Juice (t_5065be95) : feedback visuel léger (UI, lecture seule)
 import { makeAudioEngine, sfxForAlert, normalizeAudioState } from './audio.mjs'; // R44 (t_ebbb202e) : synthèse audio (0 asset) + SFX par alerte
@@ -194,6 +195,14 @@ export function boot(canvas) {
   // → goulot → investir. UI fine (aucune règle) ; la progression est sur
   // `state.intro` (sérialisée → elle reprend après sauvegarde).
   const intro = makeIntro(state);
+
+  // T4 (t_eb78478e) : les 5 ASTUCES d'onboarding (non intrusives — un toast
+  // doré 9 s, une seule fois chacune : la persistance est sur `state.tips.seen`,
+  // sérialisée avec la sauvegarde → jamais de rediffusion). LECTURE SEULE de
+  // la sim ; le DOM passe par le toast EXISTANT (options.mjs, R28/BL-01).
+  const tips = makeTips(state, {
+    toast: (text, o) => toasts.toast(text, o && o.kind, o),
+  });
 
   // R35 : l'ÉCRAN de faillite (bilan + décisions : reprendre / nouvelle
   // partie) — UI fine : l'UI émet l'intention, la sim règle (resumeAfter-
@@ -444,6 +453,7 @@ export function boot(canvas) {
     // R20 : l'intro (carte du premier cycle) + les boutons de commandes
     // (vitesse/pause reflètent l'état courant) suivent à chaque frame.
     intro.refresh();
+    tips.refresh(); // T4 : les astuces vérifient leurs conditions (toast une fois, jamais de rediffusion)
     bankruptcyScreen.refresh(); // R35 : l'écran suit le flag de la sim (open/fermé + peinture)
     optionsPage.refresh(); // R43 : la page options suit l'état (valeurs des boutons)
     buildTool.refreshControls();
@@ -555,6 +565,7 @@ export function boot(canvas) {
     toasts,
     panels,
     intro, // R20 : l'introduction (tests CDP : étape courante, done/skipped)
+    tips, // T4 (t_eb78478e) : les astuces d'onboarding (tests CDP : seen, refresh)
     bankruptcyScreen, // R35 : l'écran de faillite (tests CDP : ouvert sur bankrupt, boutons)
     options, // R43 : les options persistantes (volume / daltonien / vitesse)
     optionsPage, // R43 : la page options (tests CDP : open/close/apply + localStorage)

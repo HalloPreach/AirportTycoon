@@ -5,6 +5,8 @@
 // Le fantôme est dessiné par le renderer via drawGhost(ctx, cam, view).
 import { BUILDINGS } from '../data/catalog.mjs';
 import { unlockState } from '../infra/unlocks.mjs';
+import { iconCanvas } from './icons.mjs'; // T4 (t_eb78478e) : icônes vectorielles des 11 types
+import { THEME } from './theme.mjs'; // T4 : design tokens (couleurs des icônes)
 
 // T33 (t_88aee6d5) : dérivé du CATALOGUE (BUILDINGS) — la liste grandit avec
 // les bâtiments. Les 8 d'origine gardent leurs touches 1-8 ; les nouveaux
@@ -26,6 +28,10 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
     const btn = document.createElement('button');
     btn.className = 'tool';
     btn.textContent = `${n + 1} · ${BUILDINGS[k].name} (${BUILDINGS[k].cost} $)`;
+    // T4 : icône vectorielle du type (20 px) AVANT l'étiquette — le type est
+    // reconnaissable sans lire le libellé (le coût reste dans le texte).
+    const ic = iconCanvas(k, 20, { color: THEME.text, accent: THEME.accent });
+    if (ic) btn.prepend(ic);
     btn.addEventListener('click', () => {
       tool.mode = true; tool.demolishMode = false; tool.kind = k; sync();
     });

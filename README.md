@@ -8,6 +8,27 @@ Jeu de gestion d'aéroport 2D — local, hors ligne, Canvas 2D vanilla, **0 dép
 node serve.mjs        # http://127.0.0.1:8123
 ```
 
+## Version autonome (release)
+
+Un artefact unique, **0 dépendance, 0 appel réseau** : tout le graphe de
+modules ESM est inliné dans un seul script classique.
+
+```bash
+npm run build         # → dist/standalone.html + dist/standalone.js (+ build-report.json)
+```
+
+- **Jouer** : ouvrir `dist/standalone.html` directement (`file://`, double-clic)
+  ou servir le dossier `dist/` — le jeu démarre tel quel, hors-ligne.
+- **Générer** : `tools/build-standalone.mjs` (Node stdlib uniquement, aucun
+  bundler externe) — tri topologique + SCC (Tarjan) : le cycle réel du graphe
+  (`contracts → infra → aircraft → unlocks → contracts`) est traité par
+  substitution live des bindings rétrogrades ; les imports dynamiques `import()`
+  deviennent des lectures du registre (`__dyn`) ; manifeste dans
+  `dist/build-report.json` (modules, cycles, arêtes rétrogrades, tailles).
+- **Preuve d'exécution** : `npm run qa:standalone` (Edge headless CDP) — boot
+  http + boot `file://` hors-ligne : menu, partie, sauvegarde/recharge,
+  0 ressource `src/` chargée, 0 exception, captures horodatées dans `evidence/`.
+
 ## Contrôles
 
 - **N** nouvelle partie (au menu) · **P** / **Échap** pause · **Q** quitter (retour menu, auto-sauvegarde) · **F** vitesse x1/x2/x4
@@ -37,6 +58,8 @@ Les bases (piste, taxiway, terminal) sont toujours constructibles.
 ```bash
 npm run test          # logique pure : machine à états, horloge, caméra, construction, sauvegarde, sim (317 tests)
 npm run qa            # QA sans GUI : boot Edge headless (CDP) — 30 frames, pause, menu, boucle jouable
+npm run build         # version autonome : dist/standalone.{html,js} (0 réseau, jouable file://)
+npm run qa:standalone # preuve CDP de la version autonome (http + file:// hors-ligne, 0 exception)
 node qa/r40-cdp.mjs   # QA navigateur intégrée : 19 flux complets sur l'UI réelle (boutons, carte, incidents)
 node qa/r42-cdp.mjs   # endurance navigateur : session prolongée + incidents + reprise sous charge (16 checks)
 node qa/r42-node.mjs  # endurance Node multi-seeds (3 seeds × 24 h) : tick coût, fuite mémoire, sauvegardes, session complète

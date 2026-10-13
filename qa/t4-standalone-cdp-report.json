@@ -1,0 +1,106 @@
+{
+  "verdict": "PASS",
+  "timestamp": "2026-10-13T22:25:23.914Z",
+  "artifact": {
+    "js": 581692,
+    "html": 14980
+  },
+  "checks": [
+    {
+      "name": "serveur local répond",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A1 window.__game exposé (bundle exécuté)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A2 0 ressource src/ (tout est inliné)",
+      "ok": true,
+      "detail": "ressources=5 (src/: 0)"
+    },
+    {
+      "name": "A2b standalone.js chargé",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A3 menu affiché (screen=\"menu\")",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A4 menu animé : 30 frames",
+      "ok": true,
+      "detail": "count=30"
+    },
+    {
+      "name": "A5 nouvelle partie : sim créée (artefact autonome)",
+      "ok": true,
+      "detail": "screen=game"
+    },
+    {
+      "name": "A6 aéroport fourni (1 piste + 1 taxiway + 2 portes)",
+      "ok": true,
+      "detail": "pistes=1 taxiways=1 portes=2"
+    },
+    {
+      "name": "A7 simulation progresse (temps de jeu avance)",
+      "ok": true,
+      "detail": "t0=0.018 t30=0.6111999999999997"
+    },
+    {
+      "name": "A8 icônes vectorielles T4 dans la toolbar (canvas .tool)",
+      "ok": true,
+      "detail": "icônes=11"
+    },
+    {
+      "name": "A9 astuces T4 branchées (g.tips.refresh + state.tips.seen persistant)",
+      "ok": true,
+      "detail": "seen()=function state.tips.seen=0"
+    },
+    {
+      "name": "A10 sauvegarde + rechargement cohérent",
+      "ok": true,
+      "detail": "saved=true load=true money=12000"
+    },
+    {
+      "name": "A11 0 exception page (section http)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B1 file:// window.__game exposé (boot hors-ligne)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B2 file:// menu affiché",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B3 file:// menu animé (20 frames)",
+      "ok": true,
+      "detail": "count=20"
+    },
+    {
+      "name": "B4 file:// 0 ressource externe (tout inliné)",
+      "ok": true,
+      "detail": "ressources=0"
+    },
+    {
+      "name": "B5 file:// 0 exception (boot complet hors-ligne)",
+      "ok": true,
+      "detail": "exceptions totales=0"
+    }
+  ],
+  "captures": [
+    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t4-standalone-20261014-002518-menu.png",
+    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t4-standalone-20261014-002518-jeu.png",
+    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t4-standalone-20261014-002518-menu-offline.png"
+  ],
+  "pageExceptions": []
+}

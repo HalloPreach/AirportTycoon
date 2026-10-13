@@ -214,6 +214,42 @@
       border-radius: 6px; padding: 6px 12px; cursor: pointer; font: 13px system-ui;
     }
     .options .tool[aria-pressed="true"] { background: #1e88e5; border-color: #64b5f6; }
+    /* T4 (t_eb78478e) : DESIGN TOKENS « tour de contrôle la nuit » — source
+       UNIQUE = src/ui/theme.mjs (ce bloc les MIRE, le test t4-theme vérifie
+       la cohérence : un token changé d'un côté DOIT l'être de l'autre). */
+    :root {
+      --at-bg: #0a1220;
+      --at-surface: #111a2b;
+      --at-surface-alt: #182439;
+      --at-border: #2a3b55;
+      --at-text: #e8eef7;
+      --at-text-dim: #93a4bd;
+      --at-accent: #4fc3f7;
+      --at-accent-soft: rgba(79,195,247,0.16);
+      --at-ok: #4caf7a;
+      --at-warn: #ffb74d;
+      --at-err: #ef5350;
+      --at-gold: #ffd54f;
+    }
+    html, body { background: var(--at-bg); } /* nuit profonde (le canvas couvre l'écran, le fond reste discret) */
+    /* T4 : ASTUCES d'onboarding (tips.mjs) — toasts dorés, une seule fois
+       (persistance state.tips.seen) ; la zone .toasts reste dédiée (T51). */
+    .toast--tip {
+      border-left-color: var(--at-gold);
+      background: rgba(24, 32, 48, 0.94);
+      box-shadow: 0 0 0 1px var(--at-accent-soft);
+    }
+    .toast--tip .tip-title { color: var(--at-gold); font-weight: 600; }
+    /* T4 : icônes vectorielles (icons.mjs) dans les boutons de construction
+       et du menu — 18-20 px, jamais de texte dupliqué. */
+    .tool .icon, .menu-diff .icon { margin-right: 6px; vertical-align: -4px; }
+    /* T4 : boutons du menu — filet d'accent cyan (balise de tour) + survol. */
+    .menu-btns .tool {
+      border-top: 2px solid transparent;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .menu-btns .tool:hover { border-top-color: var(--at-accent); background: #42525e; }
+    .menu-btns .tool[aria-pressed="true"] { border-top-color: var(--at-gold); }
     @media (max-width: 560px) {
       .planning { left: 8px; right: 8px; max-width: none; max-height: 25vh; overflow-y: auto; }
       .toasts { left: 8px; right: 8px; top: calc(25vh + 24px); bottom: auto; max-width: none; max-height: calc(45vh - 255px); overflow: hidden; }

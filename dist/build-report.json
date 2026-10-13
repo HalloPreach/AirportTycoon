@@ -1,0 +1,74 @@
+{
+  "generatedAt": "2026-10-13T22:25:16.159Z",
+  "entry": "src/main.mjs",
+  "moduleCount": 50,
+  "modules": [
+    "src/main.mjs",
+    "src/core/game-state.mjs",
+    "src/core/events.mjs",
+    "src/ui/camera.mjs",
+    "src/ui/input.mjs",
+    "src/ui/renderer.mjs",
+    "src/ui/options.mjs",
+    "src/core/loop.mjs",
+    "src/ui/toast.mjs",
+    "src/ui/build-tool.mjs",
+    "src/ui/save-panel.mjs",
+    "src/ui/planning-panel.mjs",
+    "src/ui/panels.mjs",
+    "src/ui/intro.mjs",
+    "src/ui/tips.mjs",
+    "src/ui/bankruptcy.mjs",
+    "src/ui/juice.mjs",
+    "src/audio.mjs",
+    "src/ui/overlay.mjs",
+    "src/persistence/save.mjs",
+    "src/data/catalog.mjs",
+    "src/core/new-game.mjs",
+    "src/core/difficulty.mjs",
+    "src/scenarios.mjs",
+    "src/sim/passengers.mjs",
+    "src/ui/palette.mjs",
+    "src/ui/theme.mjs",
+    "src/ui/icons.mjs",
+    "src/sim/weather.mjs",
+    "src/sim/clock.mjs",
+    "src/core/seasons.mjs",
+    "src/core/sim.mjs",
+    "src/infra/unlocks.mjs",
+    "src/flights/flights.mjs",
+    "src/sim/events.mjs",
+    "src/economy/economy.mjs",
+    "src/pathfinding/path.mjs",
+    "src/sim/aircraft.mjs",
+    "src/progression/objectives.mjs",
+    "src/flights/contracts.mjs",
+    "src/progression/quality.mjs",
+    "src/infra/assignments.mjs",
+    "src/progression/campaign.mjs",
+    "src/progression/stats.mjs",
+    "src/progression/achievements.mjs",
+    "src/sim/incidents.mjs",
+    "src/infra/upgrades.mjs",
+    "src/infra/infra.mjs",
+    "src/core/sim-state.mjs",
+    "src/core/layouts.mjs"
+  ],
+  "cycles": [
+    "CYCLE src/flights/contracts.mjs → src/infra/infra.mjs → src/sim/aircraft.mjs → src/infra/unlocks.mjs → src/flights/contracts.mjs"
+  ],
+  "backEdges": {
+    "src/infra/unlocks.mjs": [
+      "punctualityStats ← src/sim/aircraft.mjs"
+    ],
+    "src/flights/contracts.mjs": [
+      "runwayFor ← src/infra/infra.mjs",
+      "nominalRotation ← src/sim/aircraft.mjs"
+    ],
+    "src/infra/infra.mjs": [
+      "unlockState ← src/infra/unlocks.mjs"
+    ]
+  },
+  "jsBytes": 581692,
+  "htmlBytes": 14980
+}
