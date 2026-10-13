@@ -12,8 +12,17 @@
 //     « Scénario » + toast au lancement).
 // Le MODE LIBRE est conservé : « Nouvelle partie » = makeGameState() sans
 // scenario (seed aléatoire, pas d'objectif annoncé, pas de champ `scenario`).
-// ponytail : 3 configs en dur (le brief dit trois scénarios) ; un 4e scénario
-// s'ajoute en 1 entrée de table — pas de système de paramétrage.
+// R46 (t_7b04f863) : +3 scénarios (CRISE TOTALE, DÉFI DIFFICILE, DÉFI FACILE)
+// — le même pattern : une ENTRÉE DE TABLE, pas de système de paramétrage.
+// Deux champs de config ADDITIFS (absents des entrées R38 → comportement
+// R38 intact) :
+//   • `difficulty` : le profil T2-1 (core/difficulty.mjs) — PARAMÈTRE DE
+//     SPAWN (capital de départ + facteurs de tick), jamais une règle : le
+//     scénario porte sa difficulté, sérialisée sur state.difficulty comme le
+//     mode libre (elle REPREND au chargement, le sélecteur du menu la lit) ;
+//   • `runwayClosedSeconds` : fermeture de PISTE forçée dès le départ avec
+//     une durée EXPLICITE du défi (forceIncident R32 = l'action EXISTANTE,
+//     comme le pic ; la durée naturelle RUNWAY_CLOSE_S reste la règle sim).
 import { makeGameState } from './core/new-game.mjs';
 import { forceIncident } from './sim/incidents.mjs';
 import { OBJECTIVES } from './progression/objectives.mjs';
@@ -28,6 +37,14 @@ export const SATURATION_SURGE_S = 600; // 10 min sim : le temps de décider
 // l'emprunt borné R35 (5 000 $, une fois) RESTE le levier DU JOUEUR
 // (takeLoan, panneau Bilan) — le défi est « remonter dans le vert ».
 export const REDRESSEMENT_FUNDS = -3000;
+// R46 : le DÉFI CRISE TOTALE — pic de demande (fenêtre EXPLICITE 15 min sim)
+// ET fermeture de la piste dès le départ (durée EXPLICITE 120 s, la même que
+// la règle R32 RUNWAY_CLOSE_S : le scénario ne change que la DUREE du défi,
+// jamais la règle). Les deux effets sont les actions EXISTANTES
+// (forceIncident R32/R33) posées sur l'état frais — la réponse du joueur est
+// l'intervention PAYANTE R33 (réouvrir la piste : 600 $) ou l'attente.
+export const CRISIS_SURGE_S = 900; // 15 min sim : le temps d'absorber la crise
+export const CRISIS_RUNWAY_CLOSE_S = 120; // = la durée R32 (la règle reste, on la force au départ)
 
 export const SCENARIOS = Object.freeze({
   guide: Object.freeze({
@@ -51,23 +68,59 @@ export const SCENARIOS = Object.freeze({
     surgeSeconds: 0,
     objective: 'o1-cycle', // R22 : remettre l'aéroport dans le vert (cycle + période net ≥ 0, 1000 $)
   }),
+  // R46 (t_7b04f863) : trois nouveaux scénarios — MÊMES règles (forceIncident
+  // R32/R33, emprunt R35, difficultés T2-1, objectifs R22), configuration
+  // EXPLICITE posée sur l'état frais, rejouables (seed imposée).
+  crise: Object.freeze({
+    name: 'Défi crise totale',
+    seed: 13,
+    funds: START_FUNDS, // budget normal (le défi est l'incident, pas le budget)
+    surgeSeconds: CRISIS_SURGE_S, // pic de 15 min sim ACTIF dès le départ
+    runwayClosedSeconds: CRISIS_RUNWAY_CLOSE_S, // ET la piste fermée 120 s dès le départ
+    objective: 'o2-surge', // R22 : ponctualité restaurée pendant le pic (≥ 50 %, 1500 $)
+  }),
+  difficile: Object.freeze({
+    name: 'Défi difficile',
+    seed: 21,
+    difficulty: 'hard', // T2-1 : capital maigre 6 000 $ + incidents ×0.6 + OPEX ×1.25
+    objective: 'o1-cycle', // R22 : remettre dans le vert en conditions dures (1000 $)
+  }),
+  facile: Object.freeze({
+    name: 'Défi facile',
+    seed: 3,
+    difficulty: 'easy', // T2-1 : capital confort 18 000 $ + incidents ×1.6 + OPEX ×0.85
+    objective: 'o1-cycle', // R22 : premier cycle sans départ sec + période net ≥ 0 (1000 $)
+  }),
 });
 
 // Démarre un scénario : état frais (seed imposée) + la configuration EXPLICITE
-// appliquée SUR LA SIM (pic = forceIncident, solde = champ de l'économie —
-// aucune règle ajoutée au tick). Retourne le state complet ; le câblage
-// (main.mjs) fait Object.assign(state, ret) comme pour une nouvelle partie.
+// appliquée SUR LA SIM (pic = forceIncident, solde = champ de l'économie,
+// piste fermée = forceIncident R32 — aucune règle ajoutée au tick). Retourne
+// le state complet ; le câblage (main.mjs) fait Object.assign(state, ret)
+// comme pour une nouvelle partie.
 // `state.scenario` = la configuration (marqueur sérialisé, la config REPREND
-// au chargement).
+// au chargement). La difficulté du scénario (R46, absente des entrées R38 →
+// 'normal' = comportement R38 intact) est le PARAMÈTRE DE SPAWN T2-1 : elle
+// vit sur state.difficulty / sim.difficulty (sérialisées, reprises au load).
 export function startScenario(mode) {
   const cfg = SCENARIOS[mode];
   if (!cfg) throw new Error(`scénario inconnu : ${mode} (les modes : ${Object.keys(SCENARIOS).join(', ')})`);
-  const state = makeGameState(cfg.seed);
-  state.scenario = { id: mode, name: cfg.name, objective: cfg.objective };
-  if (cfg.funds !== START_FUNDS) state.sim.economy.money = cfg.funds; // budget explicite du défi
+  const diffId = cfg.difficulty || 'normal'; // R46 : le profil T2-1 du défi (référentiel sinon)
+  const state = makeGameState(cfg.seed, diffId);
+  state.scenario = { id: mode, name: cfg.name, objective: cfg.objective, difficulty: diffId };
+  // Budget EXPLICITE du défi (absent pour les défis de difficulté : le
+  // CAPITAL DU PROFIL T2-1 posé par makeGameState EST la config du défi —
+  // pas de chiffre dupliqué).
+  if (cfg.funds !== undefined && cfg.funds !== state.sim.economy.money) state.sim.economy.money = cfg.funds;
   if (cfg.surgeSeconds > 0) {
     forceIncident(state.sim, 'surge'); // l'action EXISTANTE (tests R33) met le pic actif
     state.sim.incidents.surge.remaining = cfg.surgeSeconds; // durée EXPLICITE du défi
+  }
+  if (cfg.runwayClosedSeconds > 0) {
+    const rw = state.sim.infra.runways[0]; // plan de départ A-2 : la piste fournie
+    if (!rw) throw new Error(`scénario ${mode} : fermeture de piste impossible (aucune piste au départ)`);
+    forceIncident(state.sim, `runway:${rw.id}`); // l'action EXISTANTE R32 (attachée à l'actif)
+    state.sim.incidents.runways[rw.id].remaining = cfg.runwayClosedSeconds; // durée EXPLICITE du défi
   }
   return state;
 }

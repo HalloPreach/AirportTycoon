@@ -1,15 +1,17 @@
 {
   "tool": "qa/r38-scenarios.mjs",
-  "commit": "(non connu)",
+  "commit": "7d87483",
   "mode": "saturation",
   "config": {
     "seed": 7,
     "funds": 12000,
+    "difficulty": "normal",
     "surge": {
       "active": true,
       "seconds": 600,
       "note": "durée EXPLICITE du défi — la durée naturelle (90 s) n'est pas écrasée"
     },
+    "runwayClosed": null,
     "loan": null,
     "objective": {
       "id": "o2-surge",
@@ -27,6 +29,7 @@
     "note": "le pic est ACTIF dès le départ avec la fenêtre EXPLICITE du défi (600 s) — après 1 h de rejoue, un pic actif en fin de run serait un pic NATUREL (pas celui du défi)"
   },
   "redressement": null,
+  "crise": null,
   "objective": {
     "announced": {
       "id": "o2-surge",
@@ -52,8 +55,8 @@
   "invariants": "OK (money/satisfaction finies, pax monotones, positions finies, phases connues — un seul = ABORT)",
   "determinism": {
     "snapshotsByteIdentical": true,
-    "sha256RunA": "accc758963757ab4a684d42245cc9f5ab3869ff6e2d46f64f085bb22440c8e1c",
-    "sha256RunB": "accc758963757ab4a684d42245cc9f5ab3869ff6e2d46f64f085bb22440c8e1c",
+    "sha256RunA": "f72c4242e7f11392ece4a1b987c17605986a62f0dc1e97bfe3601849f1e267a8",
+    "sha256RunB": "f72c4242e7f11392ece4a1b987c17605986a62f0dc1e97bfe3601849f1e267a8",
     "note": "R09 : même config + même politique = MÊME partie (EV-10 : le PRNG est sur la sim)"
   }
 }

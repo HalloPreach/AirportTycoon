@@ -1,11 +1,13 @@
 {
   "tool": "qa/r38-scenarios.mjs",
-  "commit": "(non connu)",
+  "commit": "7d87483",
   "mode": "redressement",
   "config": {
     "seed": 42,
     "funds": -3000,
+    "difficulty": "normal",
     "surge": null,
+    "runwayClosed": null,
     "loan": {
       "availableBefore": true,
       "taken": true,
@@ -36,6 +38,7 @@
     },
     "backInGreen": true
   },
+  "crise": null,
   "objective": {
     "announced": {
       "id": "o1-cycle",
@@ -61,8 +64,8 @@
   "invariants": "OK (money/satisfaction finies, pax monotones, positions finies, phases connues — un seul = ABORT)",
   "determinism": {
     "snapshotsByteIdentical": true,
-    "sha256RunA": "ed52c9f8f6d0d1e7e0b45229b8afcce3bcd6895a214ba38b5db0e52d3835792f",
-    "sha256RunB": "ed52c9f8f6d0d1e7e0b45229b8afcce3bcd6895a214ba38b5db0e52d3835792f",
+    "sha256RunA": "c11650c8be04166f242f173b5390e183a4f515611d28f9132df3c0c82aec3834",
+    "sha256RunB": "c11650c8be04166f242f173b5390e183a4f515611d28f9132df3c0c82aec3834",
     "note": "R09 : même config + même politique = MÊME partie (EV-10 : le PRNG est sur la sim)"
   }
 }

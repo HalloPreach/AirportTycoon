@@ -1,0 +1,54 @@
+{
+  "tool": "qa/r38-scenarios.mjs",
+  "commit": "7d87483",
+  "mode": "facile",
+  "config": {
+    "seed": 3,
+    "funds": 18000,
+    "difficulty": "easy",
+    "surge": null,
+    "runwayClosed": null,
+    "loan": null,
+    "objective": {
+      "id": "o1-cycle",
+      "name": "Premier cycle avec plein",
+      "reward": 1000,
+      "text": "Un vol complet sans départ sec (carburant plein au décollage) et une période close net ≥ 0."
+    },
+    "dt": 1,
+    "hours": 1,
+    "policy": "acceptation des vols (comme la case auto-accept du jeu)"
+  },
+  "saturation": null,
+  "redressement": null,
+  "crise": null,
+  "objective": {
+    "announced": {
+      "id": "o1-cycle",
+      "name": "Premier cycle avec plein",
+      "reward": 1000,
+      "text": "Un vol complet sans départ sec (carburant plein au décollage) et une période close net ≥ 0."
+    },
+    "successReadFromSim": {
+      "done": false,
+      "label": "Premier cycle avec plein (récompense 1000 $)"
+    },
+    "note": "la réussite est décidée PAR LA SIM (tickObjectives, R22) — le harnais ne la force pas"
+  },
+  "money": {
+    "start": 18000,
+    "end": 100031.99999999581,
+    "bankrupt": false
+  },
+  "passengers": {
+    "totalCarried": 6002,
+    "satisfaction": 100
+  },
+  "invariants": "OK (money/satisfaction finies, pax monotones, positions finies, phases connues — un seul = ABORT)",
+  "determinism": {
+    "snapshotsByteIdentical": true,
+    "sha256RunA": "c3d9319252e4507582ce0e27fa38532bd6f833f86044625e111635f0a9910b6c",
+    "sha256RunB": "c3d9319252e4507582ce0e27fa38532bd6f833f86044625e111635f0a9910b6c",
+    "note": "R09 : même config + même politique = MÊME partie (EV-10 : le PRNG est sur la sim)"
+  }
+}

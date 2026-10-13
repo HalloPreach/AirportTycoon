@@ -1,0 +1,68 @@
+{
+  "tool": "qa/r38-scenarios.mjs",
+  "commit": "7d87483",
+  "mode": "crise",
+  "config": {
+    "seed": 13,
+    "funds": 12000,
+    "difficulty": "normal",
+    "surge": {
+      "active": true,
+      "seconds": 900,
+      "note": "durée EXPLICITE du défi — la durée naturelle (90 s) n'est pas écrasée"
+    },
+    "runwayClosed": {
+      "activeAtStart": true,
+      "seconds": 120,
+      "note": "fermeture de la piste forçée dès le départ (forceIncident R32) — durée EXPLICITE du défi (= la durée R32) ; la réponse du joueur est l'intervention payante R33 (600 $) ou l'attente"
+    },
+    "loan": null,
+    "objective": {
+      "id": "o2-surge",
+      "name": "Pic de demande absorbé",
+      "reward": 1500,
+      "text": "Pendant un pic de demande, la ponctualité est restaurée (≥ 50 % des fins de vol récentes à l’heure)."
+    },
+    "dt": 1,
+    "hours": 1,
+    "policy": "acceptation des vols (comme la case auto-accept du jeu)"
+  },
+  "saturation": null,
+  "redressement": null,
+  "crise": {
+    "surgeAtStart": true,
+    "surgeWindowS": 900,
+    "runwayClosedAtStart": true,
+    "runwayDurationS": 120,
+    "objective": "o2-surge — la ponctualité (≥ 50 %) doit tenir PENDANT le pic, avec la piste fermée 120 s au départ (la sim décide, R16)"
+  },
+  "objective": {
+    "announced": {
+      "id": "o2-surge",
+      "name": "Pic de demande absorbé",
+      "reward": 1500,
+      "text": "Pendant un pic de demande, la ponctualité est restaurée (≥ 50 % des fins de vol récentes à l’heure)."
+    },
+    "successReadFromSim": {
+      "done": true,
+      "label": "Pic de demande absorbé (récompense 1500 $)"
+    },
+    "note": "la réussite est décidée PAR LA SIM (tickObjectives, R22) — le harnais ne la force pas"
+  },
+  "money": {
+    "start": 12000,
+    "end": 107868.00000000742,
+    "bankrupt": false
+  },
+  "passengers": {
+    "totalCarried": 7024,
+    "satisfaction": 100
+  },
+  "invariants": "OK (money/satisfaction finies, pax monotones, positions finies, phases connues — un seul = ABORT)",
+  "determinism": {
+    "snapshotsByteIdentical": true,
+    "sha256RunA": "31bfb10fbfbdad73b86e82c02b7fce0fdc8cc351cb89ee23bc766f3042df5f44",
+    "sha256RunB": "31bfb10fbfbdad73b86e82c02b7fce0fdc8cc351cb89ee23bc766f3042df5f44",
+    "note": "R09 : même config + même politique = MÊME partie (EV-10 : le PRNG est sur la sim)"
+  }
+}
