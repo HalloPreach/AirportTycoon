@@ -1,0 +1,820 @@
+{
+  "task": "t_cccfbc97",
+  "test": "qa/ui-no-overlap-cdp.mjs",
+  "ts": "2026-10-13T22:03:35.489Z",
+  "rule": "aucun élément interactif visible ne chevauche un autre (zones + z-index) ; #game (zone de jeu) et .toasts (pointer-events:none) exclus des paires ; au menu, les 3 racines de panneaux de jeu sont masquées",
+  "viewports": [
+    {
+      "viewport": "1920x1080",
+      "screens": [
+        {
+          "screen": "menu",
+          "screenExpected": "menu",
+          "screenActual": "menu",
+          "layers": [
+            {
+              "sel": "#game",
+              "present": true,
+              "hidden": false,
+              "pos": "relative",
+              "z": "10",
+              "pe": "auto",
+              "x": 0,
+              "y": 0,
+              "w": 1920,
+              "h": 1080
+            },
+            {
+              "sel": ".toasts",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "500",
+              "pe": "none",
+              "x": 1908,
+              "y": 1068,
+              "w": 0,
+              "h": 0
+            },
+            {
+              "sel": ".planning",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".panels",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".intro",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".toolbar",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".bankruptcy",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".options",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".menu-btns",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "100",
+              "pe": "auto",
+              "x": 480,
+              "y": 12,
+              "w": 960,
+              "h": 72
+            }
+          ],
+          "overlaps": [],
+          "menuPanelsHidden": true
+        },
+        {
+          "screen": "game",
+          "screenExpected": "game",
+          "screenActual": "game",
+          "layers": [
+            {
+              "sel": "#game",
+              "present": true,
+              "hidden": false,
+              "pos": "relative",
+              "z": "10",
+              "pe": "auto",
+              "x": 0,
+              "y": 0,
+              "w": 1920,
+              "h": 1080
+            },
+            {
+              "sel": ".toasts",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "500",
+              "pe": "none",
+              "x": 1588,
+              "y": 1018,
+              "w": 320,
+              "h": 50
+            },
+            {
+              "sel": ".planning",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "101",
+              "pe": "auto",
+              "x": 1532,
+              "y": 12,
+              "w": 376,
+              "h": 160
+            },
+            {
+              "sel": ".panels",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "102",
+              "pe": "auto",
+              "x": 1548,
+              "y": 494,
+              "w": 360,
+              "h": 522
+            },
+            {
+              "sel": ".intro",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "103",
+              "pe": "auto",
+              "x": 12,
+              "y": 829,
+              "w": 358,
+              "h": 135
+            },
+            {
+              "sel": ".toolbar",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "104",
+              "pe": "auto",
+              "x": 12,
+              "y": 994,
+              "w": 1524,
+              "h": 74
+            },
+            {
+              "sel": ".bankruptcy",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".options",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".menu-btns",
+              "present": true,
+              "hidden": true
+            }
+          ],
+          "overlaps": []
+        },
+        {
+          "screen": "game-reloaded",
+          "screenExpected": "game-reloaded",
+          "screenActual": "game",
+          "layers": [
+            {
+              "sel": "#game",
+              "present": true,
+              "hidden": false,
+              "pos": "relative",
+              "z": "10",
+              "pe": "auto",
+              "x": 0,
+              "y": 0,
+              "w": 1920,
+              "h": 1080
+            },
+            {
+              "sel": ".toasts",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "500",
+              "pe": "none",
+              "x": 1811,
+              "y": 1035,
+              "w": 97,
+              "h": 33
+            },
+            {
+              "sel": ".planning",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "101",
+              "pe": "auto",
+              "x": 1532,
+              "y": 12,
+              "w": 376,
+              "h": 160
+            },
+            {
+              "sel": ".panels",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "102",
+              "pe": "auto",
+              "x": 1548,
+              "y": 494,
+              "w": 360,
+              "h": 522
+            },
+            {
+              "sel": ".intro",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "103",
+              "pe": "auto",
+              "x": 12,
+              "y": 829,
+              "w": 358,
+              "h": 135
+            },
+            {
+              "sel": ".toolbar",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "104",
+              "pe": "auto",
+              "x": 12,
+              "y": 994,
+              "w": 1524,
+              "h": 74
+            },
+            {
+              "sel": ".bankruptcy",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".options",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".menu-btns",
+              "present": true,
+              "hidden": true
+            }
+          ],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "viewport": "1366x768",
+      "screens": [
+        {
+          "screen": "menu",
+          "screenExpected": "menu",
+          "screenActual": "menu",
+          "layers": [
+            {
+              "sel": "#game",
+              "present": true,
+              "hidden": false,
+              "pos": "relative",
+              "z": "10",
+              "pe": "auto",
+              "x": 0,
+              "y": 0,
+              "w": 1366,
+              "h": 768
+            },
+            {
+              "sel": ".toasts",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "500",
+              "pe": "none",
+              "x": 1354,
+              "y": 756,
+              "w": 0,
+              "h": 0
+            },
+            {
+              "sel": ".planning",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".panels",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".intro",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".toolbar",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".bankruptcy",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".options",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".menu-btns",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "100",
+              "pe": "auto",
+              "x": 342,
+              "y": 12,
+              "w": 683,
+              "h": 111
+            }
+          ],
+          "overlaps": [],
+          "menuPanelsHidden": true
+        },
+        {
+          "screen": "game",
+          "screenExpected": "game",
+          "screenActual": "game",
+          "layers": [
+            {
+              "sel": "#game",
+              "present": true,
+              "hidden": false,
+              "pos": "relative",
+              "z": "10",
+              "pe": "auto",
+              "x": 0,
+              "y": 0,
+              "w": 1366,
+              "h": 768
+            },
+            {
+              "sel": ".toasts",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "500",
+              "pe": "none",
+              "x": 1034,
+              "y": 706,
+              "w": 320,
+              "h": 50
+            },
+            {
+              "sel": ".planning",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "101",
+              "pe": "auto",
+              "x": 978,
+              "y": 12,
+              "w": 376,
+              "h": 160
+            },
+            {
+              "sel": ".panels",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "102",
+              "pe": "auto",
+              "x": 994,
+              "y": 354,
+              "w": 360,
+              "h": 350
+            },
+            {
+              "sel": ".intro",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "103",
+              "pe": "auto",
+              "x": 12,
+              "y": 517,
+              "w": 358,
+              "h": 135
+            },
+            {
+              "sel": ".toolbar",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "104",
+              "pe": "auto",
+              "x": 12,
+              "y": 652,
+              "w": 970,
+              "h": 104
+            },
+            {
+              "sel": ".bankruptcy",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".options",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".menu-btns",
+              "present": true,
+              "hidden": true
+            }
+          ],
+          "overlaps": []
+        },
+        {
+          "screen": "game-reloaded",
+          "screenExpected": "game-reloaded",
+          "screenActual": "game",
+          "layers": [
+            {
+              "sel": "#game",
+              "present": true,
+              "hidden": false,
+              "pos": "relative",
+              "z": "10",
+              "pe": "auto",
+              "x": 0,
+              "y": 0,
+              "w": 1366,
+              "h": 768
+            },
+            {
+              "sel": ".toasts",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "500",
+              "pe": "none",
+              "x": 1257,
+              "y": 723,
+              "w": 97,
+              "h": 33
+            },
+            {
+              "sel": ".planning",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "101",
+              "pe": "auto",
+              "x": 978,
+              "y": 12,
+              "w": 376,
+              "h": 160
+            },
+            {
+              "sel": ".panels",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "102",
+              "pe": "auto",
+              "x": 994,
+              "y": 354,
+              "w": 360,
+              "h": 350
+            },
+            {
+              "sel": ".intro",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "103",
+              "pe": "auto",
+              "x": 12,
+              "y": 517,
+              "w": 358,
+              "h": 135
+            },
+            {
+              "sel": ".toolbar",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "104",
+              "pe": "auto",
+              "x": 12,
+              "y": 652,
+              "w": 970,
+              "h": 104
+            },
+            {
+              "sel": ".bankruptcy",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".options",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".menu-btns",
+              "present": true,
+              "hidden": true
+            }
+          ],
+          "overlaps": []
+        }
+      ]
+    },
+    {
+      "viewport": "390x844",
+      "screens": [
+        {
+          "screen": "menu",
+          "screenExpected": "menu",
+          "screenActual": "menu",
+          "layers": [
+            {
+              "sel": "#game",
+              "present": true,
+              "hidden": false,
+              "pos": "relative",
+              "z": "10",
+              "pe": "auto",
+              "x": 0,
+              "y": 0,
+              "w": 390,
+              "h": 844
+            },
+            {
+              "sel": ".toasts",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "500",
+              "pe": "none",
+              "x": 8,
+              "y": 235,
+              "w": 374,
+              "h": 0
+            },
+            {
+              "sel": ".planning",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".panels",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".intro",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".toolbar",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".bankruptcy",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".options",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".menu-btns",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "100",
+              "pe": "auto",
+              "x": 61,
+              "y": 12,
+              "w": 267,
+              "h": 307
+            }
+          ],
+          "overlaps": [],
+          "menuPanelsHidden": true
+        },
+        {
+          "screen": "game",
+          "screenExpected": "game",
+          "screenActual": "game",
+          "layers": [
+            {
+              "sel": "#game",
+              "present": true,
+              "hidden": false,
+              "pos": "relative",
+              "z": "10",
+              "pe": "auto",
+              "x": 0,
+              "y": 0,
+              "w": 390,
+              "h": 844
+            },
+            {
+              "sel": ".toasts",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "500",
+              "pe": "none",
+              "x": 8,
+              "y": 235,
+              "w": 374,
+              "h": 50
+            },
+            {
+              "sel": ".planning",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "101",
+              "pe": "auto",
+              "x": 8,
+              "y": 12,
+              "w": 374,
+              "h": 160
+            },
+            {
+              "sel": ".panels",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "102",
+              "pe": "auto",
+              "x": 8,
+              "y": 515,
+              "w": 374,
+              "h": 253
+            },
+            {
+              "sel": ".intro",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "103",
+              "pe": "auto",
+              "x": 8,
+              "y": 372,
+              "w": 374,
+              "h": 135
+            },
+            {
+              "sel": ".toolbar",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "104",
+              "pe": "auto",
+              "x": 8,
+              "y": 784,
+              "w": 374,
+              "h": 48
+            },
+            {
+              "sel": ".bankruptcy",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".options",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".menu-btns",
+              "present": true,
+              "hidden": true
+            }
+          ],
+          "overlaps": []
+        },
+        {
+          "screen": "game-reloaded",
+          "screenExpected": "game-reloaded",
+          "screenActual": "game",
+          "layers": [
+            {
+              "sel": "#game",
+              "present": true,
+              "hidden": false,
+              "pos": "relative",
+              "z": "10",
+              "pe": "auto",
+              "x": 0,
+              "y": 0,
+              "w": 390,
+              "h": 844
+            },
+            {
+              "sel": ".toasts",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "500",
+              "pe": "none",
+              "x": 8,
+              "y": 235,
+              "w": 374,
+              "h": 33
+            },
+            {
+              "sel": ".planning",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "101",
+              "pe": "auto",
+              "x": 8,
+              "y": 12,
+              "w": 374,
+              "h": 160
+            },
+            {
+              "sel": ".panels",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "102",
+              "pe": "auto",
+              "x": 8,
+              "y": 515,
+              "w": 374,
+              "h": 253
+            },
+            {
+              "sel": ".intro",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "103",
+              "pe": "auto",
+              "x": 8,
+              "y": 372,
+              "w": 374,
+              "h": 135
+            },
+            {
+              "sel": ".toolbar",
+              "present": true,
+              "hidden": false,
+              "pos": "fixed",
+              "z": "104",
+              "pe": "auto",
+              "x": 8,
+              "y": 784,
+              "w": 374,
+              "h": 48
+            },
+            {
+              "sel": ".bankruptcy",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".options",
+              "present": true,
+              "hidden": true
+            },
+            {
+              "sel": ".menu-btns",
+              "present": true,
+              "hidden": true
+            }
+          ],
+          "overlaps": []
+        }
+      ]
+    }
+  ],
+  "verdict": "PASS",
+  "totalOverlaps": 0
+}
