@@ -2,7 +2,7 @@
   "task": "t_2e6ad3c0",
   "browser": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
   "started": true,
-  "page": "http://127.0.0.1:8541/",
+  "page": "http://127.0.0.1:8540/",
   "session": {
     "speed": 4,
     "gameSeconds": 1200,
@@ -11,8 +11,8 @@
   },
   "samples": [
     {
-      "t": 127.7527000000007,
-      "money": 8600,
+      "t": 127.5342999999991,
+      "money": 8601,
       "pax": 0,
       "speedIndex": 2,
       "alerts": 4,
@@ -31,11 +31,11 @@
       "carriedDelta": 0,
       "bankrupt": false,
       "sample": 0,
-      "clickMs": 16
+      "clickMs": 12
     },
     {
-      "t": 188.03700000000435,
-      "money": 8623,
+      "t": 187.73360000000056,
+      "money": 8624,
       "pax": 0,
       "speedIndex": 2,
       "alerts": 6,
@@ -44,26 +44,26 @@
       "punctuality": 0,
       "planning": 3,
       "aircraft": 2,
-      "heapMB": 2,
+      "heapMB": 4,
       "nonFinite": [],
       "orphanGates": 0,
       "contractDupes": 0,
       "activeSettled": null,
-      "injected": 139,
+      "injected": 69,
       "inQueues": 0,
-      "carriedDelta": -139,
+      "carriedDelta": -69,
       "bankrupt": false,
       "sample": 1,
-      "clickMs": 12,
-      "fps": 60.2,
-      "maxGapMs": 17
+      "clickMs": 6,
+      "fps": 57,
+      "maxGapMs": 19
     },
     {
-      "t": 269.12210000001164,
-      "money": 11490,
-      "pax": 220,
+      "t": 268.84510000000154,
+      "money": 12019,
+      "pax": 139,
       "speedIndex": 2,
-      "alerts": 11,
+      "alerts": 15,
       "periods": 0,
       "contractHistory": 0,
       "punctuality": 2,
@@ -74,138 +74,138 @@
       "orphanGates": 0,
       "contractDupes": 0,
       "activeSettled": null,
-      "injected": 325,
+      "injected": 277,
       "inQueues": 0,
-      "carriedDelta": -105,
+      "carriedDelta": -138,
       "bankrupt": false,
       "sample": 2,
-      "clickMs": 5
+      "clickMs": 13
     },
     {
-      "t": 329.3399000000243,
-      "money": 12773,
-      "pax": 325,
+      "t": 329.063299999997,
+      "money": 13698,
+      "pax": 277,
       "speedIndex": 2,
-      "alerts": 16,
+      "alerts": 18,
       "periods": 1,
       "contractHistory": 0,
       "punctuality": 3,
-      "planning": 2,
+      "planning": 3,
       "aircraft": 1,
-      "heapMB": 3,
+      "heapMB": 4,
       "nonFinite": [],
       "orphanGates": 0,
       "contractDupes": 0,
       "activeSettled": null,
-      "injected": 469,
+      "injected": 355,
       "inQueues": 0,
-      "carriedDelta": -144,
+      "carriedDelta": -78,
       "bankrupt": false,
       "sample": 3,
-      "clickMs": 7
+      "clickMs": 12
     },
     {
-      "t": 389.6243000000371,
-      "money": 14524,
-      "pax": 469,
+      "t": 389.3708999999928,
+      "money": 14657,
+      "pax": 355,
       "speedIndex": 2,
-      "alerts": 20,
+      "alerts": 25,
       "periods": 1,
       "contractHistory": 0,
       "punctuality": 4,
-      "planning": 2,
-      "aircraft": 1,
-      "heapMB": 3,
+      "planning": 3,
+      "aircraft": 2,
+      "heapMB": 4,
       "nonFinite": [],
       "orphanGates": 0,
       "contractDupes": 0,
       "activeSettled": null,
-      "injected": 583,
+      "injected": 488,
       "inQueues": 0,
-      "carriedDelta": -114,
+      "carriedDelta": -133,
       "bankrupt": false,
       "sample": 4,
-      "clickMs": 18,
-      "fps": 60.2,
-      "maxGapMs": 17
+      "clickMs": 17,
+      "fps": 57,
+      "maxGapMs": 19
     },
     {
-      "t": 470.7097000000541,
-      "money": 15819,
-      "pax": 583,
+      "t": 470.4709999999852,
+      "money": 16179,
+      "pax": 488,
       "speedIndex": 2,
-      "alerts": 23,
+      "alerts": 30,
       "periods": 1,
       "contractHistory": 0,
       "punctuality": 5,
-      "planning": 2,
-      "aircraft": 1,
-      "heapMB": 2,
+      "planning": 3,
+      "aircraft": 2,
+      "heapMB": 4,
       "nonFinite": [],
       "orphanGates": 0,
       "contractDupes": 0,
       "activeSettled": null,
-      "injected": 663,
+      "injected": 605,
       "inQueues": 0,
-      "carriedDelta": -80,
+      "carriedDelta": -117,
       "bankrupt": false,
       "sample": 5,
       "clickMs": 6
     },
     {
-      "t": 530.9939000000674,
-      "money": 18301,
-      "pax": 663,
+      "t": 530.7081999999849,
+      "money": 17606,
+      "pax": 605,
       "speedIndex": 2,
-      "alerts": 28,
+      "alerts": 36,
       "periods": 1,
       "contractHistory": 0,
       "punctuality": 6,
-      "planning": 2,
-      "aircraft": 1,
-      "heapMB": 3,
+      "planning": 3,
+      "aircraft": 2,
+      "heapMB": 4,
       "nonFinite": [],
       "orphanGates": 0,
       "contractDupes": 0,
       "activeSettled": null,
-      "injected": 741,
+      "injected": 740,
       "inQueues": 0,
-      "carriedDelta": -78,
+      "carriedDelta": -135,
       "bankrupt": false,
       "sample": 6,
-      "clickMs": 16
+      "clickMs": 18
     },
     {
-      "t": 591.2789000000811,
-      "money": 19260,
-      "pax": 741,
+      "t": 590.979899999996,
+      "money": 19249,
+      "pax": 740,
       "speedIndex": 2,
-      "alerts": 32,
+      "alerts": 39,
       "periods": 1,
       "contractHistory": 0,
       "punctuality": 7,
       "planning": 3,
-      "aircraft": 1,
-      "heapMB": 3,
+      "aircraft": 2,
+      "heapMB": 4,
       "nonFinite": [],
       "orphanGates": 0,
       "contractDupes": 0,
       "activeSettled": null,
-      "injected": 881,
+      "injected": 878,
       "inQueues": 0,
-      "carriedDelta": -140,
+      "carriedDelta": -138,
       "bankrupt": false,
       "sample": 7,
-      "clickMs": 17,
-      "fps": 60.2,
-      "maxGapMs": 17
+      "clickMs": 18,
+      "fps": 56.8,
+      "maxGapMs": 19
     },
     {
-      "t": 672.4304000000996,
-      "money": 21167,
-      "pax": 1002,
+      "t": 671.9978000000008,
+      "money": 21132,
+      "pax": 955,
       "speedIndex": 2,
-      "alerts": 38,
+      "alerts": 45,
       "periods": 2,
       "contractHistory": 0,
       "punctuality": 8,
@@ -216,19 +216,19 @@
       "orphanGates": 0,
       "contractDupes": 0,
       "activeSettled": null,
-      "injected": 1121,
-      "inQueues": 113.664,
-      "carriedDelta": -119,
+      "injected": 1026,
+      "inQueues": 69.604,
+      "carriedDelta": -71,
       "bankrupt": false,
       "sample": 8,
-      "clickMs": 16
+      "clickMs": 5
     },
     {
-      "t": 732.6486000001132,
-      "money": 22642,
-      "pax": 1121,
+      "t": 732.218600000008,
+      "money": 22079,
+      "pax": 1026,
       "speedIndex": 2,
-      "alerts": 41,
+      "alerts": 48,
       "periods": 2,
       "contractHistory": 0,
       "punctuality": 9,
@@ -239,44 +239,44 @@
       "orphanGates": 0,
       "contractDupes": 0,
       "activeSettled": null,
-      "injected": 1189,
-      "inQueues": 53.328,
-      "carriedDelta": -68,
+      "injected": 1100,
+      "inQueues": 64.912,
+      "carriedDelta": -74,
       "bankrupt": false,
       "sample": 9,
-      "clickMs": 16
+      "clickMs": 5
     },
     {
-      "t": 792.9332000001269,
-      "money": 24092,
-      "pax": 1189,
+      "t": 792.4474000000154,
+      "money": 22954,
+      "pax": 1100,
       "speedIndex": 2,
-      "alerts": 44,
+      "alerts": 51,
       "periods": 2,
       "contractHistory": 0,
       "punctuality": 10,
       "planning": 4,
       "aircraft": 3,
-      "heapMB": 4,
+      "heapMB": 3,
       "nonFinite": [],
       "orphanGates": 0,
       "contractDupes": 0,
       "activeSettled": null,
-      "injected": 1280,
-      "inQueues": 81,
-      "carriedDelta": -91,
+      "injected": 1180,
+      "inQueues": 75.024,
+      "carriedDelta": -80,
       "bankrupt": false,
       "sample": 10,
-      "clickMs": 17,
-      "fps": 60.2,
-      "maxGapMs": 17
+      "clickMs": 7,
+      "fps": 56.8,
+      "maxGapMs": 19
     },
     {
-      "t": 874.0179000001455,
-      "money": 25927,
-      "pax": 1280,
+      "t": 873.5144000000229,
+      "money": 24729,
+      "pax": 1180,
       "speedIndex": 2,
-      "alerts": 48,
+      "alerts": 55,
       "periods": 2,
       "contractHistory": 0,
       "punctuality": 12,
@@ -287,116 +287,22 @@
       "orphanGates": 0,
       "contractDupes": 0,
       "activeSettled": null,
-      "injected": 1352,
+      "injected": 1317,
       "inQueues": 0,
-      "carriedDelta": -72,
+      "carriedDelta": -137,
       "bankrupt": false,
       "sample": 11,
-      "clickMs": 8
+      "clickMs": 17
     },
     {
-      "t": 934.2354000001591,
-      "money": 26814,
-      "pax": 1352,
-      "speedIndex": 2,
-      "alerts": 53,
-      "periods": 3,
-      "contractHistory": 0,
-      "punctuality": 13,
-      "planning": 3,
-      "aircraft": 2,
-      "heapMB": 3,
-      "nonFinite": [],
-      "orphanGates": 0,
-      "contractDupes": 0,
-      "activeSettled": null,
-      "injected": 1472,
-      "inQueues": 0,
-      "carriedDelta": -120,
-      "bankrupt": false,
-      "sample": 12,
-      "clickMs": 6
-    },
-    {
-      "t": 994.5198000001728,
-      "money": 28277,
-      "pax": 1472,
-      "speedIndex": 2,
-      "alerts": 56,
-      "periods": 3,
-      "contractHistory": 0,
-      "punctuality": 14,
-      "planning": 3,
-      "aircraft": 2,
-      "heapMB": 2,
-      "nonFinite": [],
-      "orphanGates": 0,
-      "contractDupes": 0,
-      "activeSettled": null,
-      "injected": 1613,
-      "inQueues": 0,
-      "carriedDelta": -141,
-      "bankrupt": false,
-      "sample": 13,
-      "clickMs": 17,
-      "fps": 60.2,
-      "maxGapMs": 17
-    },
-    {
-      "t": 1075.604900000191,
-      "money": 29896,
-      "pax": 1613,
+      "t": 933.7175000000335,
+      "money": 26097,
+      "pax": 1317,
       "speedIndex": 2,
       "alerts": 59,
       "periods": 3,
       "contractHistory": 0,
-      "punctuality": 15,
-      "planning": 3,
-      "aircraft": 2,
-      "heapMB": 3,
-      "nonFinite": [],
-      "orphanGates": 0,
-      "contractDupes": 0,
-      "activeSettled": null,
-      "injected": 1747,
-      "inQueues": 0,
-      "carriedDelta": -134,
-      "bankrupt": false,
-      "sample": 14,
-      "clickMs": 5
-    },
-    {
-      "t": 1135.8230000002047,
-      "money": 31527,
-      "pax": 1747,
-      "speedIndex": 2,
-      "alerts": 62,
-      "periods": 3,
-      "contractHistory": 0,
-      "punctuality": 16,
-      "planning": 3,
-      "aircraft": 2,
-      "heapMB": 3,
-      "nonFinite": [],
-      "orphanGates": 0,
-      "contractDupes": 0,
-      "activeSettled": null,
-      "injected": 1849,
-      "inQueues": 0,
-      "carriedDelta": -102,
-      "bankrupt": false,
-      "sample": 15,
-      "clickMs": 5
-    },
-    {
-      "t": 1196.0409000002182,
-      "money": 32774,
-      "pax": 1849,
-      "speedIndex": 2,
-      "alerts": 65,
-      "periods": 3,
-      "contractHistory": 0,
-      "punctuality": 17,
+      "punctuality": 13,
       "planning": 3,
       "aircraft": 2,
       "heapMB": 4,
@@ -404,24 +310,22 @@
       "orphanGates": 0,
       "contractDupes": 0,
       "activeSettled": null,
-      "injected": 1989,
+      "injected": 1317,
       "inQueues": 0,
-      "carriedDelta": -140,
+      "carriedDelta": 0,
       "bankrupt": false,
-      "sample": 16,
-      "clickMs": 6,
-      "fps": 60.2,
-      "maxGapMs": 17
+      "sample": 12,
+      "clickMs": 6
     },
     {
-      "t": 1277.1259000002367,
-      "money": 34181,
-      "pax": 2072,
+      "t": 993.9372000000398,
+      "money": 25320,
+      "pax": 1317,
       "speedIndex": 2,
-      "alerts": 71,
-      "periods": 4,
+      "alerts": 64,
+      "periods": 3,
       "contractHistory": 0,
-      "punctuality": 19,
+      "punctuality": 14,
       "planning": 3,
       "aircraft": 2,
       "heapMB": 3,
@@ -429,24 +333,120 @@
       "orphanGates": 0,
       "contractDupes": 0,
       "activeSettled": null,
-      "injected": 2176,
-      "inQueues": 53.332,
-      "carriedDelta": -104,
+      "injected": 1317,
+      "inQueues": 0,
+      "carriedDelta": 0,
+      "bankrupt": false,
+      "sample": 13,
+      "clickMs": 15,
+      "fps": 57.2,
+      "maxGapMs": 19
+    },
+    {
+      "t": 1075.0325000000082,
+      "money": 25246,
+      "pax": 1317,
+      "speedIndex": 2,
+      "alerts": 67,
+      "periods": 3,
+      "contractHistory": 0,
+      "punctuality": 14,
+      "planning": 4,
+      "aircraft": 3,
+      "heapMB": 3,
+      "nonFinite": [],
+      "orphanGates": 0,
+      "contractDupes": 0,
+      "activeSettled": null,
+      "injected": 1454,
+      "inQueues": 0,
+      "carriedDelta": -137,
+      "bankrupt": false,
+      "sample": 14,
+      "clickMs": 13
+    },
+    {
+      "t": 1135.2408999999698,
+      "money": 26914,
+      "pax": 1454,
+      "speedIndex": 2,
+      "alerts": 70,
+      "periods": 3,
+      "contractHistory": 0,
+      "punctuality": 15,
+      "planning": 4,
+      "aircraft": 3,
+      "heapMB": 3,
+      "nonFinite": [],
+      "orphanGates": 0,
+      "contractDupes": 0,
+      "activeSettled": null,
+      "injected": 1544,
+      "inQueues": 0,
+      "carriedDelta": -90,
+      "bankrupt": false,
+      "sample": 15,
+      "clickMs": 6
+    },
+    {
+      "t": 1195.4775999999288,
+      "money": 28016,
+      "pax": 1544,
+      "speedIndex": 2,
+      "alerts": 73,
+      "periods": 3,
+      "contractHistory": 0,
+      "punctuality": 16,
+      "planning": 4,
+      "aircraft": 3,
+      "heapMB": 4,
+      "nonFinite": [],
+      "orphanGates": 0,
+      "contractDupes": 0,
+      "activeSettled": null,
+      "injected": 1611,
+      "inQueues": 0,
+      "carriedDelta": -67,
+      "bankrupt": false,
+      "sample": 16,
+      "clickMs": 16,
+      "fps": 56.8,
+      "maxGapMs": 19
+    },
+    {
+      "t": 1276.552999999878,
+      "money": 29047,
+      "pax": 1694,
+      "speedIndex": 2,
+      "alerts": 78,
+      "periods": 4,
+      "contractHistory": 0,
+      "punctuality": 17,
+      "planning": 5,
+      "aircraft": 4,
+      "heapMB": 4,
+      "nonFinite": [],
+      "orphanGates": 0,
+      "contractDupes": 0,
+      "activeSettled": null,
+      "injected": 1809,
+      "inQueues": 69.528,
+      "carriedDelta": -115,
       "bankrupt": false,
       "sample": 17,
-      "clickMs": 19
+      "clickMs": 7
     }
   ],
   "results": [
     {
       "name": "serveur local répond",
       "ok": true,
-      "detail": "http://127.0.0.1:8541"
+      "detail": "http://127.0.0.1:8540"
     },
     {
       "name": "navigateur démarré (cible CDP page)",
       "ok": true,
-      "detail": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe → ws://127.0.0.1:8408/devtools/page/9C492139B78DFC"
+      "detail": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe → ws://127.0.0.1:8365/devtools/page/24E03234A76CEB"
     },
     {
       "name": "window.__game exposé",
@@ -456,7 +456,7 @@
     {
       "name": "A. nouvelle partie + auto-accept (case) + vitesse x4",
       "ok": true,
-      "detail": "offres=true auto=true x4=true pistes=1 solde=11803"
+      "detail": "offres=true auto=true x4=true pistes=1 solde=11804"
     },
     {
       "name": "B. layout chargé : 2e piste + 2e taxiway (bouton outil + clic carte)",
@@ -476,32 +476,32 @@
     {
       "name": "C. passagers comptés UNE fois (totalCarried monotone non-décroissante)",
       "ok": true,
-      "detail": "monotone sur 18 paliers (pax finale=2072)"
+      "detail": "monotone sur 18 paliers (pax finale=1694)"
     },
     {
       "name": "C. conservation des passagers (transportés ≤ injectés — pax non créés de nulle part)",
       "ok": true,
-      "detail": "tenue (pax finale=2072 ≤ injecté=2176, tol=0.002)"
+      "detail": "tenue (pax finale=1694 ≤ injecté=1809, tol=0.002)"
     },
     {
       "name": "C. invariants tenus pendant la session (finies, pax 1×, orphelines 0, contrats 1×, journaux bornés)",
       "ok": true,
-      "detail": "paliers=18 last:pax=2072 money=34181 alerts=71 periods=4 histoContrats=0 paxOrphelines=0"
+      "detail": "paliers=18 last:pax=1694 money=29047 alerts=78 periods=4 histoContrats=0 paxOrphelines=0"
     },
     {
       "name": "C. mémoire JS sans croissance continue (pas de fuite de journal)",
       "ok": true,
-      "detail": "heap début≈3 MB fin≈4 MB (Δ 2e moitié=1 MB)"
+      "detail": "heap début≈4 MB fin≈4 MB (Δ 2e moitié=0 MB)"
     },
     {
       "name": "C. fluidité : FPS moyen ≥ 15 et blocage max < 250 ms",
       "ok": true,
-      "detail": "FPS moyen=60 blocage max=17 ms"
+      "detail": "FPS moyen=57 blocage max=19 ms"
     },
     {
       "name": "C. réactivité des clics : latence max < 200 ms",
       "ok": true,
-      "detail": "latences=16,12,5,7,18,6,16,17,16,16,17,8,6,17,5,5,6,19 ms (max=19)"
+      "detail": "latences=12,6,13,12,17,6,18,18,5,5,7,17,6,15,13,6,16,7 ms (max=18)"
     },
     {
       "name": "D. incident forcé (fermeture piste) → réponse via le bouton du panneau (sous charge)",
@@ -511,12 +511,12 @@
     {
       "name": "E. sauvegarde manuelle (bouton) → localStorage + canResume",
       "ok": true,
-      "detail": "pax=2072 pistes=2 taxiways=2"
+      "detail": "pax=1694 pistes=2 taxiways=2"
     },
     {
       "name": "E. recharge + « Reprendre » : l'état est intact (2 pistes + 2 taxiways, pax, avance)",
       "ok": true,
-      "detail": "screen=game pistes=2 taxiways=2 pax=2072 avance=true"
+      "detail": "screen=game pistes=2 taxiways=2 pax=1694 avance=true"
     },
     {
       "name": "F. aucune ressource HTTP en échec (hors /favicon.ico connu)",
@@ -536,16 +536,212 @@
     {
       "name": "F. console : aucune erreur inexpliquée",
       "ok": true,
-      "detail": "1 message(s) console, 0 erreur"
+      "detail": "244 message(s) console, 0 erreur"
     }
   ],
   "failedResources": [
-    "404 http://127.0.0.1:8541/favicon.ico"
+    "404 http://127.0.0.1:8540/favicon.ico"
   ],
   "consoleLogs": [
     {
       "level": "error",
       "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+    },
+    {
+      "level": "warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
     }
   ],
   "pageExceptions": [],
