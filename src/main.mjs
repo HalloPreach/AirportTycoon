@@ -49,6 +49,24 @@ export function boot(canvas) {
   syncAudioMute();
   const bus = new EventBus();
   const camera = new Camera(state);
+
+  // T51 (t_cccfbc97) : les PANNEAUX DE JEU (barre de construction, panneaux de
+  // consultation, planning) ne flottent PAS au-dessus du MENU. Au menu, leur
+  // racine DOM est masquée (display:none) ; au retour en jeu, elle réapparaît.
+  // Bascule UNIQUEMENT au CHANGEMENT d'écran (pas à chaque frame) : la valeur
+  // ne change que sur une transition. Les racines sont exposées par les
+  // modules (bar / col / box) ; `.menu-btns`, `.intro` et `.toasts` restent
+  // affichés au menu (boutons du menu + carte intro + toasts).
+  const gamePanelRoots = [];
+  let gamePanelsHidden = null;
+  function syncGamePanelsVisibility() {
+    const hidden = state.screen === 'menu';
+    if (hidden === gamePanelsHidden) return;
+    gamePanelsHidden = hidden;
+    for (const p of gamePanelRoots) {
+      if (p) p.style.display = hidden ? 'none' : '';
+    }
+  }
   const toasts = makeToasts(document.body);
   // R43 : page OPTIONS (volume / daltonien / vitesse) — UI fine : elle édite
   // l'objet options VIVANT (state.options, le miroir lu par le renderer) et,
@@ -263,6 +281,12 @@ export function boot(canvas) {
   const planningPanel = makePlanningPanel({ state, toast: toasts.toast, onAutoChange: setPlanningAuto });
   state.planningAuto = false; // préférence par défaut : source sérialisée sur le state
 
+  // T51 (t_cccfbc97) : les 3 racines de panneaux de JEU entrent dans la
+  // synchronisation menu/jeu (barre de construction / panneaux de consultation /
+  // planning) — masquées au menu, réaffichées au retour en jeu.
+  // (APRÈS la construction des 3 modules : leurs racines DOM existent.)
+  gamePanelRoots.push(buildTool.box, panels.col, planningPanel.box);
+
   // Panneau sauvegarde (S sauvegarder, L charger).
   const savePanel = makeSavePanel(state, {
     toast: toasts.toast,
@@ -412,6 +436,7 @@ export function boot(canvas) {
   // avant le tick — les vols acceptés ici sont DÉPLOIÉS par la sim au prochain
   // passage de son horaire (la sim ne décide jamais elle-même).
   bus.on('frame', (dt) => {
+    syncGamePanelsVisibility(); // T51 : bascule menu/jeu (garde : no-op sauf transition)
     juice.update(dt); // Juice (t_5065be95) : particules/nombres/shake avancent au temps réel
     if (state.planningAuto) planningPanel.tickAuto();
     planningPanel.refresh(); // reconstruction des lignes seulement si le planning a changé

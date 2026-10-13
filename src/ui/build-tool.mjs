@@ -85,6 +85,9 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
   // le fantôme mais le bouton ne s'allumait jamais).
   tool.setKind = (k) => { tool.kind = k; sync(); };
   tool.isActive = () => !!(tool.mode || tool.demolishMode);
+  // T51 (t_cccfbc97) : la RACINE DOM de la barre est EXPOSÉE (main.mjs la
+  // masque au menu — les panneaux de jeu ne flottent pas au-dessus du menu).
+  tool.box = bar;
 
   // Aperçu de pose (lecture seule) : tient dans le terrain ? chevauche-t-il une
   // case occupée (grille de la sim) ? fonds suffisants ? — le VRAI verdict est la sim.

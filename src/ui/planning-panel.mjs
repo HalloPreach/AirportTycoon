@@ -65,6 +65,10 @@ export function makePlanningPanel({ state, toast, onAutoChange }) {
   // .click()). C'est un miroir : la source reste state.planningAuto (D1).
   panel.setAuto = (on) => { autoCb.checked = !!on; };
 
+  // T51 (t_cccfbc97) : la RACINE DOM du panneau est EXPOSÉE (main.mjs la
+  // masque au menu — le panneau de jeu ne flotte pas au-dessus du menu).
+  panel.box = box;
+
   function airlineName(id) { return (AIRLINES.find((x) => x.id === id) || { name: id }).name; }
   // Horloge de la sim en heures:minutes:secondes (le planning est « consultable
   // avec les horaires prévus » — un timestamp lisible, pas un nombre brut).
