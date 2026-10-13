@@ -3,6 +3,8 @@
 import { queueTotals } from '../sim/passengers.mjs'; // R30 : files par terminal → somme (HUD)
 import { getPalette } from './palette.mjs'; // R43 : palette standard / daltonienne
 import { weatherView } from '../sim/weather.mjs'; // T3 (t_9b665a8b) : la MÉTÉO (lecture pure — le renderer reste en lecture seule, pas d'ensure)
+import { clockView, phaseTint } from '../sim/clock.mjs'; // T3 (t_76744b22) : l'HORLOGE jour/nuit (la phase pilote la teinte du monde)
+import { seasonTint, seasonView } from '../core/seasons.mjs'; // T3 (t_76744b22) : l'habillage de saison (teinte + affichage)
 // R39 : piste fermée — LECTURE SEULE de l'état d'incident (règle dans la sim,
 // incidents.mjs) : la piste est fermée tant que l'incident attaché a un
 // remaining > 0. On ne PASSE PAS par runwayClosed() : elle appelle
@@ -26,6 +28,23 @@ function weatherTint(sim) {
   if (wv.state === 'rain') return 'rgba(70, 90, 140, 0.10)';
   if (wv.state === 'snow') return 'rgba(220, 230, 245, 0.14)';
   return null;
+}
+// T3 (t_76744b22) : la teinte du monde par PHASE JOUR/NUIT (zéro asset, un
+// rempli — même pattern que weatherTint) : nuit = bleuté profond,
+// aube/crépuscule = voiles légers, « jour » = null (pas de bruit). Lecture
+// SEULE (clockView + phaseTint — pas d'ensure : le renderer ne mute jamais la
+// sim ; l'horloge absente/corrompue → jour 1 08:00 = phase « jour » = null).
+function dayTint(sim) {
+  if (!sim) return null;
+  return phaseTint(clockView(sim).phase);
+}
+// T3 (t_76744b22) : l'habillage de SAISON (teinte du monde, zéro asset) :
+// été = voile doré, automne = voile ocre, hiver = voile bleuté, printemps =
+// null (pas de bruit — la référence). S'APPLIQUE PAR-DESSUS la teinte météo
+// (les deux se composent, lecture seule seasonTint).
+function seasonWorldTint(sim) {
+  if (!sim) return null;
+  return seasonTint(sim);
 }
 export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, selectionOf = null, paletteOf = null, juice = null } = {}) {
   const ctx = canvas.getContext('2d');
@@ -386,6 +405,12 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
         (wv.speed < 1 ? ` · arrivée ${Math.round((1 - wv.speed) * 100)} % plus lente` : '') +
         (wv.delay > 0 && !wv.incident ? ` · +${wv.delay} s en attente` : '')
       );
+      // T3 (t_76744b22) : l'HORLOGE DE JEU (jour + heure JEU + phase) + la
+      // SAISON (dérivée du jour — saisons.mjs) : l'affichage du temps
+      // (lecture pure clockView/seasonView — l'horloge absente → J1 08:00).
+      const cv = clockView(sim);
+      const sv = seasonView(sim);
+      lines.push(`Horloge : J${cv.day} ${cv.label} (${cv.phaseFr}) · ${sv.fr}`);
     }
     if (state.paused) lines.push('PAUSE (P pour reprendre)');
     const w = 240;
@@ -423,6 +448,14 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
       // léger pour exister — pas de bruit). Le HUD reste stable (après restore).
       const tint = weatherTint(state.sim);
       if (tint) { ctx.fillStyle = tint; ctx.fillRect(-16, -16, canvas.width + 32, canvas.height + 32); }
+      // T3 (t_76744b22) : l'HORLOGE jour/nuit — la teinte du monde PAR PHASE
+      // (nuit = bleuté profond, aube/crépuscule = voiles, jour = rien) +
+      // l'habillage de SAISON (par-dessus la météo : été doré / automne
+      // ocre / hiver bleuté, printemps = rien). Zéro asset, deux remplis.
+      const dt_ = dayTint(state.sim);
+      if (dt_) { ctx.fillStyle = dt_; ctx.fillRect(-16, -16, canvas.width + 32, canvas.height + 32); }
+      const st = seasonWorldTint(state.sim);
+      if (st) { ctx.fillStyle = st; ctx.fillRect(-16, -16, canvas.width + 32, canvas.height + 32); }
       ctx.restore();
       drawHud(state);
     }

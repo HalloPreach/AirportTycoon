@@ -53,6 +53,7 @@ import { ensureLoan } from '../economy/economy.mjs'; // R35 : migration de l'emp
 import { ensureDifficulty } from '../core/difficulty.mjs'; // T2-1 : migration de la difficulté (champs absents)
 import { ensureEvents } from '../sim/events.mjs'; // T3 : migration de la couche d'événements dynamiques (champ absent)
 import { ensureWeather } from '../sim/weather.mjs'; // T3 (t_9b665a8b) : migration du champ MÉTÉO (champ absent sur les sauvegardes PRÉ-T3)
+import { ensureClock } from '../sim/clock.mjs'; // T3 (t_76744b22) : migration du champ HORLOGE (champ absent sur les sauvegardes PRÉ-T3-horloge)
 
 export const SAVE_KEY = 'airport-tycoon-save';
 export const SAVE_VERSION = 1;
@@ -358,6 +359,13 @@ export function deserialize(json) {
     // répare un champ corrompu (état inconnu / durée hors bornes) — sans
     // toucher les autres champs (migration ADDITIVE, EV-10).
     ensureWeather(out.sim);
+    // T3 HORLOGE (t_76744b22) : le CHAMP HORLOGE (sim.clock) — les
+    // sauvegardes PRÉ-T3-horloge l'ont ABSENT (toléré, comme weather) :
+    // ensureClock l'adopte à l'état initial (jour 1, 08:00 — la partie
+    // reprend le MATIN, comportement de référence : saison printemps ×1) et
+    // répare un champ corrompu (jour non entier / t non fini) — sans
+    // toucher les autres champs (migration ADDITIVE, EV-10).
+    ensureClock(out.sim);
   }
   return out;
 }

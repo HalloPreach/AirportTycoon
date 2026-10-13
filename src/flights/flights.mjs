@@ -17,6 +17,7 @@ import { pushEvent } from '../core/sim-state.mjs';
 import { rebuildGraph, findPath, gateNodeOf, runwayExitNode } from '../pathfinding/path.mjs';
 import { isSurge, runwayClosed, fuelOut } from '../sim/incidents.mjs';
 import { activeContract } from './contracts.mjs';
+import { spawnLayer } from '../core/difficulty.mjs'; // T3 (t_76744b22) : la couche de paramètres de spawn (saisons)
 import { qualityTier, Q_TIERS } from '../progression/quality.mjs'; // R26 : le palier qualité filtre les tailles offertes
 import { PAX_REVENUE, PAX_REVENUE_DRY, LANDING_FEE, GATE_FEE, FUEL_COST_PER_PAX } from '../economy/economy.mjs';
 
@@ -101,13 +102,23 @@ export function tickPlanner(sim, dt, rng = Math.random) {
 // plus jamais comptées dans le second terme : aucun double comptage).
 // BL-14 : en pic de demande (surge), la cadence est DOUBLÉE (2 vols par
 // fenêtre) — le pic se mesure au nombre de vols planifiés.
-function windowClose(sim, rng) {
+// T3 (t_76744b22) : la fenêtre est exposée (export) pour que la couche de
+// SAISONS (spawnLayer) soit TESTABLE en isolation (le comptage des offres est
+// la mesure de la cadence) — même pattern que les forceIncident/forceWeather.
+export function windowClose(sim, rng) {
   if (sim.infra.runways.length) {
     // R26 : le contrat ACTIF ouvre une augmentation ANNONCÉE de demande
     // (+1 offre par fenêtre, comme le pic BL-14) — l'engagement augmente
     // RÉELLEMENT les vols proposés ; la capacité pour les traiter est le
     // paramètre pendingCap (plafond borné) + l'infra (portes/pistes).
-    const n = (isSurge(sim) ? 2 : 1) + (activeContract(sim) ? 1 : 0);
+    // T3 (t_76744b22) : la COUCHE DE SAISONS (spawnLayer, difficulty.mjs —
+    // les PARAMÈTRES DE SPAWN s'additionnent sans modifier la règle) : le
+    // facteur de cadence de la saison courante MULTIPLIE le nombre d'offres
+    // de la fenêtre (arrondi entier, plancher 1 : une fenêtre ne génère
+    // JAMAIS 0 offre — le comportement de référence est préservé, le
+    // printemps ×1 est bit-à-bit identique à avant).
+    const base = (isSurge(sim) ? 2 : 1) + (activeContract(sim) ? 1 : 0);
+    const n = Math.max(1, Math.round(base * spawnLayer(sim).spawnFactor));
     const cap = pendingCap(sim); // R26 : le plafond est un PARAMÈTRE de la sim (borné)
     for (let k = 0; k < n; k++) {
       const pending = pendingCount(sim) + sim.planning.filter((e) => e.status === 'planned' || e.status === 'accepted').length;

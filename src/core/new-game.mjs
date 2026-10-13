@@ -8,6 +8,7 @@ import { newGame } from './game-state.mjs';
 import { newSimState } from './sim-state.mjs';
 import { placeBuilding } from '../infra/infra.mjs';
 import { DIFFICULTIES, normalizeDifficulty } from './difficulty.mjs';
+import { ensureClock } from '../sim/clock.mjs'; // T3 (t_76744b22) : l'horloge de jeu (jour/nuit + saisons)
 
 // Plan de départ (A-2) : la géométrie prouvée du test « bien conçu » — les
 // segments se TOUCHENT physiquement (règle BL-02) : la sortie de piste (800,1100)
@@ -42,6 +43,12 @@ export function makeGameState(seed = undefined, difficultyId = 'normal') {
   state.sim.difficulty = {
     incidentScale: diff.incidentScale, opexFactor: diff.opexFactor,
   };
+  // T3 (t_76744b22) : l'HORLOGE DE JEU (sim.clock) — une nouvelle partie
+  // démarre au JOUR 1, 08:00 (printemps, phase « jour » — l'état de
+  // référence : le facteur de spawn ×1, la teinte du monde absente). La
+  // SAISON est dérivée du jour (seasons.mjs) : la partie commence au
+  // printemps, l'été suit au 2e jour-jeu (4 jours = 1 an-jeu).
+  ensureClock(state.sim);
   // R09 (D3, tranché) : le seed de la partie est généré à la FRONTIÈRE DE
   // CRÉATION : entier 32 bits ALEATOIRE (31 bits + signe — Math.random × 2^31,
   // borné aux entiers 32 bits → sérialise proprement en JSON) pour qu'aucune

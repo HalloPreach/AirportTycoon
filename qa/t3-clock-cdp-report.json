@@ -1,0 +1,129 @@
+{
+  "ok": true,
+  "ts": "20261013212805",
+  "results": [
+    {
+      "name": "serveur local répond",
+      "ok": true,
+      "detail": "http://127.0.0.1:8834"
+    },
+    {
+      "name": "navigateur démarré (cible CDP page)",
+      "ok": true,
+      "detail": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
+    },
+    {
+      "name": "window.__game exposé",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Nouvelle partie : sim.clock est VIF sur la sim (jour 1, t initial — la partie commence le MATIN)",
+      "ok": true,
+      "detail": "{\"day\":1,\"t\":800.8087000000004}"
+    },
+    {
+      "name": "Nouvelle partie : clockView J1 08:00 phase « jour » (AUCUNE teinte — pas de bruit)",
+      "ok": true,
+      "detail": "{\"day\":1,\"hour\":8,\"minute\":0,\"label\":\"08:00\",\"phase\":\"day\",\"phaseFr\":\"jour\",\"tint\":null}"
+    },
+    {
+      "name": "Nouvelle partie : saison PRINTEMPS (référentiel) + couche spawn ×1 (comportement inchangé)",
+      "ok": true,
+      "detail": "{\"season\":\"spring\",\"spawn\":{\"season\":\"spring\",\"spawnFactor\":1}}"
+    },
+    {
+      "name": "Panneau : la ligne « Horloge » est AFFICHÉE (Jour 1 · 08:00 (jour) — Printemps)",
+      "ok": true,
+      "detail": "\"HorlogeJour 1 · 08:00 (jour) — Printemps\""
+    },
+    {
+      "name": "Monde : la teinte nuit est APPLIQUÉE par le renderer (la zone monde est PLUS SOMBRE la nuit — mesure pixels)",
+      "ok": true,
+      "detail": "{\"lumDay\":31.97,\"lumNight\":23.04,\"delta\":8.93}"
+    },
+    {
+      "name": "Cycle : le passage de jour est ARITHMÉTIQUE (22:00 + 250 s → jour 2, 00:30 — nuit continue)",
+      "ok": true,
+      "detail": "{\"day\":2,\"t\":50.141000000000076,\"label\":\"00:30\",\"phase\":\"night\",\"alerte\":{\"day\":2,\"seq\":1},\"season\":\"summer\"}"
+    },
+    {
+      "name": "Cycle : UNE alerte LISIBLE est émise au passage de jour (season-change, jour 2)",
+      "ok": true,
+      "detail": "{\"day\":2,\"seq\":1}"
+    },
+    {
+      "name": "Cycle : la saison suit le jour (jour 2 = ÉTÉ — 1 an-jeu = 4 jours)",
+      "ok": true,
+      "detail": "{\"season\":\"summer\"}"
+    },
+    {
+      "name": "Saisons : l'ÉTÉ (jour 2) est lisible — habillage doré + facteur de cadence 1,3 (pic touristique)",
+      "ok": true,
+      "detail": "{\"view\":{\"id\":\"summer\",\"fr\":\"Été\",\"spawnFactor\":1.3,\"dressing\":{\"tint\":\"rgba(255, 190, 80, 0.06)\",\"note\":\"pic touristique (cadence +30 %)\"}},\"layer\":{\"season\":\"summer\",\"spawnFactor\":1.3},\"tint\":\"rgba(255, 190, 80, 0.06)\"}"
+    },
+    {
+      "name": "Saisons : l'HIVER (jour 4) est lisible — habillage bleuté + facteur de cadence 0,7 (saison creuse)",
+      "ok": true,
+      "detail": "{\"view\":{\"id\":\"winter\",\"fr\":\"Hiver\",\"spawnFactor\":0.7,\"dressing\":{\"tint\":\"rgba(170, 200, 240, 0.12)\",\"note\":\"saison creuse (cadence −30 %)\"}},\"layer\":{\"season\":\"winter\",\"spawnFactor\":0.7},\"tint\":\"rgba(170, 200, 240, 0.12)\"}"
+    },
+    {
+      "name": "Cadence : le PRINTEMPS (jour 1, sans pic) crée 1 offre — le comportement RÉFÉRENTIEL est inchangé",
+      "ok": true,
+      "detail": "1"
+    },
+    {
+      "name": "Cadence : l'ÉTÉ + pic crée 3 offres (2 × 1,3 → 3 — la cadence saisonnière est MESURABLE : +30 %)",
+      "ok": true,
+      "detail": "3"
+    },
+    {
+      "name": "Cadence : l'HIVER + pic crée 1 offre (2 × 0,7 = 1,4 → plancher 1 — une fenêtre ne génère JAMAIS 0 offre)",
+      "ok": true,
+      "detail": "1"
+    },
+    {
+      "name": "Cadence : l'HIVER sans pic tient le PLANCHER (1 × 0,7 → 1 offre minimum par fenêtre)",
+      "ok": true,
+      "detail": "1"
+    },
+    {
+      "name": "Persistence : sim.clock (jour + t) est SÉRIALISÉ dans la sauvegarde",
+      "ok": true,
+      "detail": "{\"day\":4,\"t\":1200}"
+    },
+    {
+      "name": "Rechargement : l'horloge REPREND (jour + t restaurés — la suite reste reproductible, EV-10)",
+      "ok": true,
+      "detail": "{\"day\":4,\"t\":1200.6165}"
+    },
+    {
+      "name": "Rechargement : la SAISON restaurée suit le jour (dérivée — pas de champ fantôme)",
+      "ok": true,
+      "detail": "{\"day\":4,\"season\":\"winter\"}"
+    },
+    {
+      "name": "Migration : une sauvegarde PRÉ-T3-horloge (champ ABSENT) passe par le VRAI deserialize → ADOPTÉE en jour 1, 08:00 (printemps ×1 — comportement inchangé à la reprise)",
+      "ok": true,
+      "detail": "{\"noSave\":false,\"clock\":{\"day\":1,\"t\":800},\"label\":\"08:00\",\"phase\":\"day\",\"season\":\"spring\",\"spawn\":1,\"rngSeed\":1507944828,\"rngCounter\":0,\"outRngSeed\":1507944828,\"outRngCounter\":0}"
+    },
+    {
+      "name": "Migration : les AUTRES champs sont INTACTS (migration ADDITIVE — rngSeed/rngCounter préservés)",
+      "ok": true,
+      "detail": "{\"rngSeed\":1507944828,\"rngCounter\":0}"
+    },
+    {
+      "name": "aucune exception de page",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "diag": {
+    "browser": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "spawnError": "\r\nDevTools listening on ws://127.0.0.1:9073/devtools/browser/0b6b29b1-a951-476b-8c25-855761d1c549\r\n[11180:33120:1013/232808.856:ERROR:chrome\\elevation_service\\edge_elevation_service_browser_helper.cc:94] LaunchUpdateCmdElevatedAndWait:  hr = 80070002 with exit code: 32\r\n[11180:17400:1013/232808.880:ERROR:chrome\\browser\\task_manager\\providers\\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a \"Renderer\" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.\r\n",
+    "cdpTarget": "ws://127.0.0.1:9073/devtools/page/33E20D592843101F8AB85C1359C2872A",
+    "started": true,
+    "page": "http://127.0.0.1:8834/"
+  },
+  "pageExceptions": []
+}

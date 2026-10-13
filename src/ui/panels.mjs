@@ -32,6 +32,8 @@ import { unlockView } from '../infra/unlocks.mjs';
 // est dans la sim, le panneau émet l'intention).
 import { assignmentView, setAssignment } from '../infra/assignments.mjs';
 import { weatherView } from '../sim/weather.mjs'; // T3 (t_9b665a8b) : la MÉTÉO (état + incident — lecture pure)
+import { clockView } from '../sim/clock.mjs'; // T3 (t_76744b22) : l'HORLOGE jour/nuit (lecture pure)
+import { seasonOf, seasonView } from '../core/seasons.mjs'; // T3 (t_76744b22) : la SAISON (lecture pure)
 // T2-2 (t_6344db94) : la SAISON (victoire) + stats persistantes + succès —
 // LECTURE seule (campaignView / statsView / achievementsView / unlockedCount) :
 // la sim décide (tickCampaign / tickStats / tickAchievements), le panneau
@@ -406,6 +408,9 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
           // panneau se met à jour quand les files saturent / se vident.
           ...(() => { const c = satisfactionCauses(sim); return [c.loss > 0, c.satStages, Math.round(c.overflow)]; })(),
           pu.rate == null ? 'no' : `${pu.total}|${pu.onTime}|${pu.cancels}`,
+          // T3 (t_76744b22) : l'HORLOGE de jeu + la SAISON font partie de la
+          // signature — le panneau se reconstruit au passage de jour/saison.
+          `${clockView(sim).day}|${seasonOf(sim)}`,
         ].join('|');
       },
       (body) => {
@@ -415,6 +420,12 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         const p = sim.passengers;
         const qt = queueTotals(sim); // R30 : files par terminal → somme (affichage)
         line(body, 'Temps de jeu', fmtClock(sim.time));
+        // T3 (t_76744b22) : l'HORLOGE DE JEU (jour + heure JEU + phase) + la
+        // SAISON (dérivée du jour — saisons.mjs) : l'affichage du temps
+        // (lecture pure — l'horloge absente/corrompue → J1 08:00, printemps).
+        const cv = clockView(sim);
+        const sv = seasonView(sim);
+        line(body, 'Horloge', `Jour ${cv.day} · ${cv.label} (${cv.phaseFr}) — ${sv.fr}`);
         line(body, 'Passagers transportés', `${p.totalCarried}`);
         // R34 : satisfaction + CAUSES (lecture satisfactionCauses — module
         // unique, pas de second module qui se contredit) : ce qui pèse

@@ -19,6 +19,7 @@
 // défaut d'une sauvegarde PRÉ-T2-1 (absentes → référentiel normal, sans crash).
 import { START_FUNDS } from './sim-state.mjs';
 import { INCID } from '../sim/incidents.mjs';
+import { seasonParams } from './seasons.mjs'; // T3 (t_76744b22) : la couche de saisons (paramètres de spawn)
 
 export const DIFFICULTY_IDS = Object.freeze(['easy', 'normal', 'hard']);
 
@@ -100,4 +101,21 @@ export function ensureDifficulty(state, sim) {
     }
   }
   return state;
+}
+
+// T3 (t_76744b22) : la COUCHE DE PARAMÈTRES DE SPAWN (s'ADDITONNE sur la
+// couche difficulté, SANS MODIFIER LES RÈGLES) : la SAISON (dérivée de
+// l'horloge de jeu, seasons.mjs) module la CADENCE des offres du
+// planificateur (un multiplicateur lu par windowClose, flights.mjs) — même
+// principe que l'incidentScale/opexFactor (des chiffres, pas une règle).
+// RÉFÉRENTIEL : le printemps (jour 1, la saison de départ) est ×1 — le
+// comportement d'une partie au printemps est EXACTEMENT celui d'avant
+// (pas de facteur caché la première journée). Lecture pure (guardée :
+// horloge absente/corrompue → printemps, comportement inchangé).
+export function spawnLayer(sim) {
+  const p = seasonParams(sim); // { season, spawnFactor } (la table est SÉRIELLE)
+  return Object.freeze({
+    season: p.season,          // la saison courante (affichage « pic / creux »)
+    spawnFactor: p.spawnFactor, // × sur la cadence des offres (1 = inchangé)
+  });
 }

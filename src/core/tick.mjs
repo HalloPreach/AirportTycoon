@@ -19,6 +19,7 @@ import { tickCampaign } from '../progression/campaign.mjs'; // T2-2 : la campagn
 import { tickStats } from '../progression/stats.mjs'; // T2-2 : les stats persistantes
 import { tickAchievements } from '../progression/achievements.mjs'; // T2-2 : les succès
 import { makeSimRng } from './rng.mjs';
+import { tickClock } from '../sim/clock.mjs'; // T3 (t_76744b22) : l'horloge de jeu (jour/nuit + saisons)
 import { tickWeather } from '../sim/weather.mjs'; // T3 (t_9b665a8b) : le cycle météo (délais + capacité)
 
 export function tick(state, dt, rng) {
@@ -27,6 +28,7 @@ export function tick(state, dt, rng) {
   if (sim.economy.bankrupt) return; // la sim est stoppée une fois la faillite déclarée
   if (!rng) rng = makeSimRng(sim); // pas de Math.random à l'état : le générateur est SÉMÉ + sérialisé (EV-10)
   tickPlanner(sim, dt, rng); // horloge de la sim (sim.time) est pilotée PAR le planificateur
+  tickClock(sim, dt); // T3 (t_76744b22) : l'HORLOGE DE JEU (jour/nuit + saisons) — APRÈS le planificateur (le temps du tick courant est déjà celui du planificateur), AVANT les avions (la phase du tick courant pilote la teinte du monde)
   tickWeather(sim, dt, rng); // T3 (t_9b665a8b) : la MÉTÉO (cycle déterministe) — AVANT les avions (le temps du tick courant pilote leurs retards/capacité)
   tickAircraft(sim, dt);
   tickQuality(sim, dt); // R26 : APRÈS les avions (leur fin de vol alimente la fenêtre de ponctualité)
