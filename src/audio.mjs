@@ -130,6 +130,10 @@ const ALERT_SFX = Object.freeze({
   'fuel-back': 'event',
   'bankrupt': 'event',
   'unlocked': 'event',
+  // T2-2 (t_6344db94) : la campagne (victoire) + les succès
+  'campaign-won': 'cashGain',
+  'campaign-lost': 'cashLoss',
+  'achievement-unlocked': 'cashGain',
   // silencieux : 'flight-offer-expired', 'contract-offered',
   // 'contract-started', 'contract-refused', 'contract-expired',
   // 'bankruptcy-resumed', 'ac-blocked' non → ci-dessus, tout le reste = null.

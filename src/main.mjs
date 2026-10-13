@@ -325,6 +325,11 @@ export function boot(canvas) {
     'fuel-back': (e) => `Station carburant de nouveau en service${e.why ? ` — ${e.why}` : ''}`,
     'planning-relief': (e) => `Allègement du planning : ${e.count} vol(s) refusé(s) — ${e.why || 'revenu perdu'}`,
     'objective-paid': (e) => `OBJECTIF RÉUSSI : ${e.name} — récompense +${e.reward} $`,
+    // T2-2 (t_6344db94) : la campagne (victoire) + les succès (la sim émet,
+    // l'UI affiche — même règle qu'objective-paid R22).
+    'campaign-won': (e) => `SAISON REMPORTÉE — ${e.wins}/${e.target} contrats réussis : prime +${e.reward} $`,
+    'campaign-lost': (e) => `Saison échouée — ${e.wins}/${e.target} contrats avant l'échéance (le jeu continue)`,
+    'achievement-unlocked': (e) => `SUCCÈS DÉBLOQUÉ : ${e.name} — ${e.desc}`,
   };
   // R14 : un tick qui lève (bug de règle, état corrompu) arrive ici via
   // 'sim-error' (voir loop.mjs) — erreur lisible en toast, le jeu ne crashe pas.
@@ -385,7 +390,7 @@ export function boot(canvas) {
       // Lecture seule : la sim n'est jamais modifiée ici.
       juiceForAlert(juice, sim, a, camera);
       const text = (ALERT_MSG[a.kind] || ((e) => a.why || a.kind))(a);
-      const cls = a.kind === 'bankrupt' || a.kind === 'treasury-critical'
+      const cls = a.kind === 'bankrupt' || a.kind === 'treasury-critical' || a.kind === 'campaign-lost'
         ? 'err' : a.kind === 'treasury-warn' || a.kind === 'loan-taken'
         ? 'warn' : a.kind.startsWith('ac-') || a.kind === 'flight-cancelled' ? 'err' : 'info';
       if (a.kind === pendingKind) { pendingCount++; continue; } // identique → on compte

@@ -31,6 +31,13 @@ import { unlockView } from '../infra/unlocks.mjs';
 // source) + COMMANDE (setAssignment : le joueur change l'affectation, la règle
 // est dans la sim, le panneau émet l'intention).
 import { assignmentView, setAssignment } from '../infra/assignments.mjs';
+// T2-2 (t_6344db94) : la SAISON (victoire) + stats persistantes + succès —
+// LECTURE seule (campaignView / statsView / achievementsView / unlockedCount) :
+// la sim décide (tickCampaign / tickStats / tickAchievements), le panneau
+// affiche (même pattern que les objectifs R22).
+import { campaignView } from '../progression/campaign.mjs';
+import { statsView } from '../progression/stats.mjs';
+import { achievementsView, unlockedCount } from '../progression/achievements.mjs';
 // R33 (t_11a4e241) : DEUX réponses opérationnelles par incident — LECTURE
 // (incidentResponse : les 2 réponses + conséquences AVANT décision) + COMMANDE
 // (respondIncident : la sim règle le coût/l'effet, l'UI émet l'intention).
@@ -469,6 +476,50 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
     );
   }
 
+  // --- 3b. T2-2 (t_6344db94) : la SAISON (victoire) + STATS + SUCCÈS ------
+  // UI fine : LECTURE seule (campaignView / statsView / achievementsView) —
+  // la sim décide (tickCampaign/tickStats/tickAchievements), le panneau
+  // affiche (même pattern que les objectifs R22).
+  const campaign = makeSection(col, 'panel', 'Saison, stats & succès');
+  function refreshCampaign() {
+    campaign.refresh(
+      () => {
+        const sim = state.sim;
+        if (!sim) return 'none';
+        const c = campaignView(sim);
+        const s = statsView(sim);
+        return [c.status, c.wins, c.left, c.rewardPaid,
+                s.paxTotal, s.profit, s.nonDeficit.current, s.nonDeficit.best,
+                s.incidentsSurvived, s.periodsClosed, unlockedCount(sim)].join('§');
+      },
+      (body) => {
+        body.replaceChildren();
+        const sim = state.sim;
+        if (!sim) return;
+        const c = campaignView(sim);
+        line(body, 'La saison', c.text,
+             c.status === 'won' ? 'good' : c.status === 'lost' ? 'bad' : 'warn');
+        const s = statsView(sim);
+        line(body, 'Passagers transportés', String(s.paxTotal));
+        line(body, 'Bénéfice (cumulé)', money(s.profit),
+             s.profit > 0 ? 'good' : s.profit < 0 ? 'bad' : '');
+        line(body, 'Série sans déficit',
+             `${s.nonDeficit.current} consécutive(s) — record ${s.nonDeficit.best}`,
+             s.nonDeficit.current >= 3 ? 'good' : '');
+        line(body, 'Incidents survivus', String(s.incidentsSurvived));
+        line(body, 'Périodes closes', String(s.periodsClosed));
+        const ach = achievementsView(sim);
+        const n = unlockedCount(sim);
+        line(body, 'Succès', `${n}/${ach.length} débloqué(s)`, n === ach.length ? 'good' : '');
+        for (const a of ach) {
+          line(body, a.name,
+               a.unlocked ? (a.at != null ? `débloqué à ${fmtClock(a.at)}` : 'débloqué') : a.desc,
+               a.unlocked ? 'good' : '');
+        }
+      },
+    );
+  }
+
   // --- 3c. R23 : déblocages des services (conditions mesurables) ------------
   // UI fine : LECTURE seule (unlockView) — les conditions sont décidées par
   // tickUnlocks (unlocks.mjs), le panneau affiche le BÉNÉFICE + la condition
@@ -680,7 +731,7 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   return {
     // Appel à chaque frame (bus 'frame') : chaque panneau ne reconstruit son DOM
     // que si sa signature a changé — coût négligeable sinon (pattern planning).
-    refresh: () => { refreshInspect(); refreshFin(); refreshStats(); refreshGoals(); refreshUnlocks(); refreshContracts(); refreshHist(); refreshNet(); },
+    refresh: () => { refreshInspect(); refreshFin(); refreshStats(); refreshGoals(); refreshCampaign(); refreshUnlocks(); refreshContracts(); refreshHist(); refreshNet(); },
     // R07 : une sauvegarde rechargée ou une nouvelle partie change tout l'état —
     // la sélection inspecte un OBJET QUI N'EXISTE PLUS. invalidate() vide le pick
     // ; la prochaine refreshInspect rend l'état par défaut (pas un « parti »

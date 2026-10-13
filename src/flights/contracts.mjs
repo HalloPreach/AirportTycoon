@@ -15,6 +15,7 @@ import { AIRCRAFT } from '../data/catalog.mjs'; // R25 : affichage des capacité
 import { runwayFor } from '../infra/infra.mjs'; // R25 : critère compatibilité piste (le même que le planificateur)
 import { nominalRotation } from '../sim/aircraft.mjs';
 import { pushEvent } from '../core/sim-state.mjs';
+import { countCampaignWin } from '../progression/campaign.mjs'; // T2-2 : un contrat réussi compte pour la saison
 
 // Les 3 modèles (les chiffres d'équilibrage vivent ICI, comme tiers.mjs) :
 // période (s de sim), quantité (vols + pax minimum cumulés sur la période),
@@ -213,8 +214,10 @@ function settle(sim, c, result, penalty) {
   c.settled = true;
   c.result = result;
   const m = CONTRACT_MODELS.find((x) => x.id === c.model);
-  if (result === 'success') earn(sim, m.bonus, 'contract'); // prime (compte revenue.contract)
-  else if (penalty != null) charge(sim, penalty, 'contract-penalty');
+  if (result === 'success') {
+    earn(sim, m.bonus, 'contract'); // prime (compte revenue.contract)
+    countCampaignWin(sim); // T2-2 : un contrat RÉUSSI compte pour la saison
+  } else if (penalty != null) charge(sim, penalty, 'contract-penalty');
   const s = ensureContracts(sim);
   s.active = null;
   s.history.push({ ...c });

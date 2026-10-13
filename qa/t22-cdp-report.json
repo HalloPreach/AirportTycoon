@@ -1,0 +1,108 @@
+{
+  "ok": true,
+  "results": [
+    {
+      "name": "serveur local répond",
+      "ok": true,
+      "detail": "http://127.0.0.1:9047"
+    },
+    {
+      "name": "navigateur démarré (cible CDP page)",
+      "ok": true,
+      "detail": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
+    },
+    {
+      "name": "window.__game exposé",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Nouvelle partie : la CAMPAGNE est initialisée (active, 0/3, pas de prime)",
+      "ok": true,
+      "detail": "{\"status\":\"active\",\"wins\":0,\"rewardPaid\":false,\"endedAt\":null}"
+    },
+    {
+      "name": "Nouvelle partie : les STATS sont initialisées (série 0, incidents 0) + 0 pax",
+      "ok": true,
+      "detail": "{\"nonDeficit\":{\"current\":0,\"best\":0},\"incidentsSurvived\":0,\"periodsClosed\":0,\"lastPeriodAt\":null,\"prevIncidents\":0}"
+    },
+    {
+      "name": "Nouvelle partie : les SUCCÈS sont initialisés (aucun débloqué)",
+      "ok": true,
+      "detail": "{\"unlocked\":{}}"
+    },
+    {
+      "name": "Panneau : section « Saison, stats & succès » visible (campagne 0/3 + succès 0/8)",
+      "ok": true,
+      "detail": "{\"section\":true,\"campaignLine\":true,\"succas\":true}"
+    },
+    {
+      "name": "VICTOIRE : la sim passe la campagne à « won » (prime payée UNE fois, horodatée)",
+      "ok": true,
+      "detail": "{\"status\":\"won\",\"rewardPaid\":true,\"endedAt\":0.8288000000000003,\"money\":14493.566400000005,\"revenueCampaign\":2500,\"toastWon\":true,\"panelWon\":true,\"achSeason\":true}"
+    },
+    {
+      "name": "VICTOIRE : la prime 2500 $ est créditée au compte revenue « campaign »",
+      "ok": true,
+      "detail": "revenue.campaign=2500 money=14493.566400000005"
+    },
+    {
+      "name": "VICTOIRE : toast « SAISON REMPORTÉE » + le PANEAU affiche la saison gagnée",
+      "ok": true,
+      "detail": "{\"status\":\"won\",\"rewardPaid\":true,\"endedAt\":0.8288000000000003,\"money\":14493.566400000005,\"revenueCampaign\":2500,\"toastWon\":true,\"panelWon\":true,\"achSeason\":true}"
+    },
+    {
+      "name": "VICTOIRE : le SUCCÈS « Saison remportée » est débloqué (condition mesurée)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "SUCCÈS « Premiers pas » : 100 pax transportés → débloqué + toast « SUCCÈS DÉBLOQUÉ »",
+      "ok": true,
+      "detail": "{\"pax100\":true,\"toastAch\":true,\"panelCount\":true,\"pax\":150}"
+    },
+    {
+      "name": "Panneau : le compteur de succès suit (2/8 : saison remportée + premiers pas)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "STATS : le total pax est une LECTURE du compteur existant (≥ 150 transportés)",
+      "ok": true,
+      "detail": "totalCarried=150"
+    },
+    {
+      "name": "PERSISTANCE : la campagne (won, 3 succès) est SÉRIALISÉE dans la sauvegarde",
+      "ok": true,
+      "detail": "{\"savedCampaign\":\"won\",\"savedWins\":3,\"savedPax100\":true,\"savedPax\":150}"
+    },
+    {
+      "name": "PERSISTANCE : le succès pax-100 + le compteur pax (≥ 150) sont SÉRIALISÉS",
+      "ok": true,
+      "detail": "{\"savedCampaign\":\"won\",\"savedWins\":3,\"savedPax100\":true,\"savedPax\":150}"
+    },
+    {
+      "name": "RECHARGEMENT : « Reprendre » RESTAURE la campagne gagnée (état serialisé)",
+      "ok": true,
+      "detail": "{\"screen\":\"game\",\"campaignStatus\":\"won\",\"campaignWins\":3,\"pax100\":true,\"panelWon\":true}"
+    },
+    {
+      "name": "RECHARGEMENT : le succès pax-100 SURVIT + le PANEAU garde « saison gagnée »",
+      "ok": true,
+      "detail": "{\"screen\":\"game\",\"campaignStatus\":\"won\",\"campaignWins\":3,\"pax100\":true,\"panelWon\":true}"
+    },
+    {
+      "name": "aucune exception de page",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "diag": {
+    "browser": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "spawnError": "\r\nDevTools listening on ws://127.0.0.1:9137/devtools/browser/1c93661c-066c-4013-9791-95215060b843\r\n[32532:20340:1013/170945.681:ERROR:chrome\\browser\\task_manager\\providers\\fallback_task_provider.cc:126] Every renderer should have at least one task provided by a primary task provider. If a \"Renderer\" fallback task is shown, it is a bug. If you have repro steps, please file a new bug and tag it as a dependency of crbug.com/40528867.\r\n[32532:30012:1013/170946.288:ERROR:chrome\\elevation_service\\edge_elevation_service_browser_helper.cc:94] LaunchUpdateCmdElevatedAndWait:  hr = 80070002 with exit code: 32\r\n",
+    "cdpTarget": "ws://127.0.0.1:9137/devtools/page/23A1F8E4FE1E8CA83BBDFE9A204BA64F",
+    "started": true,
+    "page": "http://127.0.0.1:9047/"
+  },
+  "pageExceptions": []
+}

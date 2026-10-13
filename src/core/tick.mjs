@@ -14,6 +14,9 @@ import { tickIncidents } from '../sim/incidents.mjs';
 import { tickQuality } from '../progression/quality.mjs'; // R26 : la qualité des offres converge vers la mesure (inertie)
 import { tickObjectives } from '../progression/objectives.mjs';
 import { tickContracts } from '../flights/contracts.mjs';
+import { tickCampaign } from '../progression/campaign.mjs'; // T2-2 : la campagne (victoire)
+import { tickStats } from '../progression/stats.mjs'; // T2-2 : les stats persistantes
+import { tickAchievements } from '../progression/achievements.mjs'; // T2-2 : les succès
 import { makeSimRng } from './rng.mjs';
 
 export function tick(state, dt, rng) {
@@ -30,5 +33,8 @@ export function tick(state, dt, rng) {
   tickIncidents(sim, dt, rng); // BL-14 : incidents opérationnels limités (après la passe)
   tickObjectives(sim); // R22 : objectifs de progression — récompense payée UNE fois (condition mesurée)
   tickContracts(sim, dt); // R24 : contrats de compagnie — prime/pénalité réglées UNE fois (mesure de période)
+  tickCampaign(sim); // T2-2 : la campagne (victoire) — APRÈS le règlement des contrats (les réussis comptent)
+  tickStats(sim); // T2-2 : stats persistantes — APRÈS l'économie (la période close alimente la série)
+  tickAchievements(sim); // T2-2 : succès — en dernier (ils lisent campagne, stats, palier qualité)
   tickUnlocks(sim);
 }

@@ -225,6 +225,23 @@ export function juiceForAlert(juice, sim, alert, cam = { x: 0, y: 0 }) {
       juice.float(cam.x, cam.y, `+${alert.principal} $`, 'gain');
       push('float');
       break;
+    // T2-2 (t_6344db94) : la campagne (victoire) + les succès (le centre de
+    // l'écran — pas de position dans l'événement, comme « objective-paid »).
+    case 'campaign-won':
+      juice.burst(cam.x, cam.y, { colors: GOLD, count: 48 });
+      juice.float(cam.x, cam.y, `+${alert.reward} $ — Saison remportée`, 'gain');
+      push('burst', 'float');
+      break;
+    case 'campaign-lost':
+      juice.burst(cam.x, cam.y, { colors: DANGER_COLORS, count: 30 });
+      juice.shake(8, 0.5);
+      push('burst', 'shake');
+      break;
+    case 'achievement-unlocked':
+      juice.burst(cam.x, cam.y, { colors: GOLD, count: 24 });
+      juice.float(cam.x, cam.y, `Succès : ${alert.name}`, 'gain');
+      push('burst', 'float');
+      break;
   }
   return effects;
 }
