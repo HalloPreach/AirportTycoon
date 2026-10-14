@@ -1,43 +1,43 @@
 {
-  "ts": "2026-10-14T14:47:17.342Z",
-  "head": "df0056f55d3dccc9a0fb8943d97ca8925f472e7c",
+  "ts": "2026-10-14T15:28:38.124Z",
+  "head": "db1b3368813f5996247f4f0ce7d3f7dfe971e100",
   "pass": true,
   "captures": [
     {
       "name": "before-title",
-      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T14-47-09-127Z-before-title.png",
-      "bytes": 47652,
-      "kb": 46.5
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T15-28-30-203Z-before-title.png",
+      "bytes": 245306,
+      "kb": 239.6
     },
     {
       "name": "before-game",
-      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T14-47-09-127Z-before-game.png",
-      "bytes": 77653,
-      "kb": 75.8
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T15-28-30-203Z-before-game.png",
+      "bytes": 140221,
+      "kb": 136.9
     },
     {
       "name": "after-index",
-      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T14-47-09-127Z-after-index.png",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T15-28-30-203Z-after-index.png",
       "bytes": 78883,
       "kb": 77
     },
     {
       "name": "after-a",
-      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T14-47-09-127Z-after-a.png",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T15-28-30-203Z-after-a.png",
       "bytes": 387042,
       "kb": 378
     },
     {
       "name": "after-b",
-      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T14-47-09-127Z-after-b.png",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T15-28-30-203Z-after-b.png",
       "bytes": 318263,
       "kb": 310.8
     },
     {
       "name": "after-c",
-      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T14-47-09-127Z-after-c.png",
-      "bytes": 572056,
-      "kb": 558.6
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T15-28-30-203Z-after-c.png",
+      "bytes": 577464,
+      "kb": 563.9
     }
   ],
   "consoleErrors": [],

@@ -1,5 +1,5 @@
 /* Airport Tycoon — VERSION AUTONOME (T4, t_eb78478e) */
-/* Généré le 2026-10-14T15:22:21.211Z par tools/build-standalone.mjs — NE PAS ÉDITER À LA MAIN. */
+/* Généré le 2026-10-14T15:29:29.977Z par tools/build-standalone.mjs — NE PAS ÉDITER À LA MAIN. */
 /* 50 modules ESM inlinés (ordre topologique, cycles traités par substitution live), 0 dépendance, 0 appel réseau : jouable hors-ligne (file:// ou serveur statique). */
 (() => {
 'use strict';
