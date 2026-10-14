@@ -70,7 +70,11 @@ const RE_REEXPORT = /^export\s*\{([^}]*)\}\s*from\s*(['"])([^'"]+)\2\s*;?\s*(?:\
 const RE_EXPORT_LIST = /^export\s*\{([^}]*)\}\s*;?\s*$/;
 const RE_EXPORT_DEFAULT = /^export\s+default\b/;
 const RE_EXPORT_DECL = /^export\s+(async\s+)?(function\s*\*?|function|class|const|let|var)\s+([A-Za-z_$][\w$]*)/;
-const RE_DYNAMIC = /import\s*\(\s*(['"])([^'"]+)\2\s*\)/g;
+// T6 (t_87168414) : la référence arrière doit viser le GROUPE 1 (le
+// guillemet ouvrant) — `\2` visait le contenu et le regex ne matchait
+// JAMAIS (les 5 sites d'import dynamiques restaient bruts dans le
+// bundle, en erreur 404 à l'exécution → « Simulation non prête »).
+const RE_DYNAMIC = /import\s*\(\s*(['"])([^'"]+)\1\s*\)/g;
 
 function specifiersOf(file, text) {
   const specs = new Set();
@@ -382,6 +386,12 @@ catch (e) { fail(`bundle incompilable : ${e.message}`); }
 // (b) aucune syntaxe ESM résiduelle en tête de ligne
 const leftover = bundleJs.split('\n').filter((l) => /^import\s/.test(l.trim()) || /^export\s/.test(l.trim()));
 if (leftover.length) fail(`${leftover.length} ligne(s) ESM résiduelle(s), ex. : ${leftover[0].trim().slice(0, 80)}`);
+// (b2) T6 (t_87168414) : AUCUN import dynamique relatif RESIDUEL au milieu
+// d'une ligne (la réécriture __dyn( ci-dessus doit avoir tout couvert —
+// sinon le bundle 404 au chargement différé et la pose de bâtiment échoue
+// silencieusement : « Simulation non prête »).
+const rawDyn = bundleJs.match(/\bimport\s*\(\s*(['"])\.\.?\/[^'"]+\1\s*\)/g) || [];
+if (rawDyn.length) fail(`${rawDyn.length} import(s) dynamique(s) relatif(s) résiduel(s) dans le bundle, ex. : ${rawDyn[0]}`);
 // (c) hors-ligne : ni fetch, ni XHR, ni Worker dans le bundle
 for (const pat of [/\bfetch\s*\(/, /XMLHttpRequest/, /new Worker\(/]) {
   if (pat.test(bundleJs)) fail(`appel réseau inattendu dans le bundle (${pat})`);

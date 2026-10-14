@@ -1,9 +1,9 @@
 /* Airport Tycoon — VERSION AUTONOME (T4, t_eb78478e) */
-/* Généré le 2026-10-14T15:46:05.903Z par tools/build-standalone.mjs — NE PAS ÉDITER À LA MAIN. */
-/* 50 modules ESM inlinés (ordre topologique, cycles traités par substitution live), 0 dépendance, 0 appel réseau : jouable hors-ligne (file:// ou serveur statique). */
+/* Généré le 2026-10-14T20:13:47.670Z par tools/build-standalone.mjs — NE PAS ÉDITER À LA MAIN. */
+/* 53 modules ESM inlinés (ordre topologique, cycles traités par substitution live), 0 dépendance, 0 appel réseau : jouable hors-ligne (file:// ou serveur statique). */
 (() => {
 'use strict';
-const __reg = { 'm_src_main': {}, 'm_src_core_game-state': {}, 'm_src_core_events': {}, 'm_src_ui_camera': {}, 'm_src_ui_input': {}, 'm_src_ui_renderer': {}, 'm_src_ui_options': {}, 'm_src_core_loop': {}, 'm_src_ui_toast': {}, 'm_src_ui_build-tool': {}, 'm_src_ui_save-panel': {}, 'm_src_ui_planning-panel': {}, 'm_src_ui_panels': {}, 'm_src_ui_intro': {}, 'm_src_ui_tips': {}, 'm_src_ui_bankruptcy': {}, 'm_src_ui_juice': {}, 'm_src_audio': {}, 'm_src_ui_overlay': {}, 'm_src_persistence_save': {}, 'm_src_data_catalog': {}, 'm_src_core_new-game': {}, 'm_src_core_difficulty': {}, 'm_src_scenarios': {}, 'm_src_sim_passengers': {}, 'm_src_ui_palette': {}, 'm_src_ui_theme': {}, 'm_src_ui_icons': {}, 'm_src_sim_weather': {}, 'm_src_sim_clock': {}, 'm_src_core_seasons': {}, 'm_src_core_sim': {}, 'm_src_infra_unlocks': {}, 'm_src_flights_flights': {}, 'm_src_sim_events': {}, 'm_src_economy_economy': {}, 'm_src_pathfinding_path': {}, 'm_src_sim_aircraft': {}, 'm_src_progression_objectives': {}, 'm_src_flights_contracts': {}, 'm_src_progression_quality': {}, 'm_src_infra_assignments': {}, 'm_src_progression_campaign': {}, 'm_src_progression_stats': {}, 'm_src_progression_achievements': {}, 'm_src_sim_incidents': {}, 'm_src_infra_upgrades': {}, 'm_src_infra_infra': {}, 'm_src_core_sim-state': {}, 'm_src_core_layouts': {} };
+const __reg = { 'm_src_main': {}, 'm_src_core_game-state': {}, 'm_src_core_events': {}, 'm_src_ui_camera': {}, 'm_src_ui_input': {}, 'm_src_ui_touch': {}, 'm_src_ui_renderer': {}, 'm_src_ui_options': {}, 'm_src_core_loop': {}, 'm_src_ui_toast': {}, 'm_src_ui_build-tool': {}, 'm_src_ui_save-panel': {}, 'm_src_ui_planning-panel': {}, 'm_src_ui_panels': {}, 'm_src_ui_intro': {}, 'm_src_ui_tips': {}, 'm_src_ui_bankruptcy': {}, 'm_src_ui_juice': {}, 'm_src_audio': {}, 'm_src_ui_overlay': {}, 'm_src_persistence_save': {}, 'm_src_data_catalog': {}, 'm_src_core_new-game': {}, 'm_src_core_difficulty': {}, 'm_src_scenarios': {}, 'm_src_sim_passengers': {}, 'm_src_ui_palette': {}, 'm_src_ui_theme': {}, 'm_src_ui_icons': {}, 'm_src_sim_weather': {}, 'm_src_sim_clock': {}, 'm_src_core_seasons': {}, 'm_src_core_sim': {}, 'm_src_infra_unlocks': {}, 'm_src_infra_infra': {}, 'm_src_flights_flights': {}, 'm_src_sim_events': {}, 'm_src_economy_economy': {}, 'm_src_pathfinding_path': {}, 'm_src_sim_aircraft': {}, 'm_src_progression_objectives': {}, 'm_src_flights_contracts': {}, 'm_src_progression_quality': {}, 'm_src_infra_assignments': {}, 'm_src_progression_campaign': {}, 'm_src_progression_stats': {}, 'm_src_progression_achievements': {}, 'm_src_sim_incidents': {}, 'm_src_infra_upgrades': {}, 'm_src_core_sim-state': {}, 'm_src_core_layouts': {}, 'm_src_core_tick': {}, 'm_src_core_rng': {} };
 function __ns(id) { return __reg[id]; }
 function __dyn(id) { return Promise.resolve(__reg[id]); }
 
@@ -207,6 +207,125 @@ function makeInputHandlers(canvas, bus, camera, viewSize) {
 
 __exports.makeInputHandlers = makeInputHandlers;
 })(__reg['m_src_ui_input']);
+
+/* --- module src/ui/touch.mjs --- */
+(function (__exports) {
+// Entrée tactile mobile (T6, t_87168414) : PAN 1 doigt, PINCH ZOOM 2 doigts,
+// TAP = click. Le TAP est routé vers `onTap(sx, sy)` — le MÊME chemin qu'un
+// click desktop : les consommateurs (build-tool, panneaux) exposent
+// `clickAt(sx, sy)`, le click souris et le tap tactil passent TOUS les deux
+// par là. Zéro logique dupliquée, le desktop est intact (aucun événement
+// touch ne se produit sur une souris).
+//
+// Couche UI fine : elle ne décide rien (pas de règle de jeu) — elle applique
+// la caméra (camera.pan / camera.zoomAt) et émet UN seul callback (onTap).
+//
+// Les listeners sont NON PASSIFS (passive: false) pour pouvoir
+// preventDefault :
+//  - sur touchstart  → supprime l'émulation souris (pas de mousedown fantôme)
+//  - sur touchend    → supprime le click SYNTHÉTIQUE post-touch : sans ça le
+//    tap serait exécuté DEUX fois (le notre + celui du navigateur).
+
+// Seuils (mesurables, couverts par tests/t6-touch.test.mjs) :
+const TOUCH_CFG = Object.freeze({
+  tapMaxMs: 250,     // tap : la gesture dure ≤ 250 ms
+  tapMaxMovePx: 10,  // ...et la dérive totale reste < 10 px
+  panSlopPx: 8,      // le pan ne démarre qu'au-delà de 8 px (en-dessous = tap)
+  minPinchDist: 24,  // pinch : distance minimale entre doigts (garde-boue)
+});
+
+function makeTouchHandlers(canvas, camera, viewSize, { onTap = null } = {}) {
+  // Machine à états de la gesture : 'pan' (1 doigt) / 'pinch' (2 doigts) /
+  // null (repos). Une seule gesture à la fois (le canvas est le seul
+  // récepteur tactile du jeu).
+  let mode = null;
+  let lastX = 0, lastY = 0;   // dernière position (pas du pan)
+  let lastDist = 0;          // dernière distance inter-doigts (pinch)
+  let startX = 0, startY = 0; // départ de la gesture (tap)
+  let startT = 0;            // horodatage du départ (tap : ≤ tapMaxMs)
+  let maxMove = 0;           // dérive max depuis le départ (tap : < tapMaxMovePx)
+  let usedPinch = false;     // un pinch est passé → le tap est mort
+
+  // Coordonnées CANVAS (même espace que e.offsetX : le bitmap = la fenêtre,
+  // la scale protège si le CSS scale le canvas dans le futur).
+  function local(cx, cy) {
+    const r = canvas.getBoundingClientRect();
+    const sx = r.width > 0 ? canvas.width / r.width : 1;
+    const sy = r.height > 0 ? canvas.height / r.height : 1;
+    return [(cx - r.left) * sx, (cy - r.top) * sy];
+  }
+  const dist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+
+  canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (e.touches.length === 1) {
+      mode = 'pan';
+      const [x, y] = local(e.touches[0].clientX, e.touches[0].clientY);
+      lastX = startX = x;
+      lastY = startY = y;
+      startT = e.timeStamp;
+      maxMove = 0;
+      usedPinch = false;
+    } else {
+      // 2 doigts (ou +) : pinch (le zoom), le tap est définitivement exclu.
+      mode = 'pinch';
+      usedPinch = true;
+      lastDist = Math.max(dist(e.touches[0], e.touches[1]), 1);
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    if (mode === 'pan' && e.touches.length === 1) {
+      const [x, y] = local(e.touches[0].clientX, e.touches[0].clientY);
+      maxMove = Math.max(maxMove, Math.hypot(x - startX, y - startY));
+      if (maxMove < TOUCH_CFG.panSlopPx) return; // en-deçà : toujours un tap
+      camera.pan(x - lastX, y - lastY);
+      lastX = x;
+      lastY = y;
+    } else if (mode === 'pinch' && e.touches.length >= 2) {
+      const d = dist(e.touches[0], e.touches[1]);
+      if (d < TOUCH_CFG.minPinchDist) return; // bruit : on n'zoom pas dessus
+      const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const my = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      const [cx, cy] = local(mx, my);
+      // Zoom centré sur le point milieu, facteur = rapport des distances
+      // (incrémental → le pinch est fluide). camera.zoomAt borne [0.25, 4].
+      camera.zoomAt(cx, cy, d / lastDist, viewSize().width, viewSize().height);
+      lastDist = d;
+    } else if (mode === 'pinch' && e.touches.length === 1) {
+      // Un doigt s'est levé : le restant reprend le PAN (ré-ancré sur sa
+      // position courante) — la gesture continue sans à-coup. Le tap reste
+      // exclu (usedPinch).
+      mode = 'pan';
+      const [x, y] = local(e.touches[0].clientX, e.touches[0].clientY);
+      lastX = x;
+      lastY = y;
+    }
+  }, { passive: false });
+
+  function end(e) {
+    // preventDefault sur touchend : le click synthétique post-touch est
+    // supprimé (le tap est le NOTRE seul — pas de double exécution).
+    e.preventDefault();
+    if (e.touches.length === 0) {
+      // TAP ? Une seule gesture, brève, dérive minime, jamais de pinch.
+      const isTap = mode === 'pan' && !usedPinch
+        && (e.timeStamp - startT) <= TOUCH_CFG.tapMaxMs
+        && maxMove < TOUCH_CFG.tapMaxMovePx;
+      if (isTap && onTap) onTap(lastX, lastY);
+      mode = null;
+    }
+  }
+  canvas.addEventListener('touchend', end, { passive: false });
+  canvas.addEventListener('touchcancel', () => { mode = null; }, { passive: false });
+
+  return { config: TOUCH_CFG };
+}
+
+__exports.TOUCH_CFG = TOUCH_CFG;
+__exports.makeTouchHandlers = makeTouchHandlers;
+})(__reg['m_src_ui_touch']);
 
 /* --- module src/core/sim-state.mjs --- */
 (function (__exports) {
@@ -809,93 +928,6 @@ __exports.CSS_MIRRORED_KEYS = CSS_MIRRORED_KEYS;
 __exports.themeColor = themeColor;
 })(__reg['m_src_ui_theme']);
 
-/* --- module src/core/sim.mjs --- */
-(function (__exports) {
-// Pont UI → simulation : la carte UI ne branche QUE ce module, elle n'importe
-// jamais les règles de sim. Les modules de sim sont chargés paresseusement :
-// s'ils ne sont pas encore là (autre milestone en cours), le jeu tourne quand
-// même — la sim se branche d'elle-même dès qu'elle est prête.
-// ponytail: import paresseux + cache du module + backoff 5 s ; pas de DI.
-
-let cache = null;
-let retryAt = 0;
-
-// Charge le graphe de sim (tick + factory + infra). Échec silencieux, on réessaie.
-async function ensureSim() {
-  if (cache) return cache;
-  if (Date.now() < retryAt) return null; // pas prêt à réessayer (backoff)
-  retryAt = Date.now() + 5000; // les modules peuvent encore être en cours d'écriture
-  try {
-    const [tickM, stateM, infraM] = await Promise.all([
-      import('./tick.mjs'),
-      import('./sim-state.mjs'),
-      import('../infra/infra.mjs'),
-    ]);
-    cache = {
-      tick: tickM.tick,
-      newSimState: stateM.newSimState,
-      buildBuilding: infraM.buildBuilding,
-      demolishBuilding: infraM.demolishBuilding,
-    };
-  } catch {
-    cache = null; // sim pas prête : on y retourne plus tard (pas de crash)
-  }
-  return cache;
-}
-
-// Tick par frame : si la sim n'est pas prête, rien ne se passe (le jeu tourne).
-async function simTick(state, dt) {
-  const m = await ensureSim();
-  if (m && m.tick) m.tick(state, dt);
-}
-
-// Stub injectable (tests r14) : si un test pose `globalThis.__simTick`, la
-// boucle l'utilise au lieu du tick réel — permet d'essayer un tick qui lève
-// sans builder de faux modules. En jeu, l'absence du stub = zéro surcoût.
-const tickFn = (state, dt) => (globalThis.__simTick || simTick)(state, dt);
-
-// État de sim d'une nouvelle partie (null si la sim n'est pas encore prête).
-async function freshSimState() {
-  const m = await ensureSim();
-  return m && m.newSimState ? m.newSimState() : null;
-}
-
-__exports.ensureSim = ensureSim;
-__exports.simTick = simTick;
-__exports.tickFn = tickFn;
-__exports.freshSimState = freshSimState;
-})(__reg['m_src_core_sim']);
-
-/* --- module src/ui/toast.mjs --- */
-(function (__exports) {
-// Toasts : petits messages lisibles en bas à droite (feedback utilisateur).
-// Pur DOM, zéro règle de jeu : afficher, auto-disparaître.
-// ponytail: max 4 toasts empilés, 4 s ; c'est un feedback, pas un journal.
-function makeToasts(root) {
-  const box = document.createElement('div');
-  box.className = 'toasts';
-  box.setAttribute('role', 'status'); // annoncé aux lecteurs d'écran
-  root.appendChild(box);
-
-  let timer = 0;
-  function toast(msg, kind = 'info') {
-    while (box.children.length >= 4) box.firstChild.remove(); // on garde les 4 derniers
-    const el = document.createElement('div');
-    el.className = `toast toast--${kind}`;
-    el.textContent = msg;
-    box.appendChild(el);
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      for (const t of [...box.children]) t.classList.add('toast--out');
-      setTimeout(() => box.replaceChildren(), 200);
-    }, 4000);
-  }
-  return { toast, box };
-}
-
-__exports.makeToasts = makeToasts;
-})(__reg['m_src_ui_toast']);
-
 /* --- module src/core/layouts.mjs --- */
 (function (__exports) {
 // T3 stretch (t_79820790) — MULTI-AEROPORTS : la table AIRPORTS — un aéroport
@@ -943,6 +975,70 @@ const AIRPORTS = Object.freeze({
 __exports.DEFAULT_AIRPORT = DEFAULT_AIRPORT;
 __exports.AIRPORTS = AIRPORTS;
 })(__reg['m_src_core_layouts']);
+
+/* --- module src/core/rng.mjs --- */
+(function (__exports) {
+// PRNG déterministe (mulberry32) — l'ÉTAT du générateur vit sur la sim
+// (sim.rngSeed + sim.rngCounter) → il est CONSERVÉ dans la sauvegarde (EV-10) :
+// la reprise après fermeture est reproductible (même état de générateur → même
+// suite de vols). Les tests fournissent leur propre rng semé (déterminisme par
+// scénario, ex. seed 42) ; en jeu, tick() utilise CE PRNG semé (plus de
+// Math.random à l'état) → la partie est déterministe ET reproductible à la reprise.
+//
+// mulberry32 : un compteur 32 bits + un seed fixe donnent une séquence de [0,1).
+// R09 : le seed est maintenant MÉLÉ dans le compteur (t0 = seed + 0x6D2B79F5)
+// → des seeds différents donnent des SUITES différentes (le défaut G0/R02 :
+// seed 42 et 99 jouaient la MÊME partie, le générateur ne consommant que
+// rngCounter). ANCRE DE MIGRATION : t0 est CONSTANT (le même 0x6D2B79F5
+// d'origine) → avec rngSeed 0 la suite est BIT-À-BIT IDENTIQUE à la suite
+// pré-R09 (les fixtures de migration evidence/seed-42 et seed-99, state.json
+// du G0, sont conservées pour prouver cette continuité).
+// L'état (seed, compteur) est entier 32 bits → sérialise proprement en JSON.
+function makeSimRng(sim) {
+  if (!Number.isInteger(sim.rngSeed)) sim.rngSeed = 0;
+  if (!Number.isInteger(sim.rngCounter)) sim.rngCounter = 0;
+  const t0 = (sim.rngSeed + 0x6D2B79F5) | 0; // le seed entre dans la suite (R09)
+  return function rng() {
+    sim.rngCounter = (sim.rngCounter + 1) | 0;
+    let t = (sim.rngCounter + t0) | 0;
+    t = Math.imul(t ^ (t >>> 15), 1 | t);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+__exports.makeSimRng = makeSimRng;
+})(__reg['m_src_core_rng']);
+
+/* --- module src/ui/toast.mjs --- */
+(function (__exports) {
+// Toasts : petits messages lisibles en bas à droite (feedback utilisateur).
+// Pur DOM, zéro règle de jeu : afficher, auto-disparaître.
+// ponytail: max 4 toasts empilés, 4 s ; c'est un feedback, pas un journal.
+function makeToasts(root) {
+  const box = document.createElement('div');
+  box.className = 'toasts';
+  box.setAttribute('role', 'status'); // annoncé aux lecteurs d'écran
+  root.appendChild(box);
+
+  let timer = 0;
+  function toast(msg, kind = 'info') {
+    while (box.children.length >= 4) box.firstChild.remove(); // on garde les 4 derniers
+    const el = document.createElement('div');
+    el.className = `toast toast--${kind}`;
+    el.textContent = msg;
+    box.appendChild(el);
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      for (const t of [...box.children]) t.classList.add('toast--out');
+      setTimeout(() => box.replaceChildren(), 200);
+    }, 4000);
+  }
+  return { toast, box };
+}
+
+__exports.makeToasts = makeToasts;
+})(__reg['m_src_ui_toast']);
 
 /* --- module src/ui/intro.mjs --- */
 (function (__exports) {
@@ -2679,34 +2775,6 @@ __exports.ICON_KINDS = ICON_KINDS;
 __exports.drawIcon = drawIcon;
 __exports.iconCanvas = iconCanvas;
 })(__reg['m_src_ui_icons']);
-
-/* --- module src/core/loop.mjs --- */
-(function (__exports) {
-// Boucle de jeu : requestAnimationFrame, dt clampé, horloge + rendu.
-// S'exécute uniquement dans le navigateur (rAF) ; les tests Node n'importent jamais ce module.
-const { advanceTime } = __ns('m_src_core_game-state');
-const { tickFn } = __ns('m_src_core_sim');
-
-function startLoop({ state, bus, renderer }) {
-  let last = performance.now();
-  function frame(now) {
-    const dt = Math.min(0.1, (now - last) / 1000); // clamp : pas de spirale de la mort après une coupure d'onglet
-    last = now;
-    const played = advanceTime(state, dt); // horloge (pause → 0, x1/x2/x4 appliqué)
-    // R14 : simTick est asynchrone — un tick qui lève (état corrompu, bug de
-    // règle) doit REJETER la promesse, pas la planter en unhandledrejection :
-    // on route l'erreur sur le bus ('sim-error'), l'UI l'annonce en toast
-    // lisible et la boucle (horloge + rendu) continue — le jeu ne crashe pas.
-    tickFn(state, played).catch((e) => bus.emit('sim-error', e));  // la sim avance au TEMPS DE JEU (sinon x4 = sim à vitesse x1)
-    bus.emit('frame', dt);  // l'UI (caméra clavier) consomme le dt, elle ne décide pas
-    renderer.render(state);
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-}
-
-__exports.startLoop = startLoop;
-})(__reg['m_src_core_loop']);
 
 /* --- module src/ui/tips.mjs --- */
 (function (__exports) {
@@ -8055,233 +8123,103 @@ __exports.causeAt = causeAt;
 __exports.tickAircraft = tickAircraft;
 })(__reg['m_src_sim_aircraft']);
 
-/* --- module src/ui/build-tool.mjs --- */
+/* --- module src/progression/quality.mjs --- */
 (function (__exports) {
-// Outil de construction UI : barre d'outils (B, touches 1-9), fantôme au survol
-// (vert = posable, rouge = refus), clic = placer, X = démolir (clic sur un bâtiment).
-// La décision de pose/vraie démolition est la sim (infra.mjs) : l'UI ne fait que
-// le DOM, la souris et un aperçu « est-ce que ça tient ? » (grille + fonds).
-// Le fantôme est dessiné par le renderer via drawGhost(ctx, cam, view).
-const { BUILDINGS } = __ns('m_src_data_catalog');
-const { unlockState } = __ns('m_src_infra_unlocks');
-const { iconCanvas } = __ns('m_src_ui_icons');
-const { THEME } = __ns('m_src_ui_theme');
+// R26 (t_62ffa6bc) — relier les offres à la progression et à la qualité.
+// La « réputation » de l'aéroport vis-à-vis des offres = le taux de
+// PUNCTUALITÉ mesuré (fenêtre bornée R17, aircraft.mjs) — on réutilise la
+// statistique existante, PAS un compteur parallèle.
+// Bornes + inertie (spec R26) :
+//   - la valeur effective est bornée [Q_FLOOR, 1] : la réputation FAIBLE garde
+//     une voie de reprise (le planificateur offre TOUJOURS au moins les
+//     petits avions — aucune spirale punitive sans issue) ;
+//   - la valeur ne bouge que par PAS BORNÉ par seconde de jeu (inertie :
+//     pas de changement brutal, la montée est plus lente que la descente —
+//     la qualité se gagne, elle se perd vite) ;
+//   - le palier (mix de tailles que le planificateur est autorisé à proposer)
+//     est une fonction PURE de la valeur : jamais de 2e règle de sim.
+// L'état vit sur `sim.quality` (sérialisé avec la sim → la reprise est
+// reproductible, EV-10), comme sim.punctuality / sim.contracts.
+const { punctualityStats, ensurePunctuality } = __ns('m_src_sim_aircraft');
 
-// T33 (t_88aee6d5) : dérivé du CATALOGUE (BUILDINGS) — la liste grandit avec
-// les bâtiments. Les 8 d'origine gardent leurs touches 1-8 ; les nouveaux
-// prennent 9+ (9 = dernière touche simple ; 10/11 se choisissent à la
-// barre d'outils, la liste clavier est bornée aux touches simples).
-const KINDS = Object.keys(BUILDINGS);
+const Q_FLOOR = 0.3;    // borne basse : la réputation ne tombe jamais sous
+const Q_DROP_PER_S = 0.002;   // la descente est bornée (0.3 en ~2.5 min sim si tout s'effondre)
+const Q_RISE_PER_S = 0.0005;  // la montée est bornée ET plus lente (40 min sim pour regagner 0.4)
 
-function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced, onDemolished, controls = [] }) {
-  const tool = { mode: false, kind: 'runway', demolishMode: false, ghost: null };
+// Paliers du mix d'offres (l'index dans le catalogue = la taille :
+// small → medium → large, catalog.mjs) :
+//   0 : petits seulement (la voie de reprise — les Cessna se posent à l'heure)
+//   1 : petits + moyens (l'activité modeste de départ)
+//   2 : toutes tailles (la progression — les 747 réapparaissent dans les offres)
+const Q_TIERS = Object.freeze([
+  { name: 'petits', sizes: ['small'] },
+  { name: 'petits + moyens', sizes: ['small', 'medium'] },
+  { name: 'toutes tailles', sizes: ['small', 'medium', 'large'] },
+]);
 
-  // Barre d'outils (DOM, en bas à gauche) — accessible : boutons <button> réels.
-  const bar = document.createElement('div');
-  bar.className = 'toolbar';
-  bar.setAttribute('role', 'toolbar');
-  bar.setAttribute('aria-label', `Outils de construction (B activer, 1-${KINDS.length} choisir, X démolir)`);
-  const buttons = {};
-  for (let n = 0; n < KINDS.length; n++) {
-    const k = KINDS[n];
-    const btn = document.createElement('button');
-    btn.className = 'tool';
-    btn.textContent = `${n + 1} · ${BUILDINGS[k].name} (${BUILDINGS[k].cost} $)`;
-    // T4 : icône vectorielle du type (20 px) AVANT l'étiquette — le type est
-    // reconnaissable sans lire le libellé (le coût reste dans le texte).
-    const ic = iconCanvas(k, 20, { color: THEME.text, accent: THEME.accent });
-    if (ic) btn.prepend(ic);
-    btn.addEventListener('click', () => {
-      tool.mode = true; tool.demolishMode = false; tool.kind = k; sync();
-    });
-    bar.appendChild(btn);
-    buttons[k] = btn;
-  }
-  const demolishBtn = document.createElement('button');
-  demolishBtn.className = 'tool tool--danger';
-  demolishBtn.textContent = 'X · Démolir';
-  demolishBtn.addEventListener('click', () => {
-    tool.demolishMode = !tool.demolishMode; tool.mode = false; sync();
-  });
-  bar.appendChild(demolishBtn);
-  // R20 : boutons SOURIS des commandes du jeu (pause, vitesse, sauvegarde,
-  // reprise) — les MÊMES commandes que les raccourcis clavier (les touches
-  // complètent, elles ne sont pas seules porteuses). L'UI ne tranche rien :
-  // le clic appelle la commande (main.mjs), le label note le raccourci.
-  for (const c of controls) {
-    const btn = document.createElement('button');
-    btn.className = 'tool';
-    btn.textContent = c.label;
-    if (c.key) btn.title = `Raccourci : ${c.key}`;
-    btn.addEventListener('click', c.action);
-    bar.appendChild(btn);
-    c._btn = btn; // l'état actif (pause) est resynchronisé par refreshControls
-  }
-  const hint = document.createElement('span');
-  hint.className = 'toolbar-hint';
-  hint.textContent = `B : construire · 1-${KINDS.length} : bâtiment · X : démolir · A : auto-accept vols · Échap : annuler`;
-  bar.appendChild(hint);
-  document.body.appendChild(bar);
-
-  function sync() {
-    for (const k of KINDS) {
-      buttons[k].classList.toggle('tool--active', tool.mode && !tool.demolishMode && tool.kind === k);
-    }
-    demolishBtn.classList.toggle('tool--active', tool.demolishMode);
-  }
-
-  // Commandes publiques (clavier global dans main.mjs).
-  tool.toggleBuild = () => {
-    tool.demolishMode = false;
-    tool.mode = !tool.mode;
-    if (!tool.mode) tool.ghost = null;
-    sync();
-  };
-  tool.toggleDemolish = () => {
-    tool.mode = false;
-    tool.demolishMode = !tool.demolishMode;
-    if (!tool.demolishMode) tool.ghost = null;
-    sync();
-  };
-  tool.cancel = () => { tool.mode = false; tool.demolishMode = false; tool.ghost = null; sync(); };
-  // T33 (t_88aee6d5) : la SÉLECTION clavier (1-9) doit être VISIBLE —
-  // sync() met à jour la classe active (avant : seule la barre la mettait à
-  // jour, la touche choisissait « en sourdine » — le choix était actif dans
-  // le fantôme mais le bouton ne s'allumait jamais).
-  tool.setKind = (k) => { tool.kind = k; sync(); };
-  tool.isActive = () => !!(tool.mode || tool.demolishMode);
-  // T51 (t_cccfbc97) : la RACINE DOM de la barre est EXPOSÉE (main.mjs la
-  // masque au menu — les panneaux de jeu ne flottent pas au-dessus du menu).
-  tool.box = bar;
-
-  // Aperçu de pose (lecture seule) : tient dans le terrain ? chevauche-t-il une
-  // case occupée (grille de la sim) ? fonds suffisants ? — le VRAI verdict est la sim.
-  // ponytail: la grille existe car la sim a posé de l'infra ; avant, on n'a que le
-  // test rectangle-à-rectangle (pas de grille) → l'aperçu peut être optimiste.
-  function cellFree(x, y, w, h) {
-    const g = state.sim?.infra?.grid;
-    if (!g || !g.cells) return null; // grille absente : pas de verdict
-    const x0 = Math.max(0, Math.floor(x / 10)), y0 = Math.max(0, Math.floor(y / 10));
-    const x1 = Math.min(g.w - 1, Math.floor((x + w - 1) / 10));
-    const y1 = Math.min(g.h - 1, Math.floor((y + h - 1) / 10));
-    for (let cy = y0; cy <= y1; cy++) {
-      for (let cx = x0; cx <= x1; cx++) {
-        if (g.cells[cy * g.w + cx]) return false;
-      }
-    }
-    return true;
-  }
-  function canPlacePreview(kind, x, y) {
-    const def = BUILDINGS[kind];
-    const sim = state.sim;
-    if (!sim) return { ok: false, why: 'Simulation non prête' };
-    const t = state.terrain;
-    if (x < 0 || y < 0 || x + def.w > t.w || y + def.h > t.h) {
-      return { ok: false, why: 'Hors du terrain' };
-    }
-    const money = sim.economy && (sim.economy.money ?? sim.economy.funds);
-    if (money !== undefined && money < def.cost) {
-      return { ok: false, why: `Fonds insuffisants (${def.cost} $)` };
-    }
-    // Service pas encore débloqué (condition mesurable, R23) : le fantôme
-    // l'indique À L'AVANCE — le BÉNÉFICE (pourquoi acheter) + la condition
-    // restante (quand ça se débloquera), pas un simple seuil de pax.
-    const st = unlockState(sim, kind);
-    if (!st.unlocked) {
-      return { ok: false, why: st.why };
-    }
-    const free = cellFree(x, y, def.w, def.h);
-    if (free === false) return { ok: false, why: 'Zone déjà occupée' };
-    return { ok: true };
-  }
-
-  // Fantôme : rectangle centré sous la souris, couleur selon l'aperçu.
-  function computeGhost(sx, sy) {
-    const def = BUILDINGS[tool.kind];
-    const wx = camera.screenToWorldX(sx, viewSize().width) - def.w / 2;
-    const wy = camera.screenToWorldY(sy, viewSize().height) - def.h / 2;
-    const check = canPlacePreview(tool.kind, wx, wy);
-    tool.ghost = { x: wx, y: wy, w: def.w, h: def.h, ok: check.ok, why: check.why };
-  }
-
-  canvas.addEventListener('mousemove', (e) => {
-    if (tool.mode && !tool.demolishMode) computeGhost(e.offsetX, e.offsetY);
-    else tool.ghost = null;
-  });
-
-  canvas.addEventListener('click', async (e) => {
-    if (!state.sim) { toast('Simulation non prête', 'err'); return; }
-    if (tool.demolishMode) {
-      // Bâtiment sous la souris → démolir (verdict de la sim, lisible en toast).
-      const wx = camera.screenToWorldX(e.offsetX, viewSize().width);
-      const wy = camera.screenToWorldY(e.offsetY, viewSize().height);
-      const sim = state.sim;
-      const hit = [...sim.infra.runways, ...sim.infra.taxiways, ...sim.infra.terminals, ...sim.infra.services]
-        .find((b) => wx >= b.x && wx <= b.x + b.w && wy >= b.y && wy <= b.y + b.h);
-      if (!hit) return;
-      const { demolishBuilding } = await import('../infra/infra.mjs').catch(() => ({ demolishBuilding: null }));
-      if (!demolishBuilding) { toast('Simulation non prête', 'err'); return; }
-      const r = demolishBuilding(sim, hit.id);
-      if (r.ok && onDemolished) onDemolished(hit, r); // Juice (t_5065be95) : avant la suppression, l'objet porte sa position
-      toast(r.ok ? `${BUILDINGS[hit.type] ? BUILDINGS[hit.type].name : hit.type} démoli (+${r.refund} $)` : r.why, r.ok ? 'ok' : 'err');
-      return;
-    }
-    if (!tool.mode) return;
-    computeGhost(e.offsetX, e.offsetY);
-    const g = tool.ghost;
-    if (!g.ok) { toast(g.why, 'err'); return; }
-    const { buildBuilding } = await import('../infra/infra.mjs').catch(() => ({ buildBuilding: null }));
-    if (!buildBuilding) { toast('Simulation non prête', 'err'); return; }
-    const b = buildBuilding(state.sim, tool.kind, g.x, g.y);
-    if (b) {
-      toast(`${BUILDINGS[tool.kind].name} construit (−${BUILDINGS[tool.kind].cost} $)`, 'ok');
-      if (onPlaced) onPlaced(b);
-    } else {
-      // La sim a refusé (grille / fonds) : son événement « build-blocked / no-funds »
-      // est déjà passé dans sim.alerts → le HUD l'affiche. On n'ajoute pas un 2e toast.
-    }
-    tool.ghost = null;
-  });
-
-  // R20 : les boutons de commandes reflètent l'état courant (vitesse, pause).
-  // `refreshControls` est appelé à chaque frame par main.mjs — le label du
-  // bouton vitesse suit state.speedIndex, la classe active suit state.paused.
-  tool.refreshControls = () => {
-    for (const c of controls) {
-      if (c.labelOf) c._btn.textContent = c.labelOf(state);
-      if (c.activeOf) c._btn.classList.toggle('tool--active', c.activeOf(state));
-    }
-  };
-
-  // Rendu du fantôme (appelé par le renderer : drawGhost(ctx, cam, view)).
-  tool.drawGhost = (ctx, cam, view) => {
-    const g = tool.ghost;
-    if (!g) return;
-    const x0 = (g.x - (cam.x - view.width / 2 / cam.zoom)) * cam.zoom;
-    const y0 = (g.y - (cam.y - view.height / 2 / cam.zoom)) * cam.zoom;
-    const w = g.w * cam.zoom;
-    const h = g.h * cam.zoom;
-    // T5c (t_bd4726e7) : couleurs v2 Radar Rétro — phosphore si posable
-    // (= THEME.ok, alpha 0,45), rouge CRT sinon (= THEME.err).
-    ctx.fillStyle = g.ok ? 'rgba(61,255,165,0.45)' : 'rgba(255,90,78,0.45)';
-    ctx.fillRect(x0, y0, w, h);
-    ctx.strokeStyle = g.ok ? THEME.ok : THEME.err;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x0, y0, w, h);
-    if (!g.ok && g.why) {
-      ctx.fillStyle = THEME.text;
-      ctx.font = `12px ${THEME.fontUi}`;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText(g.why, x0, y0 - 4);
-    }
-  };
-
-  return tool;
+// Initialisation paresseuse (pattern sim.punctuality / sim.contracts) :
+// une sauvegarde ancienne n'a pas le champ → le 1er tick le crée.
+// Départ à 1.0 : la qualité se PRouve par les fins de vol, elle ne se
+// présume pas — mais le mix de départ reste modeste (le palier 2 n'ouvre
+// les offres large que si la mesure le justifie, le filtre « servable »
+// de l'infra fait le reste).
+function ensureQuality(sim) {
+  sim.quality = sim.quality || { q: 1 };
+  if (typeof sim.quality.q !== 'number' || !isFinite(sim.quality.q)) sim.quality.q = 1;
+  sim.quality.q = Math.min(1, Math.max(Q_FLOOR, sim.quality.q)); // borné (EV-10 : état corrompu réparé)
+  return sim.quality;
 }
 
-__exports.makeBuildTool = makeBuildTool;
-})(__reg['m_src_ui_build-tool']);
+// Le palier LU : fonction pure de la valeur effective — le planificateur
+// et le panneau lisent LA même règle (jamais deux règles divergentes).
+function qualityTier(sim) {
+  const q = ensureQuality(sim).q;
+  return q < 0.4 ? 0 : q < 0.7 ? 1 : 2;
+}
+
+// Le battement qualité (appelé par tick.mjs APRÈS les avions : c'est le tour
+// des avions qui alimente la fenêtre de ponctualité, logFlightEnd).
+// La valeur effective CONVERGE vers la mesure bornée (inertie) :
+//   - cible = le taux mesuré (fenêtre R17) ; aucune mesure → 1 (départ neuf,
+//     pas de faux chiffre — la valeur reste ce qu'elle est déjà bornée) ;
+//   - pas borné : descente ≤ Q_DROP_PER_S × dt, montée ≤ Q_RISE_PER_S × dt ;
+//   - borne basse Q_FLOOR : la descente s'arrête là (la voie de reprise existe).
+function tickQuality(sim, dt) {
+  const st = ensureQuality(sim);
+  ensurePunctuality(sim);
+  const rate = punctualityStats(sim).rate; // null = aucune fin de vol dans la fenêtre
+  const target = rate == null ? 1 : rate;
+  const delta = target - st.q;
+  if (delta < 0) st.q = Math.max(Q_FLOOR, st.q - Math.min(-delta, Q_DROP_PER_S * dt));
+  else if (delta > 0) st.q = Math.min(1, st.q + Math.min(delta, Q_RISE_PER_S * dt));
+}
+
+// LECTURE pour le panneau (UI fine, pattern contractView/objectiveView) :
+// la valeur effective, le palier (mix offert) et la mesure sous-jacente
+// (taux R17 sur la fenêtre bornée — null = pas encore de fins de vol).
+function qualityView(sim) {
+  const st = ensureQuality(sim);
+  const tier = qualityTier(sim);
+  const stats = punctualityStats(sim);
+  return {
+    q: st.q,
+    tier,
+    tierName: Q_TIERS[tier].name,
+    sizes: Q_TIERS[tier].sizes.slice(),
+    measured: stats.rate,          // taux R17 (null si fenêtre vide)
+    measuredTotal: stats.total,    // fins de vol comptées (borné, R17)
+  };
+}
+
+__exports.Q_FLOOR = Q_FLOOR;
+__exports.Q_DROP_PER_S = Q_DROP_PER_S;
+__exports.Q_RISE_PER_S = Q_RISE_PER_S;
+__exports.Q_TIERS = Q_TIERS;
+__exports.ensureQuality = ensureQuality;
+__exports.qualityTier = qualityTier;
+__exports.tickQuality = tickQuality;
+__exports.qualityView = qualityView;
+})(__reg['m_src_progression_quality']);
 
 /* --- module src/core/new-game.mjs --- */
 (function (__exports) {
@@ -8507,103 +8445,238 @@ __exports.tickObjectives = tickObjectives;
 __exports.objectiveView = objectiveView;
 })(__reg['m_src_progression_objectives']);
 
-/* --- module src/progression/quality.mjs --- */
+/* --- module src/ui/build-tool.mjs --- */
 (function (__exports) {
-// R26 (t_62ffa6bc) — relier les offres à la progression et à la qualité.
-// La « réputation » de l'aéroport vis-à-vis des offres = le taux de
-// PUNCTUALITÉ mesuré (fenêtre bornée R17, aircraft.mjs) — on réutilise la
-// statistique existante, PAS un compteur parallèle.
-// Bornes + inertie (spec R26) :
-//   - la valeur effective est bornée [Q_FLOOR, 1] : la réputation FAIBLE garde
-//     une voie de reprise (le planificateur offre TOUJOURS au moins les
-//     petits avions — aucune spirale punitive sans issue) ;
-//   - la valeur ne bouge que par PAS BORNÉ par seconde de jeu (inertie :
-//     pas de changement brutal, la montée est plus lente que la descente —
-//     la qualité se gagne, elle se perd vite) ;
-//   - le palier (mix de tailles que le planificateur est autorisé à proposer)
-//     est une fonction PURE de la valeur : jamais de 2e règle de sim.
-// L'état vit sur `sim.quality` (sérialisé avec la sim → la reprise est
-// reproductible, EV-10), comme sim.punctuality / sim.contracts.
-const { punctualityStats, ensurePunctuality } = __ns('m_src_sim_aircraft');
+// Outil de construction UI : barre d'outils (B, touches 1-9), fantôme au survol
+// (vert = posable, rouge = refus), clic = placer, X = démolir (clic sur un bâtiment).
+// La décision de pose/vraie démolition est la sim (infra.mjs) : l'UI ne fait que
+// le DOM, la souris et un aperçu « est-ce que ça tient ? » (grille + fonds).
+// Le fantôme est dessiné par le renderer via drawGhost(ctx, cam, view).
+const { BUILDINGS } = __ns('m_src_data_catalog');
+const { unlockState } = __ns('m_src_infra_unlocks');
+const { iconCanvas } = __ns('m_src_ui_icons');
+const { THEME } = __ns('m_src_ui_theme');
 
-const Q_FLOOR = 0.3;    // borne basse : la réputation ne tombe jamais sous
-const Q_DROP_PER_S = 0.002;   // la descente est bornée (0.3 en ~2.5 min sim si tout s'effondre)
-const Q_RISE_PER_S = 0.0005;  // la montée est bornée ET plus lente (40 min sim pour regagner 0.4)
+// T33 (t_88aee6d5) : dérivé du CATALOGUE (BUILDINGS) — la liste grandit avec
+// les bâtiments. Les 8 d'origine gardent leurs touches 1-8 ; les nouveaux
+// prennent 9+ (9 = dernière touche simple ; 10/11 se choisissent à la
+// barre d'outils, la liste clavier est bornée aux touches simples).
+const KINDS = Object.keys(BUILDINGS);
 
-// Paliers du mix d'offres (l'index dans le catalogue = la taille :
-// small → medium → large, catalog.mjs) :
-//   0 : petits seulement (la voie de reprise — les Cessna se posent à l'heure)
-//   1 : petits + moyens (l'activité modeste de départ)
-//   2 : toutes tailles (la progression — les 747 réapparaissent dans les offres)
-const Q_TIERS = Object.freeze([
-  { name: 'petits', sizes: ['small'] },
-  { name: 'petits + moyens', sizes: ['small', 'medium'] },
-  { name: 'toutes tailles', sizes: ['small', 'medium', 'large'] },
-]);
+function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced, onDemolished, controls = [] }) {
+  const tool = { mode: false, kind: 'runway', demolishMode: false, ghost: null };
 
-// Initialisation paresseuse (pattern sim.punctuality / sim.contracts) :
-// une sauvegarde ancienne n'a pas le champ → le 1er tick le crée.
-// Départ à 1.0 : la qualité se PRouve par les fins de vol, elle ne se
-// présume pas — mais le mix de départ reste modeste (le palier 2 n'ouvre
-// les offres large que si la mesure le justifie, le filtre « servable »
-// de l'infra fait le reste).
-function ensureQuality(sim) {
-  sim.quality = sim.quality || { q: 1 };
-  if (typeof sim.quality.q !== 'number' || !isFinite(sim.quality.q)) sim.quality.q = 1;
-  sim.quality.q = Math.min(1, Math.max(Q_FLOOR, sim.quality.q)); // borné (EV-10 : état corrompu réparé)
-  return sim.quality;
-}
+  // Barre d'outils (DOM, en bas à gauche) — accessible : boutons <button> réels.
+  const bar = document.createElement('div');
+  bar.className = 'toolbar';
+  bar.setAttribute('role', 'toolbar');
+  bar.setAttribute('aria-label', `Outils de construction (B activer, 1-${KINDS.length} choisir, X démolir)`);
+  const buttons = {};
+  for (let n = 0; n < KINDS.length; n++) {
+    const k = KINDS[n];
+    const btn = document.createElement('button');
+    btn.className = 'tool';
+    btn.textContent = `${n + 1} · ${BUILDINGS[k].name} (${BUILDINGS[k].cost} $)`;
+    // T4 : icône vectorielle du type (20 px) AVANT l'étiquette — le type est
+    // reconnaissable sans lire le libellé (le coût reste dans le texte).
+    const ic = iconCanvas(k, 20, { color: THEME.text, accent: THEME.accent });
+    if (ic) btn.prepend(ic);
+    btn.addEventListener('click', () => {
+      tool.mode = true; tool.demolishMode = false; tool.kind = k; sync();
+    });
+    bar.appendChild(btn);
+    buttons[k] = btn;
+  }
+  const demolishBtn = document.createElement('button');
+  demolishBtn.className = 'tool tool--danger';
+  demolishBtn.textContent = 'X · Démolir';
+  demolishBtn.addEventListener('click', () => {
+    tool.demolishMode = !tool.demolishMode; tool.mode = false; sync();
+  });
+  bar.appendChild(demolishBtn);
+  // R20 : boutons SOURIS des commandes du jeu (pause, vitesse, sauvegarde,
+  // reprise) — les MÊMES commandes que les raccourcis clavier (les touches
+  // complètent, elles ne sont pas seules porteuses). L'UI ne tranche rien :
+  // le clic appelle la commande (main.mjs), le label note le raccourci.
+  for (const c of controls) {
+    const btn = document.createElement('button');
+    btn.className = 'tool';
+    btn.textContent = c.label;
+    if (c.key) btn.title = `Raccourci : ${c.key}`;
+    btn.addEventListener('click', c.action);
+    bar.appendChild(btn);
+    c._btn = btn; // l'état actif (pause) est resynchronisé par refreshControls
+  }
+  const hint = document.createElement('span');
+  hint.className = 'toolbar-hint';
+  hint.textContent = `B : construire · 1-${KINDS.length} : bâtiment · X : démolir · A : auto-accept vols · Échap : annuler`;
+  bar.appendChild(hint);
+  document.body.appendChild(bar);
 
-// Le palier LU : fonction pure de la valeur effective — le planificateur
-// et le panneau lisent LA même règle (jamais deux règles divergentes).
-function qualityTier(sim) {
-  const q = ensureQuality(sim).q;
-  return q < 0.4 ? 0 : q < 0.7 ? 1 : 2;
-}
+  function sync() {
+    for (const k of KINDS) {
+      buttons[k].classList.toggle('tool--active', tool.mode && !tool.demolishMode && tool.kind === k);
+    }
+    demolishBtn.classList.toggle('tool--active', tool.demolishMode);
+  }
 
-// Le battement qualité (appelé par tick.mjs APRÈS les avions : c'est le tour
-// des avions qui alimente la fenêtre de ponctualité, logFlightEnd).
-// La valeur effective CONVERGE vers la mesure bornée (inertie) :
-//   - cible = le taux mesuré (fenêtre R17) ; aucune mesure → 1 (départ neuf,
-//     pas de faux chiffre — la valeur reste ce qu'elle est déjà bornée) ;
-//   - pas borné : descente ≤ Q_DROP_PER_S × dt, montée ≤ Q_RISE_PER_S × dt ;
-//   - borne basse Q_FLOOR : la descente s'arrête là (la voie de reprise existe).
-function tickQuality(sim, dt) {
-  const st = ensureQuality(sim);
-  ensurePunctuality(sim);
-  const rate = punctualityStats(sim).rate; // null = aucune fin de vol dans la fenêtre
-  const target = rate == null ? 1 : rate;
-  const delta = target - st.q;
-  if (delta < 0) st.q = Math.max(Q_FLOOR, st.q - Math.min(-delta, Q_DROP_PER_S * dt));
-  else if (delta > 0) st.q = Math.min(1, st.q + Math.min(delta, Q_RISE_PER_S * dt));
-}
-
-// LECTURE pour le panneau (UI fine, pattern contractView/objectiveView) :
-// la valeur effective, le palier (mix offert) et la mesure sous-jacente
-// (taux R17 sur la fenêtre bornée — null = pas encore de fins de vol).
-function qualityView(sim) {
-  const st = ensureQuality(sim);
-  const tier = qualityTier(sim);
-  const stats = punctualityStats(sim);
-  return {
-    q: st.q,
-    tier,
-    tierName: Q_TIERS[tier].name,
-    sizes: Q_TIERS[tier].sizes.slice(),
-    measured: stats.rate,          // taux R17 (null si fenêtre vide)
-    measuredTotal: stats.total,    // fins de vol comptées (borné, R17)
+  // Commandes publiques (clavier global dans main.mjs).
+  tool.toggleBuild = () => {
+    tool.demolishMode = false;
+    tool.mode = !tool.mode;
+    if (!tool.mode) tool.ghost = null;
+    sync();
   };
+  tool.toggleDemolish = () => {
+    tool.mode = false;
+    tool.demolishMode = !tool.demolishMode;
+    if (!tool.demolishMode) tool.ghost = null;
+    sync();
+  };
+  tool.cancel = () => { tool.mode = false; tool.demolishMode = false; tool.ghost = null; sync(); };
+  // T33 (t_88aee6d5) : la SÉLECTION clavier (1-9) doit être VISIBLE —
+  // sync() met à jour la classe active (avant : seule la barre la mettait à
+  // jour, la touche choisissait « en sourdine » — le choix était actif dans
+  // le fantôme mais le bouton ne s'allumait jamais).
+  tool.setKind = (k) => { tool.kind = k; sync(); };
+  tool.isActive = () => !!(tool.mode || tool.demolishMode);
+  // T51 (t_cccfbc97) : la RACINE DOM de la barre est EXPOSÉE (main.mjs la
+  // masque au menu — les panneaux de jeu ne flottent pas au-dessus du menu).
+  tool.box = bar;
+
+  // Aperçu de pose (lecture seule) : tient dans le terrain ? chevauche-t-il une
+  // case occupée (grille de la sim) ? fonds suffisants ? — le VRAI verdict est la sim.
+  // ponytail: la grille existe car la sim a posé de l'infra ; avant, on n'a que le
+  // test rectangle-à-rectangle (pas de grille) → l'aperçu peut être optimiste.
+  function cellFree(x, y, w, h) {
+    const g = state.sim?.infra?.grid;
+    if (!g || !g.cells) return null; // grille absente : pas de verdict
+    const x0 = Math.max(0, Math.floor(x / 10)), y0 = Math.max(0, Math.floor(y / 10));
+    const x1 = Math.min(g.w - 1, Math.floor((x + w - 1) / 10));
+    const y1 = Math.min(g.h - 1, Math.floor((y + h - 1) / 10));
+    for (let cy = y0; cy <= y1; cy++) {
+      for (let cx = x0; cx <= x1; cx++) {
+        if (g.cells[cy * g.w + cx]) return false;
+      }
+    }
+    return true;
+  }
+  function canPlacePreview(kind, x, y) {
+    const def = BUILDINGS[kind];
+    const sim = state.sim;
+    if (!sim) return { ok: false, why: 'Simulation non prête' };
+    const t = state.terrain;
+    if (x < 0 || y < 0 || x + def.w > t.w || y + def.h > t.h) {
+      return { ok: false, why: 'Hors du terrain' };
+    }
+    const money = sim.economy && (sim.economy.money ?? sim.economy.funds);
+    if (money !== undefined && money < def.cost) {
+      return { ok: false, why: `Fonds insuffisants (${def.cost} $)` };
+    }
+    // Service pas encore débloqué (condition mesurable, R23) : le fantôme
+    // l'indique À L'AVANCE — le BÉNÉFICE (pourquoi acheter) + la condition
+    // restante (quand ça se débloquera), pas un simple seuil de pax.
+    const st = unlockState(sim, kind);
+    if (!st.unlocked) {
+      return { ok: false, why: st.why };
+    }
+    const free = cellFree(x, y, def.w, def.h);
+    if (free === false) return { ok: false, why: 'Zone déjà occupée' };
+    return { ok: true };
+  }
+
+  // Fantôme : rectangle centré sous la souris, couleur selon l'aperçu.
+  function computeGhost(sx, sy) {
+    const def = BUILDINGS[tool.kind];
+    const wx = camera.screenToWorldX(sx, viewSize().width) - def.w / 2;
+    const wy = camera.screenToWorldY(sy, viewSize().height) - def.h / 2;
+    const check = canPlacePreview(tool.kind, wx, wy);
+    tool.ghost = { x: wx, y: wy, w: def.w, h: def.h, ok: check.ok, why: check.why };
+  }
+
+  canvas.addEventListener('mousemove', (e) => {
+    if (tool.mode && !tool.demolishMode) computeGhost(e.offsetX, e.offsetY);
+    else tool.ghost = null;
+  });
+
+  // T6 (t_87168414) : clickAt(sx, sy) — la logique de pose/démolition avec
+  // des coordonnées EXPLICITES. Le click desktop délègue (e.offsetX/offsetY),
+  // le tap tactil (touch.mjs) appelle le MÊME chemin : une seule logique,
+  // zéro duplication. L'async vient du chargement différé de la règle (sim).
+  tool.clickAt = async (sx, sy) => {
+    if (!state.sim) { toast('Simulation non prête', 'err'); return; }
+    if (tool.demolishMode) {
+      // Bâtiment sous le point → démolir (verdict de la sim, lisible en toast).
+      const wx = camera.screenToWorldX(sx, viewSize().width);
+      const wy = camera.screenToWorldY(sy, viewSize().height);
+      const sim = state.sim;
+      const hit = [...sim.infra.runways, ...sim.infra.taxiways, ...sim.infra.terminals, ...sim.infra.services]
+        .find((b) => wx >= b.x && wx <= b.x + b.w && wy >= b.y && wy <= b.y + b.h);
+      if (!hit) return;
+      const { demolishBuilding } = await __dyn('m_src_infra_infra').catch(() => ({ demolishBuilding: null }));
+      if (!demolishBuilding) { toast('Simulation non prête', 'err'); return; }
+      const r = demolishBuilding(sim, hit.id);
+      if (r.ok && onDemolished) onDemolished(hit, r); // Juice (t_5065be95) : avant la suppression, l'objet porte sa position
+      toast(r.ok ? `${BUILDINGS[hit.type] ? BUILDINGS[hit.type].name : hit.type} démoli (+${r.refund} $)` : r.why, r.ok ? 'ok' : 'err');
+      return;
+    }
+    if (!tool.mode) return;
+    computeGhost(sx, sy);
+    const g = tool.ghost;
+    if (!g.ok) { toast(g.why, 'err'); return; }
+    const { buildBuilding } = await __dyn('m_src_infra_infra').catch(() => ({ buildBuilding: null }));
+    if (!buildBuilding) { toast('Simulation non prête', 'err'); return; }
+    const b = buildBuilding(state.sim, tool.kind, g.x, g.y);
+    if (b) {
+      toast(`${BUILDINGS[tool.kind].name} construit (−${BUILDINGS[tool.kind].cost} $)`, 'ok');
+      if (onPlaced) onPlaced(b);
+    } else {
+      // La sim a refusé (grille / fonds) : son événement « build-blocked / no-funds »
+      // est déjà passé dans sim.alerts → le HUD l'affiche. On n'ajoute pas un 2e toast.
+    }
+    tool.ghost = null;
+  };
+  canvas.addEventListener('click', (e) => tool.clickAt(e.offsetX, e.offsetY));
+
+  // R20 : les boutons de commandes reflètent l'état courant (vitesse, pause).
+  // `refreshControls` est appelé à chaque frame par main.mjs — le label du
+  // bouton vitesse suit state.speedIndex, la classe active suit state.paused.
+  tool.refreshControls = () => {
+    for (const c of controls) {
+      if (c.labelOf) c._btn.textContent = c.labelOf(state);
+      if (c.activeOf) c._btn.classList.toggle('tool--active', c.activeOf(state));
+    }
+  };
+
+  // Rendu du fantôme (appelé par le renderer : drawGhost(ctx, cam, view)).
+  tool.drawGhost = (ctx, cam, view) => {
+    const g = tool.ghost;
+    if (!g) return;
+    const x0 = (g.x - (cam.x - view.width / 2 / cam.zoom)) * cam.zoom;
+    const y0 = (g.y - (cam.y - view.height / 2 / cam.zoom)) * cam.zoom;
+    const w = g.w * cam.zoom;
+    const h = g.h * cam.zoom;
+    // T5c (t_bd4726e7) : couleurs v2 Radar Rétro — phosphore si posable
+    // (= THEME.ok, alpha 0,45), rouge CRT sinon (= THEME.err).
+    ctx.fillStyle = g.ok ? 'rgba(61,255,165,0.45)' : 'rgba(255,90,78,0.45)';
+    ctx.fillRect(x0, y0, w, h);
+    ctx.strokeStyle = g.ok ? THEME.ok : THEME.err;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x0, y0, w, h);
+    if (!g.ok && g.why) {
+      ctx.fillStyle = THEME.text;
+      ctx.font = `12px ${THEME.fontUi}`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(g.why, x0, y0 - 4);
+    }
+  };
+
+  return tool;
 }
 
-__exports.Q_FLOOR = Q_FLOOR;
-__exports.Q_DROP_PER_S = Q_DROP_PER_S;
-__exports.Q_RISE_PER_S = Q_RISE_PER_S;
-__exports.Q_TIERS = Q_TIERS;
-__exports.ensureQuality = ensureQuality;
-__exports.qualityTier = qualityTier;
-__exports.tickQuality = tickQuality;
-__exports.qualityView = qualityView;
-})(__reg['m_src_progression_quality']);
+__exports.makeBuildTool = makeBuildTool;
+})(__reg['m_src_ui_build-tool']);
 
 /* --- module src/ui/overlay.mjs --- */
 (function (__exports) {
@@ -8712,193 +8785,6 @@ function drawNetworkOverlay(ctx, cam, viewSize, sim) {
 __exports.overlayState = overlayState;
 __exports.drawNetworkOverlay = drawNetworkOverlay;
 })(__reg['m_src_ui_overlay']);
-
-/* --- module src/scenarios.mjs --- */
-(function (__exports) {
-// R38 (t_8f8f4a63) — les TROIS scénarios rejouables : DÉMARRAGE GUIDÉ,
-// DÉFI SATURATION, DÉFI REDRESSEMENT. Chacun :
-//   • les MÊMES règles (tick, sim, économie — AUCUNE règle n'est modifiée :
-//     le pic est l'action EXISTANTE forceIncident, l'emprunt la commande
-//     EXISTANTE takeLoan du joueur, l'objectif annoncé est un objectif R22) ;
-//   • une CONFIGURATION EXPLICITE (seed, solde, pic, emprunt) posée sur l'état
-//     frais — elle vit sur `state.scenario` (sérialisée avec l'état entier → la
-//     partie scénario est sauvegardable/rechargeable, la configuration REPREND
-//     au chargement : les effets déjà appliqués sont sur la sim, le champ sert
-//     de marqueur) ;
-//   • un OBJECTIF ANNONCÉ (l'objectif R22 correspondant, affiché par le panneau
-//     « Scénario » + toast au lancement).
-// Le MODE LIBRE est conservé : « Nouvelle partie » = makeGameState() sans
-// scenario (seed aléatoire, pas d'objectif annoncé, pas de champ `scenario`).
-// R46 (t_7b04f863) : +3 scénarios (CRISE TOTALE, DÉFI DIFFICILE, DÉFI FACILE)
-// — le même pattern : une ENTRÉE DE TABLE, pas de système de paramétrage.
-// Deux champs de config ADDITIFS (absents des entrées R38 → comportement
-// R38 intact) :
-//   • `difficulty` : le profil T2-1 (core/difficulty.mjs) — PARAMÈTRE DE
-//     SPAWN (capital de départ + facteurs de tick), jamais une règle : le
-//     scénario porte sa difficulté, sérialisée sur state.difficulty comme le
-//     mode libre (elle REPREND au chargement, le sélecteur du menu la lit) ;
-//   • `runwayClosedSeconds` : fermeture de PISTE forçée dès le départ avec
-//     une durée EXPLICITE du défi (forceIncident R32 = l'action EXISTANTE,
-//     comme le pic ; la durée naturelle RUNWAY_CLOSE_S reste la règle sim).
-const { makeGameState } = __ns('m_src_core_new-game');
-const { forceIncident } = __ns('m_src_sim_incidents');
-const { OBJECTIVES } = __ns('m_src_progression_objectives');
-const { START_FUNDS } = __ns('m_src_core_sim-state');
-
-// Le pic forcé du DÉFI SATURATION : durée EXPLICITE du défi (le pic NATUREL
-// reste INCID.SURGE_S — on n'écrase rien, forceIncident est la même action ;
-// seule la durée du DÉFI est un paramètre du scénario, pas de la sim).
-const SATURATION_SURGE_S = 600; // 10 min sim : le temps de décider
-// Le DÉFI REDRESSEMENT : l'aéroport démarre EN DÉFICIT (solde EXPLICITE, pas
-// un budget gonflé — START_FUNDS 12 000 reste le capital du mode libre) ;
-// l'emprunt borné R35 (5 000 $, une fois) RESTE le levier DU JOUEUR
-// (takeLoan, panneau Bilan) — le défi est « remonter dans le vert ».
-const REDRESSEMENT_FUNDS = -3000;
-// R46 : le DÉFI CRISE TOTALE — pic de demande (fenêtre EXPLICITE 15 min sim)
-// ET fermeture de la piste dès le départ (durée EXPLICITE 120 s, la même que
-// la règle R32 RUNWAY_CLOSE_S : le scénario ne change que la DUREE du défi,
-// jamais la règle). Les deux effets sont les actions EXISTANTES
-// (forceIncident R32/R33) posées sur l'état frais — la réponse du joueur est
-// l'intervention PAYANTE R33 (réouvrir la piste : 600 $) ou l'attente.
-const CRISIS_SURGE_S = 900; // 15 min sim : le temps d'absorber la crise
-const CRISIS_RUNWAY_CLOSE_S = 120; // = la durée R32 (la règle reste, on la force au départ)
-// T3 stretch (t_79820790) — le SECOND AÉROPORT (scénario « Cap Nord »,
-// layout src/core/layouts.mjs : 2 pistes L/M + terminal 4 portes) : le
-// budget de départ FIXÉ par un replay 48 h passif MESURÉ (rejoué dans
-// tests/r49-airports.mjs, seed 24, solde de départ 12 000 $) : le MINIMUM
-// de solde sur 48 h est 11 357 $ — le solde reste POSITIF tout le long
-// (pas de faillite, pas de chiffre inventé : mesuré sur la sim réelle).
-const CAP_NORD_FUNDS = 12000;
-
-const SCENARIOS = Object.freeze({
-  guide: Object.freeze({
-    name: 'Démarrage guidé',
-    seed: 42, // rejouable : même seed + mêmes décisions = même partie (R09)
-    funds: START_FUNDS, // budget normal (pas de gonflement)
-    surgeSeconds: 0, // aucun pic forcé
-    objective: 'o1-cycle', // R22 : premier cycle sans départ sec + période net ≥ 0 (1000 $)
-  }),
-  saturation: Object.freeze({
-    name: 'Défi saturation',
-    seed: 7,
-    funds: START_FUNDS,
-    surgeSeconds: SATURATION_SURGE_S, // pic de demande forcé dès le départ
-    objective: 'o2-surge', // R22 : ponctualité restaurée pendant le pic (≥ 50 %, 1500 $)
-  }),
-  redressement: Object.freeze({
-    name: 'Défi redressement',
-    seed: 42,
-    funds: REDRESSEMENT_FUNDS, // budget EXPLICITE du défi (déficit de départ)
-    surgeSeconds: 0,
-    objective: 'o1-cycle', // R22 : remettre l'aéroport dans le vert (cycle + période net ≥ 0, 1000 $)
-  }),
-  // R46 (t_7b04f863) : trois nouveaux scénarios — MÊMES règles (forceIncident
-  // R32/R33, emprunt R35, difficultés T2-1, objectifs R22), configuration
-  // EXPLICITE posée sur l'état frais, rejouables (seed imposée).
-  crise: Object.freeze({
-    name: 'Défi crise totale',
-    seed: 13,
-    funds: START_FUNDS, // budget normal (le défi est l'incident, pas le budget)
-    surgeSeconds: CRISIS_SURGE_S, // pic de 15 min sim ACTIF dès le départ
-    runwayClosedSeconds: CRISIS_RUNWAY_CLOSE_S, // ET la piste fermée 120 s dès le départ
-    objective: 'o2-surge', // R22 : ponctualité restaurée pendant le pic (≥ 50 %, 1500 $)
-  }),
-  difficile: Object.freeze({
-    name: 'Défi difficile',
-    seed: 21,
-    difficulty: 'hard', // T2-1 : capital maigre 6 000 $ + incidents ×0.6 + OPEX ×1.25
-    objective: 'o1-cycle', // R22 : remettre dans le vert en conditions dures (1000 $)
-  }),
-  facile: Object.freeze({
-    name: 'Défi facile',
-    seed: 3,
-    difficulty: 'easy', // T2-1 : capital confort 18 000 $ + incidents ×1.6 + OPEX ×0.85
-    objective: 'o1-cycle', // R22 : premier cycle sans départ sec + période net ≥ 0 (1000 $)
-  }),
-  // T3 stretch (t_79820790) — le SECOND AÉROPORT (objectif « a second
-  // airport ») : le layout Cap Nord (src/core/layouts.mjs — 2 pistes, une
-  // CAPABLE L + une M, terminal 4 portes L/M/M/L) — MÊMES règles du jeu
-  // (aucune n'est modifiée : l'aéroport est un PARAMÈTRE DE SPAWN, la sim
-  // décide), profil DIFFÉRENT de tous les autres scénarios (2 pistes vs 1,
-  // 4 portes vs 2) + budget FIXÉ par replay 48 h passif (pas de faillite).
-  // ADDITIF : l'absence du champ `airport` sur les entrées R38/R46 = le
-  // layout « central » (comportement R38/R46 intact — pas de ligne
-  // modifiée pour les 6 scénarios existants).
-  capNord: Object.freeze({
-    name: 'Cap Nord — aéroport du nord',
-    seed: 24, // rejouable (EV-10) : même seed + mêmes décisions = même partie
-    funds: CAP_NORD_FUNDS, // budget EXPLICITE du second aéroport (mesuré, cf. tests/r49)
-    airport: 'cap-nord', // NOUVEAU champ additif (absent → layout « central »)
-    objective: 'o1-cycle', // R22 : premier cycle sans départ sec + période net ≥ 0 (1000 $)
-  }),
-});
-
-// Démarre un scénario : état frais (seed imposée) + la configuration EXPLICITE
-// appliquée SUR LA SIM (pic = forceIncident, solde = champ de l'économie,
-// piste fermée = forceIncident R32 — aucune règle ajoutée au tick). Retourne
-// le state complet ; le câblage (main.mjs) fait Object.assign(state, ret)
-// comme pour une nouvelle partie.
-// `state.scenario` = la configuration (marqueur sérialisé, la config REPREND
-// au chargement). La difficulté du scénario (R46, absente des entrées R38 →
-// 'normal' = comportement R38 intact) est le PARAMÈTRE DE SPAWN T2-1 : elle
-// vit sur state.difficulty / sim.difficulty (sérialisées, reprises au load).
-function startScenario(mode) {
-  const cfg = SCENARIOS[mode];
-  if (!cfg) throw new Error(`scénario inconnu : ${mode} (les modes : ${Object.keys(SCENARIOS).join(', ')})`);
-  const diffId = cfg.difficulty || 'normal'; // R46 : le profil T2-1 du défi (référentiel sinon)
-  // T3 stretch (t_79820790) : l'aéroport du scénario (champ ADDITIF, absent
-  // des entrées R38/R46 → « central » = comportement R38/R46 intact).
-  const state = makeGameState(cfg.seed, diffId, cfg.airport);
-  state.scenario = { id: mode, name: cfg.name, objective: cfg.objective, difficulty: diffId, airport: cfg.airport };
-  // Budget EXPLICITE du défi (absent pour les défis de difficulté : le
-  // CAPITAL DU PROFIL T2-1 posé par makeGameState EST la config du défi —
-  // pas de chiffre dupliqué).
-  if (cfg.funds !== undefined && cfg.funds !== state.sim.economy.money) state.sim.economy.money = cfg.funds;
-  if (cfg.surgeSeconds > 0) {
-    forceIncident(state.sim, 'surge'); // l'action EXISTANTE (tests R33) met le pic actif
-    state.sim.incidents.surge.remaining = cfg.surgeSeconds; // durée EXPLICITE du défi
-  }
-  if (cfg.runwayClosedSeconds > 0) {
-    const rw = state.sim.infra.runways[0]; // plan de départ A-2 : la piste fournie
-    if (!rw) throw new Error(`scénario ${mode} : fermeture de piste impossible (aucune piste au départ)`);
-    forceIncident(state.sim, `runway:${rw.id}`); // l'action EXISTANTE R32 (attachée à l'actif)
-    state.sim.incidents.runways[rw.id].remaining = cfg.runwayClosedSeconds; // durée EXPLICITE du défi
-  }
-  return state;
-}
-
-// L'objectif ANNONCÉ du scénario en cours (le toast de lancement + le panneau
-// « Scénario » le lisent). Lecture seule : la sim décide, l'UI n'affiche.
-function scenarioObjective(state) {
-  const sc = state && state.scenario;
-  const cfg = sc && SCENARIOS[sc.id];
-  if (!sc || !cfg) return null; // mode libre : pas d'objectif annoncé
-  const o = OBJECTIVES.find((x) => x.id === cfg.objective);
-  return { id: cfg.objective, name: o ? o.name : cfg.objective,
-           reward: o ? o.reward : 0, text: o ? o.desc : '' };
-}
-
-// Statut de l'objectif annoncé (lecture mesurée de l'état — la sim reste la
-// source ; la QA rejoue ce critère avec des politiques documentées). La
-// réussite = l'objectif R22 payé (compté par tickObjectives, la seule porte).
-function scenarioSuccess(state) {
-  const sc = state && state.scenario;
-  const o = scenarioObjective(state);
-  if (!sc || !o) return null; // mode libre : pas d'objectif annoncé
-  const paid = (state.sim?.objectives || []).some((s) => s.id === sc.objective && s.paid);
-  return { done: paid, label: `${o.name} (récompense ${o.reward} $)` };
-}
-
-__exports.SATURATION_SURGE_S = SATURATION_SURGE_S;
-__exports.REDRESSEMENT_FUNDS = REDRESSEMENT_FUNDS;
-__exports.CRISIS_SURGE_S = CRISIS_SURGE_S;
-__exports.CRISIS_RUNWAY_CLOSE_S = CRISIS_RUNWAY_CLOSE_S;
-__exports.CAP_NORD_FUNDS = CAP_NORD_FUNDS;
-__exports.SCENARIOS = SCENARIOS;
-__exports.startScenario = startScenario;
-__exports.scenarioObjective = scenarioObjective;
-__exports.scenarioSuccess = scenarioSuccess;
-})(__reg['m_src_scenarios']);
 
 /* --- module src/flights/flights.mjs --- */
 (function (__exports) {
@@ -9497,164 +9383,192 @@ __exports.achievementsView = achievementsView;
 __exports.unlockedCount = unlockedCount;
 })(__reg['m_src_progression_achievements']);
 
-/* --- module src/sim/events.mjs --- */
+/* --- module src/scenarios.mjs --- */
 (function (__exports) {
-// T3 (t_4c9baadc) : COUCHE D'ÉVÉNEMENTS DYNAMIQUES — des événements injectent
-// du travail dans la sim PAR LES MODULES EXISTANTS, avec une cadence bornée
-// et reproductible (PRNG semé + compteurs sérialisés sur sim.events, EV-10).
-//
-// Design : EVENTS est une TABLE de 3 événements (des ENTRÉES, pas un système
-// de paramétrage — même discipline que la table INCID des incidents) :
-//   - conference : une délégation arrive — un vol PLEIN (100 % des sièges) est
-//     injecté dans le planning (planOneFlight, flights.mjs) : le mécanisme de
-//     décision EXISTANT (accepter/refuser, déploiement à l'heure prévue).
-//   - charter    : un affrètement — UNE SÉRIE de 2 vols (70 % des sièges)
-//     injectés dans le planning (même mécanisme).
-//   - tourism    : un pic touristique — l'incident de DEMANDE (surge) est
-//     injecté via incidents.mjs (l'état i.surge que tickIncidents fait
-//     avancer, la cadence du planificateur DOUBLÉE pendant le pic), avec la
-//     durée explicite de scenarios.mjs (source unique — jamais de nombre
-//     dupliqué). INTERACTION AVEC UN INCIDENT : si un pic est déjà en cours
-//     (incident naturel OU pic antérieur), l'événement le RENFORÇE
-//     (remaining += durée, pas un reset) — le pic se prolonge, mesurable.
-//
-// Tirage : une fenêtre toutes les EVENT_EVERY_S (compteur acc PRESERVÉ aux
-// grands pas dt — même pattern que les horloges incidents/planner) avec une
-// probabilité EVENT_PROB par fenêtre : déterministe à la relecture (rng semé
-// + acc/last/seq/fired sur sim.events) → reproductible après rechargement.
-//
-// Feedback : l'événement émet UNE alerte `event-start` (pushEvent, kind
-// lisible + seq) → le câblage EXISTANT la consomme : toast (ALERT_MSG,
-// main.mjs) + SFX (sfxForAlert, audio.mjs) + juice (juiceForAlert,
-// ui/juice.mjs). La fin du pic touristique est l'événement EXISTANT
-// `surge-end` des incidents (pas de double compte à rebours).
-//
-// Sauvegarde : l'état vit sur sim.events (sérialisé seul, comme
-// sim.incidents) — les sauvegardes PRÉ-T3 n'ont pas le champ (toléré :
-// ensureEvents le re-attache, save.mjs).
-const { pushEvent } = __ns('m_src_core_sim-state');
-const { ensureIncidents } = __ns('m_src_sim_incidents');
-const { SATURATION_SURGE_S } = __ns('m_src_scenarios');
-const { planOneFlight } = __ns('m_src_flights_flights');
+// R38 (t_8f8f4a63) — les TROIS scénarios rejouables : DÉMARRAGE GUIDÉ,
+// DÉFI SATURATION, DÉFI REDRESSEMENT. Chacun :
+//   • les MÊMES règles (tick, sim, économie — AUCUNE règle n'est modifiée :
+//     le pic est l'action EXISTANTE forceIncident, l'emprunt la commande
+//     EXISTANTE takeLoan du joueur, l'objectif annoncé est un objectif R22) ;
+//   • une CONFIGURATION EXPLICITE (seed, solde, pic, emprunt) posée sur l'état
+//     frais — elle vit sur `state.scenario` (sérialisée avec l'état entier → la
+//     partie scénario est sauvegardable/rechargeable, la configuration REPREND
+//     au chargement : les effets déjà appliqués sont sur la sim, le champ sert
+//     de marqueur) ;
+//   • un OBJECTIF ANNONCÉ (l'objectif R22 correspondant, affiché par le panneau
+//     « Scénario » + toast au lancement).
+// Le MODE LIBRE est conservé : « Nouvelle partie » = makeGameState() sans
+// scenario (seed aléatoire, pas d'objectif annoncé, pas de champ `scenario`).
+// R46 (t_7b04f863) : +3 scénarios (CRISE TOTALE, DÉFI DIFFICILE, DÉFI FACILE)
+// — le même pattern : une ENTRÉE DE TABLE, pas de système de paramétrage.
+// Deux champs de config ADDITIFS (absents des entrées R38 → comportement
+// R38 intact) :
+//   • `difficulty` : le profil T2-1 (core/difficulty.mjs) — PARAMÈTRE DE
+//     SPAWN (capital de départ + facteurs de tick), jamais une règle : le
+//     scénario porte sa difficulté, sérialisée sur state.difficulty comme le
+//     mode libre (elle REPREND au chargement, le sélecteur du menu la lit) ;
+//   • `runwayClosedSeconds` : fermeture de PISTE forçée dès le départ avec
+//     une durée EXPLICITE du défi (forceIncident R32 = l'action EXISTANTE,
+//     comme le pic ; la durée naturelle RUNWAY_CLOSE_S reste la règle sim).
+const { makeGameState } = __ns('m_src_core_new-game');
+const { forceIncident } = __ns('m_src_sim_incidents');
+const { OBJECTIVES } = __ns('m_src_progression_objectives');
+const { START_FUNDS } = __ns('m_src_core_sim-state');
 
-// Cadence bornée du tirage (table exportée — lisible, jamais de nombre
-// réinventé ailleurs) : une fenêtre de 8 min sim, 1 tirage par fenêtre.
-const EVENT_EVERY_S = 480;
-const EVENT_PROB = 0.5; // probabilité de tirage par fenêtre (comme INCID)
+// Le pic forcé du DÉFI SATURATION : durée EXPLICITE du défi (le pic NATUREL
+// reste INCID.SURGE_S — on n'écrase rien, forceIncident est la même action ;
+// seule la durée du DÉFI est un paramètre du scénario, pas de la sim).
+const SATURATION_SURGE_S = 600; // 10 min sim : le temps de décider
+// Le DÉFI REDRESSEMENT : l'aéroport démarre EN DÉFICIT (solde EXPLICITE, pas
+// un budget gonflé — START_FUNDS 12 000 reste le capital du mode libre) ;
+// l'emprunt borné R35 (5 000 $, une fois) RESTE le levier DU JOUEUR
+// (takeLoan, panneau Bilan) — le défi est « remonter dans le vert ».
+const REDRESSEMENT_FUNDS = -3000;
+// R46 : le DÉFI CRISE TOTALE — pic de demande (fenêtre EXPLICITE 15 min sim)
+// ET fermeture de la piste dès le départ (durée EXPLICITE 120 s, la même que
+// la règle R32 RUNWAY_CLOSE_S : le scénario ne change que la DUREE du défi,
+// jamais la règle). Les deux effets sont les actions EXISTANTES
+// (forceIncident R32/R33) posées sur l'état frais — la réponse du joueur est
+// l'intervention PAYANTE R33 (réouvrir la piste : 600 $) ou l'attente.
+const CRISIS_SURGE_S = 900; // 15 min sim : le temps d'absorber la crise
+const CRISIS_RUNWAY_CLOSE_S = 120; // = la durée R32 (la règle reste, on la force au départ)
+// T3 stretch (t_79820790) — le SECOND AÉROPORT (scénario « Cap Nord »,
+// layout src/core/layouts.mjs : 2 pistes L/M + terminal 4 portes) : le
+// budget de départ FIXÉ par un replay 48 h passif MESURÉ (rejoué dans
+// tests/r49-airports.mjs, seed 24, solde de départ 12 000 $) : le MINIMUM
+// de solde sur 48 h est 11 357 $ — le solde reste POSITIF tout le long
+// (pas de faillite, pas de chiffre inventé : mesuré sur la sim réelle).
+const CAP_NORD_FUNDS = 12000;
 
-// La TABLE des événements (entrées lues par le tirage + l'UI : name/why).
-// Les effets sont injectés via les modules existants — cette table ne porte
-// QUE les caractéristiques de l'offrande (jamais de règle de sim).
-const EVENTS = Object.freeze({
-  conference: Object.freeze({
-    name: 'Conférence internationale',
-    why: 'une délégation arrive en avion : un vol PLEIN à décider',
-    flights: 1, paxRatio: 1.0, leadS: 60,
+const SCENARIOS = Object.freeze({
+  guide: Object.freeze({
+    name: 'Démarrage guidé',
+    seed: 42, // rejouable : même seed + mêmes décisions = même partie (R09)
+    funds: START_FUNDS, // budget normal (pas de gonflement)
+    surgeSeconds: 0, // aucun pic forcé
+    objective: 'o1-cycle', // R22 : premier cycle sans départ sec + période net ≥ 0 (1000 $)
   }),
-  charter: Object.freeze({
-    name: 'Affrètement charter',
-    why: 'une compagnie affrète la flotte : deux offres à décider',
-    flights: 2, paxRatio: 0.7, leadS: 60, gapS: 90,
+  saturation: Object.freeze({
+    name: 'Défi saturation',
+    seed: 7,
+    funds: START_FUNDS,
+    surgeSeconds: SATURATION_SURGE_S, // pic de demande forcé dès le départ
+    objective: 'o2-surge', // R22 : ponctualité restaurée pendant le pic (≥ 50 %, 1500 $)
   }),
-  tourism: Object.freeze({
-    name: 'Pic touristique',
-    why: 'la demande explose : le planificateur double la cadence',
-    surgeS: SATURATION_SURGE_S, // durée explicite (scenarios.mjs, source unique)
+  redressement: Object.freeze({
+    name: 'Défi redressement',
+    seed: 42,
+    funds: REDRESSEMENT_FUNDS, // budget EXPLICITE du défi (déficit de départ)
+    surgeSeconds: 0,
+    objective: 'o1-cycle', // R22 : remettre l'aéroport dans le vert (cycle + période net ≥ 0, 1000 $)
+  }),
+  // R46 (t_7b04f863) : trois nouveaux scénarios — MÊMES règles (forceIncident
+  // R32/R33, emprunt R35, difficultés T2-1, objectifs R22), configuration
+  // EXPLICITE posée sur l'état frais, rejouables (seed imposée).
+  crise: Object.freeze({
+    name: 'Défi crise totale',
+    seed: 13,
+    funds: START_FUNDS, // budget normal (le défi est l'incident, pas le budget)
+    surgeSeconds: CRISIS_SURGE_S, // pic de 15 min sim ACTIF dès le départ
+    runwayClosedSeconds: CRISIS_RUNWAY_CLOSE_S, // ET la piste fermée 120 s dès le départ
+    objective: 'o2-surge', // R22 : ponctualité restaurée pendant le pic (≥ 50 %, 1500 $)
+  }),
+  difficile: Object.freeze({
+    name: 'Défi difficile',
+    seed: 21,
+    difficulty: 'hard', // T2-1 : capital maigre 6 000 $ + incidents ×0.6 + OPEX ×1.25
+    objective: 'o1-cycle', // R22 : remettre dans le vert en conditions dures (1000 $)
+  }),
+  facile: Object.freeze({
+    name: 'Défi facile',
+    seed: 3,
+    difficulty: 'easy', // T2-1 : capital confort 18 000 $ + incidents ×1.6 + OPEX ×0.85
+    objective: 'o1-cycle', // R22 : premier cycle sans départ sec + période net ≥ 0 (1000 $)
+  }),
+  // T3 stretch (t_79820790) — le SECOND AÉROPORT (objectif « a second
+  // airport ») : le layout Cap Nord (src/core/layouts.mjs — 2 pistes, une
+  // CAPABLE L + une M, terminal 4 portes L/M/M/L) — MÊMES règles du jeu
+  // (aucune n'est modifiée : l'aéroport est un PARAMÈTRE DE SPAWN, la sim
+  // décide), profil DIFFÉRENT de tous les autres scénarios (2 pistes vs 1,
+  // 4 portes vs 2) + budget FIXÉ par replay 48 h passif (pas de faillite).
+  // ADDITIF : l'absence du champ `airport` sur les entrées R38/R46 = le
+  // layout « central » (comportement R38/R46 intact — pas de ligne
+  // modifiée pour les 6 scénarios existants).
+  capNord: Object.freeze({
+    name: 'Cap Nord — aéroport du nord',
+    seed: 24, // rejouable (EV-10) : même seed + mêmes décisions = même partie
+    funds: CAP_NORD_FUNDS, // budget EXPLICITE du second aéroport (mesuré, cf. tests/r49)
+    airport: 'cap-nord', // NOUVEAU champ additif (absent → layout « central »)
+    objective: 'o1-cycle', // R22 : premier cycle sans départ sec + période net ≥ 0 (1000 $)
   }),
 });
 
-// État de la couche sur la sim (sérialisable SEUL — sans état dérivé) :
-//   acc   : accumulateur de la fenêtre de tirage (survit aux grands pas dt)
-//   last  : sim.time du dernier événement déclenché
-//   seq   : nombre d'événements déclenchés (lecture, persiste)
-//   fired : compteurs PAR événement { conference: n, charter: n, tourism: n }
-// Migration idempotente (pattern ensureIncidents) : une sauvegarde pré-T3
-// (champ absent) est re-attachée ; les valeurs corrompues sont normalisées —
-// le champ EXISTANT mais de mauvais type est REFUSÉ en amont (validateSim,
-// save.mjs), jamais écrasé silencieusement ici.
-function ensureEvents(sim) {
-  let ev = sim.events;
-  if (!ev || typeof ev !== 'object') ev = sim.events = {};
-  ev.acc = Number.isFinite(ev.acc) ? ev.acc : 0;
-  ev.last = Number.isFinite(ev.last) ? ev.last : 0;
-  ev.seq = Number.isInteger(ev.seq) && ev.seq >= 0 ? ev.seq : 0;
-  ev.fired = ev.fired && typeof ev.fired === 'object' ? ev.fired : (ev.fired = {});
-  for (const k of Object.keys(ev.fired)) {
-    if (!Number.isInteger(ev.fired[k]) || ev.fired[k] < 0) ev.fired[k] = 0;
+// Démarre un scénario : état frais (seed imposée) + la configuration EXPLICITE
+// appliquée SUR LA SIM (pic = forceIncident, solde = champ de l'économie,
+// piste fermée = forceIncident R32 — aucune règle ajoutée au tick). Retourne
+// le state complet ; le câblage (main.mjs) fait Object.assign(state, ret)
+// comme pour une nouvelle partie.
+// `state.scenario` = la configuration (marqueur sérialisé, la config REPREND
+// au chargement). La difficulté du scénario (R46, absente des entrées R38 →
+// 'normal' = comportement R38 intact) est le PARAMÈTRE DE SPAWN T2-1 : elle
+// vit sur state.difficulty / sim.difficulty (sérialisées, reprises au load).
+function startScenario(mode) {
+  const cfg = SCENARIOS[mode];
+  if (!cfg) throw new Error(`scénario inconnu : ${mode} (les modes : ${Object.keys(SCENARIOS).join(', ')})`);
+  const diffId = cfg.difficulty || 'normal'; // R46 : le profil T2-1 du défi (référentiel sinon)
+  // T3 stretch (t_79820790) : l'aéroport du scénario (champ ADDITIF, absent
+  // des entrées R38/R46 → « central » = comportement R38/R46 intact).
+  const state = makeGameState(cfg.seed, diffId, cfg.airport);
+  state.scenario = { id: mode, name: cfg.name, objective: cfg.objective, difficulty: diffId, airport: cfg.airport };
+  // Budget EXPLICITE du défi (absent pour les défis de difficulté : le
+  // CAPITAL DU PROFIL T2-1 posé par makeGameState EST la config du défi —
+  // pas de chiffre dupliqué).
+  if (cfg.funds !== undefined && cfg.funds !== state.sim.economy.money) state.sim.economy.money = cfg.funds;
+  if (cfg.surgeSeconds > 0) {
+    forceIncident(state.sim, 'surge'); // l'action EXISTANTE (tests R33) met le pic actif
+    state.sim.incidents.surge.remaining = cfg.surgeSeconds; // durée EXPLICITE du défi
   }
-  return ev;
+  if (cfg.runwayClosedSeconds > 0) {
+    const rw = state.sim.infra.runways[0]; // plan de départ A-2 : la piste fournie
+    if (!rw) throw new Error(`scénario ${mode} : fermeture de piste impossible (aucune piste au départ)`);
+    forceIncident(state.sim, `runway:${rw.id}`); // l'action EXISTANTE R32 (attachée à l'actif)
+    state.sim.incidents.runways[rw.id].remaining = cfg.runwayClosedSeconds; // durée EXPLICITE du défi
+  }
+  return state;
 }
 
-// Le battement de la couche : un tirage par fenêtre COMPLÉTÉE (le compteur acc
-// est PRESERVÉ aux grands pas dt — comme les horloges incidents/planner, la
-// fenêtre n'est ni sautée ni dupliquée). Déterministe : rng semé + compteurs
-// sur sim.events (reproductible à la relecture).
-function tickEvents(sim, dt, rng) {
-  const ev = ensureEvents(sim);
-  ev.acc += dt;
-  const windows = Math.floor(ev.acc / EVENT_EVERY_S);
-  if (!windows) return;
-  ev.acc -= windows * EVENT_EVERY_S;
-  for (let w = 0; w < windows; w++) {
-    if (rng() >= EVENT_PROB) continue; // le tirage rate la fenêtre (la fenêtre est consommée)
-    const id = Object.keys(EVENTS)[Math.floor(rng() * Object.keys(EVENTS).length)];
-    if (!id) continue;
-    if (fireEvent(sim, id, rng)) {
-      ev.seq += 1;
-      ev.last = sim.time ?? 0;
-      ev.fired[id] = (ev.fired[id] || 0) + 1;
-    }
-  }
+// L'objectif ANNONCÉ du scénario en cours (le toast de lancement + le panneau
+// « Scénario » le lisent). Lecture seule : la sim décide, l'UI n'affiche.
+function scenarioObjective(state) {
+  const sc = state && state.scenario;
+  const cfg = sc && SCENARIOS[sc.id];
+  if (!sc || !cfg) return null; // mode libre : pas d'objectif annoncé
+  const o = OBJECTIVES.find((x) => x.id === cfg.objective);
+  return { id: cfg.objective, name: o ? o.name : cfg.objective,
+           reward: o ? o.reward : 0, text: o ? o.desc : '' };
 }
 
-// Déclenche UN événement : l'effet est injecté PAR LES MODULES EXISTANTS
-// (planOneFlight pour les vols, l'état incidents pour le pic) — ce module ne
-// réinvente aucune règle de sim. Retourne true si l'événement a eu un effet
-// (sinon il n'est pas compté : rien ne s'est passé).
-function fireEvent(sim, id, rng) {
-  const cfg = EVENTS[id];
-  if (!cfg) return false;
-  if (cfg.surgeS != null) {
-    // Pic touristique : l'incident de DEMANDE via l'état des incidents
-    // (tickIncidents le fait avancer et le termine — événement « surge-end »
-    // EXISTANT à la fin, pas de double compte à rebours ici).
-    const i = ensureIncidents(sim);
-    if (i.surge.active && i.surge.remaining > 0) {
-      // Interaction avec un incident EN COURS : renforcement (le pic se
-      // prolonge d'autant), jamais un reset de l'horloge en cours.
-      i.surge.remaining += cfg.surgeS;
-      pushEvent(sim, { kind: 'event-start', event: id, name: cfg.name, why: `renforce le pic en cours (+${cfg.surgeS} s)` });
-    } else {
-      i.surge.active = true;
-      i.surge.remaining = cfg.surgeS;
-      i.surge.acc = 0;
-      i.surge.last = sim.time ?? 0;
-      pushEvent(sim, { kind: 'event-start', event: id, name: cfg.name, why: cfg.why });
-    }
-    return true;
-  }
-  // Conférence / charter : les vols sont injectés dans le planning via
-  // planOneFlight (le mécanisme EXISTANT : offre « planned » à décider,
-  // déploiement à l'heure prévue, purge au départ) — la charge est explicite
-  // (fraction des sièges) et l'entrée porte le marqueur `event` (lecture
-  // lisible dans le panneau planning).
-  let injected = 0;
-  for (let f = 0; f < cfg.flights; f++) {
-    const planned = (sim.time ?? 0) + cfg.leadS + (cfg.gapS ? f * cfg.gapS : 0);
-    const e = planOneFlight(sim, rng, { paxRatio: cfg.paxRatio, planned, event: id });
-    if (e) injected++;
-  }
-  if (!injected) return false; // aucune infra servable : l'événement n'a pas d'effet
-  pushEvent(sim, { kind: 'event-start', event: id, name: cfg.name, why: cfg.why });
-  return true;
+// Statut de l'objectif annoncé (lecture mesurée de l'état — la sim reste la
+// source ; la QA rejoue ce critère avec des politiques documentées). La
+// réussite = l'objectif R22 payé (compté par tickObjectives, la seule porte).
+function scenarioSuccess(state) {
+  const sc = state && state.scenario;
+  const o = scenarioObjective(state);
+  if (!sc || !o) return null; // mode libre : pas d'objectif annoncé
+  const paid = (state.sim?.objectives || []).some((s) => s.id === sc.objective && s.paid);
+  return { done: paid, label: `${o.name} (récompense ${o.reward} $)` };
 }
 
-__exports.EVENT_EVERY_S = EVENT_EVERY_S;
-__exports.EVENT_PROB = EVENT_PROB;
-__exports.EVENTS = EVENTS;
-__exports.ensureEvents = ensureEvents;
-__exports.tickEvents = tickEvents;
-})(__reg['m_src_sim_events']);
+__exports.SATURATION_SURGE_S = SATURATION_SURGE_S;
+__exports.REDRESSEMENT_FUNDS = REDRESSEMENT_FUNDS;
+__exports.CRISIS_SURGE_S = CRISIS_SURGE_S;
+__exports.CRISIS_RUNWAY_CLOSE_S = CRISIS_RUNWAY_CLOSE_S;
+__exports.CAP_NORD_FUNDS = CAP_NORD_FUNDS;
+__exports.SCENARIOS = SCENARIOS;
+__exports.startScenario = startScenario;
+__exports.scenarioObjective = scenarioObjective;
+__exports.scenarioSuccess = scenarioSuccess;
+})(__reg['m_src_scenarios']);
 
 /* --- module src/ui/panels.mjs --- */
 (function (__exports) {
@@ -9815,6 +9729,31 @@ function makePanels({ state, camera, viewSize, buildTool }) {
   col.className = 'panels';
   col.setAttribute('role', 'complementary');
   col.setAttribute('aria-label', 'Panneaux de consultation (inspection, finances, stats, alertes, réseau)');
+  // T6 (t_87168414) : repliable (accordion) — sur mobile, le bandeau est
+  // replié PAR DÉFAUT (la map garde ≥60 % de la hauteur) ; le bouton .fold
+  // (≥44×44) déplie le contenu (30vh, scroll interne). Desktop : le bouton
+  // est masqué (.fold display:none) et le bandeau reste toujours visible —
+  // le comportement desktop est intact.
+  const fold = document.createElement('button');
+  fold.className = 'fold';
+  fold.type = 'button';
+  fold.setAttribute('aria-expanded', 'true');
+  fold.textContent = '▾ Consultation';
+  const mqMobile = (typeof window !== 'undefined' && typeof window.matchMedia === 'function')
+    ? window.matchMedia('(max-width: 560px)') : null;
+  function setFold(open) {
+    col.classList.toggle('open', open);
+    fold.setAttribute('aria-expanded', String(open));
+    fold.textContent = (open ? '▾ ' : '▴ ') + 'Consultation';
+  }
+  fold.addEventListener('click', () => setFold(!col.classList.contains('open')));
+  // Premier enfant (le stub DOM des tests n'a pas prepend ; les sections
+  // makeSection ci-dessous sont ajoutées après → l'ordre reste le même).
+  col.appendChild(fold);
+  if (mqMobile) {
+    if (mqMobile.matches) setFold(false); // mobile : replié par défaut (map dégagée)
+    mqMobile.addEventListener('change', (e) => { if (!e.matches) setFold(true); });
+  }
   document.body.appendChild(col);
 
   // --- 1. Inspection avion + bâtiment (clic sur la carte) -------------------
@@ -9972,13 +9911,17 @@ function makePanels({ state, camera, viewSize, buildTool }) {
   // Clic sur la carte : avion (rayon ~30 px écran) puis bâtiment (rect).
   // L'outil de construction/démolition garde la priorité s'il est actif (son
   // propre click listener gère la pose/démolition).
+  // T6 (t_87168414) : pickAt(sx, sy) porte la logique avec des coordonnées
+  // EXPLICITES — le click desktop délègue (e.offsetX/offsetY) et le tap
+  // tactil (touch.mjs) appelle LE MÊME chemin (panels.clickAt). Zéro
+  // duplication : la sélection a une seule implémentation.
   const canvas = document.querySelector('#game');
-  canvas.addEventListener('click', (e) => {
+  function pickAt(sx, sy) {
     if (buildTool && buildTool.isActive()) return; // le clic est géré par l'outil
     if (state.screen !== 'game' || !state.sim) return;
     const v = viewSize();
-    const wx = camera.screenToWorldX(e.offsetX, v.width);
-    const wy = camera.screenToWorldY(e.offsetY, v.height);
+    const wx = camera.screenToWorldX(sx, v.width);
+    const wy = camera.screenToWorldY(sy, v.height);
     const sim = state.sim;
     const r = 30 / state.camera.zoom; // rayon d'inspection en unités MONDE (le zoom compte)
     const ac = sim.aircraft.find((a) => Math.abs(a.x - wx) <= r && Math.abs(a.y - wy) <= r);
@@ -9986,7 +9929,8 @@ function makePanels({ state, camera, viewSize, buildTool }) {
     const b = [...sim.infra.runways, ...sim.infra.taxiways, ...sim.infra.terminals, ...sim.infra.services]
       .find((x) => wx >= x.x && wx <= x.x + x.w && wy >= x.y && wy <= x.y + x.h);
     pick = b ? { kind: 'bldg', id: b.id } : null;
-  });
+  }
+  canvas.addEventListener('click', (e) => pickAt(e.offsetX, e.offsetY));
 
   // --- 2. Bilan financier détaillé (surfacer economy.periodStatement) -------
   const fin = makeSection(col, 'panel', 'Bilan financier');
@@ -10426,12 +10370,226 @@ function makePanels({ state, camera, viewSize, buildTool }) {
     // R39 (t_1c21c88e) : la sélection d'inspection est EXPOSÉE au renderer
     // (l'entouré blanc pointillé suit l'objet) — lecture seule de `pick`.
     selectionOf: () => pick,
+    // T6 (t_87168414) : la sélection tactil passe par LE MÊME chemin que le
+    // click desktop (pickAt — main.mjs la câble au tap de touch.mjs).
+    clickAt: (sx, sy) => pickAt(sx, sy),
     col,
   };
 }
 
 __exports.makePanels = makePanels;
 })(__reg['m_src_ui_panels']);
+
+/* --- module src/sim/events.mjs --- */
+(function (__exports) {
+// T3 (t_4c9baadc) : COUCHE D'ÉVÉNEMENTS DYNAMIQUES — des événements injectent
+// du travail dans la sim PAR LES MODULES EXISTANTS, avec une cadence bornée
+// et reproductible (PRNG semé + compteurs sérialisés sur sim.events, EV-10).
+//
+// Design : EVENTS est une TABLE de 3 événements (des ENTRÉES, pas un système
+// de paramétrage — même discipline que la table INCID des incidents) :
+//   - conference : une délégation arrive — un vol PLEIN (100 % des sièges) est
+//     injecté dans le planning (planOneFlight, flights.mjs) : le mécanisme de
+//     décision EXISTANT (accepter/refuser, déploiement à l'heure prévue).
+//   - charter    : un affrètement — UNE SÉRIE de 2 vols (70 % des sièges)
+//     injectés dans le planning (même mécanisme).
+//   - tourism    : un pic touristique — l'incident de DEMANDE (surge) est
+//     injecté via incidents.mjs (l'état i.surge que tickIncidents fait
+//     avancer, la cadence du planificateur DOUBLÉE pendant le pic), avec la
+//     durée explicite de scenarios.mjs (source unique — jamais de nombre
+//     dupliqué). INTERACTION AVEC UN INCIDENT : si un pic est déjà en cours
+//     (incident naturel OU pic antérieur), l'événement le RENFORÇE
+//     (remaining += durée, pas un reset) — le pic se prolonge, mesurable.
+//
+// Tirage : une fenêtre toutes les EVENT_EVERY_S (compteur acc PRESERVÉ aux
+// grands pas dt — même pattern que les horloges incidents/planner) avec une
+// probabilité EVENT_PROB par fenêtre : déterministe à la relecture (rng semé
+// + acc/last/seq/fired sur sim.events) → reproductible après rechargement.
+//
+// Feedback : l'événement émet UNE alerte `event-start` (pushEvent, kind
+// lisible + seq) → le câblage EXISTANT la consomme : toast (ALERT_MSG,
+// main.mjs) + SFX (sfxForAlert, audio.mjs) + juice (juiceForAlert,
+// ui/juice.mjs). La fin du pic touristique est l'événement EXISTANT
+// `surge-end` des incidents (pas de double compte à rebours).
+//
+// Sauvegarde : l'état vit sur sim.events (sérialisé seul, comme
+// sim.incidents) — les sauvegardes PRÉ-T3 n'ont pas le champ (toléré :
+// ensureEvents le re-attache, save.mjs).
+const { pushEvent } = __ns('m_src_core_sim-state');
+const { ensureIncidents } = __ns('m_src_sim_incidents');
+const { SATURATION_SURGE_S } = __ns('m_src_scenarios');
+const { planOneFlight } = __ns('m_src_flights_flights');
+
+// Cadence bornée du tirage (table exportée — lisible, jamais de nombre
+// réinventé ailleurs) : une fenêtre de 8 min sim, 1 tirage par fenêtre.
+const EVENT_EVERY_S = 480;
+const EVENT_PROB = 0.5; // probabilité de tirage par fenêtre (comme INCID)
+
+// La TABLE des événements (entrées lues par le tirage + l'UI : name/why).
+// Les effets sont injectés via les modules existants — cette table ne porte
+// QUE les caractéristiques de l'offrande (jamais de règle de sim).
+const EVENTS = Object.freeze({
+  conference: Object.freeze({
+    name: 'Conférence internationale',
+    why: 'une délégation arrive en avion : un vol PLEIN à décider',
+    flights: 1, paxRatio: 1.0, leadS: 60,
+  }),
+  charter: Object.freeze({
+    name: 'Affrètement charter',
+    why: 'une compagnie affrète la flotte : deux offres à décider',
+    flights: 2, paxRatio: 0.7, leadS: 60, gapS: 90,
+  }),
+  tourism: Object.freeze({
+    name: 'Pic touristique',
+    why: 'la demande explose : le planificateur double la cadence',
+    surgeS: SATURATION_SURGE_S, // durée explicite (scenarios.mjs, source unique)
+  }),
+});
+
+// État de la couche sur la sim (sérialisable SEUL — sans état dérivé) :
+//   acc   : accumulateur de la fenêtre de tirage (survit aux grands pas dt)
+//   last  : sim.time du dernier événement déclenché
+//   seq   : nombre d'événements déclenchés (lecture, persiste)
+//   fired : compteurs PAR événement { conference: n, charter: n, tourism: n }
+// Migration idempotente (pattern ensureIncidents) : une sauvegarde pré-T3
+// (champ absent) est re-attachée ; les valeurs corrompues sont normalisées —
+// le champ EXISTANT mais de mauvais type est REFUSÉ en amont (validateSim,
+// save.mjs), jamais écrasé silencieusement ici.
+function ensureEvents(sim) {
+  let ev = sim.events;
+  if (!ev || typeof ev !== 'object') ev = sim.events = {};
+  ev.acc = Number.isFinite(ev.acc) ? ev.acc : 0;
+  ev.last = Number.isFinite(ev.last) ? ev.last : 0;
+  ev.seq = Number.isInteger(ev.seq) && ev.seq >= 0 ? ev.seq : 0;
+  ev.fired = ev.fired && typeof ev.fired === 'object' ? ev.fired : (ev.fired = {});
+  for (const k of Object.keys(ev.fired)) {
+    if (!Number.isInteger(ev.fired[k]) || ev.fired[k] < 0) ev.fired[k] = 0;
+  }
+  return ev;
+}
+
+// Le battement de la couche : un tirage par fenêtre COMPLÉTÉE (le compteur acc
+// est PRESERVÉ aux grands pas dt — comme les horloges incidents/planner, la
+// fenêtre n'est ni sautée ni dupliquée). Déterministe : rng semé + compteurs
+// sur sim.events (reproductible à la relecture).
+function tickEvents(sim, dt, rng) {
+  const ev = ensureEvents(sim);
+  ev.acc += dt;
+  const windows = Math.floor(ev.acc / EVENT_EVERY_S);
+  if (!windows) return;
+  ev.acc -= windows * EVENT_EVERY_S;
+  for (let w = 0; w < windows; w++) {
+    if (rng() >= EVENT_PROB) continue; // le tirage rate la fenêtre (la fenêtre est consommée)
+    const id = Object.keys(EVENTS)[Math.floor(rng() * Object.keys(EVENTS).length)];
+    if (!id) continue;
+    if (fireEvent(sim, id, rng)) {
+      ev.seq += 1;
+      ev.last = sim.time ?? 0;
+      ev.fired[id] = (ev.fired[id] || 0) + 1;
+    }
+  }
+}
+
+// Déclenche UN événement : l'effet est injecté PAR LES MODULES EXISTANTS
+// (planOneFlight pour les vols, l'état incidents pour le pic) — ce module ne
+// réinvente aucune règle de sim. Retourne true si l'événement a eu un effet
+// (sinon il n'est pas compté : rien ne s'est passé).
+function fireEvent(sim, id, rng) {
+  const cfg = EVENTS[id];
+  if (!cfg) return false;
+  if (cfg.surgeS != null) {
+    // Pic touristique : l'incident de DEMANDE via l'état des incidents
+    // (tickIncidents le fait avancer et le termine — événement « surge-end »
+    // EXISTANT à la fin, pas de double compte à rebours ici).
+    const i = ensureIncidents(sim);
+    if (i.surge.active && i.surge.remaining > 0) {
+      // Interaction avec un incident EN COURS : renforcement (le pic se
+      // prolonge d'autant), jamais un reset de l'horloge en cours.
+      i.surge.remaining += cfg.surgeS;
+      pushEvent(sim, { kind: 'event-start', event: id, name: cfg.name, why: `renforce le pic en cours (+${cfg.surgeS} s)` });
+    } else {
+      i.surge.active = true;
+      i.surge.remaining = cfg.surgeS;
+      i.surge.acc = 0;
+      i.surge.last = sim.time ?? 0;
+      pushEvent(sim, { kind: 'event-start', event: id, name: cfg.name, why: cfg.why });
+    }
+    return true;
+  }
+  // Conférence / charter : les vols sont injectés dans le planning via
+  // planOneFlight (le mécanisme EXISTANT : offre « planned » à décider,
+  // déploiement à l'heure prévue, purge au départ) — la charge est explicite
+  // (fraction des sièges) et l'entrée porte le marqueur `event` (lecture
+  // lisible dans le panneau planning).
+  let injected = 0;
+  for (let f = 0; f < cfg.flights; f++) {
+    const planned = (sim.time ?? 0) + cfg.leadS + (cfg.gapS ? f * cfg.gapS : 0);
+    const e = planOneFlight(sim, rng, { paxRatio: cfg.paxRatio, planned, event: id });
+    if (e) injected++;
+  }
+  if (!injected) return false; // aucune infra servable : l'événement n'a pas d'effet
+  pushEvent(sim, { kind: 'event-start', event: id, name: cfg.name, why: cfg.why });
+  return true;
+}
+
+__exports.EVENT_EVERY_S = EVENT_EVERY_S;
+__exports.EVENT_PROB = EVENT_PROB;
+__exports.EVENTS = EVENTS;
+__exports.ensureEvents = ensureEvents;
+__exports.tickEvents = tickEvents;
+})(__reg['m_src_sim_events']);
+
+/* --- module src/core/tick.mjs --- */
+(function (__exports) {
+// tick(state, dt, rng) : le battement unique de la simulation.
+// Appelé par la boucle de jeu à chaque frame (l'UI n'appelle JAMAIS les modules de
+// règle directement — règle « UI fine »).
+// Ne fait AUCUNE règle elle-même : délègue aux modules de sim (ordonnancement).
+// Ordre : planificateur (arrivées + retards) → avions (cycle) → économie → passagers.
+// Déterministe si rng est un PRNG semé (les tests) ; EN JEU : rng est le PRNG semé
+// de la sim (makeSimRng) — son état (seed + compteur) vit sur la sim, il est
+// CONSERVÉ dans la sauvegarde (EV-10) : la reprise après fermeture est reproductible.
+const { tickPlanner } = __ns('m_src_flights_flights');
+const { tickAircraft } = __ns('m_src_sim_aircraft');
+const { tickEconomy, tickPassengers } = __ns('m_src_economy_economy');
+const { tickUnlocks, cleanGates } = __ns('m_src_infra_infra');
+const { tickIncidents } = __ns('m_src_sim_incidents');
+const { tickEvents } = __ns('m_src_sim_events');
+const { tickQuality } = __ns('m_src_progression_quality');
+const { tickObjectives } = __ns('m_src_progression_objectives');
+const { tickContracts } = __ns('m_src_flights_contracts');
+const { tickCampaign } = __ns('m_src_progression_campaign');
+const { tickStats } = __ns('m_src_progression_stats');
+const { tickAchievements } = __ns('m_src_progression_achievements');
+const { makeSimRng } = __ns('m_src_core_rng');
+const { tickClock } = __ns('m_src_sim_clock');
+const { tickWeather } = __ns('m_src_sim_weather');
+
+function tick(state, dt, rng) {
+  if (state.screen !== 'game' || state.paused || !state.sim) return;
+  const sim = state.sim;
+  if (sim.economy.bankrupt) return; // la sim est stoppée une fois la faillite déclarée
+  if (!rng) rng = makeSimRng(sim); // pas de Math.random à l'état : le générateur est SÉMÉ + sérialisé (EV-10)
+  tickPlanner(sim, dt, rng); // horloge de la sim (sim.time) est pilotée PAR le planificateur
+  tickClock(sim, dt); // T3 (t_76744b22) : l'HORLOGE DE JEU (jour/nuit + saisons) — APRÈS le planificateur (le temps du tick courant est déjà celui du planificateur), AVANT les avions (la phase du tick courant pilote la teinte du monde)
+  tickWeather(sim, dt, rng); // T3 (t_9b665a8b) : la MÉTÉO (cycle déterministe) — AVANT les avions (le temps du tick courant pilote leurs retards/capacité)
+  tickAircraft(sim, dt);
+  tickQuality(sim, dt); // R26 : APRÈS les avions (leur fin de vol alimente la fenêtre de ponctualité)
+  cleanGates(sim, dt); // t_2179387d : nettoyage (g.cleaning) + hangar (g.maintenance)
+  tickEconomy(sim, dt);
+  tickPassengers(sim, dt);
+  tickIncidents(sim, dt, rng); // BL-14 : incidents opérationnels limités (après la passe)
+  tickEvents(sim, dt, rng); // T3 : événements dynamiques (conférence/charter/pic) — injection via les modules existants
+  tickObjectives(sim); // R22 : objectifs de progression — récompense payée UNE fois (condition mesurée)
+  tickContracts(sim, dt); // R24 : contrats de compagnie — prime/pénalité réglées UNE fois (mesure de période)
+  tickCampaign(sim); // T2-2 : la campagne (victoire) — APRÈS le règlement des contrats (les réussis comptent)
+  tickStats(sim); // T2-2 : stats persistantes — APRÈS l'économie (la période close alimente la série)
+  tickAchievements(sim); // T2-2 : succès — en dernier (ils lisent campagne, stats, palier qualité)
+  tickUnlocks(sim);
+}
+
+__exports.tick = tick;
+})(__reg['m_src_core_tick']);
 
 /* --- module src/persistence/save.mjs --- */
 (function (__exports) {
@@ -10932,7 +11090,34 @@ function makePlanningPanel({ state, toast, onAutoChange }) {
     onAutoChange?.(autoCb.checked);
   });
   autoLabel.append(autoCb, document.createTextNode(' auto-accepter les vols prévus'));
-  box.append(title, decTitle, decRows, filterBar, opsTitle, opsRows, autoLabel);
+  // T6 (t_87168414) : repliable (accordion) — sur mobile, la bande est
+  // repliée PAR DÉFAUT (la map garde ≥60 % de la hauteur) ; le bouton
+  // .fold (≥44×44) déplie le contenu (22vh, scroll interne). Desktop : le
+  // bouton est masqué (.fold display:none) et la bande reste visible —
+  // le comportement desktop est intact.
+  const fold = document.createElement('button');
+  fold.className = 'fold';
+  fold.type = 'button';
+  fold.setAttribute('aria-expanded', 'true');
+  fold.textContent = '▾ Planning & réseau';
+  // matchMedia : indisponible sous Node (tests sans DOM) → null = pas de
+  // repli par défaut, pas de changement (le bouton existe quand même).
+  const mqMobile = (typeof window !== 'undefined' && typeof window.matchMedia === 'function')
+    ? window.matchMedia('(max-width: 560px)') : null;
+  function setFold(open) {
+    box.classList.toggle('open', open);
+    fold.setAttribute('aria-expanded', String(open));
+    fold.textContent = (open ? '▾ ' : '▴ ') + 'Planning & réseau';
+    document.body.classList.toggle('plan-open', open); // les toasts s'adaptent (T6)
+  }
+  fold.addEventListener('click', () => setFold(!box.classList.contains('open')));
+  if (mqMobile) {
+    if (mqMobile.matches) setFold(false); // mobile : replié par défaut (map dégagée)
+    mqMobile.addEventListener('change', (e) => { if (!e.matches) setFold(true); });
+  }
+  // Le fold est PREMIER enfant (bandeau au-dessus du contenu) — inséré dans
+  // l'ordre d'append (le stub DOM des tests n'a pas prepend).
+  box.append(fold, title, decTitle, decRows, filterBar, opsTitle, opsRows, autoLabel);
   document.body.appendChild(box);
 
   // Synchronise le miroir DOM de la case sur l'état (touche A / rechargement /
@@ -11104,6 +11289,63 @@ function makePlanningPanel({ state, toast, onAutoChange }) {
 __exports.makePlanningPanel = makePlanningPanel;
 })(__reg['m_src_ui_planning-panel']);
 
+/* --- module src/core/sim.mjs --- */
+(function (__exports) {
+// Pont UI → simulation : la carte UI ne branche QUE ce module, elle n'importe
+// jamais les règles de sim. Les modules de sim sont chargés paresseusement :
+// s'ils ne sont pas encore là (autre milestone en cours), le jeu tourne quand
+// même — la sim se branche d'elle-même dès qu'elle est prête.
+// ponytail: import paresseux + cache du module + backoff 5 s ; pas de DI.
+
+let cache = null;
+let retryAt = 0;
+
+// Charge le graphe de sim (tick + factory + infra). Échec silencieux, on réessaie.
+async function ensureSim() {
+  if (cache) return cache;
+  if (Date.now() < retryAt) return null; // pas prêt à réessayer (backoff)
+  retryAt = Date.now() + 5000; // les modules peuvent encore être en cours d'écriture
+  try {
+    const [tickM, stateM, infraM] = await Promise.all([
+      __dyn('m_src_core_tick'),
+      __dyn('m_src_core_sim-state'),
+      __dyn('m_src_infra_infra'),
+    ]);
+    cache = {
+      tick: tickM.tick,
+      newSimState: stateM.newSimState,
+      buildBuilding: infraM.buildBuilding,
+      demolishBuilding: infraM.demolishBuilding,
+    };
+  } catch {
+    cache = null; // sim pas prête : on y retourne plus tard (pas de crash)
+  }
+  return cache;
+}
+
+// Tick par frame : si la sim n'est pas prête, rien ne se passe (le jeu tourne).
+async function simTick(state, dt) {
+  const m = await ensureSim();
+  if (m && m.tick) m.tick(state, dt);
+}
+
+// Stub injectable (tests r14) : si un test pose `globalThis.__simTick`, la
+// boucle l'utilise au lieu du tick réel — permet d'essayer un tick qui lève
+// sans builder de faux modules. En jeu, l'absence du stub = zéro surcoût.
+const tickFn = (state, dt) => (globalThis.__simTick || simTick)(state, dt);
+
+// État de sim d'une nouvelle partie (null si la sim n'est pas encore prête).
+async function freshSimState() {
+  const m = await ensureSim();
+  return m && m.newSimState ? m.newSimState() : null;
+}
+
+__exports.ensureSim = ensureSim;
+__exports.simTick = simTick;
+__exports.tickFn = tickFn;
+__exports.freshSimState = freshSimState;
+})(__reg['m_src_core_sim']);
+
 /* --- module src/ui/save-panel.mjs --- */
 (function (__exports) {
 // Panneau Sauvegarde : charge/enregistre la sauvegarde via localStorage et
@@ -11182,6 +11424,34 @@ function makeSavePanel(state, { toast, syncPlanningPanel, onLoad }) {
 __exports.makeSavePanel = makeSavePanel;
 })(__reg['m_src_ui_save-panel']);
 
+/* --- module src/core/loop.mjs --- */
+(function (__exports) {
+// Boucle de jeu : requestAnimationFrame, dt clampé, horloge + rendu.
+// S'exécute uniquement dans le navigateur (rAF) ; les tests Node n'importent jamais ce module.
+const { advanceTime } = __ns('m_src_core_game-state');
+const { tickFn } = __ns('m_src_core_sim');
+
+function startLoop({ state, bus, renderer }) {
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.1, (now - last) / 1000); // clamp : pas de spirale de la mort après une coupure d'onglet
+    last = now;
+    const played = advanceTime(state, dt); // horloge (pause → 0, x1/x2/x4 appliqué)
+    // R14 : simTick est asynchrone — un tick qui lève (état corrompu, bug de
+    // règle) doit REJETER la promesse, pas la planter en unhandledrejection :
+    // on route l'erreur sur le bus ('sim-error'), l'UI l'annonce en toast
+    // lisible et la boucle (horloge + rendu) continue — le jeu ne crashe pas.
+    tickFn(state, played).catch((e) => bus.emit('sim-error', e));  // la sim avance au TEMPS DE JEU (sinon x4 = sim à vitesse x1)
+    bus.emit('frame', dt);  // l'UI (caméra clavier) consomme le dt, elle ne décide pas
+    renderer.render(state);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+__exports.startLoop = startLoop;
+})(__reg['m_src_core_loop']);
+
 /* --- module src/main.mjs --- */
 (function (__exports) {
 // Point d'entrée du jeu (navigateur). Câble : état, bus, caméra, entrées, rendu, boucle,
@@ -11191,6 +11461,7 @@ const { newGame, setScreen, togglePause, cycleSpeed, SCREENS, SPEEDS } = __ns('m
 const { EventBus } = __ns('m_src_core_events');
 const { Camera } = __ns('m_src_ui_camera');
 const { makeInputHandlers } = __ns('m_src_ui_input');
+const { makeTouchHandlers } = __ns('m_src_ui_touch');
 const { makeRenderer } = __ns('m_src_ui_renderer');
 const { makeOptionsPage, loadOptions, saveOptionsToStorage, normalizeOptions } = __ns('m_src_ui_options');
 const { startLoop } = __ns('m_src_core_loop');
@@ -11374,6 +11645,18 @@ function boot(canvas) {
     state, camera,
     viewSize: () => ({ width: canvas.width, height: canvas.height }),
     buildTool,
+  });
+
+  // T6 (t_87168414) : ENTRÉE TACTILE — pan 1 doigt, pinch zoom 2 doigts,
+  // tap = click. Le TAP est routé vers LE MÊME chemin que le click desktop
+  // (buildTool.clickAt + panels.clickAt — une seule logique par module,
+  // zéro duplication). Desktop : aucun événement touch ne se produit, le
+  // comportement souris/clavier est intact.
+  makeTouchHandlers(canvas, camera, () => ({ width: canvas.width, height: canvas.height }), {
+    onTap: (sx, sy) => {
+      buildTool.clickAt(sx, sy); // pose / démolition (l'outil gère sa priorité)
+      panels.clickAt(sx, sy);    // sélection d'inspection (R39)
+    },
   });
 
   // R20 : introduction du PREMIER CYCLE (carte courte, désactivable — « Passer

@@ -301,6 +301,57 @@
       .toolbar { left: 8px; right: 8px; bottom: 12px; max-width: none; box-sizing: border-box; max-height: 48px; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; }
       .menu-btns { max-width: 100vw; }
     }
+
+    /* ============================================================
+    T6 (t_87168414) : MOBILE JOUABLE — tactile
+    - canvas#game : touch-action:none (le navigateur ne préempte ni le
+      scroll ni le zoom de page pendant les gestes pan/pinch/tap) ;
+    - bandes planning / consultation : REPLIABLES (accordion) et repliées
+      PAR DÉFAUT sur mobile (JS : matchMedia) → la map garde ≥60 % de la
+      hauteur ; le bouton .fold (cible 44×44 px) déplie le contenu
+      (22vh / 30vh, défilement interne) ;
+    - toolbar : cibles tactiles ≥44×44 px (défilement horizontal T5a) ;
+    - toasts : zone libre (jamais au-dessus d'un élément interactif),
+      sous la bande planning repliée ; déplacés quand elle est dépliée.
+    Desktop : .fold est masqué (display:none) — les bandes restent
+    toujours visibles, le comportement desktop est intact.
+    ============================================================ */
+    .fold { display: none; }
+    @media (max-width: 560px) {
+      canvas#game { touch-action: none; }
+      .fold {
+        display: flex; align-items: center; box-sizing: border-box;
+        width: 100%; min-height: 44px; padding: 0 12px;
+        background: var(--at-surface); color: var(--at-text);
+        border: none; cursor: pointer; text-align: left;
+        font: 13px 'Courier New', monospace; letter-spacing: 0.08em; text-transform: uppercase;
+      }
+      /* Cibles tactiles ≥44×44 (boutons de la toolbar, intro, menu) */
+      .toolbar .tool { min-width: 44px; min-height: 44px; flex: none; padding: 4px 8px; }
+      .toolbar .toolbar-hint { display: none; }
+      .intro .tool { min-width: 44px; min-height: 44px; }
+      .menu-btns .tool { min-width: 44px; min-height: 44px; }
+      /* Planning : replié = la ligne du bouton (44 px) ; déplié = 22vh scrollé
+         (T5a) — repli par défaut géré par le JS (matchMedia), non ici. */
+      .planning { max-height: 44px; overflow: hidden; padding: 0; }
+      .planning.open { max-height: 22vh; overflow-y: auto; padding: 8px; }
+      .planning:not(.open) > :not(.fold) { display: none; }
+      /* Consultation : replié = la ligne du bouton ; déplié = 30vh scrollé */
+      .panels { max-height: 44px; overflow: hidden; }
+      .panels.open { max-height: 30vh; overflow-y: auto; }
+      .panels:not(.open) > :not(.fold) { display: none; }
+      /* Toasts : zone libre sous la bande repliée (12+44 → top 56) ;
+         quand le planning est déplié, ils passent SOUS la bande dépliée
+         (12px de top de base + 22vh de contenu + 16px de marge). */
+      .toasts { top: 56px; bottom: auto; max-height: 20vh; overflow-y: auto; }
+      body.plan-open .toasts { top: calc(12px + 22vh + 16px); }
+      /* Intro : position T5a conservée (bottom: calc(30vh + 84px), y≈391-507) —
+         elle reste 8 px au-dessus de la bande consultation DÉPLIÉE (30vh) et
+         117 px au-dessus de la bande repliée (y≈724). Un recentrage « pile
+         basse » (calc(44+48+22) = 114 px) a CHEVAUCHÉ la bande repliée
+         (top y=724 → 6 px × 374 = 2244 px², QA ui-no-overlap en échec) :
+         la pile basse s'étend de 76 à 120 px du bas, pas 44+48. */
+    }
   </style>
 </head>
 <body>

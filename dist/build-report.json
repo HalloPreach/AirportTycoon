@@ -1,13 +1,14 @@
 {
-  "generatedAt": "2026-10-14T15:46:05.931Z",
+  "generatedAt": "2026-10-14T20:13:47.699Z",
   "entry": "src/main.mjs",
-  "moduleCount": 50,
+  "moduleCount": 53,
   "modules": [
     "src/main.mjs",
     "src/core/game-state.mjs",
     "src/core/events.mjs",
     "src/ui/camera.mjs",
     "src/ui/input.mjs",
+    "src/ui/touch.mjs",
     "src/ui/renderer.mjs",
     "src/ui/options.mjs",
     "src/core/loop.mjs",
@@ -36,6 +37,7 @@
     "src/core/seasons.mjs",
     "src/core/sim.mjs",
     "src/infra/unlocks.mjs",
+    "src/infra/infra.mjs",
     "src/flights/flights.mjs",
     "src/sim/events.mjs",
     "src/economy/economy.mjs",
@@ -50,25 +52,26 @@
     "src/progression/achievements.mjs",
     "src/sim/incidents.mjs",
     "src/infra/upgrades.mjs",
-    "src/infra/infra.mjs",
     "src/core/sim-state.mjs",
-    "src/core/layouts.mjs"
+    "src/core/layouts.mjs",
+    "src/core/tick.mjs",
+    "src/core/rng.mjs"
   ],
   "cycles": [
-    "CYCLE src/flights/contracts.mjs → src/infra/infra.mjs → src/sim/aircraft.mjs → src/infra/unlocks.mjs → src/flights/contracts.mjs"
+    "CYCLE src/flights/contracts.mjs → src/sim/aircraft.mjs → src/infra/unlocks.mjs → src/infra/infra.mjs → src/flights/contracts.mjs"
   ],
   "backEdges": {
     "src/infra/unlocks.mjs": [
       "punctualityStats ← src/sim/aircraft.mjs"
     ],
+    "src/infra/infra.mjs": [
+      "unlockState ← src/infra/unlocks.mjs"
+    ],
     "src/flights/contracts.mjs": [
       "runwayFor ← src/infra/infra.mjs",
       "nominalRotation ← src/sim/aircraft.mjs"
-    ],
-    "src/infra/infra.mjs": [
-      "unlockState ← src/infra/unlocks.mjs"
     ]
   },
-  "jsBytes": 617617,
-  "htmlBytes": 19035
+  "jsBytes": 632910,
+  "htmlBytes": 22236
 }
