@@ -76,6 +76,10 @@ export function makePlanningPanel({ state, toast, onAutoChange }) {
     fold.setAttribute('aria-expanded', String(open));
     fold.textContent = (open ? '▾ ' : '▴ ') + 'Planning & réseau';
     document.body.classList.toggle('plan-open', open); // les toasts s'adaptent (T6)
+    // T7 (t_0f131a58) : HOOK d'exclusivité mobile — main.mjs y branche
+    // « déplier PLANNING replie CONSULTATION » (et symétriquement côté
+    // panels.mjs) pour ≤560px ; desktop : aucun appelant, aucun effet.
+    panel.onFoldChange?.(open);
   }
   fold.addEventListener('click', () => setFold(!box.classList.contains('open')));
   if (mqMobile) {
@@ -95,6 +99,12 @@ export function makePlanningPanel({ state, toast, onAutoChange }) {
   // T51 (t_cccfbc97) : la RACINE DOM du panneau est EXPOSÉE (main.mjs la
   // masque au menu — le panneau de jeu ne flotte pas au-dessus du menu).
   panel.box = box;
+
+  // T7 (t_0f131a58) : command surface — repli/dépli programmatique (QA CDP +
+  // exclusivité mobile : main.mjs branche les hooks onFoldChange des deux
+  // bandes) ; onFoldChange reste null tant que main.mjs ne le branche pas.
+  panel.setFold = setFold;
+  panel.onFoldChange = null;
 
   function airlineName(id) { return (AIRLINES.find((x) => x.id === id) || { name: id }).name; }
   // Horloge de la sim en heures:minutes:secondes (le planning est « consultable
@@ -138,6 +148,10 @@ export function makePlanningPanel({ state, toast, onAutoChange }) {
     const evName = e.event ? (EVENTS[e.event] ? EVENTS[e.event].name : e.event) : null;
     info.textContent = `${airlineName(e.airline)} · ${ac ? ac.name : e.acType} · ${e.pax} pax · ${fmtClock(e.planned)} · ${STATUS[e.status] || e.status}` +
       (e.why ? ` (${e.why})` : '') + (evName ? ` · ⚡ ${evName}` : '');
+    // T7 (t_0f131a58) : ELLIPSIS + TOOLTIP desktop — la ligne tronquée (… au
+    // delà de la largeur 360px) expose le texte COMPLET au survol ; mobile :
+    // le texte wrappe (bande scrollable) et le title reste inoffensif.
+    info.title = info.textContent;
     row.appendChild(info);
     if (e.status === 'planned') {
       renderNote(sim, e, row); // R19 : obstacle/risque/revenu estimé AVANT la décision

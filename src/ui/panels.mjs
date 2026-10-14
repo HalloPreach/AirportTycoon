@@ -167,10 +167,17 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   fold.textContent = '▾ Consultation';
   const mqMobile = (typeof window !== 'undefined' && typeof window.matchMedia === 'function')
     ? window.matchMedia('(max-width: 560px)') : null;
+  // T7 (t_0f131a58) : HOOK d'exclusivité mobile — main.mjs branche
+  // `panels.onFoldChange` (déplier CONSULTATION replie PLANNING, symétrique
+  // du hook planning-panel) pour ≤560px. `api` est assemblé au retour du
+  // module (null au boot mobile, d'où le `?.` — setFold(false) y est appelé
+  // dès l'init si le viewport est mobile).
+  let api = null;
   function setFold(open) {
     col.classList.toggle('open', open);
     fold.setAttribute('aria-expanded', String(open));
     fold.textContent = (open ? '▾ ' : '▴ ') + 'Consultation';
+    api?.onFoldChange?.(open);
   }
   fold.addEventListener('click', () => setFold(!col.classList.contains('open')));
   // Premier enfant (le stub DOM des tests n'a pas prepend ; les sections
@@ -784,7 +791,10 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
     );
   }
 
-  return {
+  // T7 (t_0f131a58) : le module est exposé comme `api` (et NON comme un
+  // littéral anonyme) pour que setFold puisse lire le hook onFoldChange —
+  // main.mjs le branche pour l'exclusivité mobile PLANNING/CONSULTATION.
+  api = {
     // Appel à chaque frame (bus 'frame') : chaque panneau ne reconstruit son DOM
     // que si sa signature a changé — coût négligeable sinon (pattern planning).
     refresh: () => { refreshInspect(); refreshFin(); refreshStats(); refreshGoals(); refreshCampaign(); refreshUnlocks(); refreshContracts(); refreshHist(); refreshNet(); },
@@ -799,6 +809,11 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
     // T6 (t_87168414) : la sélection tactil passe par LE MÊME chemin que le
     // click desktop (pickAt — main.mjs la câble au tap de touch.mjs).
     clickAt: (sx, sy) => pickAt(sx, sy),
+    // T7 (t_0f131a58) : command surface repli/dépli (QA CDP) + hook d'exclusivité
+    // (null tant que main.mjs ne le branche pas ; desktop : aucun appelant).
+    setFold,
+    onFoldChange: null,
     col,
   };
+  return api;
 }

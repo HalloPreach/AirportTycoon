@@ -20,10 +20,26 @@ import { decideFlight } from '../src/flights/flights.mjs';
 // Stub DOM minimal : les nœuds gardent les enfants + les handlers d'événements.
 // Les méthodes DOM touchées par planning-panel.mjs : createElement, createTextNode,
 // body.appendChild, setAttribute, appendChild, append, addEventListener, replaceChildren.
+// T7 (t_0f131a58) : + classList minimal (setFold toggle 'open' / body 'plan-open').
+function makeClassList() {
+  const set = new Set();
+  return {
+    add: (c) => set.add(c),
+    remove: (c) => set.delete(c),
+    contains: (c) => set.has(c),
+    toggle(c, force) {
+      const want = force === undefined ? !set.has(c) : !!force;
+      if (want) set.add(c); else set.delete(c);
+      return want;
+    },
+    _set: set,
+  };
+}
 function makeDom() {
   function makeNode(tag) {
     const node = {
       tag, className: '', textContent: '', children: [], handlers: {}, checked: false, type: '',
+      classList: makeClassList(),
       setAttribute() {},
       appendChild(c) { this.children.push(c); },
       append(...cs) { this.children.push(...cs); },
@@ -125,4 +141,39 @@ test('R06 (D1) : nouvelle partie réinitialise la case (miroir suit l\'état fal
   state.sim.planning.push({ id: 9, airline: 'x', acType: 'medium', pax: 10, planned: 0, status: 'planned' });
   panel.tickAuto();
   assert.equal(state.sim.planning[0].status, 'planned', 'après nouvelle partie, auto-accept inactif (état false)');
+});
+
+// T7 (t_0f131a58) — EXCLUSIVITÉ PLANNING/CONSULTATION (câblage fait comme
+// main.mjs) : déplier une bande replie l'autre — jamais les deux dépliées à
+// la fois (mobile ≤560px). La porte matchMedia vit dans main.mjs (navigateur)
+// : ici on vérifie le CONTRAT des hooks (onFoldChange) qui la réalise ; le
+// flux navigateur complet est vérifié par la batterie qa/t7-no-bleed-cdp.mjs.
+test('T7 : exclusivité PLANNING/CONSULTATION — déplier l\'une replie l\'autre (câblage main.mjs)', () => {
+  const { body } = makeDom();
+  const state = { screen: 'game', sim: newSimState(), planningAuto: false };
+  const { panel } = wireStatePanel(state);
+  assert.equal(typeof panel.setFold, 'function', 'T7 : setFold est exposé (commande repli/dépli)');
+  // CONSULTATION = le même contrat de hooks que panels.mjs (setFold + onFoldChange).
+  const consult = {
+    open: false,
+    setFold(o) { this.open = o; this.onFoldChange?.(o); },
+    onFoldChange: null,
+  };
+  // Câblage FAIT COMME main.mjs (la garde mqT7.matches est contournée ici :
+  // le test joue le côté « mobile » du contrat).
+  panel.onFoldChange = (open) => { if (open) consult.setFold(false); };
+  consult.onFoldChange = (open) => { if (open) panel.setFold(false); };
+  // Déplier PLANNING replie CONSULTATION.
+  panel.setFold(true);
+  assert.equal(consult.open, false, 'déplier PLANNING replie CONSULTATION');
+  assert.ok(body.classList.contains('plan-open'), 'body.plan-open suit le dépli (adaptation toasts)');
+  // Déplier CONSULTATION replie PLANNING (symétrique).
+  consult.setFold(true);
+  assert.equal(consult.open, true, 'CONSULTATION dépliée');
+  assert.equal(panel.box.classList.contains('open'), false, 'déplier CONSULTATION replie PLANNING');
+  // Le repli des deux est autorisé (l'exclusivité porte sur le DÉPLI seulement).
+  panel.setFold(false);
+  consult.setFold(false);
+  assert.equal(panel.box.classList.contains('open'), false, 'PLANNING repli');
+  assert.equal(consult.open, false, 'CONSULTATION repliée');
 });

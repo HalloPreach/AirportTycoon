@@ -69,6 +69,8 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
       buttons[k].classList.toggle('tool--active', tool.mode && !tool.demolishMode && tool.kind === k);
     }
     demolishBtn.classList.toggle('tool--active', tool.demolishMode);
+    t7Poke(); // T7 (t_0f131a58) : tout changement d'état de l'outil (B / 1-9 / X)
+    // ramène la toolbar à l'affichage si elle était estompée.
   }
 
   // Commandes publiques (clavier global dans main.mjs).
@@ -94,6 +96,48 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
   // T51 (t_cccfbc97) : la RACINE DOM de la barre est EXPOSÉE (main.mjs la
   // masque au menu — les panneaux de jeu ne flottent pas au-dessus du menu).
   tool.box = bar;
+
+  // T7 (t_0f131a58) — DESKTOP : AUTO-HIDE de la toolbar (« vrai jeu ») — la
+  // bande du BAS GAUCHE est la seule zone UI massives au bas de la map (jusqu'à
+  // 104 px) : au repos (outil construction INACTIF + souris hors de la bande
+  // du bas depuis 1600 ms) elle s'estompe (opacity 0.12, pointer-events:none)
+  // → la zone centrale ET le bas de la carte restent dégagés ; dès le
+  // prochain survol de la bande du bas (140 px, la souris « traverse » la
+  // toolbar estompée — pointer-events:none) ou l'activation de l'outil
+  // (B / 1-9 / X, via sync()), elle re-apparaît IMMÉDIATEMENT : on ne perd
+  // jamais les outils en pleine pose. Choix : estompage (et non décalage de la
+  // map) — un origin décalé casserait les conventions caméra/HUD/T51 ; l'UI
+  // reste au même endroit, juste « fantôme » au repos. MOBILE : inactif —
+  // la toolbar y est la rangée d'outils permanente (cibles ≥44 px, pas de
+  // notion de souris-idle). NODE : pas de window → bloc inactif (tests verts).
+  const mqDeskT7 = (typeof window !== 'undefined' && typeof window.matchMedia === 'function')
+    ? window.matchMedia('(min-width: 561px)') : null;
+  let t7IdleTimer = 0;
+  function t7IdleOn() {
+    if (!mqDeskT7 || !mqDeskT7.matches || tool.isActive()) return;
+    bar.classList.add('idle');
+  }
+  function t7Poke() {
+    bar.classList.remove('idle');
+    clearTimeout(t7IdleTimer);
+    t7IdleTimer = 0;
+    if (!mqDeskT7 || !mqDeskT7.matches || tool.isActive()) return;
+    t7IdleTimer = setTimeout(t7IdleOn, 1600); // 1600 ms de grâce, puis estompage
+  }
+  if (mqDeskT7) {
+    // La souris dans les 140 px du bas de l'écran (la bande toolbar + marge)
+    // ramène la toolbar immédiatement — l'événement arrive sur la fenêtre
+    // même quand la toolbar est .idle (pointer-events:none) → ça marche dans
+    // les deux sens.
+    window.addEventListener('mousemove', (e) => {
+      if (typeof e.clientY === 'number' && e.clientY > window.innerHeight - 140) t7Poke();
+    });
+    mqDeskT7.addEventListener('change', (ev) => {
+      if (ev.matches) t7Poke(); // desktop : estompage (re)possible
+      else bar.classList.remove('idle'); // mobile : jamais estompée
+    });
+    if (mqDeskT7.matches) t7Poke(); // boot desktop : carte dégagée au démarrage
+  }
 
   // Aperçu de pose (lecture seule) : tient dans le terrain ? chevauche-t-il une
   // case occupée (grille de la sim) ? fonds suffisants ? — le VRAI verdict est la sim.

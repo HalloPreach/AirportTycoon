@@ -303,6 +303,26 @@ export function boot(canvas) {
   const planningPanel = makePlanningPanel({ state, toast: toasts.toast, onAutoChange: setPlanningAuto });
   state.planningAuto = false; // préférence par défaut : source sérialisée sur le state
 
+  // T7 (t_0f131a58) — EXCLUSIVITÉ MOBILE (≤560px) : les bandes PLANNING et
+  // CONSULTATION ne sont JAMAIS dépliées EN MÊME TEMPS — déplier l'une replie
+  // l'autre (via les hooks onFoldChange des deux modules : un seul point de
+  // branchement, les modules ne se connaissent pas). La carte garde ≥45 % de
+  // la hauteur d'écran même dépliée (calcul QA t7 : 54,9 % au pire cas —
+  // consultation dépliée 30vh + planning replié 44px + toolbar 48px).
+  // DESKTOP : aucun appelant (les bandes sont toujours dépliées, .fold masqué
+  // par CSS) — le branchement est inerte, le comportement desktop est intact.
+  // Sous Node (tests) : pas de matchMedia → mqT7 null, hooks non branchés.
+  const mqT7 = (typeof window !== 'undefined' && typeof window.matchMedia === 'function')
+    ? window.matchMedia('(max-width: 560px)') : null;
+  if (mqT7) {
+    planningPanel.onFoldChange = (open) => {
+      if (open && mqT7.matches) panels.setFold(false);
+    };
+    panels.onFoldChange = (open) => {
+      if (open && mqT7.matches) planningPanel.setFold(false);
+    };
+  }
+
   // T51 (t_cccfbc97) : les 3 racines de panneaux de JEU entrent dans la
   // synchronisation menu/jeu (barre de construction / panneaux de consultation /
   // planning) — masquées au menu, réaffichées au retour en jeu.
@@ -578,6 +598,7 @@ export function boot(canvas) {
     buildTool,
     toasts,
     panels,
+    planningPanel, // T7 (t_0f131a58) : repli/dépli programmatique du planning (QA CDP + exclusivité mobile)
     intro, // R20 : l'introduction (tests CDP : étape courante, done/skipped)
     tips, // T4 (t_eb78478e) : les astuces d'onboarding (tests CDP : seen, refresh)
     bankruptcyScreen, // R35 : l'écran de faillite (tests CDP : ouvert sur bankrupt, boutons)
