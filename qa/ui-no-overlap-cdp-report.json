@@ -1,7 +1,7 @@
 {
   "task": "t_cccfbc97",
   "test": "qa/ui-no-overlap-cdp.mjs",
-  "ts": "2026-10-14T15:23:25.952Z",
+  "ts": "2026-10-14T15:31:06.588Z",
   "rule": "aucun élément interactif visible ne chevauche un autre (zones + z-index) ; #game (zone de jeu) et .toasts (pointer-events:none) exclus des paires ; au menu, les 3 racines de panneaux de jeu sont masquées",
   "viewports": [
     {

@@ -1,6 +1,6 @@
 {
-  "ts": "2026-10-14T15:20:42.048Z",
-  "head": "df0056f55d3dccc9a0fb8943d97ca8925f472e7c",
+  "ts": "2026-10-14T15:30:29.808Z",
+  "head": "ab8a8f19651cb2ba1ea4ff3b12826a9db4b6439c",
   "pass": true,
   "scenario": "capNord",
   "aircraft": [
@@ -20,32 +20,32 @@
   "captures": [
     {
       "name": "menu",
-      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5c-map-cdp\\t5c-map-cdp-2026-10-14T15-20-37-038Z-menu.png",
-      "bytes": 245550,
-      "kb": 239.8
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5c-map-cdp\\t5c-map-cdp-2026-10-14T15-30-24-866Z-menu.png",
+      "bytes": 244847,
+      "kb": 239.1
     },
     {
       "name": "jeu-defaut",
-      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5c-map-cdp\\t5c-map-cdp-2026-10-14T15-20-37-038Z-jeu-defaut.png",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5c-map-cdp\\t5c-map-cdp-2026-10-14T15-30-24-866Z-jeu-defaut.png",
       "bytes": 170473,
       "kb": 166.5
     },
     {
       "name": "jeu-zoom",
-      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5c-map-cdp\\t5c-map-cdp-2026-10-14T15-20-37-038Z-jeu-zoom.png",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5c-map-cdp\\t5c-map-cdp-2026-10-14T15-30-24-866Z-jeu-zoom.png",
       "bytes": 154925,
       "kb": 151.3
     },
     {
       "name": "jeu-zoom-piste",
-      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5c-map-cdp\\t5c-map-cdp-2026-10-14T15-20-37-038Z-jeu-zoom-piste.png",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5c-map-cdp\\t5c-map-cdp-2026-10-14T15-30-24-866Z-jeu-zoom-piste.png",
       "bytes": 153559,
       "kb": 150
     },
     {
       "name": "jeu-pluie",
-      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5c-map-cdp\\t5c-map-cdp-2026-10-14T15-20-37-038Z-jeu-pluie.png",
-      "bytes": 162328,
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5c-map-cdp\\t5c-map-cdp-2026-10-14T15-30-24-866Z-jeu-pluie.png",
+      "bytes": 162342,
       "kb": 158.5
     }
   ],

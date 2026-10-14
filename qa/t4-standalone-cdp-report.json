@@ -1,6 +1,6 @@
 {
   "verdict": "PASS",
-  "timestamp": "2026-10-14T15:22:27.122Z",
+  "timestamp": "2026-10-14T15:31:04.940Z",
   "artifact": {
     "js": 617617,
     "html": 19035
@@ -49,7 +49,7 @@
     {
       "name": "A7 simulation progresse (temps de jeu avance)",
       "ok": true,
-      "detail": "t0=0.01659999999999991 t30=0.49989999999999973"
+      "detail": "t0=0.016700000000000045 t30=0.5000999999999999"
     },
     {
       "name": "A8 icônes vectorielles T4 dans la toolbar (canvas .tool)",
@@ -98,9 +98,9 @@
     }
   ],
   "captures": [
-    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t4-standalone-20261014-172222-menu.png",
-    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t4-standalone-20261014-172222-jeu.png",
-    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t4-standalone-20261014-172222-menu-offline.png"
+    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t4-standalone-20261014-173100-menu.png",
+    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t4-standalone-20261014-173100-jeu.png",
+    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t4-standalone-20261014-173100-menu-offline.png"
   ],
   "pageExceptions": []
 }

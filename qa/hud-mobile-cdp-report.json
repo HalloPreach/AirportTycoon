@@ -1,7 +1,7 @@
 {
   "task": "t_e4c3ffff",
   "test": "qa/hud-mobile-cdp.mjs",
-  "ts": "2026-10-14T15:22:50.828Z",
+  "ts": "2026-10-14T15:31:36.362Z",
   "rule": "T5a : zone HUD canvas sans chevauchement (panneaux + toolbar + intro) ; police HUD ≥11px (13 souhaités) ; polices DOM interactives ≥11px ; texte HUD non débordant (largeur = contenu) ; contraste WCAG AA ≥4.5:1 pire cas (fonds α lues du CSS sur le monde le plus clair, terrainBorder)",
   "viewports": [
     {
