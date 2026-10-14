@@ -1,0 +1,813 @@
+{
+  "task": "t_e4c3ffff",
+  "test": "qa/hud-mobile-cdp.mjs",
+  "ts": "2026-10-14T14:02:38.022Z",
+  "rule": "T5a : zone HUD canvas sans chevauchement (panneaux + toolbar + intro) ; police HUD ≥11px (13 souhaités) ; polices DOM interactives ≥11px ; texte HUD non débordant (largeur = contenu) ; contraste WCAG AA ≥4.5:1 pire cas (fonds α lues du CSS sur le monde le plus clair, terrainBorder)",
+  "viewports": [
+    {
+      "viewport": "1366x768",
+      "checks": {
+        "hudVsPanels": {
+          "hud": {
+            "x": 12,
+            "y": 12,
+            "w": 295,
+            "h": 184,
+            "fontPx": 16,
+            "maxLinePx": 271,
+            "lines": 7,
+            "mobile": false
+          },
+          "panels": [
+            ".planning",
+            ".panels",
+            ".toolbar",
+            ".intro"
+          ],
+          "hudOverlaps": [],
+          "panelOverlaps": []
+        },
+        "hudFont": 16,
+        "domFonts": [
+          {
+            "sel": "toast toast--ok",
+            "px": 14
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool tool--danger",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline pline--good",
+            "px": 13
+          },
+          {
+            "sel": "pline pline--bad",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline pline--good",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline pline--warn",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline pline--warn",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline pline--bad",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline pline--good",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 15
+          },
+          {
+            "sel": "P",
+            "px": 14
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "planning-sec",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter on",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-sec",
+            "px": 12
+          }
+        ],
+        "textFits": {
+          "maxLinePx": 271,
+          "panelW": 295,
+          "fits": true
+        }
+      }
+    },
+    {
+      "viewport": "390x844",
+      "checks": {
+        "hudVsPanels": {
+          "hud": {
+            "x": 12,
+            "y": 215,
+            "w": 262,
+            "h": 163,
+            "fontPx": 14,
+            "maxLinePx": 238,
+            "lines": 7,
+            "mobile": true
+          },
+          "panels": [
+            ".planning",
+            ".panels",
+            ".toolbar",
+            ".intro"
+          ],
+          "hudOverlaps": [],
+          "panelOverlaps": []
+        },
+        "hudFont": 14,
+        "domFonts": [
+          {
+            "sel": "toast toast--ok",
+            "px": 14
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool tool--danger",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline pline--good",
+            "px": 13
+          },
+          {
+            "sel": "pline pline--bad",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline pline--good",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline pline--warn",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline pline--warn",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline pline--bad",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline pline--good",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "pline",
+            "px": 13
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "P",
+            "px": 13
+          },
+          {
+            "sel": "tool",
+            "px": 12
+          },
+          {
+            "sel": "H4",
+            "px": 13
+          },
+          {
+            "sel": "planning-sec",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter on",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-filter",
+            "px": 12
+          },
+          {
+            "sel": "planning-sec",
+            "px": 12
+          }
+        ],
+        "textFits": {
+          "maxLinePx": 238,
+          "panelW": 262,
+          "fits": true
+        }
+      }
+    }
+  ],
+  "verdict": "PASS",
+  "problems": [],
+  "contrastHud": {
+    "ratio": 10.48,
+    "over": [
+      45,
+      54,
+      66
+    ]
+  },
+  "contrastPanel": {
+    "alphas": [
+      0.82,
+      0.82,
+      0.82
+    ],
+    "overWorld": [
+      207,
+      216,
+      220
+    ],
+    "ratios": {
+      "#fff": 15.01,
+      "#b0bec5": 7.87,
+      "#90a4ae": 5.79
+    }
+  }
+}

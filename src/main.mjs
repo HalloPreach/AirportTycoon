@@ -553,6 +553,7 @@ export function boot(canvas) {
   window.__game = {
     state,
     camera,
+    hudRect: () => renderer.hudRect(), // T5a (t_e4c3ffff) : la zone du HUD canvas (x, y, w, h, fontPx)
     startNewGame,
     togglePause: () => togglePause(state),
     cycleSpeed: () => cycleSpeed(state),

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13T22:25:16.159Z",
+  "generatedAt": "2026-10-14T14:03:27.430Z",
   "entry": "src/main.mjs",
   "moduleCount": 50,
   "modules": [
@@ -69,6 +69,6 @@
       "unlockState ← src/infra/unlocks.mjs"
     ]
   },
-  "jsBytes": 581692,
-  "htmlBytes": 14980
+  "jsBytes": 583928,
+  "htmlBytes": 17996
 }

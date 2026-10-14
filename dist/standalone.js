@@ -1,5 +1,5 @@
 /* Airport Tycoon — VERSION AUTONOME (T4, t_eb78478e) */
-/* Généré le 2026-10-13T22:25:16.130Z par tools/build-standalone.mjs — NE PAS ÉDITER À LA MAIN. */
+/* Généré le 2026-10-14T14:03:27.402Z par tools/build-standalone.mjs — NE PAS ÉDITER À LA MAIN. */
 /* 50 modules ESM inlinés (ordre topologique, cycles traités par substitution live), 0 dépendance, 0 appel réseau : jouable hors-ligne (file:// ou serveur statique). */
 (() => {
 'use strict';
@@ -3998,6 +3998,12 @@ function makeRenderer(canvas, { overlays = [], onMenuCommands = null, selectionO
     });
   }
 
+  // T5a (t_e4c3ffff) : la ZONE du dernier HUD peint (x, y, w, h + police) —
+  // exposée aux tests CDP (renderer.hudRect()) : le HUD est peint SUR le
+  // canvas #game, une mesure DOM ne le voit pas ; la QA vérifie l'absence de
+  // chevauchement avec les panneaux par cette zone, pas par le canvas entier.
+  let hudRectNow = null;
+
   // Bandeau HUD : temps, vitesse, pause + (si sim) fonds, passagers, satisfaction.
   function drawHud(state) {
     const lines = [
@@ -4038,14 +4044,39 @@ function makeRenderer(canvas, { overlays = [], onMenuCommands = null, selectionO
       lines.push(`Horloge : J${cv.day} ${cv.label} (${cv.phaseFr}) · ${sv.fr}`);
     }
     if (state.paused) lines.push('PAUSE (P pour reprendre)');
-    const w = 240;
+    // T5a (t_e4c3ffff) : HUD LISIBLE + PLACEMENT EXPLICITE (0 chevauchement).
+    // • Largeur du panneau = plus longue LIGNE mesurée (ctx.measureText) +
+    //   marge 24 px, plafonnée à vw - 24 : les lignes longues (« Files : … »,
+    //   « Météo : … ») DÉBORDAIENT le fixe 240 px — le texte dépassait la
+    //   surface, illisible. La largeur suit le contenu.
+    // • Écran étroit (≤560 px, même seuil que le @media d'index.html) : le
+    //   bandeau planning est une STRIPE PLEINE LARGEUR en haut — le HUD
+    //   canvas peint en haut à gauche était COUVERT (le bug mobile connu).
+    //   Décision de layout T5a : le HUD DESCEND SOUS la stripe (y = 8 +
+    //   .planning.offsetHeight + 8 — mesure DOM en lecture seule, la zone
+    //   canvas dessous reste libre et jouable) ; police 14 px (≥11 px exigés,
+    //   compact pour 8 lignes sur 390 px). Desktop : haut à gauche (12, 12),
+    //   16 px (13 px souhaités respectés).
+    const vw = viewSize().width;
+    const mobile = vw <= 560;
+    const fs = mobile ? 14 : 16;
+    const lh = Math.round(fs * 1.5); // pas de ligne (24 px en desktop = avant)
+    ctx.font = fs + 'px system-ui, sans-serif';
+    let maxLine = 0;
+    for (const t of lines) maxLine = Math.max(maxLine, ctx.measureText(t).width);
+    const w = Math.min(Math.ceil(maxLine) + 24, Math.max(120, vw - 24));
+    const planEl = typeof document !== 'undefined' ? document.querySelector('.planning') : null;
+    const planH = planEl && mobile ? planEl.offsetHeight : 0;
+    const x = 12;
+    const y = mobile ? 8 + planH + 8 : 12; // mobile : sous la stripe planning (top 8 + hauteur + 8)
+    const h = lh * lines.length + 16;
     ctx.fillStyle = 'rgba(10,18,32,0.82)'; // T4 : surface « nuit » (tokens)
-    ctx.fillRect(12, 12, w, 24 * lines.length + 16);
+    ctx.fillRect(x, y, w, h);
     ctx.fillStyle = THEME.text;
-    ctx.font = '16px system-ui, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    lines.forEach((t, i) => ctx.fillText(t, 24, 24 + i * 24 + 12));
+    lines.forEach((t, i) => ctx.fillText(t, x + 12, y + 8 + fs + i * lh));
+    hudRectNow = { x, y, w, h, fontPx: fs, maxLinePx: Math.ceil(maxLine), lines: lines.length, mobile };
   }
 
   // T4 (t_eb78478e) : transition d'écran (MENU ↔ JEU) — fondu depuis le noir
@@ -4112,7 +4143,7 @@ function makeRenderer(canvas, { overlays = [], onMenuCommands = null, selectionO
     };
   }
 
-  return { render, viewSize, resize };
+  return { render, viewSize, resize, hudRect: () => hudRectNow }; // T5a (t_e4c3ffff) : zone du HUD (tests CDP)
 }
 
 __exports.makeRenderer = makeRenderer;
@@ -11066,6 +11097,7 @@ function boot(canvas) {
   window.__game = {
     state,
     camera,
+    hudRect: () => renderer.hudRect(), // T5a (t_e4c3ffff) : la zone du HUD canvas (x, y, w, h, fontPx)
     startNewGame,
     togglePause: () => togglePause(state),
     cycleSpeed: () => cycleSpeed(state),
