@@ -1,5 +1,5 @@
 /* Airport Tycoon — VERSION AUTONOME (T4, t_eb78478e) */
-/* Généré le 2026-10-14T20:13:47.670Z par tools/build-standalone.mjs — NE PAS ÉDITER À LA MAIN. */
+/* Généré le 2026-10-14T22:33:32.649Z par tools/build-standalone.mjs — NE PAS ÉDITER À LA MAIN. */
 /* 53 modules ESM inlinés (ordre topologique, cycles traités par substitution live), 0 dépendance, 0 appel réseau : jouable hors-ligne (file:// ou serveur statique). */
 (() => {
 'use strict';
@@ -8518,6 +8518,8 @@ function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced, onDem
       buttons[k].classList.toggle('tool--active', tool.mode && !tool.demolishMode && tool.kind === k);
     }
     demolishBtn.classList.toggle('tool--active', tool.demolishMode);
+    t7Poke(); // T7 (t_0f131a58) : tout changement d'état de l'outil (B / 1-9 / X)
+    // ramène la toolbar à l'affichage si elle était estompée.
   }
 
   // Commandes publiques (clavier global dans main.mjs).
@@ -8543,6 +8545,48 @@ function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced, onDem
   // T51 (t_cccfbc97) : la RACINE DOM de la barre est EXPOSÉE (main.mjs la
   // masque au menu — les panneaux de jeu ne flottent pas au-dessus du menu).
   tool.box = bar;
+
+  // T7 (t_0f131a58) — DESKTOP : AUTO-HIDE de la toolbar (« vrai jeu ») — la
+  // bande du BAS GAUCHE est la seule zone UI massives au bas de la map (jusqu'à
+  // 104 px) : au repos (outil construction INACTIF + souris hors de la bande
+  // du bas depuis 1600 ms) elle s'estompe (opacity 0.12, pointer-events:none)
+  // → la zone centrale ET le bas de la carte restent dégagés ; dès le
+  // prochain survol de la bande du bas (140 px, la souris « traverse » la
+  // toolbar estompée — pointer-events:none) ou l'activation de l'outil
+  // (B / 1-9 / X, via sync()), elle re-apparaît IMMÉDIATEMENT : on ne perd
+  // jamais les outils en pleine pose. Choix : estompage (et non décalage de la
+  // map) — un origin décalé casserait les conventions caméra/HUD/T51 ; l'UI
+  // reste au même endroit, juste « fantôme » au repos. MOBILE : inactif —
+  // la toolbar y est la rangée d'outils permanente (cibles ≥44 px, pas de
+  // notion de souris-idle). NODE : pas de window → bloc inactif (tests verts).
+  const mqDeskT7 = (typeof window !== 'undefined' && typeof window.matchMedia === 'function')
+    ? window.matchMedia('(min-width: 561px)') : null;
+  let t7IdleTimer = 0;
+  function t7IdleOn() {
+    if (!mqDeskT7 || !mqDeskT7.matches || tool.isActive()) return;
+    bar.classList.add('idle');
+  }
+  function t7Poke() {
+    bar.classList.remove('idle');
+    clearTimeout(t7IdleTimer);
+    t7IdleTimer = 0;
+    if (!mqDeskT7 || !mqDeskT7.matches || tool.isActive()) return;
+    t7IdleTimer = setTimeout(t7IdleOn, 1600); // 1600 ms de grâce, puis estompage
+  }
+  if (mqDeskT7) {
+    // La souris dans les 140 px du bas de l'écran (la bande toolbar + marge)
+    // ramène la toolbar immédiatement — l'événement arrive sur la fenêtre
+    // même quand la toolbar est .idle (pointer-events:none) → ça marche dans
+    // les deux sens.
+    window.addEventListener('mousemove', (e) => {
+      if (typeof e.clientY === 'number' && e.clientY > window.innerHeight - 140) t7Poke();
+    });
+    mqDeskT7.addEventListener('change', (ev) => {
+      if (ev.matches) t7Poke(); // desktop : estompage (re)possible
+      else bar.classList.remove('idle'); // mobile : jamais estompée
+    });
+    if (mqDeskT7.matches) t7Poke(); // boot desktop : carte dégagée au démarrage
+  }
 
   // Aperçu de pose (lecture seule) : tient dans le terrain ? chevauche-t-il une
   // case occupée (grille de la sim) ? fonds suffisants ? — le VRAI verdict est la sim.
@@ -9741,10 +9785,17 @@ function makePanels({ state, camera, viewSize, buildTool }) {
   fold.textContent = '▾ Consultation';
   const mqMobile = (typeof window !== 'undefined' && typeof window.matchMedia === 'function')
     ? window.matchMedia('(max-width: 560px)') : null;
+  // T7 (t_0f131a58) : HOOK d'exclusivité mobile — main.mjs branche
+  // `panels.onFoldChange` (déplier CONSULTATION replie PLANNING, symétrique
+  // du hook planning-panel) pour ≤560px. `api` est assemblé au retour du
+  // module (null au boot mobile, d'où le `?.` — setFold(false) y est appelé
+  // dès l'init si le viewport est mobile).
+  let api = null;
   function setFold(open) {
     col.classList.toggle('open', open);
     fold.setAttribute('aria-expanded', String(open));
     fold.textContent = (open ? '▾ ' : '▴ ') + 'Consultation';
+    api?.onFoldChange?.(open);
   }
   fold.addEventListener('click', () => setFold(!col.classList.contains('open')));
   // Premier enfant (le stub DOM des tests n'a pas prepend ; les sections
@@ -10358,7 +10409,10 @@ function makePanels({ state, camera, viewSize, buildTool }) {
     );
   }
 
-  return {
+  // T7 (t_0f131a58) : le module est exposé comme `api` (et NON comme un
+  // littéral anonyme) pour que setFold puisse lire le hook onFoldChange —
+  // main.mjs le branche pour l'exclusivité mobile PLANNING/CONSULTATION.
+  api = {
     // Appel à chaque frame (bus 'frame') : chaque panneau ne reconstruit son DOM
     // que si sa signature a changé — coût négligeable sinon (pattern planning).
     refresh: () => { refreshInspect(); refreshFin(); refreshStats(); refreshGoals(); refreshCampaign(); refreshUnlocks(); refreshContracts(); refreshHist(); refreshNet(); },
@@ -10373,8 +10427,13 @@ function makePanels({ state, camera, viewSize, buildTool }) {
     // T6 (t_87168414) : la sélection tactil passe par LE MÊME chemin que le
     // click desktop (pickAt — main.mjs la câble au tap de touch.mjs).
     clickAt: (sx, sy) => pickAt(sx, sy),
+    // T7 (t_0f131a58) : command surface repli/dépli (QA CDP) + hook d'exclusivité
+    // (null tant que main.mjs ne le branche pas ; desktop : aucun appelant).
+    setFold,
+    onFoldChange: null,
     col,
   };
+  return api;
 }
 
 __exports.makePanels = makePanels;
@@ -11109,6 +11168,10 @@ function makePlanningPanel({ state, toast, onAutoChange }) {
     fold.setAttribute('aria-expanded', String(open));
     fold.textContent = (open ? '▾ ' : '▴ ') + 'Planning & réseau';
     document.body.classList.toggle('plan-open', open); // les toasts s'adaptent (T6)
+    // T7 (t_0f131a58) : HOOK d'exclusivité mobile — main.mjs y branche
+    // « déplier PLANNING replie CONSULTATION » (et symétriquement côté
+    // panels.mjs) pour ≤560px ; desktop : aucun appelant, aucun effet.
+    panel.onFoldChange?.(open);
   }
   fold.addEventListener('click', () => setFold(!box.classList.contains('open')));
   if (mqMobile) {
@@ -11128,6 +11191,12 @@ function makePlanningPanel({ state, toast, onAutoChange }) {
   // T51 (t_cccfbc97) : la RACINE DOM du panneau est EXPOSÉE (main.mjs la
   // masque au menu — le panneau de jeu ne flotte pas au-dessus du menu).
   panel.box = box;
+
+  // T7 (t_0f131a58) : command surface — repli/dépli programmatique (QA CDP +
+  // exclusivité mobile : main.mjs branche les hooks onFoldChange des deux
+  // bandes) ; onFoldChange reste null tant que main.mjs ne le branche pas.
+  panel.setFold = setFold;
+  panel.onFoldChange = null;
 
   function airlineName(id) { return (AIRLINES.find((x) => x.id === id) || { name: id }).name; }
   // Horloge de la sim en heures:minutes:secondes (le planning est « consultable
@@ -11171,6 +11240,10 @@ function makePlanningPanel({ state, toast, onAutoChange }) {
     const evName = e.event ? (EVENTS[e.event] ? EVENTS[e.event].name : e.event) : null;
     info.textContent = `${airlineName(e.airline)} · ${ac ? ac.name : e.acType} · ${e.pax} pax · ${fmtClock(e.planned)} · ${STATUS[e.status] || e.status}` +
       (e.why ? ` (${e.why})` : '') + (evName ? ` · ⚡ ${evName}` : '');
+    // T7 (t_0f131a58) : ELLIPSIS + TOOLTIP desktop — la ligne tronquée (… au
+    // delà de la largeur 360px) expose le texte COMPLET au survol ; mobile :
+    // le texte wrappe (bande scrollable) et le title reste inoffensif.
+    info.title = info.textContent;
     row.appendChild(info);
     if (e.status === 'planned') {
       renderNote(sim, e, row); // R19 : obstacle/risque/revenu estimé AVANT la décision
@@ -11759,6 +11832,26 @@ function boot(canvas) {
   const planningPanel = makePlanningPanel({ state, toast: toasts.toast, onAutoChange: setPlanningAuto });
   state.planningAuto = false; // préférence par défaut : source sérialisée sur le state
 
+  // T7 (t_0f131a58) — EXCLUSIVITÉ MOBILE (≤560px) : les bandes PLANNING et
+  // CONSULTATION ne sont JAMAIS dépliées EN MÊME TEMPS — déplier l'une replie
+  // l'autre (via les hooks onFoldChange des deux modules : un seul point de
+  // branchement, les modules ne se connaissent pas). La carte garde ≥45 % de
+  // la hauteur d'écran même dépliée (calcul QA t7 : 54,9 % au pire cas —
+  // consultation dépliée 30vh + planning replié 44px + toolbar 48px).
+  // DESKTOP : aucun appelant (les bandes sont toujours dépliées, .fold masqué
+  // par CSS) — le branchement est inerte, le comportement desktop est intact.
+  // Sous Node (tests) : pas de matchMedia → mqT7 null, hooks non branchés.
+  const mqT7 = (typeof window !== 'undefined' && typeof window.matchMedia === 'function')
+    ? window.matchMedia('(max-width: 560px)') : null;
+  if (mqT7) {
+    planningPanel.onFoldChange = (open) => {
+      if (open && mqT7.matches) panels.setFold(false);
+    };
+    panels.onFoldChange = (open) => {
+      if (open && mqT7.matches) planningPanel.setFold(false);
+    };
+  }
+
   // T51 (t_cccfbc97) : les 3 racines de panneaux de JEU entrent dans la
   // synchronisation menu/jeu (barre de construction / panneaux de consultation /
   // planning) — masquées au menu, réaffichées au retour en jeu.
@@ -12034,6 +12127,7 @@ function boot(canvas) {
     buildTool,
     toasts,
     panels,
+    planningPanel, // T7 (t_0f131a58) : repli/dépli programmatique du planning (QA CDP + exclusivité mobile)
     intro, // R20 : l'introduction (tests CDP : étape courante, done/skipped)
     tips, // T4 (t_eb78478e) : les astuces d'onboarding (tests CDP : seen, refresh)
     bankruptcyScreen, // R35 : l'écran de faillite (tests CDP : ouvert sur bankrupt, boutons)

@@ -29,10 +29,24 @@
     .menu-btns .tool[aria-pressed="true"] { background: var(--at-accent); color: #050807; border-color: var(--at-accent); }
     .toolbar {
       position: fixed; left: 12px; bottom: 12px; display: flex; gap: 6px;
-      background: rgba(5,8,7,0.82); border: 1px solid var(--at-border); border-radius: 3px; padding: 8px;
+      /* T7 (t_0f131a58) : fond OPAQUE (avant rgba(5,8,7,0.82) — aucun pixel du
+         canvas ne doit transperce la zone map) ; var(--at-surface) = α 1.0 ≥ 0.97. */
+      background: var(--at-surface); border: 1px solid var(--at-border); border-radius: 3px; padding: 8px;
       font: 13px 'Courier New', monospace; color: var(--at-text); z-index: 20;
       align-items: center; max-width: calc(100vw - 24px); flex-wrap: wrap;
+      transition: opacity 0.4s ease;
     }
+    /* T7 (t_0f131a58) : AUTO-HIDE desktop de la toolbar (géré par build-tool.mjs,
+       desktop uniquement) — en repos (outil construction inactif + souris hors
+       de la bande du bas, 1600 ms de grâce), la bande s'estompe (opacity 0.12,
+       pointer-events:none) : la zone centrale de la carte reste dégagée.
+       Re-apparition immédiate au survol de la bande du bas (mousemove fenêtre)
+       ou dès l'activation de l'outil (B / 1-9 / X) — on ne perd jamais les
+       outils en pleine pose. Choix justifié : la toolbar est la seule zone UI
+       massives du BAS de la map (jusqu'à 104 px de haut) ; un décalage de la
+       map (origin du canvas) casserait les conventions caméra/HUD/T51 —
+       l'estompage en repos garde le layout stable et réversible. */
+    .toolbar.idle { opacity: 0.12; pointer-events: none; }
     .toolbar .tool {
       background: var(--at-surface); color: var(--at-text); border: 1px solid var(--at-border);
       border-radius: 3px; padding: 5px 10px; cursor: pointer; font: inherit;
@@ -45,7 +59,9 @@
       flex-direction: column; gap: 6px; z-index: 10; max-width: 320px; pointer-events: none;
     }
     .toast {
-      background: rgba(11,18,14,0.94); color: var(--at-text); border-radius: 3px;
+      /* T7 (t_0f131a58) : fond OPAQUE (avant rgba(11,18,14,0.94) — α ≥ 0.97
+         exigé : aucun pixel du canvas ne traverse le toast). */
+      background: var(--at-surface); color: var(--at-text); border-radius: 3px;
       padding: 8px 12px; font: 14px 'Courier New', monospace; border-left: 4px solid var(--at-accent);
       transition: opacity 0.2s;
     }
@@ -76,7 +92,9 @@
        JOUR clair, le texte secondaire #90a4ae tombait sous 4.5:1). */
     .planning {
       position: fixed; right: 12px; top: 12px; z-index: 10; max-width: 360px;
-      background: rgba(5,8,7,0.82); border: 1px solid var(--at-border); border-radius: 3px; padding: 8px;
+      /* T7 (t_0f131a58) : fond OPAQUE (avant rgba(5,8,7,0.82) — α ≥ 0.97 :
+         aucun pixel du canvas ne transperce le panneau, états repli + dépli). */
+      background: var(--at-surface); border: 1px solid var(--at-border); border-radius: 3px; padding: 8px;
       font: 13px 'Courier New', monospace; color: var(--at-text);
     }
     .planning h4 { margin: 0 0 4px; color: var(--at-text-dim); font-size: 13px; font-weight: 600; }
@@ -107,11 +125,17 @@
       max-height: calc(100vh - 90px); overflow-y: auto;
     }
     .panel {
-      background: rgba(5,8,7,0.82); border: 1px solid var(--at-border); border-radius: 3px; padding: 8px;
+      /* T7 (t_0f131a58) : fond OPAQUE (avant rgba(5,8,7,0.82) — α ≥ 0.97 :
+         aucun pixel du canvas ne transperce le panneau, états repli + dépli). */
+      background: var(--at-surface); border: 1px solid var(--at-border); border-radius: 3px; padding: 8px;
       font: 13px 'Courier New', monospace; color: var(--at-text);
     }
     .panel h4 { margin: 0 0 4px; color: var(--at-text-dim); font-size: 13px; font-weight: 600; }
-    .pline { display: flex; gap: 6px; padding: 1px 0; }
+    .pline { display: flex; gap: 6px; padding: 1px 0;
+      /* T7 (t_0f131a58) : WRAP au lieu de la troncature — la valeur long (ex.
+         « 420 s · 11 400 $ · 23 % ») passe sur une 2e ligne au lieu de être
+         coupée en « 420 s · 11 40… » (zéro troncature Vols). */
+      flex-wrap: wrap; row-gap: 2px; }
     .pline > span { color: var(--at-text-dim); min-width: 110px; flex: none; }
     .pline--good { color: var(--at-ok); }
     .pline--bad { color: var(--at-err); }
@@ -351,6 +375,22 @@
          basse » (calc(44+48+22) = 114 px) a CHEVAUCHÉ la bande repliée
          (top y=724 → 6 px × 374 = 2244 px², QA ui-no-overlap en échec) :
          la pile basse s'étend de 76 à 120 px du bas, pas 44+48. */
+      /* ============ T7 (t_0f131a58) — MOBILE : cibles tactiles ≥44 px + zéro
+         troncature dans les bandes (la bande dépliée 22-30vh défile, donc les
+         textes longs WRAPPENT au lieu de tronquer) + toolbar sans scrollbar
+         (scroll propre des boutons, pas de barre au milieu des outils). ============ */
+      .toolbar { scrollbar-width: none; -ms-overflow-style: none; }
+      .toolbar::-webkit-scrollbar { display: none; }
+      .planning-row { flex-wrap: wrap; row-gap: 2px; }
+      .planning-row > span { flex: none; width: 100%; white-space: normal;
+        overflow: visible; text-overflow: clip; }
+      .planning-note { flex-basis: 100%; }
+      .planning-row button { flex: none; min-width: 44px; min-height: 44px;
+        padding: 8px 12px; }
+      .planning-filter { min-height: 44px; padding: 8px 12px; }
+      .planning-auto { min-height: 44px; padding: 6px 0; }
+      .planning-auto input { width: 22px; height: 22px; }
+      .panel button, .panel select { min-height: 44px; padding: 8px 12px; }
     }
   </style>
 </head>
