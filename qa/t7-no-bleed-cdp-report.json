@@ -1,0 +1,218 @@
+{
+  "task": "t_0f131a58",
+  "test": "qa/t7-no-bleed-cdp.mjs",
+  "ts": "2026-10-14T22:32:33.615Z",
+  "rule": "état déplié, 2 viewport : 0 chevauchement panneau-panneau, 0 bleed (surfaces α≥0.97 sur canvas peint blanc), carte ≥ 45 % libre (mobile), cibles ≥ 44 px, 0 troncature, auto-hide toolbar desktop (survol + activation outil)",
+  "viewports": [
+    {
+      "name": "mobile",
+      "size": "390×844",
+      "checks": [
+        {
+          "name": "exclusive",
+          "pass": true,
+          "note": "déplier l'une replie l'autre (hooks onFoldChange) — jamais les deux",
+          "states": {
+            "s0": {
+              "planning": false,
+              "panels": false
+            },
+            "s1": {
+              "planning": true,
+              "panels": false,
+              "via": "planning.setFold(true)"
+            },
+            "s2": {
+              "planning": false,
+              "panels": true,
+              "via": "panels.setFold(true)"
+            }
+          }
+        },
+        {
+          "name": "mapHeight",
+          "pass": true,
+          "note": "pire cas ≥ 45 % de hauteur d'écran",
+          "pctPlanning": 60.7,
+          "pctConsultation": 54.7,
+          "worst": 54.7,
+          "H": 844
+        },
+        {
+          "name": "touchTargets",
+          "pass": true,
+          "note": "cibles tactiles ≥ 44×44 px",
+          "min": 44,
+          "n": 20,
+          "fails": []
+        },
+        {
+          "name": "wrap",
+          "pass": true,
+          "note": "zéro troncature : les lignes longues wrap (bandes scrollables)",
+          "n": 48,
+          "bad": []
+        },
+        {
+          "name": "tbScroll",
+          "pass": true,
+          "note": "toolbar mobile : rangée unique 48 px, scroll horizontal SANS scrollbar",
+          "h": 48,
+          "overflowX": "auto",
+          "scrollW": 3265,
+          "clientW": 372,
+          "noScrollbar": true
+        },
+        {
+          "name": "noBleed",
+          "pass": true,
+          "note": "canvas peint BLANC : les surfaces montrent leur propre fond (α ≥ 0.97, médiane ≈ surface) — 0 pixel du canvas ne transperce",
+          "surface": "#0B120E",
+          "ref": [
+            11,
+            18,
+            14
+          ],
+          "alphas": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "samples": [
+            {
+              "name": "panels",
+              "rgb": [
+                11,
+                18,
+                14
+              ]
+            },
+            {
+              "name": "toasts",
+              "rgb": [
+                11,
+                18,
+                14
+              ]
+            },
+            {
+              "name": "toolbar",
+              "rgb": [
+                11,
+                18,
+                14
+              ]
+            }
+          ],
+          "bad": []
+        },
+        {
+          "name": "noOverlap",
+          "pass": true,
+          "note": "0 chevauchement panneau-panneau",
+          "n": 5,
+          "overlaps": []
+        }
+      ],
+      "boot": "game",
+      "ok": true
+    },
+    {
+      "name": "desktop",
+      "size": "1920×1080",
+      "checks": [
+        {
+          "name": "noOverlap",
+          "pass": true,
+          "note": "état déplié desktop : 0 chevauchement",
+          "planningOpen": false,
+          "panelsOpen": false,
+          "n": 26,
+          "overlaps": []
+        },
+        {
+          "name": "noTruncation",
+          "pass": true,
+          "note": "zéro troncature : wrap, ou ellipsis + tooltip (texte complet au survol)",
+          "n": 48,
+          "truncNoTip": [],
+          "wrapBad": []
+        },
+        {
+          "name": "noBleed",
+          "pass": true,
+          "note": "canvas peint BLANC : surfaces opaques (α ≥ 0.97) — 0 bleed",
+          "surface": "#0B120E",
+          "ref": [
+            11,
+            18,
+            14
+          ],
+          "alphas": [
+            1,
+            1,
+            1,
+            1
+          ],
+          "samples": [
+            {
+              "name": "toasts",
+              "rgb": [
+                11,
+                18,
+                14
+              ]
+            },
+            {
+              "name": "toolbar",
+              "rgb": [
+                24,
+                31,
+                27
+              ]
+            }
+          ],
+          "bad": [],
+          "toolbarIdle": false
+        },
+        {
+          "name": "autoHide",
+          "pass": true,
+          "note": "repos 1600 ms → estompage (opacity 0.12, pointer-events:none) ; survol zone basse OU outil actif → retour immédiat ; zone centrale de la carte dégagée au repos",
+          "r0": {
+            "idle": true,
+            "opacity": "0.12",
+            "pe": "none"
+          },
+          "r1": {
+            "idle": false,
+            "opacity": "0.70979"
+          },
+          "r2": {
+            "idle": false,
+            "opacity": "1",
+            "active": true
+          },
+          "r3": {
+            "idle": true
+          }
+        },
+        {
+          "name": "mapCenterFree",
+          "pass": true,
+          "note": "repos (toolbar estompée) : colonne centrale 40-60 % de la carte sans aucun élément interactif",
+          "blockers": []
+        }
+      ],
+      "boot": "game",
+      "ok": true
+    }
+  ],
+  "verdict": "PASS",
+  "summary": {
+    "viewports": 2,
+    "checks": 12,
+    "failed": 0
+  }
+}
