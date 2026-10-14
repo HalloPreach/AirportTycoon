@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Airport Tycoon — Suivi de développement</title>
+  <meta name="description" content="Suivi de l'avancement d'Airport Tycoon : tranches livrées, preuves, roadmap, et jeu autonome jouable en ligne." />
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --panel: #101628;
+      --panel-2: #0d1322;
+      --line: #1e2a45;
+      --text: #d7e2f4;
+      --dim: #8291b0;
+      --cyan: #4fd1ff;
+      --amber: #ffb454;
+      --green: #57d98d;
+      --red: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      line-height: 1.55;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 28px 20px 60px; }
+    header {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 14px;
+      padding: 18px 20px;
+      background: linear-gradient(135deg, #101a33 0%, #0c1224 100%);
+      border: 1px solid var(--line); border-radius: 12px;
+      margin-bottom: 26px;
+    }
+    header h1 { margin: 0; font-size: 1.45rem; letter-spacing: .5px; }
+    header .sub { color: var(--dim); font-size: .92rem; margin-top: 4px; }
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 999px;
+      font-size: .78rem; border: 1px solid var(--line); color: var(--dim);
+      margin-left: auto;
+    }
+    .badge.ok { color: var(--green); border-color: rgba(87, 217, 141, .4); }
+    .btn {
+      display: inline-block; padding: 10px 18px; border-radius: 8px;
+      background: var(--cyan); color: #06121f; font-weight: 700; text-decoration: none;
+      font-size: .95rem;
+    }
+    .btn.ghost {
+      background: transparent; color: var(--cyan); border: 1px solid var(--cyan);
+      font-weight: 600;
+    }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0 28px; }
+    section {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+      padding: 20px 22px; margin-bottom: 22px;
+    }
+    section h2 {
+      margin: 0 0 12px; font-size: 1.05rem; color: var(--cyan);
+      text-transform: uppercase; letter-spacing: 1.5px;
+    }
+    .tranches { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+    .tranche {
+      background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px;
+      padding: 12px 14px; font-size: .92rem;
+    }
+    .tranche b { color: var(--text); display: block; margin-bottom: 3px; }
+    .tranche span { color: var(--dim); font-size: .84rem; }
+    .tranche .done { color: var(--green); font-weight: 700; }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--dim); font-size: .78rem; text-transform: uppercase; letter-spacing: 1px; }
+    td code, .hash {
+      font-family: Consolas, monospace; font-size: .85em; color: var(--amber);
+    }
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul.proofs { margin: 0; padding-left: 18px; }
+    ul.proofs li { margin-bottom: 6px; }
+    ul.proofs li::marker { color: var(--green); }
+    .gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+    .gallery figure { margin: 0; }
+    .gallery img {
+      width: 100%; border-radius: 8px; border: 1px solid var(--line); display: block;
+    }
+    .gallery figcaption { color: var(--dim); font-size: .82rem; margin-top: 6px; }
+    .note { color: var(--dim); font-size: .84rem; margin-top: 14px; }
+    footer { color: var(--dim); font-size: .82rem; text-align: center; margin-top: 8px; }
+    .roadmap li { margin-bottom: 6px; }
+    .tag {
+      display: inline-block; font-size: .72rem; padding: 1px 8px; border-radius: 999px;
+      border: 1px solid var(--line); color: var(--dim); margin-left: 6px;
+    }
+    .tag.now { color: var(--amber); border-color: rgba(255, 180, 84, .4); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>✈ Airport Tycoon</h1>
+        <div class="sub">Tycoon d'aéroport — vanilla JS, 0 dépendance, jouable hors-ligne</div>
+      </div>
+      <span class="badge ok">LIVRÉ · 2026-10-14</span>
+    </header>
+
+    <div class="actions">
+      <a class="btn" href="./game.html">▶ Jouer la dernière release</a>
+      <a class="btn ghost" href="https://github.com/HalloPreach/AirportTycoon">Voir le code</a>
+    </div>
+
+    <section>
+      <h2>Statut des tranches</h2>
+      <div class="tranches">
+        <div class="tranche"><b>T1 — Base jouable</b><span class="done">✓ Livrée</span><br /><span>Juice, audio synthétisé, menu + options persistantes</span></div>
+        <div class="tranche"><b>T2 — Objectifs</b><span class="done">✓ Livrée</span><br /><span>3 difficultés, 3 scénarios, campagne + succès, stats persistantes</span></div>
+        <div class="tranche"><b>T3 — Profondeur</b><span class="done">✓ Livrée</span><br /><span>Météo, événements, contenu, jour/nuit + saisons, 2ᵉ aéroport</span></div>
+        <div class="tranche"><b>T4 — Polish &amp; Release</b><span class="done">✓ Livrée</span><br /><span>Direction artistique, onboarding, release autonome</span></div>
+        <div class="tranche"><b>T51 — UI</b><span class="done">✓ Livrée</span><br /><span>Chevauchements corrigés (8 → 0), hiérarchie z-index explicite</span></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Systèmes livrés (détails &amp; commits)</h2>
+      <table>
+        <tr><th>Système</th><th>Commit</th><th>Preuve</th></tr>
+        <tr>
+          <td>Météo — 5 états à effets mesurables (retard +40 s/vol, visibilité, trafic pax), cycle 180 s</td>
+          <td><a class="hash" href="https://github.com/HalloPreach/AirportTycoon/commit/f72351b">f72351b</a></td>
+          <td>QA CDP 9/9 + 5 captures</td>
+        </tr>
+        <tr>
+          <td>Événements dynamiques — conférence / pic tourisme / grève, tirages seedés, toasts</td>
+          <td><a class="hash" href="https://github.com/HalloPreach/AirportTycoon/commit/7eb0339">7eb0339</a></td>
+          <td>QA CDP 9/9 + 3 captures</td>
+        </tr>
+        <tr>
+          <td>Contenu statique — 3 bâtiments services, 3 aéronefs cargo, backward-compat saves</td>
+          <td><a class="hash" href="https://github.com/HalloPreach/AirportTycoon/commit/b71747d">b71747d</a></td>
+          <td>QA CDP 10/10 + 3 captures</td>
+        </tr>
+        <tr>
+          <td>Horloge + 4 saisons — 2400 s/jour, tint jour/nuit, paramètres saisonniers</td>
+          <td><a class="hash" href="https://github.com/HalloPreach/AirportTycoon/commit/b1b198e">b1b198e</a></td>
+          <td>QA CDP 10/10 + 5 captures</td>
+        </tr>
+        <tr>
+          <td>2ᵉ aéroport « Cap Nord » — profil de spawn différent, 0 duplication de code</td>
+          <td><a class="hash" href="https://github.com/HalloPreach/AirportTycoon/commit/39c7500">39c7500</a></td>
+          <td>QA CDP 14/14 + 3 captures</td>
+        </tr>
+        <tr>
+          <td>UI — chevauchements corrigés, z-index explicite, bascule menu/jeu</td>
+          <td><a class="hash" href="https://github.com/HalloPreach/AirportTycoon/commit/0595c70">0595c70</a> <a class="hash" href="https://github.com/HalloPreach/AirportTycoon/commit/3ce3a40">3ce3a40</a></td>
+          <td>Régression 0/9 (3 viewports × 3 états)</td>
+        </tr>
+        <tr>
+          <td>Polish — « tour de contrôle la nuit », écran-titre animé, 14 icônes vectorielles, 5 tips onboarding, release autonome</td>
+          <td><a class="hash" href="https://github.com/HalloPreach/AirportTycoon/commit/a3444b2">a3444b2</a></td>
+          <td>QA CDP 17/17 (http + file:// hors-ligne)</td>
+        </tr>
+      </table>
+      <p class="note">Rapports de livraison détaillés : <a href="https://github.com/HalloPreach/AirportTycoon/blob/main/RAPPORT_LIVRAISON_T1T2.md">T1+T2</a> · <a href="https://github.com/HalloPreach/AirportTycoon/blob/main/RAPPORT_LIVRAISON_T3T4.md">T3+T4</a> dans le dépôt.</p>
+    </section>
+
+    <section>
+      <h2>Preuves &amp; garantie qualité</h2>
+      <ul class="proofs">
+        <li><b>440/440 tests Node</b> — <code>node --test tests/*.test.mjs</code>, sortie 0 (vérifié sur l'état final).</li>
+        <li><b>QA navigateur (CDP) 17/17</b> — boot HTTP et boot <code>file://</code> hors-ligne, 0 ressource externe, 0 exception.</li>
+        <li><b>Endurance 1200 s de jeu</b> — 0 exception, 0 NaN/infini, heap stable (QA r42).</li>
+        <li><b>Régression UI 0/9</b> — aucun chevauchement sur 1920×1080, 1366×768, 390×844 (menu / partie neuve / rechargée).</li>
+        <li><b>0 dépendance npm, 0 appel réseau au runtime</b> — release autonome : 1 HTML + 1 JS (50 modules inlinés), jouable hors-ligne.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Captures</h2>
+      <div class="gallery">
+        <figure>
+          <img src="./img/menu.png" alt="Écran-titre animé — direction artistique tour de contrôle la nuit" loading="lazy" />
+          <figcaption>Écran-titre animé (0 allocation/frame) — direction artistique « tour de contrôle la nuit ».</figcaption>
+        </figure>
+        <figure>
+          <img src="./img/jeu.png" alt="Partie en cours — aéroport principal" loading="lazy" />
+          <figcaption>Partie en cours — aéroport principal (HUD nuit, panneaux, planning).</figcaption>
+        </figure>
+        <figure>
+          <img src="./img/cap-nord.png" alt="Second aéroport Cap Nord en cours de jeu" loading="lazy" />
+          <figcaption>Second aéroport « Cap Nord » — profil de spawn différent, livré en stretch T3.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section>
+      <h2>Roadmap (à venir)</h2>
+      <ul class="roadmap">
+        <li><b>HUD mobile (portrait)</b><span class="tag now">en tête de liste</span> — corriger le HUD canvas peint derrière les panneaux pleins largeur (finding connu, déclaré hors périmètre de la T51).</li>
+        <li><b>Endgame de campagne</b> — écran de victoire, réputation d'aéroport et objectifs méta à long terme.</li>
+        <li><b>Playtest humain &amp; équilibrage</b> — valider le feel des 3 difficultés (le QA automatique ne remplace pas les joueurs).</li>
+        <li><b>Étendues</b><span class="tag">option</span> — 3ᵉ aéroport, éditeur d'événements, mode comparaison de deux aéroports.</li>
+      </ul>
+    </section>
+
+    <footer>
+      Site statique GitHub Pages — mis à jour automatiquement à chaque push sur <code>main</code> (dossier <code>docs/</code>).<br />
+      Dernière mise à jour : 2026-10-14 (commit <span class="hash">7a80c03</span>).
+    </footer>
+  </div>
+</body>
+</html>

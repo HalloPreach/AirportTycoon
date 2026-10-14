@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Airport Tycoon</title>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #263238; }
+    canvas { display: block; }
+    /* UI fine : barre d'outils de construction + toasts (feedback lisible). */
+    /* R20 : barre de commandes du MENU en haut (boutons souris ; les raccourcis
+       N/R restent disponibles). La toolbar de construction reste en bas à
+       gauche et reçoit les boutons de commandes du jeu (pause, vitesse,
+       sauvegarde, reprise) — les raccourcis P/F/S/L complètent la souris. */
+    .menu-btns {
+      position: fixed; left: 50%; top: 12px; transform: translateX(-50%);
+      display: flex; flex-wrap: wrap; gap: 6px; z-index: 10;
+      justify-content: center; max-width: 92vw;
+    }
+    .menu-btns .tool {
+      background: #37474f; color: #fff; border: 1px solid #546e7a;
+      border-radius: 6px; padding: 6px 12px; cursor: pointer; font: 14px system-ui;
+    }
+    /* T2-1 (t_d5da994c) : SÉLECTION DE DIFFICULTÉ du menu — une rangée qui
+       RÉUTILISE les boutons .menu-btns .tool (pas de style duplicaté) ; le
+       bouton SÉLECTIONNÉ est mis en valeur par aria-pressed (pattern R43). */
+    .menu-diff { display: flex; gap: 4px; align-items: center; }
+    .menu-diff .menu-diff-label { color: #b0bec5; font: 13px system-ui; }
+    .menu-btns .tool[aria-pressed="true"] { background: #1e88e5; border-color: #64b5f6; }
+    .toolbar {
+      position: fixed; left: 12px; bottom: 12px; display: flex; gap: 6px;
+      background: rgba(0,0,0,0.55); border-radius: 8px; padding: 8px;
+      font: 12px system-ui, sans-serif; color: #fff; z-index: 20;
+      align-items: center; max-width: calc(100vw - 24px); flex-wrap: wrap;
+    }
+    .toolbar .tool {
+      background: #37474f; color: #fff; border: 1px solid #546e7a;
+      border-radius: 6px; padding: 4px 8px; cursor: pointer; font: inherit;
+    }
+    .toolbar .tool--danger { background: #4e342e; border-color: #8d6e63; }
+    .toolbar .tool--active { background: #1e88e5; border-color: #64b5f6; }
+    .toolbar .toolbar-hint { color: #b0bec5; padding: 0 4px; }
+    .toasts {
+      position: fixed; right: 12px; bottom: 12px; display: flex;
+      flex-direction: column; gap: 6px; z-index: 10; max-width: 320px; pointer-events: none;
+    }
+    .toast {
+      background: rgba(38,50,56,0.92); color: #fff; border-radius: 8px;
+      padding: 8px 12px; font: 13px system-ui, sans-serif; border-left: 4px solid #90a4ae;
+      transition: opacity 0.2s;
+    }
+    .toast--ok { border-left-color: #43a047; }
+    .toast--warn { border-left-color: #fbc02d; } /* R39 (t_1c21c88e) : tréso/emprunt, lisible sans couleur seule */
+    .toast--err { border-left-color: #e53935; }
+    .toast--out { opacity: 0; transform: translateY(4px); }
+    /* Juice (t_5065be95) : animations légères des panneaux — entrées à la
+       création/affichage (keyframe rejouée) et sorties des toasts (glissade).
+       Le DÉCLENCHEMENT des entrées re-affichées est géré par juice.fx
+       (src/ui/juice.mjs, testé) ; le CSS fait seulement l'animation. */
+    @keyframes fx-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+    @keyframes fx-out {
+      from { opacity: 1; }
+      to { opacity: 0; transform: translateY(4px); }
+    }
+    .panel, .planning, .intro, .toast { animation: fx-in 0.18s ease-out; }
+    .toast { transition: opacity 0.2s ease, transform 0.2s ease; }
+    .fx-enter { animation: fx-in 0.18s ease-out; }
+    .fx-exit { animation: fx-out 0.18s ease-in forwards; }
+    /* Panneau planning (BL-16) : liste consultable des vols + accepter/refuser. */
+    .planning {
+      position: fixed; right: 12px; top: 12px; z-index: 10; max-width: 360px;
+      background: rgba(0,0,0,0.55); border-radius: 8px; padding: 8px;
+      font: 12px system-ui, sans-serif; color: #fff;
+    }
+    .planning h4 { margin: 0 0 4px; color: #b0bec5; font-size: 12px; }
+    .planning-row { display: flex; gap: 6px; align-items: center; padding: 2px 0; }
+    .planning-row span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .planning-row button {
+      background: #37474f; color: #fff; border: 1px solid #546e7a;
+      border-radius: 6px; padding: 2px 8px; cursor: pointer; font: 11px system-ui;
+      white-space: nowrap;
+    }
+    .planning-row button:last-of-type { border-color: #8d6e63; background: #4e342e; }
+    .planning-empty { color: #90a4ae; font-style: italic; margin: 2px 0; }
+    .planning-auto { display: flex; gap: 4px; align-items: center; color: #b0bec5; margin-top: 4px; }
+    /* R19 — sections « à décider / en cours » + note de décision + filtres. */
+    .planning-sec { margin: 4px 0 2px; color: #90a4ae; font-size: 11px; font-weight: 600; }
+    .planning-note { color: #b0bec5; font-style: italic; }
+    .planning-filters { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+    .planning-filter {
+      background: #263238; color: #b0bec5; border: 1px solid #455a64;
+      border-radius: 6px; padding: 1px 6px; cursor: pointer; font: 10px system-ui;
+    }
+    .planning-filter.on { background: #455a64; color: #fff; border-color: #90a4ae; }
+    /* Panneaux NONMVP-5 (inspection, bilan, stats, alertes, diagnostic réseau) :
+       colonne en bas à droite, sous les toasts ; défile si trop haute. */
+    .panels {
+      position: fixed; right: 12px; bottom: 64px; z-index: 10;
+      display: flex; flex-direction: column; gap: 8px; max-width: 360px;
+      max-height: calc(100vh - 90px); overflow-y: auto;
+    }
+    .panel {
+      background: rgba(0,0,0,0.55); border-radius: 8px; padding: 8px;
+      font: 12px system-ui, sans-serif; color: #fff;
+    }
+    .panel h4 { margin: 0 0 4px; color: #b0bec5; font-size: 12px; }
+    .pline { display: flex; gap: 6px; padding: 1px 0; }
+    .pline > span { color: #b0bec5; min-width: 110px; flex: none; }
+    .pline--good { color: #a5d6a7; }
+    .pline--bad { color: #ef9a9a; }
+    .pline--warn { color: #fff59d; }
+    .aline { padding: 1px 0; color: #cfd8dc; }
+    /* R20 : carte d'introduction (premier cycle, désactivable) — bas gauche,
+       au-dessus de la barre de construction (la barre reste en bas à gauche). */
+    .intro {
+      position: fixed; left: 12px; bottom: 96px; z-index: 10; max-width: 340px;
+      background: rgba(0,0,0,0.6); border: 1px solid #546e7a; border-radius: 8px;
+      padding: 8px; font: 12px system-ui, sans-serif; color: #fff;
+    }
+    .intro h4 { margin: 0 0 4px; color: #ffe082; font-size: 13px; }
+    .intro p { margin: 0 0 6px; color: #eceff1; }
+    .intro-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    /* R35 : écran de faillite (bilan + décisions) — modal plein centre, la
+       carte est STOPPÉE derrière (le tick rentre par l'entrée : bankrupt). */
+    .bankruptcy {
+      position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      z-index: 30; max-width: 480px; width: calc(100vw - 24px);
+      background: rgba(26,16,8,0.97); border: 2px solid #ef5350; border-radius: 10px;
+      padding: 14px; font: 13px system-ui, sans-serif; color: #fff;
+    }
+    .bankruptcy h4 { margin: 0 0 8px; color: #ef5350; font-size: 15px; }
+    .bankruptcy-statement .kv { display: flex; gap: 8px; padding: 1px 0; }
+    .bankruptcy-statement .kv > span:first-child { color: #b0bec5; min-width: 190px; flex: none; }
+    .kv--bad > span:last-child { color: #ef9a9a; }
+    .kv--warn > span:last-child { color: #fff59d; }
+    .bankruptcy-statement p { margin: 6px 0 8px; color: #cfd8dc; font-size: 12px; }
+    .bankruptcy-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .bankruptcy-actions .tool {
+      background: #37474f; color: #fff; border: 1px solid #546e7a;
+      border-radius: 6px; padding: 6px 12px; cursor: pointer; font: 13px system-ui;
+    }
+    /* R39 (t_1c21c88e) : ÉCRANS ÉTROITS — la colonne de panneaux (360 px) et
+       les toasts (320 px) ne doivent plus COUCHER la carte ni se CHEVAUCHER :
+       pleine largeur (marge 8 px), la hauteur reste bornée (défilement) et la
+       zone d'atterrissage (canvas) reste jouable. Le reste est déjà fluide
+       (toolbar flex-wrap, toasts pointer-events:none).
+       ponytail : UN seuil (560 px) + pleine largeur ; on ne fera pas de
+       layout responsive multi-brisures tant que le jeu vise d'abord le desktop.
+       (À la FIN de la feuille : même spécificité que les règles de base,
+       mais après → il gagne.) */
+    @media (max-width: 560px) {
+      .panels {
+        left: 8px; right: 8px; bottom: 56px; max-width: none;
+        max-height: calc(100vh - 120px);
+      }
+      .toasts { left: 8px; right: 8px; bottom: auto; top: 8px; max-width: none; }
+      .menu-btns { max-width: 100vw; }
+    }
+
+    /* T51 (t_cccfbc97) : CORRECTION DU CHEVAUCHEMENT DES COUCHES — hiérarchie
+       z-index EXPLICITE et UNIQUE (un niveau par couche DOM ; le JUICE est
+       peint sur le canvas du jeu, il hérite donc du niveau du canvas et est
+       pointer-events:none par nature — pixels peints, pas une couche DOM à
+       empiler) + layout par ZONES (aucun élément interactif ne masque la
+       zone de jeu ni un autre élément interactif) :
+       10   = canvas jeu (le monde + HUD + juice y sont peints)
+       100  = commandes du menu (.menu-btns)
+       101  = planning (.planning) · 102 = consultation (.panels)
+       103  = intro (.intro) · 104 = barre de construction (.toolbar)
+       500  = toasts (.toasts — transitoires, pointer-events:none)
+       1000 = modales (.bankruptcy / .options)
+       Zones desktop (sans superposition, bornes mesurées par
+       qa/ui-no-overlap-cdp.mjs) : planning HAUTE DROITE (12px → 45vh-8),
+       consultation = COLONNE DROITE (45vh+8 → 64px du bas, scroll interne),
+       toolbar BAS GAUCHE borné en largeur (384px du bord droit : elle ne
+       touche plus la colonne de droite ; hauteur bornée 104px : elle ne
+       couvre jamais l'intro), intro BAS GAUCHE (116px du bas = au-dessus de
+       la toolbar), toasts = COIN LIBRE BAS DROITE (12 → 64px du bas : sous
+       la colonne de consultation, à droite de la toolbar).
+       Mobile (≤560px) : pile verticale — planning en haut (25vh), toasts
+       juste dessous, intro au-dessus de la feuille de consultation (30vh,
+       76px du bas), toolbar en RANGÉE HORIZONTALE unique (44px, scroll).
+       Le bloc est à la FIN de la feuille → il gagne sur les règles de base
+       à spécificité égale (même convention que le @media ci-dessus). */
+    canvas#game { position: relative; z-index: 10; }
+    .menu-btns { z-index: 100; }
+    .planning { z-index: 101; max-height: calc(45vh - 20px); overflow-y: auto; }
+    .panels { z-index: 102; top: calc(45vh + 8px); bottom: 64px; max-height: none; }
+    .intro { z-index: 103; bottom: 116px; }
+    .toolbar { z-index: 104; right: 384px; box-sizing: border-box; max-height: 104px; overflow-y: auto; }
+    .toasts { z-index: 500; max-height: 52px; overflow: hidden; }
+    .bankruptcy { z-index: 1000; }
+    /* R43 : la page options n'avait AUCUNE règle de position (flow normal,
+       invisible) — modale centrée au niveau des modales. */
+    .options {
+      position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      z-index: 1000; max-width: 420px; width: calc(100vw - 24px);
+      max-height: calc(100vh - 48px); overflow-y: auto;
+      background: rgba(20, 24, 28, 0.97); border: 1px solid #546e7a; border-radius: 10px;
+      padding: 14px; font: 13px system-ui, sans-serif; color: #fff;
+    }
+    .options h4 { margin: 0 0 10px; color: #ffe082; font-size: 15px; }
+    .options .opt-row { margin: 6px 0; }
+    .options .opt-label { display: flex; align-items: center; gap: 8px; }
+    .options .opt-name { color: #b0bec5; flex: 1; }
+    .options .opt-value { color: #eceff1; min-width: 56px; text-align: right; font: 12px system-ui; }
+    .options .opt-volume { width: 140px; accent-color: #1e88e5; }
+    .options .opt-speeds { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+    .options .tool {
+      background: #37474f; color: #fff; border: 1px solid #546e7a;
+      border-radius: 6px; padding: 6px 12px; cursor: pointer; font: 13px system-ui;
+    }
+    .options .tool[aria-pressed="true"] { background: #1e88e5; border-color: #64b5f6; }
+    /* T4 (t_eb78478e) : DESIGN TOKENS « tour de contrôle la nuit » — source
+       UNIQUE = src/ui/theme.mjs (ce bloc les MIRE, le test t4-theme vérifie
+       la cohérence : un token changé d'un côté DOIT l'être de l'autre). */
+    :root {
+      --at-bg: #0a1220;
+      --at-surface: #111a2b;
+      --at-surface-alt: #182439;
+      --at-border: #2a3b55;
+      --at-text: #e8eef7;
+      --at-text-dim: #93a4bd;
+      --at-accent: #4fc3f7;
+      --at-accent-soft: rgba(79,195,247,0.16);
+      --at-ok: #4caf7a;
+      --at-warn: #ffb74d;
+      --at-err: #ef5350;
+      --at-gold: #ffd54f;
+    }
+    html, body { background: var(--at-bg); } /* nuit profonde (le canvas couvre l'écran, le fond reste discret) */
+    /* T4 : ASTUCES d'onboarding (tips.mjs) — toasts dorés, une seule fois
+       (persistance state.tips.seen) ; la zone .toasts reste dédiée (T51). */
+    .toast--tip {
+      border-left-color: var(--at-gold);
+      background: rgba(24, 32, 48, 0.94);
+      box-shadow: 0 0 0 1px var(--at-accent-soft);
+    }
+    .toast--tip .tip-title { color: var(--at-gold); font-weight: 600; }
+    /* T4 : icônes vectorielles (icons.mjs) dans les boutons de construction
+       et du menu — 18-20 px, jamais de texte dupliqué. */
+    .tool .icon, .menu-diff .icon { margin-right: 6px; vertical-align: -4px; }
+    /* T4 : boutons du menu — filet d'accent cyan (balise de tour) + survol. */
+    .menu-btns .tool {
+      border-top: 2px solid transparent;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+    .menu-btns .tool:hover { border-top-color: var(--at-accent); background: #42525e; }
+    .menu-btns .tool[aria-pressed="true"] { border-top-color: var(--at-gold); }
+    @media (max-width: 560px) {
+      .planning { left: 8px; right: 8px; max-width: none; max-height: 25vh; overflow-y: auto; }
+      .toasts { left: 8px; right: 8px; top: calc(25vh + 24px); bottom: auto; max-width: none; max-height: calc(45vh - 255px); overflow: hidden; }
+      .intro { left: 8px; right: 8px; bottom: calc(30vh + 84px); max-width: none; }
+      .panels { left: 8px; right: 8px; top: auto; bottom: 76px; max-width: none; max-height: 30vh; overflow-y: auto; }
+      .toolbar { left: 8px; right: 8px; bottom: 12px; max-width: none; box-sizing: border-box; max-height: 48px; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; }
+      .menu-btns { max-width: 100vw; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+    <script src="./standalone.js"></script>
+</body>
+</html>
