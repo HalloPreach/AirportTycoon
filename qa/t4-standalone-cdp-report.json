@@ -1,9 +1,9 @@
 {
   "verdict": "PASS",
-  "timestamp": "2026-10-14T15:46:10.245Z",
+  "timestamp": "2026-10-14T20:17:06.368Z",
   "artifact": {
-    "js": 617617,
-    "html": 19035
+    "js": 632910,
+    "html": 22236
   },
   "checks": [
     {
@@ -19,7 +19,7 @@
     {
       "name": "A2 0 ressource src/ (tout est inliné)",
       "ok": true,
-      "detail": "ressources=5 (src/: 0)"
+      "detail": "ressources=2 (src/: 0)"
     },
     {
       "name": "A2b standalone.js chargé",
@@ -49,7 +49,7 @@
     {
       "name": "A7 simulation progresse (temps de jeu avance)",
       "ok": true,
-      "detail": "t0=0.016700000000000045 t30=0.5000000000000002"
+      "detail": "t0=0.01709999999999991 t30=0.5253000000000002"
     },
     {
       "name": "A8 icônes vectorielles T4 dans la toolbar (canvas .tool)",
@@ -64,7 +64,7 @@
     {
       "name": "A10 sauvegarde + rechargement cohérent",
       "ok": true,
-      "detail": "saved=true load=true money=12000"
+      "detail": "saved=true load=true money=11998"
     },
     {
       "name": "A11 0 exception page (section http)",
@@ -98,9 +98,9 @@
     }
   ],
   "captures": [
-    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t4-standalone-20261014-174605-menu.png",
-    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t4-standalone-20261014-174605-jeu.png",
-    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t4-standalone-20261014-174605-menu-offline.png"
+    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t4-standalone-20261014-221702-menu.png",
+    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t4-standalone-20261014-221702-jeu.png",
+    "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t4-standalone-20261014-221702-menu-offline.png"
   ],
   "pageExceptions": []
 }
