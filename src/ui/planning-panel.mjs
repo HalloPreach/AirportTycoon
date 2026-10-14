@@ -57,7 +57,34 @@ export function makePlanningPanel({ state, toast, onAutoChange }) {
     onAutoChange?.(autoCb.checked);
   });
   autoLabel.append(autoCb, document.createTextNode(' auto-accepter les vols prévus'));
-  box.append(title, decTitle, decRows, filterBar, opsTitle, opsRows, autoLabel);
+  // T6 (t_87168414) : repliable (accordion) — sur mobile, la bande est
+  // repliée PAR DÉFAUT (la map garde ≥60 % de la hauteur) ; le bouton
+  // .fold (≥44×44) déplie le contenu (22vh, scroll interne). Desktop : le
+  // bouton est masqué (.fold display:none) et la bande reste visible —
+  // le comportement desktop est intact.
+  const fold = document.createElement('button');
+  fold.className = 'fold';
+  fold.type = 'button';
+  fold.setAttribute('aria-expanded', 'true');
+  fold.textContent = '▾ Planning & réseau';
+  // matchMedia : indisponible sous Node (tests sans DOM) → null = pas de
+  // repli par défaut, pas de changement (le bouton existe quand même).
+  const mqMobile = (typeof window !== 'undefined' && typeof window.matchMedia === 'function')
+    ? window.matchMedia('(max-width: 560px)') : null;
+  function setFold(open) {
+    box.classList.toggle('open', open);
+    fold.setAttribute('aria-expanded', String(open));
+    fold.textContent = (open ? '▾ ' : '▴ ') + 'Planning & réseau';
+    document.body.classList.toggle('plan-open', open); // les toasts s'adaptent (T6)
+  }
+  fold.addEventListener('click', () => setFold(!box.classList.contains('open')));
+  if (mqMobile) {
+    if (mqMobile.matches) setFold(false); // mobile : replié par défaut (map dégagée)
+    mqMobile.addEventListener('change', (e) => { if (!e.matches) setFold(true); });
+  }
+  // Le fold est PREMIER enfant (bandeau au-dessus du contenu) — inséré dans
+  // l'ordre d'append (le stub DOM des tests n'a pas prepend).
+  box.append(fold, title, decTitle, decRows, filterBar, opsTitle, opsRows, autoLabel);
   document.body.appendChild(box);
 
   // Synchronise le miroir DOM de la case sur l'état (touche A / rechargement /

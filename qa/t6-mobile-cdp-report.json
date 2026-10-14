@@ -1,0 +1,100 @@
+{
+  "task": "t_87168414",
+  "test": "qa/t6-mobile-cdp.mjs",
+  "ts": "2026-10-14T20:15:21.127Z",
+  "viewport": {
+    "w": 390,
+    "h": 844,
+    "dpr": 2
+  },
+  "checks": {
+    "pan": {
+      "pass": true,
+      "before": {
+        "x": 800,
+        "y": 600,
+        "z": 1
+      },
+      "after": {
+        "x": 700,
+        "y": 560,
+        "z": 1
+      },
+      "delta": {
+        "x": -100,
+        "y": -40
+      },
+      "expected": {
+        "x": -100,
+        "y": -40
+      },
+      "note": "pan 1 doigt : delta écran / zoom (camera.pan)"
+    },
+    "pinch": {
+      "pass": true,
+      "before": 1,
+      "after": 2,
+      "note": "pinch 2 doigts : zoom × (d2/d1) centré au point milieu (camera.zoomAt)"
+    },
+    "tapBuild": {
+      "pass": true,
+      "tapAt": [
+        195,
+        422
+      ],
+      "before": 3,
+      "after": 4,
+      "note": "tap en mode construction (taxiway, caméra sur zone libre) = pose d'EXACTEMENT 1 bâtiment (buildTool.clickAt, même chemin que le click desktop)"
+    },
+    "tapSelect": {
+      "pass": true,
+      "tapped": {
+        "sx": 195,
+        "sy": 422,
+        "id": 1
+      },
+      "selection": {
+        "kind": "bldg",
+        "id": 1
+      },
+      "note": "tap sur un bâtiment = sélection d'inspection (panels.clickAt, R39)"
+    },
+    "toasts": {
+      "pass": true,
+      "toastsRect": {
+        "x": 8,
+        "y": 56,
+        "w": 374,
+        "h": 162
+      },
+      "interactiveCount": 0,
+      "overlaps": [],
+      "note": "état replié : le toast affiché 300 ms, surface d'intersection avec chaque élément interactif visible"
+    },
+    "layout": {
+      "pass": true,
+      "collapsedByDefault": true,
+      "freeBandPx": 846,
+      "freePct": 100.2,
+      "toolbarMinTarget": 44,
+      "foldMinTarget": 44,
+      "note": "état replié par défaut : bande map libre ≥ 60 % + cibles tactiles ≥ 44 px"
+    },
+    "toastsExpanded": {
+      "pass": true,
+      "planOpen": true,
+      "toastsRect": {
+        "x": 8,
+        "y": 213.671875,
+        "w": 374,
+        "h": 146
+      },
+      "interactiveCount": 0,
+      "overlaps": [],
+      "note": "bandes dépliées : le toast reste dans la zone libre (top: calc(22vh + 16px))"
+    }
+  },
+  "innerWidth": 390,
+  "screen": "menu",
+  "summary": "7/7 checks OK"
+}

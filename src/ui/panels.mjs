@@ -155,6 +155,31 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   col.className = 'panels';
   col.setAttribute('role', 'complementary');
   col.setAttribute('aria-label', 'Panneaux de consultation (inspection, finances, stats, alertes, réseau)');
+  // T6 (t_87168414) : repliable (accordion) — sur mobile, le bandeau est
+  // replié PAR DÉFAUT (la map garde ≥60 % de la hauteur) ; le bouton .fold
+  // (≥44×44) déplie le contenu (30vh, scroll interne). Desktop : le bouton
+  // est masqué (.fold display:none) et le bandeau reste toujours visible —
+  // le comportement desktop est intact.
+  const fold = document.createElement('button');
+  fold.className = 'fold';
+  fold.type = 'button';
+  fold.setAttribute('aria-expanded', 'true');
+  fold.textContent = '▾ Consultation';
+  const mqMobile = (typeof window !== 'undefined' && typeof window.matchMedia === 'function')
+    ? window.matchMedia('(max-width: 560px)') : null;
+  function setFold(open) {
+    col.classList.toggle('open', open);
+    fold.setAttribute('aria-expanded', String(open));
+    fold.textContent = (open ? '▾ ' : '▴ ') + 'Consultation';
+  }
+  fold.addEventListener('click', () => setFold(!col.classList.contains('open')));
+  // Premier enfant (le stub DOM des tests n'a pas prepend ; les sections
+  // makeSection ci-dessous sont ajoutées après → l'ordre reste le même).
+  col.appendChild(fold);
+  if (mqMobile) {
+    if (mqMobile.matches) setFold(false); // mobile : replié par défaut (map dégagée)
+    mqMobile.addEventListener('change', (e) => { if (!e.matches) setFold(true); });
+  }
   document.body.appendChild(col);
 
   // --- 1. Inspection avion + bâtiment (clic sur la carte) -------------------
@@ -312,13 +337,17 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   // Clic sur la carte : avion (rayon ~30 px écran) puis bâtiment (rect).
   // L'outil de construction/démolition garde la priorité s'il est actif (son
   // propre click listener gère la pose/démolition).
+  // T6 (t_87168414) : pickAt(sx, sy) porte la logique avec des coordonnées
+  // EXPLICITES — le click desktop délègue (e.offsetX/offsetY) et le tap
+  // tactil (touch.mjs) appelle LE MÊME chemin (panels.clickAt). Zéro
+  // duplication : la sélection a une seule implémentation.
   const canvas = document.querySelector('#game');
-  canvas.addEventListener('click', (e) => {
+  function pickAt(sx, sy) {
     if (buildTool && buildTool.isActive()) return; // le clic est géré par l'outil
     if (state.screen !== 'game' || !state.sim) return;
     const v = viewSize();
-    const wx = camera.screenToWorldX(e.offsetX, v.width);
-    const wy = camera.screenToWorldY(e.offsetY, v.height);
+    const wx = camera.screenToWorldX(sx, v.width);
+    const wy = camera.screenToWorldY(sy, v.height);
     const sim = state.sim;
     const r = 30 / state.camera.zoom; // rayon d'inspection en unités MONDE (le zoom compte)
     const ac = sim.aircraft.find((a) => Math.abs(a.x - wx) <= r && Math.abs(a.y - wy) <= r);
@@ -326,7 +355,8 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
     const b = [...sim.infra.runways, ...sim.infra.taxiways, ...sim.infra.terminals, ...sim.infra.services]
       .find((x) => wx >= x.x && wx <= x.x + x.w && wy >= x.y && wy <= x.y + x.h);
     pick = b ? { kind: 'bldg', id: b.id } : null;
-  });
+  }
+  canvas.addEventListener('click', (e) => pickAt(e.offsetX, e.offsetY));
 
   // --- 2. Bilan financier détaillé (surfacer economy.periodStatement) -------
   const fin = makeSection(col, 'panel', 'Bilan financier');
@@ -766,6 +796,9 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
     // R39 (t_1c21c88e) : la sélection d'inspection est EXPOSÉE au renderer
     // (l'entouré blanc pointillé suit l'objet) — lecture seule de `pick`.
     selectionOf: () => pick,
+    // T6 (t_87168414) : la sélection tactil passe par LE MÊME chemin que le
+    // click desktop (pickAt — main.mjs la câble au tap de touch.mjs).
+    clickAt: (sx, sy) => pickAt(sx, sy),
     col,
   };
 }

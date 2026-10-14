@@ -150,12 +150,16 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
     else tool.ghost = null;
   });
 
-  canvas.addEventListener('click', async (e) => {
+  // T6 (t_87168414) : clickAt(sx, sy) — la logique de pose/démolition avec
+  // des coordonnées EXPLICITES. Le click desktop délègue (e.offsetX/offsetY),
+  // le tap tactil (touch.mjs) appelle le MÊME chemin : une seule logique,
+  // zéro duplication. L'async vient du chargement différé de la règle (sim).
+  tool.clickAt = async (sx, sy) => {
     if (!state.sim) { toast('Simulation non prête', 'err'); return; }
     if (tool.demolishMode) {
-      // Bâtiment sous la souris → démolir (verdict de la sim, lisible en toast).
-      const wx = camera.screenToWorldX(e.offsetX, viewSize().width);
-      const wy = camera.screenToWorldY(e.offsetY, viewSize().height);
+      // Bâtiment sous le point → démolir (verdict de la sim, lisible en toast).
+      const wx = camera.screenToWorldX(sx, viewSize().width);
+      const wy = camera.screenToWorldY(sy, viewSize().height);
       const sim = state.sim;
       const hit = [...sim.infra.runways, ...sim.infra.taxiways, ...sim.infra.terminals, ...sim.infra.services]
         .find((b) => wx >= b.x && wx <= b.x + b.w && wy >= b.y && wy <= b.y + b.h);
@@ -168,7 +172,7 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
       return;
     }
     if (!tool.mode) return;
-    computeGhost(e.offsetX, e.offsetY);
+    computeGhost(sx, sy);
     const g = tool.ghost;
     if (!g.ok) { toast(g.why, 'err'); return; }
     const { buildBuilding } = await import('../infra/infra.mjs').catch(() => ({ buildBuilding: null }));
@@ -182,7 +186,8 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
       // est déjà passé dans sim.alerts → le HUD l'affiche. On n'ajoute pas un 2e toast.
     }
     tool.ghost = null;
-  });
+  };
+  canvas.addEventListener('click', (e) => tool.clickAt(e.offsetX, e.offsetY));
 
   // R20 : les boutons de commandes reflètent l'état courant (vitesse, pause).
   // `refreshControls` est appelé à chaque frame par main.mjs — le label du

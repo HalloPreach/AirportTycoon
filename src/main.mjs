@@ -5,6 +5,7 @@ import { newGame, setScreen, togglePause, cycleSpeed, SCREENS, SPEEDS } from './
 import { EventBus } from './core/events.mjs';
 import { Camera } from './ui/camera.mjs';
 import { makeInputHandlers } from './ui/input.mjs';
+import { makeTouchHandlers } from './ui/touch.mjs'; // T6 (t_87168414) : tactile (pan/pinch/tap)
 import { makeRenderer } from './ui/renderer.mjs';
 import { makeOptionsPage, loadOptions, saveOptionsToStorage, normalizeOptions } from './ui/options.mjs'; // R43 : options persistantes
 import { startLoop } from './core/loop.mjs';
@@ -188,6 +189,18 @@ export function boot(canvas) {
     state, camera,
     viewSize: () => ({ width: canvas.width, height: canvas.height }),
     buildTool,
+  });
+
+  // T6 (t_87168414) : ENTRÉE TACTILE — pan 1 doigt, pinch zoom 2 doigts,
+  // tap = click. Le TAP est routé vers LE MÊME chemin que le click desktop
+  // (buildTool.clickAt + panels.clickAt — une seule logique par module,
+  // zéro duplication). Desktop : aucun événement touch ne se produit, le
+  // comportement souris/clavier est intact.
+  makeTouchHandlers(canvas, camera, () => ({ width: canvas.width, height: canvas.height }), {
+    onTap: (sx, sy) => {
+      buildTool.clickAt(sx, sy); // pose / démolition (l'outil gère sa priorité)
+      panels.clickAt(sx, sy);    // sélection d'inspection (R39)
+    },
   });
 
   // R20 : introduction du PREMIER CYCLE (carte courte, désactivable — « Passer
