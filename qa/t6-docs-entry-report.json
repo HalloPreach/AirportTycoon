@@ -1,0 +1,37 @@
+{
+  "task": "t_87168414",
+  "test": "qa/t6-docs-entry.mjs",
+  "entry": "/docs/game.html",
+  "ts": "2026-10-14T20:15:29.995Z",
+  "viewport": {
+    "w": 390,
+    "h": 844,
+    "dpr": 2
+  },
+  "checks": {
+    "touchAction": {
+      "pass": true,
+      "value": "none"
+    },
+    "accordion": {
+      "pass": true,
+      "fold": {
+        "present": true,
+        "visible": true,
+        "w": 374,
+        "h": 44
+      },
+      "defaultState": "repliées (pas de .open)"
+    },
+    "tapBuild": {
+      "pass": true,
+      "tapAt": [
+        195,
+        422
+      ],
+      "before": 3,
+      "after": 4,
+      "note": "tap (chemin buildTool.clickAt partagé) pose EXACTEMENT 1 bâtiment sur l’entrée docs"
+    }
+  }
+}

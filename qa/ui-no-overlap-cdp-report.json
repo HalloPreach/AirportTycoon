@@ -1,7 +1,7 @@
 {
   "task": "t_cccfbc97",
   "test": "qa/ui-no-overlap-cdp.mjs",
-  "ts": "2026-10-14T15:31:06.588Z",
+  "ts": "2026-10-14T20:14:47.611Z",
   "rule": "aucun élément interactif visible ne chevauche un autre (zones + z-index) ; #game (zone de jeu) et .toasts (pointer-events:none) exclus des paires ; au menu, les 3 racines de panneaux de jeu sont masquées",
   "viewports": [
     {
@@ -572,7 +572,7 @@
               "z": "500",
               "pe": "none",
               "x": 8,
-              "y": 226,
+              "y": 56,
               "w": 374,
               "h": 0
             },
@@ -616,7 +616,7 @@
               "x": 20,
               "y": 12,
               "w": 350,
-              "h": 417
+              "h": 429
             }
           ],
           "overlaps": [],
@@ -647,7 +647,7 @@
               "z": "500",
               "pe": "none",
               "x": 8,
-              "y": 226,
+              "y": 56,
               "w": 374,
               "h": 48
             },
@@ -661,7 +661,7 @@
               "x": 8,
               "y": 8,
               "w": 374,
-              "h": 203
+              "h": 46
             },
             {
               "sel": ".panels",
@@ -671,9 +671,9 @@
               "z": "102",
               "pe": "auto",
               "x": 8,
-              "y": 515,
+              "y": 724,
               "w": 374,
-              "h": 253
+              "h": 44
             },
             {
               "sel": ".intro",
@@ -742,7 +742,7 @@
               "z": "500",
               "pe": "none",
               "x": 8,
-              "y": 226,
+              "y": 56,
               "w": 374,
               "h": 32
             },
@@ -756,7 +756,7 @@
               "x": 8,
               "y": 8,
               "w": 374,
-              "h": 203
+              "h": 46
             },
             {
               "sel": ".panels",
@@ -766,9 +766,9 @@
               "z": "102",
               "pe": "auto",
               "x": 8,
-              "y": 515,
+              "y": 724,
               "w": 374,
-              "h": 253
+              "h": 44
             },
             {
               "sel": ".intro",
