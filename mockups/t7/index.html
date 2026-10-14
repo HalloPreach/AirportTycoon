@@ -1,0 +1,131 @@
+<!doctype html>
+<!-- ============================================================
+  T7 (t_185c6f94) — PAGE D'ACCUEIL DE LA REVUE DES DIRECTIONS v2.
+  Auto-suffisante : 0 asset externe, 0 dépendance, 0 réseau,
+  DETERMINISTE (aucun Math.random). NE PAS IMPLÉMENTER avant
+  le choix d'Elsay (porte design T7).
+============================================================ -->
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>T7 · Choix de direction visuelle v2 — Airport Tycoon</title>
+<style>
+  :root {
+    --bg: #06080C; --surface: #0D1118; --border: #22303F;
+    --text: #D7E1E9; --dim: #7C8B99;
+    --radius: 6px;
+    --font-body: "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 15px/1.5 var(--font-body); -webkit-font-smoothing: antialiased; }
+  main { max-width: 980px; margin: 0 auto; padding: 40px 20px 70px; }
+  h1 { font: 700 30px/1.25 var(--font-body); letter-spacing: 0.01em; margin: 0 0 6px; }
+  .sub { color: var(--dim); margin: 0 0 8px; }
+  .rule { border: 0; border-top: 1px solid var(--border); margin: 22px 0; }
+  .card {
+    display: grid; grid-template-columns: 120px 1fr; gap: 18px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px; margin: 14px 0;
+  }
+  .card .letter {
+    display: grid; place-items: center;
+    font: 700 44px var(--font-body); color: #fff;
+    border-radius: var(--radius);
+  }
+  .card.a .letter { background: #E9EEF3; color: #17242F; border: 1px solid #C4D0DC; }
+  .card.b .letter { background: #0A100C; border: 1px solid #45F0A0; }
+  .card.c .letter { background: #0E1520; border: 1px solid #45B8F0; }
+  .card h2 { margin: 0 0 4px; font: 700 17px var(--font-body); letter-spacing: 0.02em; }
+  .card p { margin: 0 0 8px; color: var(--dim); font-size: 13.5px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chips span {
+    width: 18px; height: 18px; border-radius: 3px; display: inline-block;
+    border: 1px solid rgba(255,255,255,0.18);
+  }
+  .pros { color: #7FD6A8; font-size: 12.5px; margin: 6px 0 2px; }
+  .risk { color: #E8A9A0; font-size: 12.5px; margin: 0 0 10px; }
+  a.go {
+    display: inline-block; text-decoration: none; font: 600 13px var(--font-body);
+    color: #fff; background: #1B2B3B; border: 1px solid var(--border);
+    border-radius: 4px; padding: 7px 16px;
+  }
+  a.go:hover { background: #24384C; }
+  footer { color: var(--dim); font-size: 12.5px; margin-top: 26px; }
+  footer b { color: var(--text); }
+</style>
+</head>
+<body>
+<main>
+  <h1>T7 — Choix de la direction visuelle v2</h1>
+  <p class="sub">Airport Tycoon · 3 directions concurrentes à arbitrer — elles remplacent le thème
+  « Radar Rétro » (v2-radar-retro) rejeté (vert phosphore fatigant, rendu cheap). Chacune :
+  palette avec contrastes <em>mesurés</em>, typo, écran-titre, carte du jeu, panneaux &amp; HUD,
+  y compris le layout « zéro superposition » du HUD (Tâche A). Comparaison à géométrie égale :
+  même monde, mêmes contenus.</p>
+
+  <div class="card a">
+    <div class="letter">A</div>
+    <div>
+      <h2><a class="go" href="direction-a.html">« ATC Clair » — journée de contrôle (panneaux clairs)</a></h2>
+      <p>Charte aéronautique de jour : surfaces claires (blanc / bleu-gris), bleu aviation pour les
+      données et le focus, orange sécurité pour les alertes, carte lisible au marquage blanc.</p>
+      <div class="chips" aria-hidden="true">
+        <span style="background:#E9EEF3"></span><span style="background:#FFFFFF"></span>
+        <span style="background:#1460B0"></span><span style="background:#E8641A"></span><span style="background:#C4372B"></span>
+      </div>
+      <p class="pros">✓ Lisibilité maximale de jour · ton « propret » charte · zéro fatigue phosphore</p>
+      <p class="risk">Risque : en session de nuit de jeu, un thème clair peut paraître peu « immersif ».</p>
+    </div>
+  </div>
+
+  <div class="card b">
+    <div class="letter">B</div>
+    <div>
+      <h2><a class="go" href="direction-b.html">« CRT 2.0 » — phosphore retravaillé (haute lisibilité)</a></h2>
+      <p>Le vert phosphore de la variante C rejetée, CORRIGÉ : texte phosphore lumineux à contraste
+      relevé, fond charbon-vert adouci (plus le noir pur), ambre réservé aux alertes, UI sans-serif +
+      données mono (fin de la mono intégrale), scanlines et statique abolis.</p>
+      <div class="chips" aria-hidden="true">
+        <span style="background:#0A100C"></span><span style="background:#101913"></span>
+        <span style="background:#45F0A0"></span><span style="background:#FFB000"></span><span style="background:#FF6B5E"></span>
+      </div>
+      <p class="pros">✓ Conserve l'identité « salle de contrôle » · corrige le défaut de contraste · différenciant</p>
+      <p class="risk">Risque : dominance verte — peut paraître encore datée (le rejet T5c était précisément sur ce point).</p>
+    </div>
+  </div>
+
+  <div class="card c">
+    <div class="letter">C</div>
+    <div>
+      <h2><a class="go" href="direction-c.html">« Moderne Pro » — ardoise soignée, cyan + ambre chaleureux</a></h2>
+      <p>Le standard « vrai jeu » : fond ardoise graphite sombre (ni CRT, ni clair), accents cyan
+      aviation + ambre chaleureux, panneaux opaques à élévation douce (ombres, pas de néon),
+      hiérarchie claire. Crépuscule sur les rendus — le rendu visé pour le produit fini.</p>
+      <div class="chips" aria-hidden="true">
+        <span style="background:#0E1520"></span><span style="background:#16202C"></span>
+        <span style="background:#45B8F0"></span><span style="background:#F5A94A"></span><span style="background:#F0645A"></span>
+      </div>
+      <p class="pros">✓ Standard « jeu sérieux » · confort session longue · hiérarchie claire, zéro superposition</p>
+      <p class="risk">Risque : moins d'effet de style — l'arbitrage se fait sur le confort et la clarté.</p>
+    </div>
+  </div>
+
+  <hr class="rule"/>
+  <footer>
+    <b>Direction retenue</b> → les tokens de la maquette deviennent la v3 de <b>src/ui/theme.mjs</b>
+    (source unique), appliqués à tous les écrans + le rendu carte (T7c). Layout « zéro superposition »
+    du HUD = Tâche A du T7. Captures déterministes via <b>qa/t7-mockups-cdp.mjs</b>
+    (evidence/t7-mockups-cdp/). Maquettes auto-suffisantes : 0 asset, 0 réseau, 0 dépendance
+    (vanilla JS, polices système).
+  </footer>
+</main>
+<script>
+"use strict";
+// Page statique (0 JS de rendu) — contrat CDP uniforme des maquettes T7 :
+// data-ready signalé pour les captures déterministes (qa/t7-mockups-cdp.mjs).
+document.body.dataset.ready = "1";
+</script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+{
+  "ts": "2026-10-14T21:55:43.980Z",
+  "head": "13847d45e55b8659c8a9de3b77fc3fee89387ad2",
+  "pass": true,
+  "captures": [
+    {
+      "name": "before-title",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t7-mockups-cdp\\t7-mockups-cdp-2026-10-14T21-55-35-624Z-before-title.png",
+      "bytes": 244735,
+      "kb": 239
+    },
+    {
+      "name": "before-game",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t7-mockups-cdp\\t7-mockups-cdp-2026-10-14T21-55-35-624Z-before-game.png",
+      "bytes": 140221,
+      "kb": 136.9
+    },
+    {
+      "name": "after-index",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t7-mockups-cdp\\t7-mockups-cdp-2026-10-14T21-55-35-624Z-after-index.png",
+      "bytes": 99139,
+      "kb": 96.8,
+      "fullPage": true,
+      "pageHeightCssPx": 991,
+      "note": "full-page (captureBeyondViewport) — anti-troncature : pageHeightCssPx = hauteur réelle de la page au moment de la capture"
+    },
+    {
+      "name": "after-a",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t7-mockups-cdp\\t7-mockups-cdp-2026-10-14T21-55-35-624Z-after-a.png",
+      "bytes": 433851,
+      "kb": 423.7,
+      "fullPage": true,
+      "pageHeightCssPx": 4148,
+      "note": "full-page (captureBeyondViewport) — anti-troncature : pageHeightCssPx = hauteur réelle de la page au moment de la capture"
+    },
+    {
+      "name": "after-b",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t7-mockups-cdp\\t7-mockups-cdp-2026-10-14T21-55-35-624Z-after-b.png",
+      "bytes": 528270,
+      "kb": 515.9,
+      "fullPage": true,
+      "pageHeightCssPx": 4270,
+      "note": "full-page (captureBeyondViewport) — anti-troncature : pageHeightCssPx = hauteur réelle de la page au moment de la capture"
+    },
+    {
+      "name": "after-c",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t7-mockups-cdp\\t7-mockups-cdp-2026-10-14T21-55-35-624Z-after-c.png",
+      "bytes": 540483,
+      "kb": 527.8,
+      "fullPage": true,
+      "pageHeightCssPx": 4235,
+      "note": "full-page (captureBeyondViewport) — anti-troncature : pageHeightCssPx = hauteur réelle de la page au moment de la capture"
+    }
+  ],
+  "consoleErrors": [],
+  "specs": [
+    "index",
+    "direction-a",
+    "direction-b",
+    "direction-c"
+  ],
+  "note": "captures déterministes : avant = jeu HEAD (tmp propre via git archive), après = maquettes T7 working-tree (full-page, captureBeyondViewport + pageHeightCssPx consignés = anti-troncature). 0 exception attendue sur les maquettes."
+}

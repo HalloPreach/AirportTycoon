@@ -1,0 +1,859 @@
+<!doctype html>
+<!-- ============================================================
+  T7 (t_185c6f94) — MAQUETTE DE DIRECTION VISUELLE v2 · DIRECTION A
+  « ATC CLAIR » — journée de contrôle : panneaux CLAIRS, bleu
+  aviation + orange sécurité, carte lisible style « charte
+  aéronautique » de jour, typographie sans-serif + données mono.
+  Remplace le thème « Radar Rétro » (v2-radar-retro) rejeté par
+  Elsay (vert phosphore fatigant, rendu cheap en usage réel).
+  ------------------------------------------------------------
+  Auto-suffisante : 0 asset externe (polices système, SVG inline,
+  canvas), 0 dépendance, 0 réseau, DETERMINISTE (aucun
+  Math.random — les captures CDP sont reproductibles).
+  NE PAS IMPLÉMENTER avant la validation d'Elsay (porte design T7).
+  Même contenu/même géométrie de monde que les directions B et C →
+  comparaison à géométrie égale (precedent T5b).
+============================================================ -->
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>T7 · Direction A « ATC Clair » — Airport Tycoon</title>
+<style>
+  /* ---- TOKENS (source de la maquette — si cette direction est choisie,
+     ces valeurs dupliquent src/ui/theme.mjs, source unique du v3) ---- */
+  :root {
+    --bg: #E9EEF3;            /* fond page (ciel de charte) */
+    --surface: #FFFFFF;       /* panneaux (toolbar, planning, consultation) */
+    --surface-2: #F2F6FA;     /* panneaux relevés (modales, toasts) */
+    --border: #C4D0DC;        /* bordures (bleu-gris franc) */
+    --text: #17242F;          /* texte principal (encre marine) */
+    --dim: #5A6B7B;           /* captions, secondaire */
+    --accent: #1460B0;        /* bleu aviation (focus, données, liens) */
+    --accent-2: #E8641A;     /* orange sécurité (alertes, actions) */
+    --accent-soft: rgba(20, 96, 176, 0.08);
+    --ok: #1E7A44;            /* gains / succès (vert signal) */
+    --warn: #92400E;         /* avertissements (ambre foncé — AA clair) */
+    --err: #C4372B;          /* erreurs / incidents (rouge feu) */
+    --gold: #8A5A00;         /* récompenses / astuces (marron-ambre lisible) */
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(23,36,47,0.10), 0 4px 14px rgba(23,36,47,0.06);
+    --font-display: "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    --font-body: "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+    --font-data: "Consolas", "Cascadia Mono", "Roboto Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 14px/1.55 var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* ---- En-tête fixe de la maquette ---- */
+  header.top {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 10px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(23,36,47,0.08);
+  }
+  .brand { font: 700 13px var(--font-display); letter-spacing: 0.04em; }
+  .brand b { color: var(--accent); }
+  .brand .tag {
+    display: inline-block; margin-left: 8px; padding: 2px 9px;
+    border: 1px solid var(--accent); border-radius: 999px;
+    color: var(--accent); font: 600 10.5px var(--font-data); letter-spacing: 0.06em;
+  }
+  nav.nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  nav.nav a {
+    color: var(--dim); text-decoration: none; font: 600 12px var(--font-data);
+    padding: 4px 9px; border-radius: 4px;
+  }
+  nav.nav a:hover { color: var(--text); background: var(--accent-soft); }
+  .switch { margin-left: auto; display: flex; gap: 4px; align-items: center; }
+  .switch a {
+    font: 700 12px var(--font-data); text-decoration: none; text-align: center;
+    color: var(--dim); border: 1px solid var(--border); border-radius: 4px;
+    padding: 4px 10px; background: var(--surface-2);
+  }
+  .switch a.on { color: #fff; border-color: var(--accent); background: var(--accent); }
+  /* ---- Sections ---- */
+  main { max-width: 1060px; margin: 0 auto; padding: 26px 20px 60px; }
+  section.sec { margin: 34px 0; scroll-margin-top: 64px; }
+  section.sec h2 {
+    margin: 0 0 4px; font: 700 22px var(--font-display); letter-spacing: 0.01em;
+  }
+  section.sec h2::before {
+    content: attr(data-n) "  "; color: var(--accent-2); font: 700 15px var(--font-data);
+  }
+  p.lead { margin: 0 0 14px; color: var(--dim); max-width: 780px; }
+  .cap { color: var(--dim); font: 12px var(--font-data); margin-top: 8px; }
+  canvas.art {
+    display: block; margin: 0 auto; max-width: 100%;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); background: #fff;
+  }
+  /* ---- Palette : pastilles + contraste MESURÉ (injecté en JS) ---- */
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 10px; }
+  .swatch {
+    border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+    background: var(--surface); box-shadow: var(--shadow);
+  }
+  .swatch .chip { height: 56px; }
+  .swatch .meta { padding: 8px 10px; font: 12px var(--font-data); }
+  .swatch .meta .name { color: var(--text); font-weight: 700; }
+  .swatch .meta .hex { color: var(--accent); }
+  .swatch .meta .role { color: var(--dim); font: 11px var(--font-body); }
+  .swatch .meta .ratios { margin-top: 5px; font: 10.5px var(--font-data); color: var(--dim); }
+  .ratio-pass { color: var(--ok); font-weight: 700; }
+  .ratio-fail { color: var(--err); font-weight: 700; }
+  /* ---- Typographie : échelle ---- */
+  .type-scale { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden; box-shadow: var(--shadow); }
+  .trow {
+    display: flex; align-items: baseline; gap: 14px;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+  }
+  .trow:last-child { border-bottom: 0; }
+  .trow .label { flex: none; width: 150px; color: var(--dim); font: 600 11px var(--font-data); letter-spacing: 0.05em; }
+  .trow .sample { overflow: hidden; white-space: nowrap; }
+  .t-display { font: 700 44px var(--font-display); letter-spacing: 0.02em; color: var(--text); }
+  .t-h1 { font: 700 26px var(--font-display); }
+  .t-h2 { font: 700 18px var(--font-display); letter-spacing: 0.02em; }
+  .t-body { font: 400 14px var(--font-body); }
+  .t-small { font: 400 12px var(--font-body); color: var(--dim); }
+  .t-data { font: 700 15px var(--font-data); font-variant-numeric: tabular-nums; color: var(--accent); letter-spacing: 0.03em; }
+  /* ---- Grille de panneaux ---- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; align-items: start; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px;
+    box-shadow: var(--shadow); color: var(--text);
+  }
+  .card h3 {
+    margin: 0 0 8px; font: 700 12px var(--font-data); letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--dim);
+  }
+  .card h3::before { content: "▮ "; color: var(--accent-2); }
+  .kv { display: flex; justify-content: space-between; gap: 10px; padding: 2.5px 0; font: 12.5px var(--font-data); font-variant-numeric: tabular-nums; }
+  .kv > span:first-child { color: var(--dim); }
+  .kv .v-ok { color: var(--ok); } .kv .v-warn { color: var(--warn); }
+  .kv .v-err { color: var(--err); } .kv .v-gold { color: var(--gold); }
+  .kv .v-accent { color: var(--accent); }
+  .speeds { display: flex; gap: 5px; margin-top: 6px; }
+  .speeds .s {
+    font: 700 11px var(--font-data); color: var(--dim);
+    border: 1px solid var(--border); border-radius: 4px; padding: 2.5px 9px;
+    background: var(--surface-2);
+  }
+  .speeds .s.on { color: #fff; border-color: var(--accent); background: var(--accent); }
+  /* planning */
+  .psec { margin: 8px 0 3px; color: var(--dim); font: 700 10.5px var(--font-data); letter-spacing: 0.1em; text-transform: uppercase; }
+  .prow { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--border); font: 12.5px var(--font-data); }
+  .prow:last-of-type { border-bottom: 0; }
+  .prow .code { color: var(--accent); font-weight: 700; flex: none; }
+  .prow .desc { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prow .pay { color: var(--gold); flex: none; }
+  .prow button {
+    font: 700 10.5px var(--font-data); border-radius: 4px; padding: 3px 9px; cursor: pointer;
+    border: 1px solid var(--ok); background: var(--ok); color: #fff;
+  }
+  .prow button.no { border-color: var(--err); background: var(--err); color: #fff; }
+  .prow.done .desc { color: var(--dim); }
+  .pauto { margin-top: 7px; font: 11.5px var(--font-body); color: var(--dim); }
+  /* toasts */
+  .toast {
+    display: flex; gap: 8px; align-items: baseline;
+    border-left: 3px solid var(--border);
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 7px 10px; margin: 6px 0; font: 12.5px var(--font-body);
+  }
+  .toast .tt { font-weight: 700; font: 700 12px var(--font-data); }
+  .toast--ok { border-left-color: var(--ok); } .toast--ok .tt { color: var(--ok); }
+  .toast--warn { border-left-color: var(--warn); } .toast--warn .tt { color: var(--warn); }
+  .toast--err { border-left-color: var(--err); } .toast--err .tt { color: var(--err); }
+  .toast--tip { border-left-color: var(--gold); }
+  .toast--tip .tt { color: var(--gold); }
+  /* modale */
+  .modal {
+    position: relative; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface-2); padding: 14px; box-shadow: var(--shadow);
+  }
+  .modal h3 { color: var(--accent); }
+  .mrow { display: flex; align-items: center; gap: 8px; padding: 4px 0; font: 12.5px var(--font-body); color: var(--dim); }
+  .mrow .mlabel { flex: 1; }
+  .mrow input[type="range"] { width: 130px; accent-color: var(--accent); }
+  .mrow .toggle { width: 34px; height: 18px; border-radius: 999px; background: var(--accent); position: relative; flex: none; }
+  .mrow .toggle::after { content: ""; position: absolute; right: 2px; top: 2px; width: 12px; height: 12px; background: #fff; border-radius: 50%; }
+  .mrow .toggle.off { background: var(--border); }
+  .mrow .toggle.off::after { left: 2px; right: auto; background: #fff; }
+  .mbtn {
+    font: 700 12px var(--font-body); border-radius: 6px; padding: 6px 14px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    letter-spacing: 0.03em;
+  }
+  .mbtn.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
+  /* toolbar */
+  .toolbar { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tool {
+    display: inline-flex; align-items: center; gap: 6px;
+    font: 600 12px var(--font-body); color: var(--text);
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 10px; cursor: pointer;
+    letter-spacing: 0.03em; transition: border-color 0.12s ease, background 0.12s ease;
+  }
+  .tool:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .tool svg { width: 16px; height: 16px; stroke: var(--accent); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .tool--danger { border-color: var(--err); }
+  .tool--danger svg { stroke: var(--err); }
+  .tool--active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tool--active svg { stroke: #fff; }
+  /* ---- Scène HUD in-game (section 4B) : panneaux OPAQUES sur la carte ---- */
+  .stage {
+    position: relative; width: 960px; max-width: 100%; margin: 0 auto;
+    border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .stage canvas { display: block; width: 100%; height: auto; }
+  .hud {
+    position: absolute; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); /* OPAQUE 100 % — T7 : zéro superposition */
+    color: var(--text); box-shadow: var(--shadow);
+    font: 11px/1.45 var(--font-data); font-variant-numeric: tabular-nums;
+  }
+  .hud-top { top: 12px; left: 12px; display: flex; gap: 4px; padding: 4px; }
+  .hud-top .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 8px; font-weight: 700;
+  }
+  .hud-top .chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .hud-top .chip.warn .dot { background: var(--warn); }
+  .hud-plan { top: 52px; left: 12px; width: 258px; padding: 8px 10px; }
+  .hud-plan h4 {
+    margin: 0 0 4px; font: 700 10px var(--font-data); letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--dim);
+  }
+  .hud-plan h4 b { color: var(--accent-2); }
+  .hud-plan .l { display: flex; align-items: center; gap: 6px; padding: 2.5px 0; }
+  .hud-plan .l .c { color: var(--accent); font-weight: 700; }
+  .hud-plan .l .d { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hud-plan .l .p { color: var(--gold); }
+  .hud-plan .auto { margin-top: 4px; color: var(--dim); font-size: 10px; }
+  .hud-tools { bottom: 12px; left: 12px; display: flex; gap: 3px; padding: 4px; }
+  .hud-tools .t {
+    width: 30px; height: 30px; display: grid; place-items: center;
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px;
+    font: 700 10px var(--font-data); color: var(--text);
+  }
+  .hud-tools .t svg { width: 15px; height: 15px; stroke: var(--accent); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .hud-tools .t.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .hud-tools .t.on svg { stroke: #fff; }
+  .hud-consult { bottom: 12px; right: 12px; width: 250px; padding: 8px 10px; }
+  .hud-consult h4 {
+    margin: 0 0 4px; font: 700 10px var(--font-data); letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--dim);
+  }
+  .hud-consult h4 b { color: var(--accent); }
+  .hud-consult .g { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; }
+  .hud-consult .g div { display: flex; justify-content: space-between; gap: 6px; }
+  .hud-consult .g span:first-child { color: var(--dim); }
+  .hud-consult .ok { color: var(--ok); font-weight: 700; }
+  .hud-consult .warn { color: var(--warn); font-weight: 700; }
+  /* pied de page */
+  footer.end {
+    border-top: 1px solid var(--border); margin-top: 40px; padding: 18px 20px 40px;
+    color: var(--dim); font: 12px var(--font-data); max-width: 1060px;
+    margin-left: auto; margin-right: auto;
+  }
+  footer.end b { color: var(--accent); }
+  @media (max-width: 640px) {
+    .switch { margin-left: 0; }
+    .trow .label { width: 96px; }
+    .hud-top { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">T7 · Direction v2 <b>« ATC Clair »</b><span class="tag">à valider · pas encore implémentée</span></div>
+  <nav class="nav">
+    <a href="#palette">1 Palette</a><a href="#typo">2 Typo</a><a href="#title">3 Titre</a><a href="#map">4 Carte</a><a href="#hud">4B HUD</a><a href="#panels">5 Panneaux</a>
+  </nav>
+  <div class="switch">
+    <a href="index.html" title="Revue des directions">REVUE</a><a class="on" href="direction-a.html">A</a><a href="direction-b.html">B</a><a href="direction-c.html">C</a>
+  </div>
+</header>
+
+<main>
+  <section class="sec" id="palette">
+    <h2 data-n="1">Palette</h2>
+    <p class="lead">Journée de contrôle : surfaces claires (blanc / bleu-gris), bleu aviation pour les
+    données et le focus, orange sécurité pour les alertes et actions, rouge feu rare. La carte est une
+    « charte » de jour : fond clair, asphaltages gris, marquages blancs, terminaux blancs aux vitres
+    bleutées. Les contrastes affichés sont <em>mesurés</em> (formules WCAG, calculés à l'ouverture) —
+    seuil AA 4.5:1 pour le texte, 3:1 pour les éléments UI.</p>
+    <div class="swatches" id="swatches"></div>
+  </section>
+
+  <section class="sec" id="typo">
+    <h2 data-n="2">Typographie</h2>
+    <p class="lead">SANS-SERIF pour l'interface (Segoe UI / système), MONO tabulaire pour les données
+    (chiffres stables : heures, montants, niveaux). C'est l'anti-phosphore : pas de lueur, pas de
+    police mono intégrale — un rendu « propret » de journée, lisible en plein jour comme en salle de
+    contrôle. Corps 14 px, minimum 12 px (jamais sous 11 px, règle T5a).</p>
+    <div class="type-scale">
+      <div class="trow"><span class="label">DISPLAY · 44 px</span><span class="sample t-display">Airport Tycoon</span></div>
+      <div class="trow"><span class="label">TITRE PANEL · 26 px</span><span class="sample t-h1">Terminal A — Inspection</span></div>
+      <div class="trow"><span class="label">SECTION · 18 px</span><span class="sample t-h2">À décider</span></div>
+      <div class="trow"><span class="label">CORPS · 14 px</span><span class="sample t-body">Un aéroport au lever du jour : de la charte au départ.</span></div>
+      <div class="trow"><span class="label">CAPTION · 12 px</span><span class="sample t-small">Piste 27 fermée — dégagement dans 6 min (indépendant de la couleur : icône + texte).</span></div>
+      <div class="trow"><span class="label">DONNÉES · 15 px</span><span class="sample t-data">12 480 € · J12 14:00 · x2 · 72 %</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="title">
+    <h2 data-n="3">Écran-titre</h2>
+    <p class="lead">Départ du jour : ciel clair, soleil, nuages, tour de contrôle, parking avec avions au
+    sol et piste marquée au blanc — rendu canvas déterministe (positions figées, aucun tirage
+    aléatoire). Tableau des départs split-flap en haut à gauche. Le titre est en encre marine, accent
+    orange sécurité.</p>
+    <canvas class="art" id="cv-title" width="960" height="540"></canvas>
+    <p class="cap">Rendu canvas 960×540 — scène de journée (3 avions au sol, tour, tableau des départs), zéro aléatoire.</p>
+  </section>
+
+  <section class="sec" id="map">
+    <h2 data-n="4">Carte du jeu (charte de jour, frame statique)</h2>
+    <p class="lead">Monde « charte aéronautique » de jour : herbe claire, asphaltages gris aux marquages
+    blancs (centres pointillés, pianos de seuil), taxiways, Terminal A blanc aux vitres bleutées,
+    portes : libres (contour bleu), réservées (hachures orange + R), occupées (orange + O), feux de
+    bords remplacés par des repères blancs de jour. Avions blancs, queue marine, cône orange de statut
+    (lisibilité par la TAILLE et le cône — règle R39 conservée). Même géométrie de monde que les
+    directions B et C.</p>
+    <canvas class="art" id="cv-map" width="960" height="540"></canvas>
+    <p class="cap">2 pistes (A horizontale + B verticale), 2 taxiways, Terminal A, 4 portes, fuel, tour de contrôle — même monde que B/C.</p>
+  </section>
+
+  <section class="sec" id="hud">
+    <h2 data-n="4B">HUD in-game (maquette T7 — zéro superposition)</h2>
+    <p class="lead">L'état d'usage réel du jeu : la carte CHARGÉE + les panneaux du HUD posés par-dessus.
+    Sous cette direction, tous les panneaux sont OPAQUES (fond 100 %, plus de α 0.82 : rien ne
+    transperce) et les zones sont sans chevauchement (haut-gauche : horloge ; haut-gauche 2 :
+    planning ; bas-gauche : construction ; bas-droite : consultation) — la carte garde sa zone
+    centrale lisible. (Le layout sans superposition est la Tâche A du T7 ; ici on montre l'HABILLAGE.)</p>
+    <div class="stage" id="stage-hud">
+      <canvas id="cv-hud" width="960" height="540"></canvas>
+      <div class="hud hud-top">
+        <span class="chip"><span class="dot"></span>J12 · 14:32</span>
+        <span class="chip"><span class="dot"></span>Vitesse ×2</span>
+        <span class="chip"><span class="dot"></span>12 480 €</span>
+        <span class="chip warn"><span class="dot"></span>PLUIE +14 %</span>
+      </div>
+      <div class="hud hud-plan">
+        <h4>Planning — <b>2 à décider</b></h4>
+        <div class="l"><span class="c">AZ 412</span><span class="d">Paris CDG · 18:40</span><span class="p">+340 €</span></div>
+        <div class="l"><span class="c">KE 77</span><span class="d">Séoul ICN · 21:05</span><span class="p">+910 €</span></div>
+        <div class="l"><span class="c">DL 241</span><span class="d">New York JFK · 14:20</span><span class="p">✓</span></div>
+        <div class="auto">☑ Accepter automatiquement les vols rentables</div>
+      </div>
+      <div class="hud hud-tools">
+        <span class="t" title="Piste"><svg viewBox="0 0 24 24"><path d="M2 12h13M15 12l4-6M15 12l4 6"/><circle cx="19" cy="12" r="1.6"/></svg></span>
+        <span class="t" title="Terminal"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="1.5"/><path d="M8 7v10M12 7v10M16 7v10"/></svg></span>
+        <span class="t" title="Tour"><svg viewBox="0 0 24 24"><path d="M5 20V6l7-3v6M12 20v-8M19 20V9"/></svg></span>
+        <span class="t" title="Fuel"><svg viewBox="0 0 24 24"><path d="M9 3h6M12 3v5M8 8h8l1 5v8H7v-8z"/><circle cx="12" cy="15" r="2"/></svg></span>
+        <span class="t" title="Security"><svg viewBox="0 0 24 24"><path d="M4 17l4-4 3 3 4-5 5 5"/><path d="M4 21h16"/></svg></span>
+        <span class="t on" title="Pause"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v8l5 3"/></svg></span>
+      </div>
+      <div class="hud hud-consult">
+        <h4>Consultation — <b>Terminal A</b></h4>
+        <div class="g">
+          <div><span>Capacité</span><span>120 pax/h</span></div>
+          <div><span>Charge</span><span class="warn">62 %</span></div>
+          <div><span>Satisfact.</span><span class="ok">72 %</span></div>
+          <div><span>File</span><span>12 pax</span></div>
+          <div><span>Portes</span><span class="warn">1/4 occ.</span></div>
+          <div><span>État</span><span class="ok">service</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="cap">Panneaux 100 % opaques, zones sans chevauchement — la zone centrale de la carte (terminal, pistes, avion au roulage) reste visible et lisible. Captures CDP : preuve de l'absence de troncature (full-page).</p>
+  </section>
+
+  <section class="sec" id="panels">
+    <h2 data-n="5">Panneaux &amp; HUD</h2>
+    <p class="lead">Mêmes contenus du jeu actuel, habillés en langage « journée de contrôle » : cartes
+    blanches aux bordures bleues, boutons pleine couleur (bleu aviation), toasts liserés, modales
+    propres. On montre l'HABILLAGE (couleurs, typo, formes) — le layout in-game est la section 4B.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>HUD in-game</h3>
+        <div class="kv"><span>Temps</span><span class="v-accent">14:32 · J12</span></div>
+        <div class="kv"><span>Vitesse</span><span>×2 — <span class="v-ok">1·2·4</span></span></div>
+        <div class="kv"><span>Fonds</span><span class="v-gold">12 480 €</span></div>
+        <div class="kv"><span>Passagers</span><span>1 284 · sat 72 %</span></div>
+        <div class="kv"><span>Files</span><span>check 12 · sécu 5 · att 3</span></div>
+        <div class="kv"><span>Météo</span><span class="v-warn">PLUIE · +14 % lenteur</span></div>
+        <div class="kv"><span>Horloge</span><span>J12 14:00 · jour · été</span></div>
+        <div class="speeds"><span class="s">×1</span><span class="s on">×2</span><span class="s">×4</span></div>
+      </div>
+      <div class="card">
+        <h3>Planning des vols</h3>
+        <div class="psec">À décider (2)</div>
+        <div class="prow"><span class="code">AZ 412</span><span class="desc">Paris CDG → 18:40 · moyen</span><span class="pay">+340 €</span><button>Accepter</button><button class="no">Refuser</button></div>
+        <div class="prow"><span class="code">KE 77</span><span class="desc">Séoul ICN · 21:05 · grand</span><span class="pay">+910 €</span><button>Accepter</button><button class="no">Refuser</button></div>
+        <div class="psec">Décidé</div>
+        <div class="prow done"><span class="code">DL 241</span><span class="desc">New York JFK · 14:20 · moyen</span><span class="pay">accepté</span></div>
+        <div class="pauto">☑ Accepter automatiquement les vols rentables</div>
+      </div>
+      <div class="card">
+        <h3>Consultation — Terminal A</h3>
+        <div class="kv"><span>Capacité</span><span>120 pax/h</span></div>
+        <div class="kv"><span>Charge</span><span class="v-warn">62 %</span></div>
+        <div class="kv"><span>Satisfaction</span><span class="v-ok">72 %</span></div>
+        <div class="kv"><span>File d'attente</span><span>12 pax</span></div>
+        <div class="kv"><span>Portes</span><span class="v-err">1/4 occupée</span></div>
+        <div class="kv"><span>État</span><span class="v-ok">en service</span></div>
+      </div>
+      <div class="card">
+        <h3>Toasts</h3>
+        <div class="toast toast--ok"><span class="tt">+1 240 €</span><span>AZ 412 à quai — enregistrement ouvert.</span></div>
+        <div class="toast toast--warn"><span class="tt">Fonds</span><span>−800 € · maintenance Terminal A.</span></div>
+        <div class="toast toast--err"><span class="tt">Piste 27</span><span>FERMÉE — incident (dégagement 6 min).</span></div>
+        <div class="toast toast--tip"><span class="tt">ASTUCE</span><span>Une station fuel près de l'aire de parking réduit les refueling lents.</span></div>
+      </div>
+      <div class="modal">
+        <h3>Options</h3>
+        <div class="mrow"><span class="mlabel">Volume sonore</span><input type="range" min="0" max="100" value="40"/></div>
+        <div class="mrow"><span class="mlabel">Vitesse de base</span><span class="speeds" style="margin:0"><span class="s">×1</span><span class="s on">×2</span><span class="s">×4</span></span></div>
+        <div class="mrow"><span class="mlabel">Mode daltonien (R43)</span><span class="toggle"></span></div>
+        <div class="mrow"><span class="mlabel">Contraste élevé (T5a)</span><span class="toggle off"></span></div>
+        <div style="display:flex; gap:8px; margin-top:12px"><button class="mbtn primary">OK</button><button class="mbtn">Annuler</button></div>
+      </div>
+      <div class="card">
+        <h3>Barre d'outils (construction)</h3>
+        <div class="toolbar">
+          <button class="tool"><svg viewBox="0 0 24 24"><path d="M2 12h13M15 12l4-6M15 12l4 6"/><circle cx="19" cy="12" r="1.6"/></svg>Piste</button>
+          <button class="tool"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="1.5"/><path d="M8 7v10M12 7v10M16 7v10"/></svg>Terminal</button>
+          <button class="tool"><svg viewBox="0 0 24 24"><path d="M5 20V6l7-3v6M12 20v-8M19 20V9"/></svg>Tour</button>
+          <button class="tool"><svg viewBox="0 0 24 24"><path d="M9 3h6M12 3v5M8 8h8l1 5v8H7v-8z"/><circle cx="12" cy="15" r="2"/></svg>Fuel</button>
+          <button class="tool"><svg viewBox="0 0 24 24"><path d="M4 17l4-4 3 3 4-5 5 5"/><path d="M4 21h16"/></svg>Security</button>
+          <button class="tool tool--active"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v8l5 3"/></svg>Pause P</button>
+          <button class="tool tool--danger"><svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V5h6v2M8 7l1 12h6l1-12"/></svg>Sauvegarde</button>
+        </div>
+        <p class="cap" style="margin-top:8px">7 outils de la maquette (le jeu compte 11 bâtiments) — icônes vectorielles inline, trait bleu aviation.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="end">
+  <b>DIRECTION A « ATC CLAIR »</b> — maquette T7 (carte t_185c6f94). Ne pas implémenter avant la
+  validation d'Elsay. Si choisie, les tokens ci-dessus deviennent la v3 de <b>src/ui/theme.mjs</b>
+  (source unique), appliqués à tous les écrans + le rendu carte. Rendus canvas déterministes :
+  0 asset, 0 réseau, 0 dépendance (vanilla JS, polices système).
+</footer>
+
+<script>
+/* ===== TOKENS CANVAS — Direction A « ATC Clair » (charte de jour) ===== */
+const PALETTE = {
+  bg: '#E9EEF3', surface: '#FFFFFF', surface2: '#F2F6FA', border: '#C4D0DC',
+  text: '#17242F', dim: '#5A6B7B', accent: '#1460B0', accent2: '#E8641A',
+  ok: '#1E7A44', warn: '#92400E', err: '#C4372B', gold: '#8A5A00',
+  grass: '#DCE9DF', asphalt: '#56626E', asphalt2: '#77848F', marking: '#F5F8FA',
+  terminal: '#FFFFFF', glass: '#A8CCE8', fuel: '#9AA7B4',
+  planeBody: '#FFFFFF', planeTail: '#1460B0', cone: '#E8641A',
+  shadow: 'rgba(23,36,47,0.16)', rain: 'rgba(58,80,104,0.28)', rainTint: 'rgba(140,170,200,0.05)',
+  tagBg: '#FFFFFF', tagStroke: '#17242F', tagText: '#3A5068'
+};
+const SWATCHES = [
+  { t: 'bg', c: PALETTE.bg, r: 'fond de page / charte' },
+  { t: 'surface', c: PALETTE.surface, r: 'panneaux HUD, toolbar, planning, consultation' },
+  { t: 'surface-2', c: PALETTE.surface2, r: 'éléments relevés (chips, toasts, boutons secondaires)' },
+  { t: 'border', c: PALETTE.border, r: 'bordures de panneaux (liseré 3:1 +)' },
+  { t: 'text', c: PALETTE.text, r: 'texte principal (encre marine)' },
+  { t: 'dim', c: PALETTE.dim, r: 'textes secondaires / captions' },
+  { t: 'accent', c: PALETTE.accent, r: 'bleu aviation : données, focus, boutons' },
+  { t: 'accent-2', c: PALETTE.accent2, r: 'orange sécurité : alertes, actions, accents' },
+  { t: 'ok', c: PALETTE.ok, r: 'gains / succès (vert signal)' },
+  { t: 'warn', c: PALETTE.warn, r: 'avertissements (ambre foncé AA clair)' },
+  { t: 'err', c: PALETTE.err, r: 'erreurs / incidents (rouge feu)' },
+  { t: 'gold', c: PALETTE.gold, r: 'récompenses / astuces' }
+];
+
+/* ===== CONTRASTE WCAG — mesuré à l'ouverture, injecté dans la page ===== */
+function hexToRgb(hex) {
+  const h = hex.replace('#', '');
+  const f = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+  const n = parseInt(f, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function wcagLum(rgb) {
+  const [r, g, b] = rgb.map(v => {
+    v /= 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+function wcagRatio(hexA, hexB) {
+  const lA = wcagLum(hexToRgb(hexA)), lB = wcagLum(hexToRgb(hexB));
+  return (Math.max(lA, lB) + 0.05) / (Math.min(lA, lB) + 0.05);
+}
+function renderSwatches() {
+  const host = document.getElementById('swatches');
+  if (!host) return;
+  host.innerHTML = SWATCHES.map(s => {
+    const isUI = s.t === 'surface' || s.t === 'surface-2' || s.t === 'border';
+    const rtBg = wcagRatio(s.c, PALETTE.bg);
+    const rtSurf = wcagRatio(s.c, PALETTE.surface);
+    const rows = [];
+    if (!isUI) {
+      const okT = rtBg >= 4.5;
+      rows.push('texte sur bg <span class="' + (okT ? 'ratio-pass' : 'ratio-fail') + '">' + rtBg.toFixed(2) + ':1</span>' + (okT ? '' : ' — sous AA texte'));
+    }
+    const okUI = rtSurf >= 3;
+    rows.push('UI sur surface <span class="' + (okUI ? 'ratio-pass' : 'ratio-fail') + '">' + rtSurf.toFixed(2) + ':1</span>' + (okUI ? '' : ' — sous 3:1 UI'));
+    return (
+      '<div class="swatch">' +
+      '<div class="chip" style="background:' + s.c + '"></div>' +
+      '<div class="meta"><div class="name">' + s.t + ' <span class="hex">' + s.c + '</span></div>' +
+      '<div class="role">' + s.r + '</div>' +
+      '<div class="ratios">' + rows.join(' · ') + '</div></div></div>'
+    );
+  }).join('');
+}
+
+/* ===== AIDE-CANVAS (deterministes) ===== */
+function h32(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return (h >>> 0) / 4294967295;
+}
+function rrect(ctx, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function label(ctx, txt, x, y, color, size, align) {
+  ctx.font = '700 ' + (size || 11) + 'px Consolas, "Cascadia Mono", monospace';
+  ctx.textAlign = align || 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = color;
+  ctx.fillText(txt, x, y);
+}
+/* Silhouette vue d'en haut : même que le renderer (variant-c T5c aligné). */
+function aircraft(ctx, x, y, deg, k, body, tail, cone, large, shadow) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate((deg * Math.PI) / 180);
+  k = k || 1;
+  if (shadow) { ctx.save(); ctx.translate(2.2, 3.2); ctx.fillStyle = shadow; planeBody(ctx, k, shadow); ctx.restore(); }
+  ctx.fillStyle = body;
+  if (large) {
+    ctx.beginPath();
+    ctx.moveTo(0, -12 * k); ctx.lineTo(4.6 * k, -6 * k); ctx.lineTo(4.6 * k, 10 * k);
+    ctx.lineTo(2.6 * k, 10 * k); ctx.lineTo(2.6 * k, 2 * k); ctx.lineTo(-2.6 * k, 2 * k);
+    ctx.lineTo(-2.6 * k, 10 * k); ctx.lineTo(-4.6 * k, 10 * k); ctx.lineTo(-4.6 * k, -6 * k);
+    ctx.closePath(); ctx.fill();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(0, -11 * k); ctx.lineTo(3.2 * k, -4 * k); ctx.lineTo(3.2 * k, 10 * k);
+    ctx.lineTo(-3.2 * k, 10 * k); ctx.lineTo(-3.2 * k, -4 * k);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.fillStyle = tail;
+  ctx.beginPath();
+  ctx.moveTo(-11 * k, -1 * k); ctx.lineTo(-2.2 * k, -1 * k); ctx.lineTo(-2.2 * k, 6.5 * k);
+  ctx.lineTo(-11 * k, 6.5 * k);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-11 * k, 1 * k); ctx.lineTo(-2.2 * k, 1 * k); ctx.lineTo(-2.2 * k, 6.5 * k);
+  ctx.lineTo(-11 * k, 6.5 * k);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = cone;
+  ctx.beginPath();
+  ctx.moveTo(0, -14 * k); ctx.lineTo(2.2 * k, -8 * k); ctx.lineTo(-2.2 * k, -8 * k);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function planeBody(ctx, k, fill) {
+  ctx.fillStyle = fill;
+  ctx.beginPath();
+  ctx.moveTo(0, -11 * k); ctx.lineTo(3.2 * k, -4 * k); ctx.lineTo(3.2 * k, 10 * k);
+  ctx.lineTo(-3.2 * k, 10 * k); ctx.lineTo(-3.2 * k, -4 * k);
+  ctx.closePath(); ctx.fill();
+}
+function radarTag(ctx, txt, x, y, P) {
+  ctx.font = '700 11px Consolas, monospace';
+  const w = ctx.measureText(txt).width + 12;
+  ctx.fillStyle = P.tagBg;
+  ctx.strokeStyle = P.tagStroke;
+  ctx.lineWidth = 1;
+  rrect(ctx, x, y, w, 18, 4);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = P.tagText;
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText(txt, x + 6, y + 9.5);
+}
+function rain(ctx, w, h, seed, P) {
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  ctx.strokeStyle = P.rain;
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 110; i++) {
+    const rx = (h32(seed + 'x' + i) * w) | 0;
+    const ry = (h32(seed + 'y' + i) * h) | 0;
+    const rl = 7 + (h32(seed + 'l' + i) * 8) | 0;
+    ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx - 2, ry + rl); ctx.stroke();
+  }
+  ctx.restore();
+  ctx.fillStyle = P.rainTint;
+  ctx.fillRect(0, 0, w, h);
+}
+function cornerCrosses(ctx, w, h, color) {
+  ctx.strokeStyle = color; ctx.lineWidth = 1;
+  [[18, 18], [w - 18, 18], [18, h - 18], [w - 18, h - 18]].forEach(([cx, cy]) => {
+    ctx.beginPath();
+    ctx.moveTo(cx - 4, cy); ctx.lineTo(cx + 4, cy);
+    ctx.moveTo(cx, cy - 4); ctx.lineTo(cx, cy + 4);
+    ctx.stroke();
+  });
+}
+/* ===== TITRE — « ATC Clair » : départ du jour ===== */
+function drawTitle(cv) {
+  const ctx = cv.getContext('2d');
+  const w = cv.width, h = cv.height;
+  const sky = ctx.createLinearGradient(0, 0, 0, 380);
+  sky.addColorStop(0, '#A8CFEA');
+  sky.addColorStop(1, '#EAF6FF');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, w, 380);
+  /* soleil + halo */
+  const sun = ctx.createRadialGradient(140, 108, 6, 140, 108, 90);
+  sun.addColorStop(0, 'rgba(255, 211, 77, 0.95)');
+  sun.addColorStop(0.35, 'rgba(255, 211, 77, 0.35)');
+  sun.addColorStop(1, 'rgba(255, 211, 77, 0)');
+  ctx.fillStyle = sun;
+  ctx.fillRect(40, 8, 200, 200);
+  ctx.fillStyle = '#FFD34D';
+  ctx.beginPath(); ctx.arc(140, 108, 34, 0, Math.PI * 2); ctx.fill();
+  /* nuages (positions figées) */
+  const cloud = (cx, cy, s) => {
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    [[0, 0, 26], [24, 4, 20], [-22, 6, 18], [44, 8, 15], [-40, 10, 13]].forEach(([dx, dy, r]) => {
+      ctx.beginPath(); ctx.arc(cx + dx * s, cy + dy * s, r * s, 0, Math.PI * 2); ctx.fill();
+    });
+  };
+  cloud(330, 96, 1.15); cloud(600, 62, 0.95); cloud(790, 150, 0.8);
+  /* herbe + bandes de tonte */
+  ctx.fillStyle = '#9CC49B';
+  ctx.fillRect(0, 380, w, h - 380);
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  for (let i = 0; i < 16; i++) { if (i % 2 === 0) ctx.fillRect(i * 60, 380, 60, h - 380); }
+  /* tour de contrôle (droite) */
+  ctx.fillStyle = '#8B98A6';
+  ctx.fillRect(800, 268, 26, 112);
+  ctx.fillStyle = '#FFFFFF';
+  rrect(ctx, 790, 240, 46, 30, 4); ctx.fill();
+  ctx.strokeStyle = '#8B98A6'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = PALETTE.glass;
+  ctx.fillRect(795, 248, 36, 12);
+  ctx.strokeStyle = '#1460B0'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(813, 240); ctx.lineTo(813, 222); ctx.stroke();
+  ctx.fillStyle = PALETTE.accent2;
+  ctx.beginPath(); ctx.arc(813, 220, 3.4, 0, Math.PI * 2); ctx.fill();
+  /* parking (aire de manœuvre claire) */
+  ctx.fillStyle = '#C9D2DA';
+  rrect(ctx, 90, 372, 660, 104, 8); ctx.fill();
+  ctx.strokeStyle = PALETTE.border; ctx.lineWidth = 1; ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 1;
+  ctx.setLineDash([6, 6]);
+  ctx.beginPath(); ctx.moveTo(110, 424); ctx.lineTo(730, 424); ctx.stroke();
+  ctx.setLineDash([]);
+  /* tableau des départs split-flap (haut-gauche) */
+  ctx.fillStyle = '#17242F';
+  rrect(ctx, 58, 54, 336, 112, 6); ctx.fill();
+  ctx.strokeStyle = PALETTE.accent2; ctx.lineWidth = 2; ctx.stroke();
+  label(ctx, 'DÉPARTS', 74, 76, PALETTE.accent2, 13);
+  label(ctx, 'ORY  08:45  EN COURS', 74, 98, '#5FCE8A', 12);
+  label(ctx, 'CDG  09:15  À L\u2019HEURE', 74, 118, '#F2F6FB', 12);
+  label(ctx, 'SEA  09:40  RETARD 25', 74, 138, '#FFC24A', 12);
+  /* pistes au sol */
+  ctx.fillStyle = PALETTE.asphalt;
+  ctx.fillRect(80, 486, 800, 34);
+  ctx.strokeStyle = PALETTE.marking; ctx.lineWidth = 2;
+  ctx.setLineDash([26, 18]);
+  ctx.beginPath(); ctx.moveTo(100, 503); ctx.lineTo(860, 503); ctx.stroke();
+  ctx.setLineDash([]);
+  for (let i = 1; i <= 4; i++) {
+    ctx.fillStyle = PALETTE.marking;
+    ctx.fillRect(86, 486 + i * 5.6, 5, 7);
+    ctx.fillRect(869, 486 + i * 5.6, 5, 7);
+  }
+  /* 3 avions au parking (gros, moyen, petit) */
+  aircraft(ctx, 320, 424, 0, 1.7, PALETTE.planeBody, PALETTE.planeTail, PALETTE.cone, true, PALETTE.shadow);
+  aircraft(ctx, 520, 424, 0, 1.0, PALETTE.planeBody, PALETTE.planeTail, PALETTE.cone, false, PALETTE.shadow);
+  aircraft(ctx, 668, 424, 0, 0.7, PALETTE.planeBody, PALETTE.planeTail, PALETTE.cone, false, PALETTE.shadow);
+  /* service d'essence (camion orange) */
+  ctx.fillStyle = PALETTE.accent2;
+  rrect(ctx, 640, 452, 30, 13, 3); ctx.fill();
+  ctx.fillStyle = PALETTE.surface;
+  rrect(ctx, 668, 454, 12, 11, 3); ctx.fill();
+  ctx.fillStyle = '#17242F';
+  ctx.beginPath(); ctx.arc(650, 467, 4, 0, Math.PI * 2); ctx.arc(674, 467, 4, 0, Math.PI * 2); ctx.fill();
+  /* titre */
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.font = '700 52px "Segoe UI", system-ui, sans-serif';
+  ctx.fillStyle = '#14243A';
+  ctx.fillText('AIRPORT TYCOON', 480, 224);
+  ctx.fillStyle = PALETTE.accent2;
+  ctx.fillRect(330, 238, 300, 5);
+  ctx.font = '400 15px "Segoe UI", system-ui, sans-serif';
+  ctx.fillStyle = '#3A5068';
+  ctx.fillText('Direction de contrôle — de l\u2019aube au départ.', 480, 266);
+  ctx.textAlign = 'right';
+  label(ctx, 'v T7 · direction A « ATC Clair »', w - 16, h - 12, PALETTE.dim, 11, 'right');
+  cornerCrosses(ctx, w, h, 'rgba(23,36,47,0.35)');
+}
+
+/* ===== CARTE — monde de la maquette T7 (charte de jour), même géométrie que B/C ===== */
+function drawMap(cv) {
+  const ctx = cv.getContext('2d');
+  const w = cv.width, h = cv.height;
+  const P = PALETTE;
+  /* sol : herbe claire + grille de charte */
+  ctx.fillStyle = P.grass;
+  ctx.fillRect(0, 0, w, h);
+  ctx.strokeStyle = 'rgba(31,64,98,0.05)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y <= h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+  /* PISTE A horizontale */
+  ctx.fillStyle = P.asphalt;
+  ctx.fillRect(130, 150, 620, 46);
+  ctx.strokeStyle = P.marking; ctx.lineWidth = 1.5;
+  ctx.strokeRect(130.5, 150.5, 619, 45);
+  ctx.fillStyle = P.marking;
+  for (let x = 140; x < 740; x += 40) ctx.fillRect(x, 169, 18, 3);
+  for (let i = 1; i <= 4; i++) {
+    ctx.fillRect(135, 150 + i * 9.2, 5, 7);
+    ctx.fillRect(740, 150 + i * 9.2, 5, 7);
+  }
+  label(ctx, '09', 134, 204, '#3A5068', 11);
+  label(ctx, '27', 726, 204, '#3A5068', 11);
+  /* PISTE B verticale */
+  ctx.fillStyle = P.asphalt;
+  ctx.fillRect(616, 160, 46, 300);
+  ctx.strokeRect(616.5, 160.5, 45, 299);
+  for (let y = 170; y < 450; y += 40) ctx.fillRect(636, y, 3, 18);
+  for (let i = 1; i <= 4; i++) {
+    ctx.fillRect(616 + i * 9.2, 165, 7, 5);
+    ctx.fillRect(616 + i * 9.2, 450, 7, 5);
+  }
+  label(ctx, '18', 668, 204, '#3A5068', 11);
+  label(ctx, '36', 668, 458, '#3A5068', 11);
+  /* repères blancs de jour (remplacement des feux de bords) */
+  ctx.fillStyle = P.marking;
+  for (let x = 130; x <= 750; x += 40) { ctx.fillRect(x - 1.5, 146, 3, 3); ctx.fillRect(x - 1.5, 199, 3, 3); }
+  for (let y = 160; y <= 460; y += 40) { ctx.fillRect(612, y - 1.5, 3, 3); ctx.fillRect(665, y - 1.5, 3, 3); }
+  /* TAXIWAYS */
+  ctx.fillStyle = P.asphalt2;
+  ctx.fillRect(200, 254, 400, 16);
+  ctx.fillRect(424, 290, 16, 100);
+  ctx.strokeStyle = P.marking; ctx.lineWidth = 1;
+  ctx.setLineDash([8, 8]);
+  ctx.beginPath(); ctx.moveTo(210, 262); ctx.lineTo(590, 262); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(432, 298); ctx.lineTo(432, 382); ctx.stroke();
+  ctx.setLineDash([]);
+  /* TERMINAL A */
+  ctx.fillStyle = P.terminal;
+  ctx.fillRect(180, 300, 240, 90);
+  ctx.strokeStyle = '#9FB4C8'; ctx.lineWidth = 1.5;
+  ctx.strokeRect(180.5, 300.5, 239, 89);
+  ctx.fillStyle = P.glass;
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) ctx.fillRect(200 + c * 72, 314 + r * 24, 36, 12);
+  label(ctx, 'TERMINAL A', 188, 382, '#3A5068', 11);
+  /* surlignage de sélection */
+  ctx.strokeStyle = P.accent; ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 4]);
+  ctx.strokeRect(176, 296, 248, 98);
+  ctx.setLineDash([]);
+  label(ctx, 'SÉLECTION — TERMINAL A', 440, 300, PALETTE.accent2, 10);
+  /* PORTES 4 : libre, occupée, réservée, libre */
+  const gates = [[190, 'free'], [230, 'occ'], [270, 'res'], [310, 'free']];
+  gates.forEach(([gx, st], i) => {
+    ctx.fillStyle = st === 'occ' ? P.accent2 : P.surface;
+    ctx.fillRect(gx, 400, 26, 26);
+    ctx.strokeStyle = st === 'occ' ? P.accent2 : P.accent;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(gx + 0.75, 400.75, 24.5, 24.5);
+    if (st === 'occ') label(ctx, 'O', gx + 13, 419, '#FFFFFF', 13, 'center');
+    if (st === 'res') {
+      ctx.save();
+      ctx.beginPath(); ctx.rect(gx, 400, 26, 26); ctx.clip();
+      ctx.strokeStyle = P.accent2; ctx.lineWidth = 2;
+      for (let d = -26; d < 26; d += 8) {
+        ctx.beginPath(); ctx.moveTo(gx + d, 426); ctx.lineTo(gx + d + 26, 400); ctx.stroke();
+      }
+      ctx.restore();
+      label(ctx, 'R', gx + 13, 419, P.accent2, 12, 'center');
+    }
+    label(ctx, 'G' + (i + 1), gx + 13, 436, '#3A5068', 10, 'center');
+  });
+  /* FUEL + TOUR */
+  ctx.fillStyle = P.fuel;
+  ctx.fillRect(480, 400, 34, 26);
+  label(ctx, 'FUEL', 482, 436, '#3A5068', 10);
+  ctx.fillStyle = P.fuel;
+  ctx.fillRect(722, 316, 22, 20);
+  ctx.fillStyle = P.surface;
+  ctx.fillRect(714, 300, 38, 16);
+  ctx.strokeStyle = '#9FB4C8'; ctx.lineWidth = 1;
+  ctx.strokeRect(714.5, 300.5, 37, 15);
+  ctx.fillStyle = P.glass;
+  ctx.fillRect(718, 304, 30, 8);
+  ctx.fillStyle = P.accent2;
+  ctx.beginPath(); ctx.arc(733, 298, 2.6, 0, Math.PI * 2); ctx.fill();
+  label(ctx, 'TOUR', 722, 338, '#3A5068', 10);
+  /* AVIONS : parking G2 (gros), piste B (gros), taxiway T2 (petit) */
+  aircraft(ctx, 243, 413, -90, 1.0, P.planeBody, P.planeTail, P.cone, false, P.shadow);
+  aircraft(ctx, 639, 430, -90, 1.6, P.planeBody, P.planeTail, P.cone, true, P.shadow);
+  aircraft(ctx, 432, 350, 90, 0.7, P.planeBody, P.planeTail, P.cone, false, P.shadow);
+  /* ÉTIQUETTES RADAR */
+  radarTag(ctx, 'AFR A320 GND·', 96, 444, P);
+  radarTag(ctx, 'DAL B747 FL060↑', 672, 416, P);
+  radarTag(ctx, 'SKW C208 FL040↑', 448, 336, P);
+  /* PANNEAU MÉTÉO */
+  ctx.fillStyle = P.surface;
+  rrect(ctx, 764, 14, 182, 54, 6); ctx.fill();
+  ctx.strokeStyle = P.border; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = '#5A6B7B';
+  ctx.beginPath();
+  ctx.arc(788, 34, 7, 0, Math.PI * 2);
+  ctx.arc(798, 30, 9, 0, Math.PI * 2);
+  ctx.arc(808, 34, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = P.accent; ctx.lineWidth = 1.5;
+  [[788, 44], [798, 46], [808, 44]].forEach(([rx, ry]) => {
+    ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(rx - 2, ry + 7); ctx.stroke();
+  });
+  label(ctx, 'PLUIE · J12 14:00', 826, 34, P.text, 12);
+  label(ctx, '+14 % lenteur · +4 s attente', 826, 50, P.dim, 10);
+  /* pluie légère (état météo de la maquette) */
+  rain(ctx, w, h, 'A-map', P);
+  cornerCrosses(ctx, w, h, P.dim);
+}
+
+/* ===== INIT ===== */
+renderSwatches();
+drawTitle(document.getElementById('cv-title'));
+drawMap(document.getElementById('cv-map'));
+drawMap(document.getElementById('cv-hud'));
+document.body.dataset.ready = 'true';
+</script>
+</body>
+</html>
