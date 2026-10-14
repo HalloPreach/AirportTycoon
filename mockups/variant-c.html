@@ -1,0 +1,671 @@
+<!doctype html>
+<!-- ============================================================
+  T5b (t_52f07a47) — MAQUETTE DE DIRECTION VISUELLE · VARIANTE C
+  « RADAR RÉTRO » — un écran phosphore vert type CRT : une couleur
+  primaire (phosphore), ambre pour les alertes, police mono
+  intégrale, balayage + lueurs + scanlines. Affirmation forte,
+  cohérente avec le « langage instrument » de la salle de contrôle.
+  ------------------------------------------------------------
+  Auto-suffisante : 0 asset externe (polices système, SVG inline,
+  canvas), 0 dépendance, 0 réseau, DETERMINISTE (aucun
+  Math.random — les captures CDP sont reproductibles).
+  NE PAS IMPLÉMENTER avant le choix d'Elsay (porte T5c).
+============================================================ -->
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>T5b · Variante C « Radar Rétro » — Airport Tycoon</title>
+<style>
+  /* ---- TOKENS (source de la maquette — T5c dupliquerait ces
+     valeurs dans src/ui/theme.mjs si cette direction est choisie) ---- */
+  :root {
+    --bg: #050807;
+    --surface: #0B120E;
+    --surface-2: #101A14;
+    --border: #1F3A2B;
+    --text: #B9F5CE;
+    --dim: #5E9478;
+    --accent: #2EFF8E;       /* phosphore primaire */
+    --accent-2: #FFB000;     /* ambre (alertes / actions primaires) */
+    --accent-soft: rgba(46, 255, 142, 0.10);
+    --ok: #2EFF8E;
+    --warn: #FFB000;
+    --err: #FF4D4D;
+    --gold: #FFB000;
+    --radius: 4px;
+    --shadow: 0 0 16px rgba(46, 255, 142, 0.08);
+    --font-display: "Consolas", "Cascadia Mono", "Roboto Mono", ui-monospace, monospace;
+    --font-body: "Consolas", "Cascadia Mono", "Roboto Mono", ui-monospace, monospace;
+    --font-data: "Consolas", "Cascadia Mono", "Roboto Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 14px/1.55 var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* ---- Voile CRT global : scanlines + vignette (décoratif) ---- */
+  body::after {
+    content: ""; position: fixed; inset: 0; z-index: 900; pointer-events: none;
+    background:
+      repeating-linear-gradient(0deg, rgba(46, 255, 142, 0.035) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
+  }
+  /* ---- En-tête fixe de la maquette ---- */
+  header.top {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 10px 20px;
+    background: rgba(5, 8, 7, 0.95);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand { font: 700 13px var(--font-display); letter-spacing: 0.09em; text-transform: uppercase; }
+  .brand b { color: var(--accent); text-shadow: 0 0 8px rgba(46, 255, 142, 0.5); }
+  .brand .tag {
+    display: inline-block; margin-left: 8px; padding: 1px 8px;
+    border: 1px solid var(--accent); border-radius: 2px;
+    color: var(--accent); font: 600 10px var(--font-data); letter-spacing: 0.08em;
+  }
+  nav.nav { display: flex; gap: 4px; flex-wrap: wrap; }
+  nav.nav a {
+    color: var(--dim); text-decoration: none; font: 600 12px var(--font-data);
+    padding: 4px 9px; border-radius: 2px;
+  }
+  nav.nav a:hover { color: var(--text); background: var(--accent-soft); }
+  .switch { margin-left: auto; display: flex; gap: 4px; }
+  .switch a {
+    font: 700 12px var(--font-data); text-decoration: none; text-align: center;
+    color: var(--dim); border: 1px solid var(--border); border-radius: 2px;
+    padding: 4px 10px;
+  }
+  .switch a.on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  /* ---- Sections ---- */
+  main { max-width: 1060px; margin: 0 auto; padding: 26px 20px 60px; }
+  section.sec { margin: 34px 0; scroll-margin-top: 64px; }
+  section.sec h2 {
+    margin: 0 0 4px; font: 700 22px var(--font-display); letter-spacing: 0.12em;
+    text-transform: uppercase; text-shadow: 0 0 10px rgba(46, 255, 142, 0.35);
+  }
+  section.sec h2::before {
+    content: attr(data-n) "  "; color: var(--accent-2); font: 700 15px var(--font-data);
+  }
+  p.lead { margin: 0 0 14px; color: var(--dim); max-width: 760px; }
+  .cap { color: var(--dim); font: 12px var(--font-data); margin-top: 8px; }
+  canvas.art {
+    display: block; margin: 0 auto; max-width: 100%;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  /* ---- Palette : pastilles + contraste MESURÉ (injected en JS) ---- */
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 10px; }
+  .swatch {
+    border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+    background: var(--surface);
+  }
+  .swatch .chip { height: 56px; }
+  .swatch .meta { padding: 8px 10px; font: 12px var(--font-data); }
+  .swatch .meta .name { color: var(--text); font-weight: 700; }
+  .swatch .meta .hex { color: var(--accent); }
+  .swatch .meta .role { color: var(--dim); font: 11px var(--font-body); }
+  .swatch .meta .ratios { margin-top: 5px; font: 10.5px var(--font-data); color: var(--dim); }
+  .ratio-pass { color: var(--ok); }
+  .ratio-fail { color: var(--err); }
+  /* ---- Typographie : échelle ---- */
+  .type-scale { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+  .trow {
+    display: flex; align-items: baseline; gap: 14px;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+  }
+  .trow:last-child { border-bottom: 0; }
+  .trow .label { flex: none; width: 150px; color: var(--dim); font: 600 11px var(--font-data); letter-spacing: 0.06em; }
+  .trow .sample { overflow: hidden; white-space: nowrap; }
+  .t-display { font: 700 44px var(--font-display); letter-spacing: 0.14em; text-transform: uppercase; text-shadow: 0 0 14px rgba(46, 255, 142, 0.45); }
+  .t-h1 { font: 700 26px var(--font-display); letter-spacing: 0.06em; text-transform: uppercase; }
+  .t-h2 { font: 700 18px var(--font-display); letter-spacing: 0.1em; text-transform: uppercase; }
+  .t-body { font: 400 14px var(--font-body); }
+  .t-small { font: 400 12px var(--font-body); color: var(--dim); }
+  .t-data { font: 700 15px var(--font-data); font-variant-numeric: tabular-nums; color: var(--accent); letter-spacing: 0.05em; }
+  /* ---- Grille de panneaux ---- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; align-items: start; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px;
+    box-shadow: var(--shadow); color: var(--text);
+  }
+  .card h3 {
+    margin: 0 0 8px; font: 700 12px var(--font-data); letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--dim);
+  }
+  .card h3::before { content: "▮ "; color: var(--accent-2); }
+  .kv { display: flex; justify-content: space-between; gap: 10px; padding: 2.5px 0; font: 12.5px var(--font-data); font-variant-numeric: tabular-nums; }
+  .kv > span:first-child { color: var(--dim); }
+  .kv .v-ok { color: var(--ok); } .kv .v-warn { color: var(--warn); }
+  .kv .v-err { color: var(--err); } .kv .v-gold { color: var(--gold); }
+  .kv .v-accent { color: var(--accent); }
+  .speeds { display: flex; gap: 5px; margin-top: 6px; }
+  .speeds .s {
+    font: 700 11px var(--font-data); color: var(--dim);
+    border: 1px solid var(--border); border-radius: 2px; padding: 2px 9px;
+  }
+  .speeds .s.on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  /* planning */
+  .psec { margin: 8px 0 3px; color: var(--dim); font: 700 10.5px var(--font-data); letter-spacing: 0.12em; text-transform: uppercase; }
+  .prow { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px dashed var(--border); font: 12.5px var(--font-data); }
+  .prow:last-of-type { border-bottom: 0; }
+  .prow .code { color: var(--accent); font-weight: 700; flex: none; }
+  .prow .desc { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prow .pay { color: var(--gold); flex: none; }
+  .prow button {
+    font: 700 10.5px var(--font-data); border-radius: 2px; padding: 2.5px 8px; cursor: pointer;
+    border: 1px solid var(--ok); background: rgba(46, 255, 142, 0.10); color: var(--ok);
+  }
+  .prow button.no { border-color: var(--err); background: rgba(255, 77, 77, 0.10); color: var(--err); }
+  .prow.done .desc { color: var(--dim); }
+  .pauto { margin-top: 7px; font: 11.5px var(--font-body); color: var(--dim); }
+  /* toasts */
+  .toast {
+    display: flex; gap: 8px; align-items: baseline;
+    border-left: 3px solid var(--border);
+    background: var(--surface-2); border-radius: 4px;
+    padding: 7px 10px; margin: 6px 0; font: 12.5px var(--font-body);
+  }
+  .toast .tt { font-weight: 700; font: 700 12px var(--font-data); }
+  .toast--ok { border-left-color: var(--ok); } .toast--ok .tt { color: var(--ok); }
+  .toast--warn { border-left-color: var(--warn); } .toast--warn .tt { color: var(--warn); }
+  .toast--err { border-left-color: var(--err); } .toast--err .tt { color: var(--err); }
+  .toast--tip { border-left-color: var(--gold); background: rgba(16, 26, 20, 0.95); }
+  .toast--tip .tt { color: var(--gold); }
+  /* modale */
+  .modal {
+    position: relative; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface-2); padding: 14px;
+    box-shadow: var(--shadow), 0 0 0 1px var(--accent-soft);
+  }
+  .modal h3 { color: var(--gold); }
+  .mrow { display: flex; align-items: center; gap: 8px; padding: 4px 0; font: 12.5px var(--font-body); color: var(--dim); }
+  .mrow .mlabel { flex: 1; }
+  .mrow input[type="range"] { width: 130px; accent-color: var(--accent); }
+  .mrow .toggle { width: 34px; height: 18px; border-radius: 2px; background: var(--accent-soft); border: 1px solid var(--accent); position: relative; flex: none; }
+  .mrow .toggle::after { content: ""; position: absolute; right: 2px; top: 2px; width: 12px; height: 12px; background: var(--accent); box-shadow: 0 0 6px rgba(46,255,142,0.6); }
+  .mrow .toggle.off { border-color: var(--border); background: transparent; }
+  .mrow .toggle.off::after { left: 2px; right: auto; background: var(--dim); box-shadow: none; }
+  .mbtn {
+    font: 700 12px var(--font-body); border-radius: 2px; padding: 6px 14px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    letter-spacing: 0.06em;
+  }
+  .mbtn.primary { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  /* toolbar */
+  .toolbar { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tool {
+    display: inline-flex; align-items: center; gap: 6px;
+    font: 700 12px var(--font-body); color: var(--text);
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 2px; padding: 6px 10px; cursor: pointer;
+    letter-spacing: 0.05em; transition: border-color 0.12s ease;
+  }
+  .tool:hover { border-color: var(--accent); }
+  .tool svg { width: 16px; height: 16px; stroke: var(--accent); fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .tool--danger { border-color: rgba(255, 77, 77, 0.5); }
+  .tool--danger svg { stroke: var(--err); }
+  .tool--active { background: var(--accent-soft); border-color: var(--accent); }
+  /* pied de page */
+  footer.end {
+    border-top: 1px solid var(--border); margin-top: 40px; padding: 18px 20px 40px;
+    color: var(--dim); font: 12px var(--font-data); max-width: 1060px; margin-left: auto; margin-right: auto;
+  }
+  footer.end b { color: var(--accent); }
+  @media (max-width: 640px) {
+    .switch { margin-left: 0; }
+    .trow .label { width: 96px; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">T5b · Maquette <b>Variante C — « Radar Rétro »</b><span class="tag">à décider · pas encore implémentée</span></div>
+  <nav class="nav">
+    <a href="#palette">1 Palette</a><a href="#typo">2 Typo</a><a href="#title">3 Titre</a><a href="#map">4 Carte</a><a href="#panels">5 Panneaux</a>
+  </nav>
+  <div class="switch">
+    <a href="variant-a.html">A</a><a href="variant-b.html">B</a><a class="on" href="variant-c.html">C</a>
+  </div>
+</header>
+
+<main>
+  <section class="sec" id="palette">
+    <h2 data-n="1">Palette</h2>
+    <p class="lead">Écran phosphore vert (esprit CRT) : une couleur primaire (phosphore) + ambre pour les
+    alertes, rouge rare réservé aux incidents critiques. Les contrastes affichés sont
+    <em>mesurés</em> (formules WCAG, calculés à l'ouverture) — seuil AA 4.5:1 pour le texte, 3:1 pour les
+    éléments UI. Risque assumé de la variante : densité phosphore sur fond quasi-noir → la lisibilité
+    longuement soutenue doit être validée par Elsay.</p>
+    <div class="swatches" id="swatches"></div>
+  </section>
+
+  <section class="sec" id="typo">
+    <h2 data-n="2">Typographie</h2>
+    <p class="lead">Tout en MONO (Consolas / Cascadia Mono) : le langage instrument de la salle de
+    contrôle — chiffres tabulaires stables, capitales espacées, guillemets d'appareil. Corps 14 px,
+    minimum 12 px (jamais sous 11 px, règle T5a).</p>
+    <div class="type-scale">
+      <div class="trow"><span class="label">DISPLAY · 44 px</span><span class="sample t-display">Aeroport Tycoon</span></div>
+      <div class="trow"><span class="label">TITRE PANEL · 26 px</span><span class="sample t-h1">Terminal A — Inspection</span></div>
+      <div class="trow"><span class="label">SECTION · 18 px</span><span class="sample t-h2">À décider</span></div>
+      <div class="trow"><span class="label">CORPS · 14 px</span><span class="sample t-body">Un aéroport la nuit : du bitume au départ.</span></div>
+      <div class="trow"><span class="label">CAPTION · 12 px</span><span class="sample t-small">Piste 27 fermée — dégagement dans 6 min (indépendant de la couleur : icône + texte).</span></div>
+      <div class="trow"><span class="label">DONNÉES · 15 px</span><span class="sample t-data">12 480 € · J12 14:00 · x2 · 72 %</span></div>
+    </div>
+  </section>
+
+  <section class="sec" id="title">
+    <h2 data-n="3">Écran-titre</h2>
+    <p class="lead">Écran radar : cibles concentriques, réticule, balayage figé à 40°, blips avec
+    traîne de lueur, bruit statique + scanlines (rendu canvas déterministe — positions fixées,
+    aucun tirage aléatoire). Le titre phosphore luisant.</p>
+    <canvas class="art" id="cv-title" width="960" height="540"></canvas>
+    <p class="cap">Rendu canvas 960×540 — balayage figé (angle 40°), 3 blips déterministes, 400 pixels de statique positionnés par hash.</p>
+  </section>
+
+  <section class="sec" id="map">
+    <h2 data-n="4">Carte du jeu (phosphore, frame statique)</h2>
+    <p class="lead">Monde « fil de phosphore » : pistes et taxiways en traits luisants, feux de bords
+    ambre, guirlandes de terminal ambre, blips d'avions avec traîne (lisibilité par la TAILLE et le cône
+    de nez — règle R39 conservée). Portes : libres (contour), réservées (hachures + R), occupées (ambre + O).
+    Statique légère + pluie pour l'état météo affiché.</p>
+    <canvas class="art" id="cv-map" width="960" height="540"></canvas>
+    <p class="cap">2 pistes (A horizontale + B verticale), 2 taxiways, Terminal A, 4 portes, fuel, tour de contrôle — même monde que A/B pour comparaison à géométrie égale.</p>
+  </section>
+
+  <section class="sec" id="panels">
+    <h2 data-n="5">Panneaux &amp; HUD</h2>
+    <p class="lead">Mêmes contenus du jeu actuel, habillés en langage instrument : tout mono, crochets
+    d'appareil, toggles carrés. Le HUD in-game sera repensé par T5a (architecture + lisibilité) ; ici on
+    montre uniquement l'HABILLAGE (couleurs, typo, formes).</p>
+    <div class="grid">
+      <div class="card">
+        <h3>HUD in-game</h3>
+        <div class="kv"><span>Temps</span><span class="v-accent">14:32 · J12</span></div>
+        <div class="kv"><span>Vitesse</span><span>x2 — <span class="v-ok">1·2·4</span></span></div>
+        <div class="kv"><span>Fonds</span><span class="v-gold">12 480 €</span></div>
+        <div class="kv"><span>Passagers</span><span>1 284 · sat 72 %</span></div>
+        <div class="kv"><span>Files</span><span>check 12 · sécu 5 · att 3</span></div>
+        <div class="kv"><span>Météo</span><span class="v-warn">PLUIE · +14 % lenteur</span></div>
+        <div class="kv"><span>Horloge</span><span>J12 14:00 · jour · été</span></div>
+        <div class="speeds"><span class="s">×1</span><span class="s on">×2</span><span class="s">×4</span></div>
+      </div>
+      <div class="card">
+        <h3>Planning des vols</h3>
+        <div class="psec">À décider (2)</div>
+        <div class="prow"><span class="code">AZ 412</span><span class="desc">Paris CDG → 18:40 · moyen</span><span class="pay">+340 €</span><button>Accepter</button><button class="no">Refuser</button></div>
+        <div class="prow"><span class="code">KE 77</span><span class="desc">Séoul ICN · 21:05 · grand</span><span class="pay">+910 €</span><button>Accepter</button><button class="no">Refuser</button></div>
+        <div class="psec">Décidé</div>
+        <div class="prow done"><span class="code">DL 241</span><span class="desc">New York JFK · 14:20 · moyen</span><span class="pay">accepté</span></div>
+        <div class="pauto">☑ Accepter automatiquement les vols rentables</div>
+      </div>
+      <div class="card">
+        <h3>Consultation — Terminal A</h3>
+        <div class="kv"><span>Capacité</span><span>120 pax/h</span></div>
+        <div class="kv"><span>Charge</span><span class="v-warn">62 %</span></div>
+        <div class="kv"><span>Satisfaction</span><span class="v-ok">72 %</span></div>
+        <div class="kv"><span>File d'attente</span><span>12 pax</span></div>
+        <div class="kv"><span>Portes</span><span class="v-err">1/4 occupée</span></div>
+        <div class="kv"><span>État</span><span class="v-ok">en service</span></div>
+      </div>
+      <div class="card">
+        <h3>Toasts</h3>
+        <div class="toast toast--ok"><span class="tt">+1 240 €</span><span>AZ 412 à quai — enregistrement ouvert.</span></div>
+        <div class="toast toast--warn"><span class="tt">Fonds</span><span>−800 € · maintenance Terminal A.</span></div>
+        <div class="toast toast--err"><span class="tt">Piste 27</span><span>FERMÉE — incident (dégagement 6 min).</span></div>
+        <div class="toast toast--tip"><span class="tt">ASTUCE</span><span>Une station fuel près de l'aire de parking réduit les refueling lents.</span></div>
+      </div>
+      <div class="modal">
+        <h3>Options</h3>
+        <div class="mrow"><span class="mlabel">Volume sonore</span><input type="range" min="0" max="100" value="40"/></div>
+        <div class="mrow"><span class="mlabel">Vitesse de base</span><span class="speeds" style="margin:0"><span class="s">×1</span><span class="s on">×2</span><span class="s">×4</span></span></div>
+        <div class="mrow"><span class="mlabel">Mode daltonien (R43)</span><span class="toggle"></span></div>
+        <div class="mrow"><span class="mlabel">Contraste élevé (T5a)</span><span class="toggle off"></span></div>
+        <div style="display:flex; gap:8px; margin-top:12px"><button class="mbtn primary">OK</button><button class="mbtn">Annuler</button></div>
+      </div>
+      <div class="card">
+        <h3>Barre d'outils (construction)</h3>
+        <div class="toolbar">
+          <button class="tool"><svg viewBox="0 0 24 24"><path d="M2 12h13M15 12l4-6M15 12l4 6"/><circle cx="19" cy="12" r="1.6"/></svg>Piste</button>
+          <button class="tool"><svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="1.5"/><path d="M8 7v10M12 7v10M16 7v10"/></svg>Terminal</button>
+          <button class="tool"><svg viewBox="0 0 24 24"><path d="M5 20V6l7-3v6M12 20v-8M19 20V9"/><circle cx="5" cy="20" r="1.3"/><circle cx="19" cy="20" r="1.3"/></svg>Tour</button>
+          <button class="tool"><svg viewBox="0 0 24 24"><path d="M9 3h6M12 3v5M8 8h8l1 5v8H7v-8z"/><circle cx="12" cy="15" r="2"/></svg>Fuel</button>
+          <button class="tool"><svg viewBox="0 0 24 24"><path d="M4 17l4-4 3 3 4-5 5 5"/><path d="M4 21h16"/></svg>Security</button>
+          <button class="tool tool--active"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v8l5 3"/></svg>Pause P</button>
+          <button class="tool tool--danger"><svg viewBox="0 0 24 24"><path d="M5 7h14M9 7V5h6v2M8 7l1 12h6l1-12"/></svg>Sauvegarde</button>
+        </div>
+        <p class="cap" style="margin-top:8px">11 bâtiments du jeu — icônes vectorielles inline (T4), réhabillées en trait phosphore.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="end">
+  <b>VARIANTE C « RADAR RÉTRO »</b> — maquette T5b (carte t_52f07a47). Ne pas implémenter avant le choix.
+  Si choisie, les tokens ci-dessus deviennent la v2 de src/ui/theme.mjs (source unique),
+  appliquée à tous les écrans + rendu carte (T5c). Rendus canvas déterministes : 0 asset, 0 réseau, 0 dépendance.
+</footer>
+
+<script>
+"use strict";
+/* ================================================================
+   RENDUS DETERMINISTES (aucun Math.random) — captures reproductibles.
+================================================================ */
+const PALETTE = {
+  bg: "#050807", surface: "#0B120E", surface2: "#101A14", border: "#1F3A2B",
+  text: "#B9F5CE", dim: "#5E9478", accent: "#2EFF8E", accent2: "#FFB000",
+  ok: "#2EFF8E", warn: "#FFB000", err: "#FF4D4D", gold: "#FFB000",
+  // Monde (carte) — phosphore
+  terrain: "#04140C", grid: "rgba(46,255,142,0.05)", scopeRing: "rgba(46,255,142,0.07)",
+  runway: "#0A2416", runwayLine: "rgba(46,255,142,0.8)",
+  taxiway: "#082015", taxiLight: "#2EFF8E",
+  terminal: "#0C2A1A", terminalWin: "#FFB000",
+  fuel: "#10301F", tower: "#10301F",
+  gate: { free: "#0E2C1C", res: "#FFB000", occ: "#FF4D4D" },
+  ac: { fus: "#B9F5CE", tail: "#2EFF8E" },
+  nightTint: "rgba(2,10,6,0.30)", rainTint: "rgba(46,255,142,0.05)",
+  rainStreak: "rgba(185,245,206,0.28)", lightAmber: "#FFB000",
+  staticDot: "rgba(46,255,142,0.16)",
+};
+const SWATCHES = [
+  { name: "bg", hex: PALETTE.bg, role: "fond de page / noir phosphore", pair: "text" },
+  { name: "surface", hex: PALETTE.surface, role: "panneaux, HUD", pair: "text" },
+  { name: "surface-2", hex: PALETTE.surface2, role: "panneaux relevés (modales, toasts)", pair: "text" },
+  { name: "border", hex: PALETTE.border, role: "bordures / séparateurs", pair: "ui" },
+  { name: "text", hex: PALETTE.text, role: "texte principal (vert pale)", pair: "bg" },
+  { name: "text-dim", hex: PALETTE.dim, role: "captions, secondaire", pair: "bg" },
+  { name: "accent", hex: PALETTE.accent, role: "phosphore primaire (données, focus)", pair: "bg" },
+  { name: "ok", hex: PALETTE.ok, role: "gains / succès (phosphore)", pair: "bg" },
+  { name: "warn", hex: PALETTE.warn, role: "avertissements (ambre)", pair: "bg" },
+  { name: "err", hex: PALETTE.err, role: "erreurs / incidents (rouge rare)", pair: "bg" },
+  { name: "gold", hex: PALETTE.gold, role: "récompenses / astuces (ambre)", pair: "bg" },
+];
+/* ---- WCAG : luminance + contraste (MESURÉS, injectés) ---------- */
+function hexRgb(h) { h = h.replace("#", ""); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; }
+function lum(h) {
+  const [r, g, b] = hexRgb(h).map((v) => {
+    v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+function ratio(a, b) { const l1 = lum(a), l2 = lum(b); const hi = Math.max(l1, l2), lo = Math.min(l1, l2); return (hi + 0.05) / (lo + 0.05); }
+function renderSwatches() {
+  const root = document.getElementById("swatches");
+  SWATCHES.forEach((s) => {
+    const pairHex = s.pair === "bg" ? PALETTE.bg : s.pair === "text" ? PALETTE.text : s.pair === "ui" ? PALETTE.surface : PALETTE.bg;
+    const r = ratio(s.hex, pairHex);
+    const need = s.pair === "ui" ? 3 : 4.5;
+    const ok = r >= need;
+    const el = document.createElement("div");
+    el.className = "swatch";
+    el.innerHTML =
+      `<div class="chip" style="background:${s.hex}"></div>` +
+      `<div class="meta"><div class="name">${s.name} <span class="hex">${s.hex}</span></div>` +
+      `<div class="role">${s.role}</div>` +
+      `<div class="ratios">contraste vs ${s.pair === "ui" ? "surface" : (s.pair === "text" ? "bg" : "text/surface")} : ` +
+      `<span class="${ok ? "ratio-pass" : "ratio-fail"}">${r.toFixed(1)}:1 ${ok ? "✓" : "✗"} ${s.pair === "ui" ? "(UI ≥ 3)" : "(AA ≥ 4.5)"}</span></div></div>`;
+    root.appendChild(el);
+  });
+}
+/* ---- Helpers canvas ------------------------------------------- */
+function h32(n) { let x = (n ^ 0x9E3779B9) >>> 0; x = Math.imul(x ^ (x >>> 15), 0x85EBCA6B) >>> 0; x = Math.imul(x ^ (x >>> 13), 0xC2B2AE35) >>> 0; x ^= x >>> 16; return (x >>> 0) / 4294967296; }
+function rect(x, y, w, h, fill, stroke) {
+  ctx.fillStyle = fill; ctx.fillRect(x, y, w, h);
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1); }
+}
+function label(text, x, y, color, font) {
+  ctx.fillStyle = color || PALETTE.text; ctx.font = font || "bold 12px Consolas, monospace";
+  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; ctx.fillText(text, x, y);
+}
+function aircraft(ctx, x, y, ang, k, p, kind, glow) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(ang + Math.PI / 2); // sprite « nez vers le haut »
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.fillRect(2 - 2 * k, -10 * k + 2, 4 * k, 20 * k); // ombre décalée
+  if (glow) { ctx.shadowColor = "rgba(46,255,142,0.7)"; ctx.shadowBlur = 10; }
+  ctx.fillStyle = p.ac.fus;
+  ctx.fillRect(-2 * k, -10 * k, 4 * k, 20 * k); // fuselage
+  ctx.fillRect(-8 * k, -4 * k, 16 * k, 3 * k);   // ailes
+  ctx.beginPath(); ctx.moveTo(0, -13 * k); ctx.lineTo(3 * k, -8 * k); ctx.lineTo(-3 * k, -8 * k); ctx.closePath(); ctx.fill(); // nez
+  ctx.fillStyle = p.ac.tail; // dérive + tail-band (lisibilité)
+  ctx.fillRect(-3.5 * k, 7 * k, 7 * k, 3 * k);
+  if (kind === "large") { ctx.fillRect(-2.5 * k, -10 * k, 1.6 * k, 20 * k); } // double fuselage (grand)
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+function rain(ctx, W, H, p, n = 70) {
+  ctx.strokeStyle = p.rainStreak; ctx.lineWidth = 1.4;
+  for (let i = 0; i < n; i++) {
+    const x = (i * 137 + 61) % W, y = (i * 271 + 33) % H;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 3.5, y + 13); ctx.stroke();
+  }
+}
+function staticNoise(ctx, W, H, p, n = 400) {
+  ctx.fillStyle = p.staticDot;
+  for (let i = 0; i < n; i++) {
+    ctx.fillRect(Math.floor(h32(i * 911) * W), Math.floor(h32(i * 547) * H), 1, 1);
+  }
+}
+function scanlines(ctx, W, H) {
+  ctx.fillStyle = "rgba(46,255,142,0.05)";
+  for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);
+}
+/* ---- 3 · Écran-titre (scope radar phosphore) ------------------- */
+function drawTitle(cv) {
+  ctx = cv.getContext("2d"); const W = cv.width, H = cv.height, p = PALETTE;
+  // Bol du scope
+  const cx = W / 2, cy = H * 0.44;
+  const bowl = ctx.createRadialGradient(cx, cy, 40, cx, cy, Math.max(W, H) * 0.72);
+  bowl.addColorStop(0, "#0A1A10"); bowl.addColorStop(1, "#04140C");
+  ctx.fillStyle = bowl; ctx.fillRect(0, 0, W, H);
+  const R = Math.min(W, H) * 0.44; // rayon du scope
+  // Cibles concentriques + réticule + graduations
+  ctx.strokeStyle = p.scopeRing; ctx.lineWidth = 1;
+  for (const f of [0.25, 0.5, 0.75, 1]) { ctx.beginPath(); ctx.arc(cx, cy, R * f, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
+  for (let a = 0; a < 12; a++) {
+    const th = a * Math.PI / 6;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(th) * R, cy + Math.sin(th) * R);
+    ctx.lineTo(cx + Math.cos(th) * (R - 10), cy + Math.sin(th) * (R - 10));
+    ctx.stroke();
+  }
+  // Balayage figé à 40° (déterministe)
+  ctx.save();
+  ctx.translate(cx, cy); ctx.rotate(-Math.PI / 5); // 36°
+  const wedge = ctx.createLinearGradient(0, 0, R, 0);
+  wedge.addColorStop(0, "rgba(46,255,142,0.28)"); wedge.addColorStop(1, "rgba(46,255,142,0)");
+  ctx.fillStyle = wedge;
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R, -0.42, 0); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = "rgba(46,255,142,0.8)"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(R, 0); ctx.stroke();
+  ctx.restore();
+  // 3 blips déterministes + traîne + codes
+  const blips = [
+    { a: 0.9, r: 0.62, code: "AFR 1234" }, { a: 2.4, r: 0.40, code: "KE 77" }, { a: 3.9, r: 0.83, code: "DL 241" },
+  ];
+  for (const b of blips) {
+    const bx = cx + Math.cos(b.a) * R * b.r, by = cy + Math.sin(b.a) * R * b.r;
+    const gl = ctx.createRadialGradient(bx, by, 0, bx, by, 14);
+    gl.addColorStop(0, "rgba(46,255,142,0.7)"); gl.addColorStop(1, "rgba(46,255,142,0)");
+    ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(bx, by, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = p.accent; ctx.beginPath(); ctx.arc(bx, by, 3, 0, Math.PI * 2); ctx.fill();
+    label(b.code, bx + 10, by - 8, p.dim, "11px Consolas, monospace");
+  }
+  // Avion en transit (position figée, haut du scope) + lueur
+  const px = cx + R * 0.55, py = cy - R * 0.78;
+  ctx.save();
+  ctx.shadowColor = "rgba(255,176,0,0.8)"; ctx.shadowBlur = 12;
+  ctx.fillStyle = p.accent2;
+  ctx.beginPath(); ctx.moveTo(px, py - 9); ctx.lineTo(px + 8, py + 7); ctx.lineTo(px, py + 3); ctx.lineTo(px - 8, py + 7); ctx.closePath(); ctx.fill();
+  ctx.restore();
+  label("TRANSIT · FL320", px + 14, py + 4, p.dim, "11px Consolas, monospace");
+  // Statique + scanlines + vignette d'angle
+  staticNoise(ctx, W, H, p, 400);
+  scanlines(ctx, W, H);
+  // Titre phosphore luisant + sous-titre + version
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.font = "700 46px Consolas, monospace";
+  ctx.fillStyle = "rgba(4,20,12,0.7)"; ctx.fillText("AIRPORT TYCOON", W / 2 + 3, H * 0.82 + 3);
+  ctx.shadowColor = "rgba(46,255,142,0.6)"; ctx.shadowBlur = 18;
+  ctx.fillStyle = p.text; ctx.fillText("AIRPORT TYCOON", W / 2, H * 0.82);
+  ctx.shadowBlur = 0;
+  ctx.font = "15px Consolas, monospace"; ctx.fillStyle = p.accent2;
+  ctx.fillText("// SCAN-77 · J12 14:00", W / 2, H * 0.82 + 36);
+  ctx.font = "12px Consolas, monospace"; ctx.fillStyle = p.dim;
+  ctx.fillText("Direction de contrôle — un aéroport la nuit, du bitume au départ.", W / 2, H * 0.82 + 58);
+  ctx.font = "11px Consolas, monospace"; ctx.textAlign = "right";
+  ctx.fillStyle = p.dim; ctx.fillText("v T5b · variante C", W - 12, H - 12);
+  ctx.textAlign = "left";
+  // Croix de cadrage (coins)
+  ctx.strokeStyle = "rgba(46,255,142,0.4)"; ctx.lineWidth = 1.5;
+  for (const [sx, sy, dx, dy] of [[10, 10, 1, 1], [W - 10, 10, -1, 1], [10, H - 10, 1, -1], [W - 10, H - 10, -1, -1]]) {
+    ctx.beginPath(); ctx.moveTo(sx + dx * 18, sy); ctx.lineTo(sx, sy); ctx.lineTo(sx, sy + dy * 18); ctx.stroke();
+  }
+}
+/* ---- 4 · Carte du jeu (monde phosphore, pluie) ----------------- */
+let ctx; // contexte courant (utilisé par rect/label)
+function drawMap(cv) {
+  ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height, p = PALETTE;
+  // Fond scope + grille + cibles
+  ctx.fillStyle = p.terrain; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = p.grid; ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 48) { ctx.beginPath(); ctx.moveTo(x + 0.5, 0); ctx.lineTo(x + 0.5, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += 48) { ctx.beginPath(); ctx.moveTo(0, y + 0.5); ctx.lineTo(W, y + 0.5); ctx.stroke(); }
+  ctx.strokeStyle = p.scopeRing;
+  for (const f of [0.28, 0.56, 0.84]) { ctx.beginPath(); ctx.arc(W / 2, H / 2, Math.min(W, H) * 0.5 * f, 0, Math.PI * 2); ctx.stroke(); }
+  // Piste A (horizontale) : bordures phosphore luisantes + ligne de centre
+  ctx.save();
+  ctx.shadowColor = "rgba(46,255,142,0.55)"; ctx.shadowBlur = 6;
+  ctx.fillStyle = p.runway; ctx.fillRect(130, 150, 620, 46);
+  ctx.strokeStyle = p.runwayLine; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(130, 150); ctx.lineTo(750, 150); ctx.moveTo(130, 196); ctx.lineTo(750, 196); ctx.stroke();
+  ctx.restore();
+  ctx.save();
+  ctx.shadowColor = "rgba(46,255,142,0.55)"; ctx.shadowBlur = 6;
+  ctx.fillStyle = p.runway; ctx.fillRect(616, 160, 46, 300);
+  ctx.strokeStyle = p.runwayLine; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(616, 160); ctx.lineTo(616, 460); ctx.moveTo(662, 160); ctx.lineTo(662, 460); ctx.stroke();
+  ctx.restore();
+  // Lignes de centre (pointillés phosphore)
+  ctx.fillStyle = p.runwayLine;
+  for (let x = 140; x < 740; x += 40) ctx.fillRect(x, 170, 18, 3); // centre A
+  for (let y = 170; y < 460; y += 40) ctx.fillRect(637, y, 3, 18);   // centre B
+  // Repères de seuil
+  for (const sx of [128, 744]) for (let i = 0; i < 4; i++) ctx.fillRect(sx < 400 ? sx + i * 7 : sx - 21 + i * 7, 154 + i * 10, 5, 8);
+  for (const sy of [158, 458]) for (let i = 0; i < 4; i++) ctx.fillRect(620 + i * 10, sy < 300 ? sy : sy - 33 + i * 10, 8, 5);
+  label("03", 136, 214, p.dim, "bold 12px Consolas, monospace");
+  label("27", 728, 214, p.dim, "bold 12px Consolas, monospace");
+  // Taxiways (bandes + feux phosphore)
+  ctx.fillStyle = p.taxiway;
+  ctx.fillRect(200, 254, 400, 16); // T1 : y 262
+  ctx.fillRect(424, 290, 16, 100); // T2 : x 432
+  for (let x = 200; x <= 600; x += 24) { // T1 : y 262
+    const gl = ctx.createRadialGradient(x, 262, 0, x, 262, 4);
+    gl.addColorStop(0, "rgba(46,255,142,0.9)"); gl.addColorStop(1, "rgba(46,255,142,0)");
+    ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(x, 262, 4, 0, Math.PI * 2); ctx.fill();
+  }
+  for (let y = 290; y <= 390; y += 24) { // T2 : x 432
+    const gl = ctx.createRadialGradient(432, y, 0, 432, y, 4);
+    gl.addColorStop(0, "rgba(46,255,142,0.9)"); gl.addColorStop(1, "rgba(46,255,142,0)");
+    ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(432, y, 4, 0, Math.PI * 2); ctx.fill();
+  }
+  // Terminal A + fenêtres ambre (3×3)
+  ctx.save();
+  ctx.strokeStyle = "rgba(46,255,142,0.7)"; ctx.lineWidth = 1.5;
+  ctx.fillStyle = p.terminal;
+  ctx.fillRect(180, 300, 240, 90); ctx.strokeRect(180.5, 300.5, 239, 89);
+  ctx.restore();
+  for (let c = 0; c < 3; c++) for (let r = 0; r < 3; r++) {
+    const wx = 200 + c * 72, wy = 314 + r * 24;
+    ctx.fillStyle = "rgba(255,176,0,0.12)"; ctx.fillRect(wx - 5, wy - 5, 46, 22);
+    ctx.fillStyle = p.terminalWin; ctx.fillRect(wx, wy, 36, 12);
+  }
+  label("TERMINAL A", 188, 382, p.dim, "bold 12px Consolas, monospace");
+  // Portes (g1 libre, g2 occupée O, g3 réservée R, g4 libre)
+  const gates = [
+    { x: 190, st: "free" }, { x: 230, st: "occ" }, { x: 270, st: "res" }, { x: 310, st: "free" },
+  ];
+  for (const g of gates) {
+    if (g.st === "res") {
+      ctx.fillStyle = p.gate.res; ctx.fillRect(g.x, 400, 26, 26);
+      ctx.save(); ctx.beginPath(); ctx.rect(g.x, 400, 26, 26); ctx.clip();
+      ctx.strokeStyle = "rgba(0,0,0,0.55)"; ctx.lineWidth = 2;
+      for (let sx = -26; sx < 26; sx += 6) { ctx.beginPath(); ctx.moveTo(g.x + sx, 426); ctx.lineTo(g.x + sx + 26, 400); ctx.stroke(); }
+      ctx.restore();
+      label("R", g.x + 8, 406, "#000", "bold 11px Consolas, monospace");
+    } else if (g.st === "occ") {
+      ctx.fillStyle = p.gate.occ; ctx.fillRect(g.x, 400, 26, 26);
+      label("O", g.x + 8, 406, "#000", "bold 11px Consolas, monospace");
+    } else {
+      ctx.fillStyle = p.gate.free; ctx.strokeStyle = p.accent; ctx.lineWidth = 1;
+      ctx.fillRect(g.x, 400, 26, 26); ctx.strokeRect(g.x + 0.5, 400.5, 25, 25);
+      label("·", g.x + 9, 406, "rgba(185,245,206,0.6)", "11px Consolas, monospace");
+    }
+  }
+  label("G1", 190, 428, p.dim, "10px Consolas, monospace"); label("G2", 230, 428, p.dim, "10px Consolas, monospace");
+  label("G3", 270, 428, p.dim, "10px Consolas, monospace"); label("G4", 310, 428, p.dim, "10px Consolas, monospace");
+  // Fuel + tour (feu ambre)
+  ctx.fillStyle = p.fuel; ctx.fillRect(480, 400, 34, 26);
+  label("FUEL", 482, 430, p.dim, "10px Consolas, monospace");
+  ctx.fillStyle = p.tower; ctx.fillRect(720, 296, 26, 40);
+  const tg = ctx.createRadialGradient(733, 296, 0, 733, 296, 10);
+  tg.addColorStop(0, "rgba(255,176,0,0.95)"); tg.addColorStop(1, "rgba(255,176,0,0)");
+  ctx.fillStyle = tg; ctx.beginPath(); ctx.arc(733, 296, 10, 0, Math.PI * 2); ctx.fill();
+  label("TWR", 722, 338, p.dim, "10px Consolas, monospace");
+  // Avions (3 tailles, lueur phosphore)
+  aircraft(ctx, 243, 413, -Math.PI / 2, 1, p, "medium", true);  // moyen à quai G2 (vers le terminal)
+  aircraft(ctx, 639, 430, -Math.PI / 2, 1.6, p, "large", true); // grand au roulage (piste B)
+  aircraft(ctx, 432, 350, Math.PI / 2, 0.7, p, "small", true);  // petit taxi T2 (vers l'aire)
+  // Sélection : Terminal A (pointillés phosphore)
+  ctx.save();
+  ctx.strokeStyle = p.accent; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
+  ctx.shadowColor = "rgba(46,255,142,0.6)"; ctx.shadowBlur = 8;
+  ctx.strokeRect(176, 296, 248, 98);
+  ctx.restore();
+  // Feux de bords de piste (ambre, lueurs)
+  for (let x = 130; x <= 750; x += 40) for (const y of [150, 196]) {
+    const gl = ctx.createRadialGradient(x, y, 0, x, y, 5);
+    gl.addColorStop(0, "rgba(255,176,0,0.85)"); gl.addColorStop(1, "rgba(255,176,0,0)");
+    ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
+  }
+  for (let y = 160; y <= 460; y += 40) for (const x of [616, 662]) {
+    const gl = ctx.createRadialGradient(x, y, 0, x, y, 5);
+    gl.addColorStop(0, "rgba(255,176,0,0.85)"); gl.addColorStop(1, "rgba(255,176,0,0)");
+    ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
+  }
+  // Statique + pluie (déterministe) + teintes (pluie puis nuit)
+  staticNoise(ctx, W, H, p, 260);
+  rain(ctx, W, H, p, 60);
+  ctx.fillStyle = p.rainTint; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = p.nightTint; ctx.fillRect(0, 0, W, H);
+  scanlines(ctx, W, H);
+  // Légende d'état météo (encart, style HUD phosphore)
+  ctx.fillStyle = "rgba(5,10,7,0.9)"; ctx.strokeStyle = p.accent; ctx.lineWidth = 1;
+  const bx = W - 196, by = 14;
+  ctx.beginPath(); ctx.roundRect(bx, by, 182, 54, 4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = p.accent2; ctx.beginPath(); ctx.arc(bx + 16, by + 18, 4, 0, Math.PI * 2); ctx.fill();
+  label("PLUIE · J12 14:00", bx + 28, by + 12, p.text, "bold 11px Consolas, monospace");
+  label("+14 % lenteur · +4 s attente", bx + 28, by + 30, p.dim, "10.5px Consolas, monospace");
+  // Croix de cadrage (coins)
+  ctx.strokeStyle = "rgba(46,255,142,0.4)"; ctx.lineWidth = 1.5;
+  for (const [sx, sy, dx, dy] of [[10, 10, 1, 1], [W - 10, 10, -1, 1], [10, H - 10, 1, -1], [W - 10, H - 10, -1, -1]]) {
+    ctx.beginPath(); ctx.moveTo(sx + dx * 18, sy); ctx.lineTo(sx, sy); ctx.lineTo(sx, sy + dy * 18); ctx.stroke();
+  }
+}
+/* ---- Initialisation (toute la page est dessinée en synchrone) -- */
+renderSwatches();
+drawTitle(document.getElementById("cv-title"));
+drawMap(document.getElementById("cv-map"));
+document.body.dataset.ready = "1";
+</script>
+</body>
+</html>

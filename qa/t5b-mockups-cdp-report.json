@@ -1,0 +1,51 @@
+{
+  "ts": "2026-10-14T14:05:18.430Z",
+  "head": "24825ad7d77d4cee175866984681a325d2de9eb1",
+  "pass": true,
+  "captures": [
+    {
+      "name": "before-title",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T14-05-09-878Z-before-title.png",
+      "bytes": 47661,
+      "kb": 46.5
+    },
+    {
+      "name": "before-game",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T14-05-09-878Z-before-game.png",
+      "bytes": 77653,
+      "kb": 75.8
+    },
+    {
+      "name": "after-index",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T14-05-09-878Z-after-index.png",
+      "bytes": 78883,
+      "kb": 77
+    },
+    {
+      "name": "after-a",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T14-05-09-878Z-after-a.png",
+      "bytes": 387042,
+      "kb": 378
+    },
+    {
+      "name": "after-b",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T14-05-09-878Z-after-b.png",
+      "bytes": 318263,
+      "kb": 310.8
+    },
+    {
+      "name": "after-c",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5b-mockups-cdp\\t5b-mockups-cdp-2026-10-14T14-05-09-878Z-after-c.png",
+      "bytes": 572056,
+      "kb": 558.6
+    }
+  ],
+  "consoleErrors": [],
+  "specs": [
+    "index",
+    "variant-a",
+    "variant-b",
+    "variant-c"
+  ],
+  "note": "captures déterministes : avant = jeu HEAD (tmp propre via git archive), après = maquettes working-tree (full-page). 0 exception attendue."
+}

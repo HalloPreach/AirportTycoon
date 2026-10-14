@@ -1,0 +1,124 @@
+<!doctype html>
+<!-- ============================================================
+  T5b (t_52f07a47) — PAGE D'ACCUEIL DE LA REVUE DES DIRECTIONS.
+  Auto-suffisante : 0 asset externe, 0 dépendance, 0 réseau,
+  DETERMINISTE (aucun Math.random). NE PAS IMPLÉMENTER avant
+  le choix d'Elsay (porte T5c).
+============================================================ -->
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>T5b · Choix de direction visuelle — Airport Tycoon</title>
+<style>
+  :root {
+    --bg: #06080C; --surface: #0D1118; --border: #22303F;
+    --text: #D7E1E9; --dim: #7C8B99;
+    --radius: 6px;
+    --font-body: "Segoe UI", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font: 15px/1.5 var(--font-body); -webkit-font-smoothing: antialiased; }
+  main { max-width: 980px; margin: 0 auto; padding: 40px 20px 70px; }
+  h1 { font: 700 30px/1.25 var(--font-body); letter-spacing: 0.01em; margin: 0 0 6px; }
+  .sub { color: var(--dim); margin: 0 0 8px; }
+  .rule { border: 0; border-top: 1px solid var(--border); margin: 22px 0; }
+  .card {
+    display: grid; grid-template-columns: 120px 1fr; gap: 18px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px; margin: 14px 0;
+  }
+  .card .letter {
+    display: grid; place-items: center;
+    font: 700 44px var(--font-body); color: #fff;
+    border-radius: var(--radius);
+  }
+  .card.a .letter { background: #0E1E30; border: 1px solid #2E8FE0; }
+  .card.b .letter { background: #2A1E0C; border: 1px solid #F0A93B; }
+  .card.c .letter { background: #06140C; border: 1px solid #2EFF8E; }
+  .card h2 { margin: 0 0 4px; font: 700 17px var(--font-body); letter-spacing: 0.02em; }
+  .card p { margin: 0 0 8px; color: var(--dim); font-size: 13.5px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chips span {
+    width: 18px; height: 18px; border-radius: 3px; display: inline-block;
+    border: 1px solid rgba(255,255,255,0.18);
+  }
+  .pros { color: #7FD6A8; font-size: 12.5px; margin: 6px 0 2px; }
+  .risk { color: #E8A9A0; font-size: 12.5px; margin: 0 0 10px; }
+  a.go {
+    display: inline-block; text-decoration: none; font: 600 13px var(--font-body);
+    color: #fff; background: #1B2B3B; border: 1px solid var(--border);
+    border-radius: 4px; padding: 7px 16px;
+  }
+  a.go:hover { background: #24384C; }
+  footer { color: var(--dim); font-size: 12.5px; margin-top: 26px; }
+  footer b { color: var(--text); }
+</style>
+</head>
+<body>
+<main>
+  <h1>T5b — Choix de direction visuelle</h1>
+  <p class="sub">Airport Tycoon · 3 directions concurrentes à arbitrer (débloque la T5c — implémentation du thème).
+  Chacune : palette avec contrastes <em>mesurés</em>, typo, écran-titre, carte du jeu, panneaux &amp; HUD.</p>
+
+  <div class="card a">
+    <div class="letter">A</div>
+    <div>
+      <h2><a class="go" href="variant-a.html">« Nuit REV.2 » — verre sombre + cyan électrique</a></h2>
+      <p>Proche de l'état actuel (continuité) : surfaces en verre sombre, accent cyan électrique, feux de
+      piste néon, données mono tabulaires, HUD compact.</p>
+      <div class="chips" aria-hidden="true">
+        <span style="background:#060A14"></span><span style="background:#0D1524"></span>
+        <span style="background:#38BDF8"></span><span style="background:#F59E0B"></span><span style="background:#FF4D4D"></span>
+      </div>
+      <p class="pros">✓ Moins risqué : la plus proche de l'existant · HUD compact lisible · néon cohérent</p>
+      <p class="risk">Risque : peu de rupture visuelle (affirmation moyenne).</p>
+    </div>
+  </div>
+
+  <div class="card b">
+    <div class="letter">B</div>
+    <div>
+      <h2><a class="go" href="variant-b.html">« Tour de contrôle » — sombre ambre (instrument)</a></h2>
+      <p>Langage « salle de contrôle » : fond anthracite chaud, ambre instrument, vert phosphore pour le
+      positif, rouge rare, bordures franches, typographie mono pour les données.</p>
+      <div class="chips" aria-hidden="true">
+        <span style="background:#12100C"></span><span style="background:#1B1712"></span>
+        <span style="background:#F0A93B"></span><span style="background:#8FE0A8"></span><span style="background:#E5484D"></span>
+      </div>
+      <p class="pros">✓ Identité forte « opérateur » · couleurs métier (ambre/vert/rouge) · très lisible</p>
+      <p class="risk">Risque : ambiance « vieux radar » à valider — peut paraître datée.</p>
+    </div>
+  </div>
+
+  <div class="card c">
+    <div class="letter">C</div>
+    <div>
+      <h2><a class="go" href="variant-c.html">« Radar Rétro » — phosphore vert CRT</a></h2>
+      <p>Écran phosphore vert type CRT : une couleur primaire, ambre pour les alertes, police mono
+      intégrale, lueurs, balayage radar, statique + scanlines. La plus « spectaculaire ».</p>
+      <div class="chips" aria-hidden="true">
+        <span style="background:#050807"></span><span style="background:#0B120E"></span>
+        <span style="background:#2EFF8E"></span><span style="background:#FFB000"></span><span style="background:#FF4D4D"></span>
+      </div>
+      <p class="pros">✓ Affirmation la plus forte · cohérente « instrument » · différenciant</p>
+      <p class="risk">Risque : densité phosphore sur noir — confort visuel en session longue à valider.</p>
+    </div>
+  </div>
+
+  <hr class="rule"/>
+  <footer>
+    <b>Variante retenue</b> → les tokens de la maquette deviennent la v2 de <b>src/ui/theme.mjs</b>
+    (source unique), appliqués à tous les écrans + le rendu carte (T5c). Captures déterministes via
+    <b>qa/t5b-mockups-cdp.mjs</b> (evidence/). Maquettes auto-suffisantes : 0 asset, 0 réseau, 0 dépendance.
+  </footer>
+</main>
+<script>
+"use strict";
+// Page statique (0 JS de rendu) — contrat CDP uniforme des maquettes T5b :
+// data-ready signalé pour les captures déterministes (qa/t5b-mockups-cdp.mjs).
+document.body.dataset.ready = "1";
+</script>
+</body>
+</html>
