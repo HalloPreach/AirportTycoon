@@ -424,21 +424,50 @@ function label(text, x, y, color, font) {
   ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; ctx.fillText(text, x, y);
 }
 function aircraft(ctx, x, y, ang, k, p, kind, glow) {
+  // T5c (t_bd4726e7) : SILHOUETTE VUE D'OISEAU alignée sur le renderer livré
+  // (src/ui/renderer.mjs drawAircraft) — plus de carré/croix : fuselage
+  // effilé (trapèze) + ailes en FLECHE (trapèzes battus) + empennage en
+  // flèche + cône de nez PHOSPHORE ; le grand porteur a un double fuselage.
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(ang + Math.PI / 2); // sprite « nez vers le haut »
   ctx.fillStyle = "rgba(0,0,0,0.35)";
-  ctx.fillRect(2 - 2 * k, -10 * k + 2, 4 * k, 20 * k); // ombre décalée
-  if (glow) { ctx.shadowColor = "rgba(46,255,142,0.7)"; ctx.shadowBlur = 10; }
+  ctx.fillRect(-1.5 * k + 2, -11 * k + 2, 3 * k, 22 * k); // ombre décalée
+  if (glow) { ctx.shadowColor = "rgba(46,255,142,0.7)"; ctx.shadowBlur = 8; }
   ctx.fillStyle = p.ac.fus;
-  ctx.fillRect(-2 * k, -10 * k, 4 * k, 20 * k); // fuselage
-  ctx.fillRect(-8 * k, -4 * k, 16 * k, 3 * k);   // ailes
-  ctx.beginPath(); ctx.moveTo(0, -13 * k); ctx.lineTo(3 * k, -8 * k); ctx.lineTo(-3 * k, -8 * k); ctx.closePath(); ctx.fill(); // nez
-  ctx.fillStyle = p.ac.tail; // dérive + tail-band (lisibilité)
-  ctx.fillRect(-3.5 * k, 7 * k, 7 * k, 3 * k);
-  if (kind === "large") { ctx.fillRect(-2.5 * k, -10 * k, 1.6 * k, 20 * k); } // double fuselage (grand)
+  ctx.beginPath(); // fuselage (trapèze fin, nez -12k → queue +10k)
+  ctx.moveTo(0, -12 * k); ctx.lineTo(1.5 * k, -9 * k); ctx.lineTo(1.5 * k, 7 * k);
+  ctx.lineTo(0.9 * k, 10 * k); ctx.lineTo(-0.9 * k, 10 * k); ctx.lineTo(-1.5 * k, 7 * k);
+  ctx.lineTo(-1.5 * k, -9 * k); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); // aile gauche (trapèze en flèche)
+  ctx.moveTo(-1.2 * k, -3 * k); ctx.lineTo(-9 * k, 2.5 * k); ctx.lineTo(-9 * k, 4 * k);
+  ctx.lineTo(-1.2 * k, 0.5 * k); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); // aile droite
+  ctx.moveTo(1.2 * k, -3 * k); ctx.lineTo(9 * k, 2.5 * k); ctx.lineTo(9 * k, 4 * k);
+  ctx.lineTo(1.2 * k, 0.5 * k); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = p.ac.tail; // empennage (2 ailettes en flèche) + dérive
+  ctx.beginPath(); ctx.moveTo(-0.9 * k, 7.5 * k); ctx.lineTo(-5 * k, 11 * k); ctx.lineTo(-5 * k, 12 * k); ctx.lineTo(-0.9 * k, 10 * k); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0.9 * k, 7.5 * k); ctx.lineTo(5 * k, 11 * k); ctx.lineTo(5 * k, 12 * k); ctx.lineTo(0.9 * k, 10 * k); ctx.closePath(); ctx.fill();
+  ctx.fillRect(-0.8 * k, 8.5 * k, 1.6 * k, 3 * k); // dérive (fuselage fin)
+  if (kind === "large") { // grand porteur : double fuselage (B747)
+    ctx.fillStyle = p.ac.fus;
+    ctx.fillRect(-1.1 * k, -11 * k, 0.8 * k, 20 * k);
+    ctx.fillRect(0.3 * k, -11 * k, 0.8 * k, 20 * k);
+  }
   ctx.shadowBlur = 0;
+  ctx.fillStyle = p.accent; // cône de nez PHOSPHORE (se lit par taille + cône)
+  ctx.beginPath(); ctx.moveTo(0, -14 * k); ctx.lineTo(2.2 * k, -8 * k); ctx.lineTo(-2.2 * k, -8 * k); ctx.closePath(); ctx.fill();
   ctx.restore();
+}
+// T5c : TAG RADAR (livré : indicatif + type + palier) — liseré phosphore,
+// clampé DANS le canvas (jamais rogné au bord). (tx,ty) = coin HAUT-GAUCHE.
+function radarTag(ctx, tx, ty, text, p, W, H) {
+  ctx.font = "11px Consolas, monospace";
+  ctx.textAlign = "left"; ctx.textBaseline = "top";
+  const w = ctx.measureText(text).width;
+  tx = Math.min(Math.max(4, tx), W - w - 6); ty = Math.max(4, Math.min(ty, H - 18));
+  ctx.lineWidth = 3; ctx.strokeStyle = "rgba(5,8,7,0.8)"; ctx.strokeText(text, tx, ty);
+  ctx.fillStyle = p.dim; ctx.fillText(text, tx, ty);
 }
 function rain(ctx, W, H, p, n = 70) {
   ctx.strokeStyle = p.rainStreak; ctx.lineWidth = 1.4;
@@ -559,11 +588,27 @@ function drawMap(cv) {
   ctx.fillStyle = p.runwayLine;
   for (let x = 140; x < 740; x += 40) ctx.fillRect(x, 170, 18, 3); // centre A
   for (let y = 170; y < 460; y += 40) ctx.fillRect(637, y, 3, 18);   // centre B
-  // Repères de seuil
-  for (const sx of [128, 744]) for (let i = 0; i < 4; i++) ctx.fillRect(sx < 400 ? sx + i * 7 : sx - 21 + i * 7, 154 + i * 10, 5, 8);
-  for (const sy of [158, 458]) for (let i = 0; i < 4; i++) ctx.fillRect(620 + i * 10, sy < 300 ? sy : sy - 33 + i * 10, 8, 5);
-  label("03", 136, 214, p.dim, "bold 12px Consolas, monospace");
-  label("27", 728, 214, p.dim, "bold 12px Consolas, monospace");
+  // Repères de seuil (« piano » — T5c, aligné sur drawRunwayDetails du
+  // renderer livré) : barres PERPENDICULAIRES à l'axe de la piste, empilées
+  // sur TOUTE la largeur d'extrémité (pas une cascade de coins). Le nombre
+  // suit la taille écran (span/16, borné 4..10) — ici span=46 pour A (h)
+  // et B (w) → n=4, step=9.2.
+  ctx.fillStyle = "rgba(61,255,165,0.6)";
+  const piano = (x, y, w, h, horiz, i, step) => {
+    if (horiz) { ctx.fillRect(x + 5, y + i * step, 5, 7); ctx.fillRect(x + w - 10, y + i * step, 5, 7); }
+    else { ctx.fillRect(x + i * step, y + 5, 7, 5); ctx.fillRect(x + i * step, y + h - 10, 7, 5); }
+  };
+  { const span = 46, n = Math.min(10, Math.max(4, Math.floor(span / 16))), step = span / (n + 1);
+    for (let i = 1; i <= n; i++) piano(130, 150, 620, 46, true, i, step); }   // piste A (horiz, h=46)
+  { const span = 46, n = Math.min(10, Math.max(4, Math.floor(span / 16))), step = span / (n + 1);
+    for (let i = 1; i <= n; i++) piano(616, 160, 46, 300, false, i, step); }  // piste B (vert, w=46)
+  // Désignateurs (bold 12px, dim — convention ICAO par géométrie, aligné sur
+  // le renderer : 09/27 Est-Ouest, 18/36 Nord-Sud). Le haut de B étant
+  // masqué sous A, son « 18 » est posé juste sous le bas de A (lisible).
+  label("09", 134, 202, p.dim, "bold 12px Consolas, monospace");
+  label("27", 730, 202, p.dim, "bold 12px Consolas, monospace");
+  label("18", 668, 204, p.dim, "bold 12px Consolas, monospace");
+  label("36", 668, 456, p.dim, "bold 12px Consolas, monospace");
   // Taxiways (bandes + feux phosphore)
   ctx.fillStyle = p.taxiway;
   ctx.fillRect(200, 254, 400, 16); // T1 : y 262
@@ -621,10 +666,15 @@ function drawMap(cv) {
   tg.addColorStop(0, "rgba(255,176,0,0.95)"); tg.addColorStop(1, "rgba(255,176,0,0)");
   ctx.fillStyle = tg; ctx.beginPath(); ctx.arc(733, 296, 10, 0, Math.PI * 2); ctx.fill();
   label("TWR", 722, 338, p.dim, "10px Consolas, monospace");
-  // Avions (3 tailles, lueur phosphore)
+  // Avions (3 tailles, lueur phosphore) + TAGS RADAR (livré : indicatif
+  // + type + palier/tendance) — posés dans l'espace libre (pas sur les
+  // portes/terminal), clampés dans le canvas.
   aircraft(ctx, 243, 413, -Math.PI / 2, 1, p, "medium", true);  // moyen à quai G2 (vers le terminal)
   aircraft(ctx, 639, 430, -Math.PI / 2, 1.6, p, "large", true); // grand au roulage (piste B)
   aircraft(ctx, 432, 350, Math.PI / 2, 0.7, p, "small", true);  // petit taxi T2 (vers l'aire)
+  radarTag(ctx, 96, 444, "AFR A320 GND·", p, W, H);      // moyen à quai (sol)
+  radarTag(ctx, 672, 416, "DAL B747 FL060↑", p, W, H);    // grand en sortie
+  radarTag(ctx, 448, 336, "SKW C208 FL040↑", p, W, H);    // petit en départ
   // Sélection : Terminal A (pointillés phosphore)
   ctx.save();
   ctx.strokeStyle = p.accent; ctx.lineWidth = 2; ctx.setLineDash([6, 4]);
