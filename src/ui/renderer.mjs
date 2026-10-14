@@ -3,7 +3,8 @@
 import { queueTotals } from '../sim/passengers.mjs'; // R30 : files par terminal → somme (HUD)
 import { getPalette } from './palette.mjs'; // R43 : palette standard / daltonienne
 import { THEME } from './theme.mjs'; // T4 (t_eb78478e) : design tokens (écran-titre + HUD)
-import { drawIcon, iconCanvas } from './icons.mjs'; // T4 : glyphes vectoriels (écran-titre : avion, boutons ; menu animé)
+import { iconCanvas } from './icons.mjs'; // T4 : glyphes vectoriels (boutons du menu)
+import { AIRLINES } from '../data/catalog.mjs'; // T5c : noms des compagnies (tags radar, lecture seule)
 import { weatherView } from '../sim/weather.mjs'; // T3 (t_9b665a8b) : la MÉTÉO (lecture pure — le renderer reste en lecture seule, pas d'ensure)
 import { clockView, phaseTint } from '../sim/clock.mjs'; // T3 (t_76744b22) : l'HORLOGE jour/nuit (la phase pilote la teinte du monde)
 import { seasonTint, seasonView } from '../core/seasons.mjs'; // T3 (t_76744b22) : l'habillage de saison (teinte + affichage)
@@ -25,10 +26,13 @@ function runwayClosedRO(sim, runwayId) {
 // Lecture SEULE (weatherView — pas d'ensure : le renderer ne mute jamais la sim).
 function weatherTint(sim) {
   if (!sim) return null;
+  // T5c (t_bd4726e7) : teinte MÉTÉO au phosphore (maquette variant-c :
+  // pluie = voile phosphore, neige = voile clair, orage = phosphore dense) —
+  // v1 était bleuté (incohérent avec le scope v2).
   const wv = weatherView(sim);
-  if (wv.incident || wv.state === 'storm') return 'rgba(30, 40, 70, 0.16)';
-  if (wv.state === 'rain') return 'rgba(70, 90, 140, 0.10)';
-  if (wv.state === 'snow') return 'rgba(220, 230, 245, 0.14)';
+  if (wv.incident || wv.state === 'storm') return 'rgba(46,255,142,0.14)';
+  if (wv.state === 'rain') return 'rgba(46,255,142,0.06)';
+  if (wv.state === 'snow') return 'rgba(220,235,225,0.12)';
   return null;
 }
 // T3 (t_76744b22) : la teinte du monde par PHASE JOUR/NUIT (zéro asset, un
@@ -50,6 +54,74 @@ function seasonWorldTint(sim) {
 }
 export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, selectionOf = null, paletteOf = null, juice = null } = {}) {
   const ctx = canvas.getContext('2d');
+
+  // T5c (t_bd4726e7) : SPRITES DE LUMIÈRE pré-rendus (canvas hors-écran,
+  // dégradé radial phosphore/ambre) : un feu = 1 drawImage + 1 arc — les
+  // createRadialGradient par feu et par frame sont INTERDITS par le budget
+  // rAF (T4-PERF : 0 allocation/frame ; l'alloc unique est le sprite, en
+  // cache par (couleur, rayon) — les feux de la maquette variant-c luisent
+  // sans surcoût).
+  const GLOW_DEFS = Object.freeze({
+    amber: { core: 'rgba(255,176,0,0.9)', edge: 'rgba(255,176,0,0)' },
+    phosphor: { core: 'rgba(46,255,142,0.85)', edge: 'rgba(46,255,142,0)' },
+  });
+  const glowCache = new Map();
+  function glowSprite(name, r) {
+    const key = name + '|' + r;
+    let s = glowCache.get(key);
+    if (!s) {
+      const d = GLOW_DEFS[name] || GLOW_DEFS.phosphor;
+      s = document.createElement('canvas');
+      s.width = s.height = Math.max(2, r * 2);
+      const g = s.getContext('2d');
+      const gr = g.createRadialGradient(r, r, 0, r, r, r);
+      gr.addColorStop(0, d.core);
+      gr.addColorStop(1, d.edge);
+      g.fillStyle = gr;
+      g.fillRect(0, 0, r * 2, r * 2);
+      glowCache.set(key, s);
+    }
+    return s;
+  }
+  // Feu de balisage (lueur + noyau) — 1 drawImage + 1 arc, zéro allocation.
+  function drawLight(x, y, name) {
+    ctx.drawImage(glowSprite(name, 5), x - 5, y - 5);
+    ctx.fillStyle = name === 'amber' ? 'rgba(255,176,0,0.95)' : THEME.accent;
+    ctx.beginPath();
+    ctx.arc(x, y, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // T5c : PLUIE/NEIGE déterministes (maquette variant-c — 60 raisins de pluie,
+  // 40 flocons) : positions par hash + DÉCRUEMENT par le temps de jeu (pas de
+  // Math.random, pas d'allocation — le budget rAF est intact). Écran (pas
+  // monde) : la pluie tombe pour le joueur, pas dans la sim.
+  function drawPrecip(state) {
+    const wv = weatherView(state.sim);
+    if (wv.state !== 'rain' && wv.state !== 'snow') return;
+    const W = canvas.width, H = canvas.height;
+    const t = state.time; // secondes de simulation (lecture seule)
+    ctx.save();
+    ctx.lineWidth = 1.4;
+    if (wv.state === 'rain') {
+      ctx.strokeStyle = 'rgba(185,245,206,0.28)'; // maquette : rainStreak
+      for (let i = 0; i < 60; i++) {
+        const x = ((i * 137 + 61) % W + W) % W;
+        const y = ((i * 271 + 33 + t * 90) % (H + 40) + H + 40) % (H + 40) - 20;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 3.5, y + 13);
+        ctx.stroke();
+      }
+    } else {
+      ctx.fillStyle = 'rgba(235,245,235,0.5)';
+      for (let i = 0; i < 40; i++) {
+        const x = ((i * 191 + 97) % W + W) % W;
+        const y = ((i * 313 + 17 + t * 22) % (H + 20) + H + 20) % (H + 20) - 10;
+        ctx.fillRect(x, y, 2, 2);
+      }
+    }
+    ctx.restore();
+  }
 
   function resize() {
     canvas.width = window.innerWidth;
@@ -92,10 +164,115 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
     ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
   }
 
+  // T5c (t_bd4726e7) : couleur de TEXTE selon la luminance du fond (les
+  // bâtiments v2 sont en ÉCHELLE DE LUMINANCE verte — un terminal phosphore
+  // vif exige un texte SOMBRE, une piste sombre un texte clair). Seule
+  // amélioration de lisibilité : l'étiquette (garantie R39) reste la même.
+  function textColorOn(fill) {
+    const h = String(fill);
+    if (h.startsWith('#') && h.length === 7) {
+      const r = parseInt(h.slice(1, 3), 16), g = parseInt(h.slice(3, 5), 16), b = parseInt(h.slice(5, 7), 16);
+      const L = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+      return L > 0.45 ? THEME.bg : THEME.text;
+    }
+    return THEME.text; // non hex (rgba…) → texte clair (pire cas v1)
+  }
   // Bâtiments posés (lecture seule de state.sim.infra). Couleurs par type :
   // R43 — les cartes viennent de la palette (pal.buildings) ; les ÉTIQUETTES
   // (kind peintes au zoom près) sont inchangées : la lisibilité ne repose pas
   // sur la couleur (R39), le mode daltonien ne casse donc rien.
+  // T5c (t_bd4726e7) : le détail de PISTE (maquette variant-c) — marquages de
+  // seuil, désignateurs (09/27 Est-Ouest, 18/36 Nord-Sud — dérivés de la
+  // GÉOMÉTRIE : une piste horizontale est 09/27), feux de bords ambre
+  // (sprites en cache — T4-PERF) et point d'ATTENTE (le point de la ligne de
+  // centre le plus proche du taxiway voisin — géométrie pure, lecture seule).
+  // Zooms : feux ≥ 0.5, marquages ≥ 0.5, désignateurs ≥ 0.6, attente ≥ 0.7.
+  function drawRunwayDetails(state, cam, b, x, y, w, h) {
+    const z = cam.zoom;
+    if (w < 16 && h < 16) return; // trop petit à l'écran : pas de détail
+    const horiz = w >= h;
+    // Repères de seuil (« piano » — maquette) : barres PERPENDICULAIRES à
+    // l'axe de la piste, empilées sur TOUTE la largeur d'extrémité (pas une
+    // cascade de coins) — le nombre suit la taille écran (borné ≤ 10).
+    if (z >= 0.5) {
+      ctx.fillStyle = 'rgba(61,255,165,0.6)';
+      const span = horiz ? h : w; // tranche (px écran)
+      const n = Math.min(10, Math.max(4, Math.floor(span / 16)));
+      const step = span / (n + 1);
+      for (let i = 1; i <= n; i++) {
+        if (horiz) {
+          ctx.fillRect(x + 5, y + i * step, 5, 7);          // bout gauche
+          ctx.fillRect(x + w - 10, y + i * step, 5, 7);     // bout droit
+        } else {
+          ctx.fillRect(x + i * step, y + 5, 7, 5);          // bout haut
+          ctx.fillRect(x + i * step, y + h - 10, 7, 5);     // bout bas
+        }
+      }
+    }
+    // Désignateurs (bold 12px, dim — convention ICAO par géométrie).
+    if (z >= 0.6) {
+      ctx.fillStyle = THEME.textDim;
+      ctx.font = `bold 12px ${THEME.fontUi}`;
+      if (horiz) {
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText('09', x + 4, y + h + 6);
+        ctx.textAlign = 'right';
+        ctx.fillText('27', x + w - 4, y + h + 6);
+      } else {
+        ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+        ctx.fillText('18', x + w + 6, y + 4);
+        ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+        ctx.fillText('36', x + w + 6, y + h - 4);
+      }
+    }
+    // Feux de bords ambre (lueurs en cache — 1 drawImage/feu, T4-PERF).
+    // Pas d'au moins 40 px écran (la densité visuelle est constante) et au
+    // plus ~16 feux par arête (borné quel que soit le zoom).
+    if (z >= 0.5) {
+      const step = Math.max(40, horiz ? w / 16 : h / 16);
+      if (horiz) {
+        for (let lx = x; lx <= x + w + 0.5; lx += step) {
+          drawLight(lx, y, 'amber');
+          drawLight(lx, y + h, 'amber');
+        }
+      } else {
+        for (let ly = y; ly <= y + h + 0.5; ly += step) {
+          drawLight(x, ly, 'amber');
+          drawLight(x + w, ly, 'amber');
+        }
+      }
+    }
+    // Point d'ATTENTE (circle pointillé + H) : la position de la ligne de
+    // centre la plus proche du centre du taxiway voisin (géométrie déterminée
+    // — la sim ne porte pas de « holding », le rendu déduit la logique).
+    if (z >= 0.7 && state.sim.infra.taxiways && state.sim.infra.taxiways.length) {
+      // Point d'entrée = la projection du centre du taxiway le plus proche
+      // sur l'axe de la piste (borné aux 30 px intérieurs de chaque bout).
+      let hx = x + (horiz ? w * 0.35 : w / 2), hy = y + (horiz ? h / 2 : h * 0.35);
+      let bd = Infinity;
+      for (const t of state.sim.infra.taxiways) {
+        const [tx0, ty0] = screenToCanvas((t.x != null ? t.x : 0) + (t.w || 0) / 2, (t.y != null ? t.y : 0) + (t.h || 0) / 2, cam);
+        let px, py;
+        if (horiz) { px = Math.min(Math.max(tx0, x + 30), x + w - 30); py = y + h / 2; }
+        else { px = x + w / 2; py = Math.min(Math.max(ty0, y + 30), y + h - 30); }
+        const d = Math.hypot(px - tx0, py - ty0);
+        if (d < bd) { bd = d; hx = px; hy = py; }
+      }
+      ctx.save();
+      ctx.strokeStyle = 'rgba(61,255,165,0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.arc(hx, hy, 7, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+      ctx.fillStyle = THEME.textDim;
+      ctx.font = `bold 12px ${THEME.fontUi}`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('H', hx, hy + 0.5);
+    }
+  }
+
   function drawInfra(state, cam, pal) {
     const sim = state.sim;
     if (!sim || !sim.infra) return;
@@ -107,17 +284,119 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
       const kind = b.type || b.kind; // la sim pose `type` ; les sauvegardes M1 `kind`
       const [x, y] = screenToCanvas(b.x, b.y, cam);
       const w = b.w * cam.zoom, h = b.h * cam.zoom;
-      ctx.fillStyle = pal.buildings[kind] || '#90a4ae';
+      const fill = pal.buildings[kind] || THEME.textDim; // v2 : fond phosphore (v1 : gris)
+      ctx.fillStyle = fill;
       ctx.fillRect(x, y, w, h);
-      ctx.strokeStyle = 'rgba(0,0,0,0.35)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(x, y, w, h);
-      // Étiquette lisible au zoom près.
+      // Bordure : PHOSPHORE (maquette : les pistes luisent) pour les pistes,
+      // sombre (définition) pour les bâtiments sur fond sombre.
+      if (kind === 'taxiway') {
+        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, w, h);
+        // T5c (t_bd4726e7) : LIGNE DE CENTRE de taxiway (pointillés phosphore
+        // discrets — maquette : le guidage taxi se lit comme un radar).
+        ctx.save();
+        ctx.strokeStyle = 'rgba(61,255,165,0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([8 * cam.zoom, 10 * cam.zoom]);
+        ctx.beginPath();
+        if (w >= h) { ctx.moveTo(x + 4, y + h / 2); ctx.lineTo(x + w - 4, y + h / 2); }
+        else { ctx.moveTo(x + w / 2, y + 4); ctx.lineTo(x + w / 2, y + h - 4); }
+        ctx.stroke();
+        ctx.restore();
+      } else if (kind === 'runway') {
+        // T5c (t_bd4726e7) : bords phosphore sur les ARÊTES LONGUES
+        // (maquette variant-c : les 2 lignes de bord luisent, pas les 4 côtés).
+        ctx.strokeStyle = 'rgba(61,255,165,0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        if (w >= h) { ctx.moveTo(x, y); ctx.lineTo(x + w, y); ctx.moveTo(x, y + h); ctx.lineTo(x + w, y + h); }
+        else { ctx.moveTo(x, y); ctx.lineTo(x, y + h); ctx.moveTo(x + w, y); ctx.lineTo(x + w, y + h); }
+        ctx.stroke();
+        // Ligne de centre de PISTE (pointillés phosphore — maquette) : l'axe
+        // de décollage/atterrissage se lit sur le scope.
+        ctx.save();
+        ctx.strokeStyle = 'rgba(61,255,165,0.55)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([12 * cam.zoom, 10 * cam.zoom]);
+        ctx.beginPath();
+        if (w >= h) { ctx.moveTo(x + 8, y + h / 2); ctx.lineTo(x + w - 8, y + h / 2); }
+        else { ctx.moveTo(x + w / 2, y + 8); ctx.lineTo(x + w / 2, y + h - 8); }
+        ctx.stroke();
+        ctx.restore();
+        drawRunwayDetails(state, cam, b, x, y, w, h);
+      } else {
+        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, w, h);
+      }
+      // T5c : feux de taxiway (phosphore, pas de 24 px écran — maquette) :
+      // le guidage taxi se lit comme sur un radar. Borné (pas ≥ 24 px).
+      // T5c (t_bd4726e7) : LUEURS en sprites cache (1 drawImage/feu — pas
+      // de gradient par frame, T4-PERF).
+      if (kind === 'taxiway') {
+        const band = Math.min(w, h);
+        if (band >= 8) {
+          if (w >= h) {
+            for (let sx = Math.ceil(w / 24); sx >= 0; sx--) {
+              const lx = x + sx * 24;
+              if (lx > x + w) break;
+              drawLight(lx, y + h / 2, 'phosphor');
+            }
+          } else {
+            for (let sy = Math.ceil(h / 24); sy >= 0; sy--) {
+              const ly = y + sy * 24;
+              if (ly > y + h) break;
+              drawLight(x + w / 2, ly, 'phosphor');
+            }
+          }
+        }
+      }
+      // T5c : fenêtres du TERMINAL (guirlandes ambre — maquette) : les
+      // fenêtres s'allument quand le terminal est assez grand à l'écran.
+      if (kind === 'terminal' && w >= 56 && h >= 40) {
+        const cols = Math.min(4, Math.max(2, Math.round(w / 90)));
+        const rows = Math.min(3, Math.max(2, Math.round(h / 50)));
+        const cw = w / (cols + 1), ch = h / (rows + 1);
+        for (let c = 0; c < cols; c++) {
+          for (let r = 0; r < rows; r++) {
+            const wx = x + (c + 0.5) * cw + cw * 0.15;
+            const wy = y + (r + 0.5) * ch + ch * 0.15;
+            ctx.fillStyle = 'rgba(255,201,74,0.16)'; // halo ambre (le terminal luit)
+            ctx.fillRect(wx - 4, wy - 4, cw * 0.7 + 8, ch * 0.7 + 8);
+            ctx.fillStyle = THEME.gold;
+            ctx.fillRect(wx, wy, cw * 0.7, ch * 0.7);
+          }
+        }
+      }
+      // T5c (t_bd4726e7) : dépôt CARBURANT = cuves (2-3 cercles phosphore,
+      // maquette variant-c « fuel + tour ») — pas un simple carré : on voit
+      // que ce sont des réserves (la sim reste inchangée, c'est du rendu).
+      if (kind === 'fuel' && w >= 30 && h >= 22) {
+        const tanks = w >= h ? (w >= 64 ? 3 : 2) : 2;
+        const r = Math.min(w, h) * 0.22;
+        ctx.strokeStyle = 'rgba(61,255,165,0.55)';
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < tanks; i++) {
+          let cx, cy;
+          if (w >= h) { cx = x + w * (i + 1) / (tanks + 1); cy = y + h / 2; }
+          else { cx = x + w / 2; cy = y + h * (i + 1) / (tanks + 1); }
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+      // Étiquette lisible au zoom près (T5c : texte SOMBRE sur bâtiments
+      // vifs, CLAIR sur bâtiments sombres — luminance, pas la couleur).
+      // T5c : sur une piste VERTICALE, l'étiquette est décalée SOUS la rangée
+      // de seuil du haut (y+12) pour ne plus la MASQUER (le mot « runway »
+      // couvrait la 1re barre du piano) ; piste horizontale inchangée (y+3).
       if (cam.zoom >= 0.6) {
-        ctx.fillStyle = '#fff';
-        ctx.font = '11px system-ui';
+        ctx.fillStyle = textColorOn(fill);
+        ctx.font = `11px ${THEME.fontUi}`;
         ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-        ctx.fillText(kind, x + 4, y + 3);
+        const labY = kind === 'runway' && w < h ? y + 12 : y + 3;
+        ctx.fillText(kind, x + 4, labY);
       }
       // R39 : les BLOCAGES sont lisibles autrement que par la couleur —
       // symbole + texte (X sur piste fermée, « PANNE » sur station HS), la
@@ -129,14 +408,14 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
         ctx.moveTo(x + w * 0.4, y + h * 0.4); ctx.lineTo(x + w * 0.6, y + h * 0.6);
         ctx.moveTo(x + w * 0.6, y + h * 0.4); ctx.lineTo(x + w * 0.4, y + h * 0.6);
         ctx.stroke();
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 12px system-ui';
+        ctx.fillStyle = textColorOn(pal.buildings.runway || THEME.textDim);
+        ctx.font = `bold 12px ${THEME.fontUi}`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'top';
         ctx.fillText('FERMÉE', x + w / 2, y + 6);
       }
       if (kind === 'fuel' && b.fuelOut) {
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 11px system-ui';
+        ctx.fillStyle = textColorOn(pal.buildings.fuel || THEME.textDim);
+        ctx.font = `bold 11px ${THEME.fontUi}`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('PANNE', x + w / 2, y + h / 2);
       }
@@ -147,6 +426,26 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
     // sur elle — critère R39). L'état vient de la sim : g.acId (réservation,
     // aircraft.mjs A5) + la position réelle de l'avion (occupée = à quai).
     if (sim.infra.gates && sim.infra.gates.length) {
+      // T5c (t_bd4726e7) : marquages d'APRON (périphérie pointillée
+      // phosphore de la zone de stands — maquette variant-c) — sous les
+      // portes (défini par l'union des rects, déterministe).
+      if (cam.zoom >= 0.5) {
+        let ux0 = Infinity, uy0 = Infinity, ux1 = -Infinity, uy1 = -Infinity;
+        for (const g of sim.infra.gates) {
+          if (g.x === undefined) continue;
+          const [gx0, gy0] = screenToCanvas(g.x, g.y, cam);
+          ux0 = Math.min(ux0, gx0); uy0 = Math.min(uy0, gy0);
+          ux1 = Math.max(ux1, gx0 + g.w * cam.zoom); uy1 = Math.max(uy1, gy0 + g.h * cam.zoom);
+        }
+        if (ux1 > ux0) {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(61,255,165,0.35)';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([8, 6]);
+          ctx.strokeRect(ux0 - 14, uy0 - 14, ux1 - ux0 + 28, uy1 - uy0 + 28);
+          ctx.restore();
+        }
+      }
       // R43 : couleurs de portes de la palette (S/M/L distincts en luminance
       // ; les lettres ·/R/O déjà peintes garantissent la lecture sans couleur).
       const GATE_COLOR = pal.gates;
@@ -154,12 +453,32 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
       const atGate = new Set(sim.aircraft
         .filter((a) => a.gateId != null && GROUND_PHASES.has(a.phase))
         .map((a) => a.gateId));
+      let gateNo = 0;
       for (const g of sim.infra.gates) {
         if (g.x === undefined) continue;
+        gateNo++;
         const [x, y] = screenToCanvas(g.x, g.y, cam);
         const w = g.w * cam.zoom, h = g.h * cam.zoom;
         const occ = atGate.has(g.id);
         const res = !occ && g.acId != null;
+        // T5c (t_bd4726e7) : PASSERELLE (jet bridge) — liaison courte vers
+        // le terminal (projection du centre de la porte sur le rect ; le
+        // terminal est déjà peint, la passerelle est SOUS la porte — ordre :
+        // apron, passerelle, porte). L'état reste lisible SANS la passerelle.
+        if (cam.zoom >= 0.5 && sim.infra.terminals && sim.infra.terminals.length) {
+          const term = sim.infra.terminals[0];
+          const [tx0, ty0] = screenToCanvas(term.x, term.y, cam);
+          const px = Math.min(Math.max(x + w / 2, tx0), tx0 + term.w * cam.zoom);
+          const py = Math.min(Math.max(y + h / 2, ty0), ty0 + term.h * cam.zoom);
+          if (Math.hypot(px - (x + w / 2), py - (y + h / 2)) > 4) {
+            ctx.strokeStyle = 'rgba(61,255,165,0.4)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(px, py);
+            ctx.lineTo(x + w / 2, y + h / 2);
+            ctx.stroke();
+          }
+        }
         if (res) {
           // réservée : hachures (motif noir et blanc — lisible en N&B)
           ctx.fillStyle = GATE_COLOR[g.size] || '#9e9e9e';
@@ -176,14 +495,23 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
           ctx.fillStyle = occ ? GATE_COLOR.occupied : (GATE_COLOR[g.size] || '#9e9e9e');
           ctx.fillRect(x, y, w, h);
         }
-        ctx.strokeStyle = occ ? '#fff' : 'rgba(0,0,0,0.35)';
+        ctx.strokeStyle = occ ? THEME.text : 'rgba(0,0,0,0.35)';
         ctx.lineWidth = occ ? 1.5 : 1;
         ctx.strokeRect(x, y, w, h);
         if (cam.zoom >= 0.7) {
-          ctx.fillStyle = '#fff';
-          ctx.font = 'bold 9px system-ui';
+          // T5c : la lettre suit la LUMINANCE du fond (port v2 phosphore —
+          // sombre sur port vif, claire sur port sombre ; jamais la couleur).
+          const gfill = GATE_COLOR[g.size] || '#9e9e9e';
+          ctx.fillStyle = textColorOn(occ ? GATE_COLOR.occupied : gfill);
+          ctx.font = `bold 12px ${THEME.fontUi}`;
           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText(occ ? 'O' : res ? 'R' : '·', x + w / 2, y + h / 2 + 1);
+          // T5c (t_bd4726e7) : N° de STAND (G1–Gn, maquette variant-c) sous
+          // la porte — le n° sert à la lecture (l'état = la lettre, R39).
+          ctx.fillStyle = THEME.textDim;
+          ctx.font = `12px ${THEME.fontUi}`;
+          ctx.textBaseline = 'top';
+          ctx.fillText('G' + gateNo, x + w / 2, y + h + 4);
         }
       }
     }
@@ -197,7 +525,7 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
         if (b) {
           const [x, y] = screenToCanvas(b.x, b.y, cam);
           ctx.save();
-          ctx.strokeStyle = '#fff';
+          ctx.strokeStyle = THEME.text; // T5c : sélection phosphore (v1 : blanc)
           ctx.lineWidth = 2;
           ctx.setLineDash([5, 3]);
           ctx.strokeRect(x - 2, y - 2, b.w * cam.zoom + 4, b.h * cam.zoom + 4);
@@ -232,36 +560,138 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
     // À la porte : vers la piste (sortie par le haut) ; sinon neutre.
     return -Math.PI / 2;
   }
+  // T5c (t_bd4726e7) : TAGS RADAR — type → sigle (data/catalog.mjs) +
+  // phase sim → code scope + PALIER/TENDANCE (affichages déterministes par
+  // phase : la sim ne porte ni indicatif ni FL — le renderer reste en
+  // LECTURE SEULE ; « GND · » par défaut au sol).
+  const AC_TAG = { small: 'C208', medium: 'A320', large: 'B747' };
+  const FL_TREND = {
+    holding: 'FL300·', approach: 'FL150↓', landing: 'FL100↓',
+    exit: 'FL060↑', departure: 'FL040↑',
+  };
   function drawAircraft(state, cam) {
     const sim = state.sim;
     if (!sim || !sim.aircraft) return;
     for (const a of sim.aircraft) {
       if (a.x === undefined || a.y === undefined) continue; // pas encore positionné
       const [x, y] = screenToCanvas(a.x, a.y, cam);
+      if (x < -50 || x > canvas.width + 50 || y < -50 || y > canvas.height + 50) continue;
       const k = (AC_SCALE[a.acType] || 1) * cam.zoom; // échelle TAILLE (small < medium < large)
       const ang = aircraftAngle(sim, a);
+      // T5c (t_bd4726e7) : TRACÉ DE BLIP (maquette : l'avion en mouvement
+      // laisse une traîne phosphore, comme un écho radar). Déterministe :
+      // l'opposé du cap, longueur fixe par taille — zéro état, zéro alloc.
+      // Les phases à la porte / ravitaillement / débard ne traînent pas.
+      const TRAIL_PHASES = { approach: 1, holding: 1, landing: 1, exit: 1, departure: 1 };
+      if (a.phase && TRAIL_PHASES[a.phase] && cam.zoom >= 0.6) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(61,255,165,0.35)';
+        ctx.lineWidth = Math.max(1.5, 3 * k);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x - Math.cos(ang) * 16 * k, y - Math.sin(ang) * 16 * k);
+        ctx.stroke();
+        ctx.restore();
+      }
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(ang + Math.PI / 2); // le sprite est dessiné « nez vers le haut »
       ctx.fillStyle = 'rgba(0,0,0,0.25)';
-      ctx.fillRect(-2 * k - 1 + 2, -10 * k + 2, 4 * k, 20 * k); // ombre
-      ctx.fillStyle = a.color || '#eceff1';
-      // Fuselage (long) + ailes (larges) — la TÊTE (cône) pointe devant.
-      ctx.fillRect(-2 * k, -10 * k, 4 * k, 20 * k);
-      ctx.fillRect(-8 * k, -4 * k, 16 * k, 3 * k);
-      // Tête (nez) : un cône en plus (le sens est lisible sans couleur).
+      ctx.fillRect(-1.5 * k + 2, -11 * k + 2, 3 * k, 22 * k); // ombre (décalée)
+      // T5c : lueur RADARE (le contact phosphore luit sur le scope, comme
+      // la maquette variant-c) — posée APRÈS l'ombre, sur le corps seulement.
+      ctx.shadowColor = 'rgba(61,255,165,0.5)';
+      ctx.shadowBlur = 6;
+      ctx.fillStyle = a.color || THEME.textDim; // v2 : fallback phosphore (v1 : blanc)
+      // T5c : SILHOUETTE VUE D'OISEAU reconnaissable (plus de « signe + » :
+      // fuselage long FINS + ailes en FLECHE (trapèzes) + empennage en flèche
+      // — la TÊTE (cône phosphore) pointe devant ; le grand porteur (B747) a
+      // un double fuselage (maquette : « plus de carrés »).
+      // Fuselage (trapèze fin, nez -12k → queue +10k) :
       ctx.beginPath();
-      ctx.moveTo(0, -13 * k); ctx.lineTo(3 * k, -8 * k); ctx.lineTo(-3 * k, -8 * k);
+      ctx.moveTo(0, -12 * k);
+      ctx.lineTo(1.5 * k, -9 * k);
+      ctx.lineTo(1.5 * k, 7 * k);
+      ctx.lineTo(0.9 * k, 10 * k);
+      ctx.lineTo(-0.9 * k, 10 * k);
+      ctx.lineTo(-1.5 * k, 7 * k);
+      ctx.lineTo(-1.5 * k, -9 * k);
+      ctx.closePath();
+      ctx.fill();
+      // Ailes en flèche : corde de racine LARGE, corde d'extrémité courte et
+      // BATTUE (l'extrémité est vers l'arrière) — le trait d'une vraie aile.
+      ctx.beginPath();
+      ctx.moveTo(-1.2 * k, -3 * k);
+      ctx.lineTo(-9 * k, 2.5 * k);
+      ctx.lineTo(-9 * k, 4 * k);
+      ctx.lineTo(-1.2 * k, 0.5 * k);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(1.2 * k, -3 * k);
+      ctx.lineTo(9 * k, 2.5 * k);
+      ctx.lineTo(9 * k, 4 * k);
+      ctx.lineTo(1.2 * k, 0.5 * k);
+      ctx.closePath();
+      ctx.fill();
+      // Empennage : deux ailettes en flèche à l'arrière + dérive centrale.
+      ctx.beginPath();
+      ctx.moveTo(-0.9 * k, 7.5 * k);
+      ctx.lineTo(-5 * k, 11 * k);
+      ctx.lineTo(-5 * k, 12 * k);
+      ctx.lineTo(-0.9 * k, 10 * k);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(0.9 * k, 7.5 * k);
+      ctx.lineTo(5 * k, 11 * k);
+      ctx.lineTo(5 * k, 12 * k);
+      ctx.lineTo(0.9 * k, 10 * k);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillRect(-0.8 * k, 8.5 * k, 1.6 * k, 3 * k); // dérive (fuselage fin)
+      if (a.acType === 'large') {
+        // Grand porteur : DOUBLE FUSELAGE (deux soutes parallèles le long du
+        // fuselage — l'identifiant du B747, pas un simple corps large).
+        ctx.fillRect(-1.1 * k, -11 * k, 0.8 * k, 20 * k);
+        ctx.fillRect(0.3 * k, -11 * k, 0.8 * k, 20 * k);
+      }
+      // T5c : le cône de NEZ est PHOSPHORE (maquette : le contact se lit par
+      // la taille + le cône, pas par la couleur compagnie — R39/R43).
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = THEME.accent;
+      ctx.beginPath();
+      ctx.moveTo(0, -14 * k); ctx.lineTo(2.2 * k, -8 * k); ctx.lineTo(-2.2 * k, -8 * k);
       ctx.closePath();
       ctx.fill();
       ctx.restore();
+      // T5c (t_bd4726e7) : TAG RADAR au zoom proche — « CODE SIGLE FL/↑ »
+      // (le contact se nomme comme sur un vrai scope : indicatif compagnie,
+      // type, palier + tendance — la tendance est affichée, pas simulée).
+      if (cam.zoom >= 0.9 && x > -80 && x < canvas.width + 80 && y > -40 && y < canvas.height + 40) {
+        const airline = AIRLINES.find(l => l.id === a.airline);
+        const code = airline ? airline.name.split(' ')[0].toUpperCase().slice(0, 4) : '----';
+        const tag = `${code} ${AC_TAG[a.acType] || '--'} ${FL_TREND[a.phase] || 'GND·'}`;
+        ctx.font = `12px ${THEME.fontUi}`;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+        // Le tag reste DANS le canvas (jamais rogné au bord — liseré inclus) :
+        // clamp haut (y-10 peut sortir de l'écran pour un contact haut) et
+        // droit (la largeur du tag est mesurée, pas supposée).
+        const tagW = ctx.measureText(tag).width;
+        const tx = Math.min(x + 12, canvas.width - tagW - 6);
+        const ty = Math.max(14, y - 10);
+        ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(5,8,7,0.8)'; // liseré (lisibilité)
+        ctx.strokeText(tag, tx, ty);
+        ctx.fillStyle = THEME.textDim;
+        ctx.fillText(tag, tx, ty);
+      }
       // R39 : l'avion SÉLECTIONNÉ (clic carte, panels.mjs) est entouré (trait
-      // pointillé blanc) — la sélection est lisible autrement que par couleur.
+      // pointillé phosphore) — la sélection est lisible autrement que par couleur.
       if (selectionOf) {
         const sel = selectionOf();
         if (sel && sel.kind === 'ac' && sel.id === a.id) {
           ctx.save();
-          ctx.strokeStyle = '#fff';
+          ctx.strokeStyle = THEME.text;
           ctx.lineWidth = 2;
           ctx.setLineDash([5, 3]);
           ctx.beginPath();
@@ -274,23 +704,154 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
   }
 
   // Écran de jeu : terrain + infra + avions sous la caméra.
+  // T5c (t_bd4726e7) : la carte EST un SCOPE radar (maquette variant-c) :
+  // fond noir phosphore + trame pré-rendue (cibles, réticule, statique,
+  // scanlines — 1 drawImage/frame, T4-PERF). Le cache (W,H) est PARTAGÉ
+  // avec le menu (buildScopeOverlay — le bol peint par le menu reste sous
+  // le monde : invisible, 0 surcoût).
   function drawGame(state, cam, pal) {
-    ctx.fillStyle = '#263238';
+    ctx.fillStyle = THEME.bg; // noir phosphore (v1 : #263238 « asphalte nuit »)
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     drawTerrain(state, cam, pal);
     drawInfra(state, cam, pal);
+    drawTower(state, cam);
     drawAircraft(state, cam);
+    // T5c : la trame scope (cibles + réticule + statique + scanlines) PAR-
+    // DESSUS le monde — l'écran EST le scope (l'effet CRT recouvre tout,
+    // comme la maquette variant-c) ; SOUS le HUD (peint après, lisible).
+    // Le cache (W,H) est PARTAGÉ avec le menu (buildScopeOverlay) et
+    // recalcé au resize UNIQUEMENT (1 drawImage/frame, T4-PERF).
+    const ck = canvas.width * 512 + canvas.height;
+    if (ck !== menuCacheKey) {
+      menuCacheKey = ck;
+      menuScopeOv = buildScopeOverlay(canvas.width, canvas.height);
+    }
+    if (menuScopeOv) ctx.drawImage(menuScopeOv, 0, 0, canvas.width, canvas.height);
+    // T5c (t_bd4726e7) : PRÉCIPITATIONS (pluie/grêle déterministes —
+    // maquette variant-c) : écran, au-dessus de la trame, sous le HUD.
+    drawPrecip(state);
   }
 
-  // Menu de départ : T4 (t_eb78478e) — ÉCRAN-TITRE animé « l'aéroport la
-  // nuit » (zéro asset, ~150 ops canvas) : ciel dégradé + lune + 90 étoiles
-  // scintillantes (positions DÉTERMINISTES — pas de tirage) + piste en
-  // perspective + terminal aux fenêtres allumées + avion en transit + titre.
+  // T5c (t_bd4726e7) : LA TOUR — silhouette dédiée (maquette variant-c) :
+  // soubassement + fût + cabine vitrée + balise ambrée (lueur en cache —
+  // T4-PERF). Position : l'ANCHE du layout « tower » (new-game.mjs) si la
+  // grille est construite (b.x défini), sinon le coin haut-droit du terminal.
+  // Zooms : silhouette ≥ 0.5, balise ambrée ≥ 0.4 (la tour est une tour).
+  function drawTower(state, cam) {
+    const sim = state.sim;
+    if (!sim || !sim.infra) return;
+    const t = sim.infra.tower;
+    let tx, ty;
+    if (t && t.x !== undefined) { [tx, ty] = screenToCanvas(t.x + (t.w || 0) / 2, t.y + (t.h || 0) / 2, cam); }
+    else if (sim.infra.terminals && sim.infra.terminals.length) {
+      const term = sim.infra.terminals[0];
+      [tx, ty] = screenToCanvas(term.x + (term.w || 0) * 0.5, term.y, cam);
+      ty -= 18;
+    } else { return; }
+    if (tx < -60 || tx > canvas.width + 60 || ty < -60 || ty > canvas.height + 60) return;
+    // Silhouette (socle + fût + cabine vitrée) — phosphore, maquette.
+    // T5c : silhouette LISIBLE (alpha relevés — 0.15 était quasi invisible sur
+    // fond sombre) + légère montée d'échelle au zoom (bornée ≤ 1.3).
+    if (cam.zoom >= 0.5) {
+      const s = Math.min(1.3, Math.max(1, cam.zoom * 0.8));
+      ctx.save();
+      ctx.fillStyle = 'rgba(61,255,165,0.38)';
+      ctx.fillRect(tx - 8 * s, ty + 4, 16 * s, 8 * s);          // socle
+      ctx.fillRect(tx - 3 * s, ty - 10, 6 * s, 14 * s);         // fût
+      ctx.fillStyle = 'rgba(61,255,165,0.6)';
+      ctx.fillRect(tx - 6 * s, ty - 14 * s, 12 * s, 5 * s);     // cabine vitrée
+      ctx.strokeStyle = 'rgba(61,255,165,0.9)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(tx - 6 * s, ty - 14 * s, 12 * s, 5 * s);
+      ctx.restore();
+    }
+    // Balise ambrée (lueur en cache — le repère de la tour sur le scope).
+    if (cam.zoom >= 0.4) drawLight(tx, ty - 16, 'amber');
+  }
+
+  // Menu de départ : T4 (t_eb78478e) — ÉCRAN-TITRE animé (zéro asset, budget
+  // rAF ~150 ops). v1 : « l'aéroport la nuit » (ciel dégradé + lune + 90
+  // étoiles déterministes + piste + terminal + avion). T5c (t_bd4726e7) :
+  // REMPLACÉ par le SCOPE RADAR phosphore (maquette variant-c — bol,
+  // cibles, balayage, blips ; statique en cache, see buildScopeOverlay).
   // Horloge d'animation LOCALE (menuT, comptée par frame — le menu n'a pas
   // de sim, donc pas de time de jeu à lire). Les commandes du menu restent
   // des BOUTONS DOM (R20 ; les touches N/R en raccourci) ; T4 : chaque
   // bouton reçoie une ICÔNE vectorielle (icons.mjs) — les 13 boutons-
   // scénarios un accent coloré PAR SCÉNARIO (distingusables sans lire le nom).
+  // T5c (t_bd4726e7) : la trame CRT (maquette variant-c) — DETERMINISTE :
+  // hash 32 bits (la même que la maquette) → la statique est reproductible
+  // (captures stables, zéro Math.random — discipline T4-PERF).
+  function h32(n) {
+    let x = (n ^ 0x9E3779B9) >>> 0;
+    x = Math.imul(x ^ (x >>> 15), 0x85EBCA6B) >>> 0;
+    x = Math.imul(x ^ (x >>> 13), 0xC2B2AE35) >>> 0;
+    x ^= x >>> 16;
+    return (x >>> 0) / 4294967296;
+  }
+  // T5c : le SCOPE statique (cibles concentriques + réticule + statique +
+  // scanlines + croix de cadrage) est PRE-RENDU dans un canvas hors-écran
+  // par (W,H) — 1 drawImage par frame (le budget rAF est intact, T4-PERF :
+  // le scanlineage à la main = ~250 fillRect/frame, interdit).
+  // Le bol (dégradé radial) est en cache SÉPARÉ (buildScopeBowl) : il est
+  // OPAQUE → fond du MENU uniquement ; en JEU, la trame (ci-dessous, fond
+  // TRANSPARENT) est par-dessus le monde — le bol opaque y masquerait les
+  // bâtiments (le monde doit rester lisible sous la trame, maquette).
+  function buildScopeOverlay(W, H) {
+    const off = document.createElement('canvas');
+    off.width = W; off.height = H;
+    const o = off.getContext('2d');
+    const cx = W / 2, cy = H * 0.44, R = Math.min(W, H) * 0.44; // maquette variant-c
+    // Cibles concentriques + réticule + graduations (maquette : 0.25…1).
+    o.lineWidth = 1;
+    o.strokeStyle = THEME.accentSoft;
+    for (const f of [0.25, 0.5, 0.75]) { o.beginPath(); o.arc(cx, cy, R * f, 0, Math.PI * 2); o.stroke(); }
+    o.strokeStyle = THEME.border; // la plus externe : un cran plus lisible
+    o.beginPath(); o.arc(cx, cy, R, 0, Math.PI * 2); o.stroke();
+    o.strokeStyle = THEME.accentSoft;
+    o.beginPath(); o.moveTo(cx - R, cy); o.lineTo(cx + R, cy); o.moveTo(cx, cy - R); o.lineTo(cx, cy + R); o.stroke();
+    for (let a = 0; a < 12; a++) {
+      const th = a * Math.PI / 6;
+      o.beginPath();
+      o.moveTo(cx + Math.cos(th) * R, cy + Math.sin(th) * R);
+      o.lineTo(cx + Math.cos(th) * (R - 10), cy + Math.sin(th) * (R - 10));
+      o.stroke();
+    }
+    // Statique fine (400 pixels par hash — déterministe) + scanlines CRT.
+    o.fillStyle = THEME.static;
+    for (let i = 0; i < 400; i++) {
+      o.fillRect(Math.floor(h32(i * 911) * W), Math.floor(h32(i * 547) * H), 1, 1);
+    }
+    o.fillStyle = THEME.scanline;
+    for (let y = 0; y < H; y += 3) o.fillRect(0, y, W, 1);
+    // Croix de cadrage (coins).
+    o.strokeStyle = THEME.gridStrong; o.globalAlpha = 0.4; o.lineWidth = 1.5;
+    for (const [sx, sy, dx, dy] of [[10, 10, 1, 1], [W - 10, 10, -1, 1], [10, H - 10, 1, -1], [W - 10, H - 10, -1, -1]]) {
+      o.beginPath(); o.moveTo(sx + dx * 18, sy); o.lineTo(sx, sy); o.lineTo(sx, sy + dy * 18); o.stroke();
+    }
+    o.globalAlpha = 1;
+    return off;
+  }
+  // T5c : le BOL du scope (dégradé radial phosphore — OPAQUE) : fond du MENU
+  // uniquement (le menu EST le scope). Cache séparé (W,H) ; en jeu le fond
+  // est le TERRAIN du monde (pal.terrain) — pas de bol (masquage, cf.
+  // buildScopeOverlay). 1 drawImage/frame au menu (T4-PERF).
+  function buildScopeBowl(W, H) {
+    const off = document.createElement('canvas');
+    off.width = W; off.height = H;
+    const o = off.getContext('2d');
+    const cx = W / 2, cy = H * 0.44; // = buildScopeOverlay (le bol partage le centre)
+    const bowl = o.createRadialGradient(cx, cy, 40, cx, cy, Math.max(W, H) * 0.72);
+    bowl.addColorStop(0, THEME.skyBottom); bowl.addColorStop(1, THEME.skyTop);
+    o.fillStyle = bowl; o.fillRect(0, 0, W, H);
+    return off;
+  }
+  // T5c : le MENU est le SCOPE COMPLET (bol + balayage animé + blips) ; la
+  // CARTE DU JEU ne porte que la TRAME (cibles + réticule + statique +
+  // scanlines — le balayage resterait une distraction en jeu). La trame est
+  // en cache TRANSPARENT partagé (1 drawImage/frame en jeu — T4-PERF) ; le
+  // bol (opaque) est son propre cache, peint sous la trame au MENU
+  // uniquement.
   let menuBox = null;
   let resumeBtn = null;
   let diffBtns = []; // T2-1 (t_d5da994c) : les boutons de difficulté (rangée du menu)
@@ -301,92 +862,98 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
   // seule « anim » hors jeu).
   const SCENARIO_HUES = Object.freeze([199, 262, 330, 15, 45, 110, 160, 210, 250, 300, 60, 130, 350]);
   let menuCacheKey = 0;
-  let menuSkyGrad = null;
-  let menuStarPos = [];
+  let menuScopeOv = null; // T5c : cache de la TRAME scope (transparence, v1 → v2)
+  let scopeBowl = null; // T5c : cache du BOL (opaque, fond du menu)
   function drawMenu(pal) {
     menuT += 1;
     const W = canvas.width, H = canvas.height;
-    // Cache par (W,H) — un resize change la clé et recalcule tout.
+    // T5c (t_bd4726e7) : SCOPE RADAR phosphore (maquette variant-c) — la
+    // partie STATIQUE (bol, cibles, réticule, statique, scanlines, croix de
+    // cadrage) est en CACHE (W,H) : 1 drawImage/frame (budget rAF, T4-PERF).
+    // Le cache v1 (dégradé + table d'étoiles) est remplacé par le canvas
+    // hors-écran (même discipline : recalculé au resize UNIQUEMENT).
     const ck = W * 512 + H;
     if (ck !== menuCacheKey) {
       menuCacheKey = ck;
-      const g = ctx.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, THEME.skyTop); g.addColorStop(1, THEME.skyBottom);
-      menuSkyGrad = g;
-      menuStarPos = Array.from({ length: 90 }, (_, i) => ({
-        x: (i * 733 + 57) % Math.max(1, W),
-        y: (i * 389 + 131) % Math.max(1, Math.floor(H * 0.5)),
-      }));
+      menuScopeOv = buildScopeOverlay(W, H);
+      scopeBowl = buildScopeBowl(W, H);
     }
-    // Ciel : dégradé nuit (tokens, EN CACHE) + lune (halo + disque).
-    ctx.fillStyle = menuSkyGrad;
-    ctx.fillRect(0, 0, W, H);
-    const mx = W * 0.78, my = H * 0.18, mr = Math.min(W, H) * 0.035;
+    // Bol OPAQUE d'abord (le fond du scope), la trame par-dessus (cibles +
+    // réticule + statique + scanlines), le balayage animé au-dessus.
+    if (scopeBowl) ctx.drawImage(scopeBowl, 0, 0);
+    ctx.drawImage(menuScopeOv, 0, 0);
+    const cx = W / 2, cy = H * 0.44, R = Math.min(W, H) * 0.44; // = buildScopeOverlay
+    // BALAYAGE animé (traîne de 0,42 rad en fondu phosphore) — la signature
+    // du radar rétro ; le menu reste la seule « anim » hors jeu (T4).
+    const sweep = menuT * 0.005; // tour complet ~ 21 s à 60 fps
     ctx.save();
-    ctx.fillStyle = THEME.moon;
-    ctx.globalAlpha = 0.15;
-    ctx.beginPath(); ctx.arc(mx, my, mr * 2.4, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.beginPath(); ctx.arc(mx, my, mr, 0, Math.PI * 2); ctx.fill();
+    ctx.translate(cx, cy);
+    ctx.rotate(sweep);
+    const wedge = ctx.createLinearGradient(0, 0, R, 0);
+    wedge.addColorStop(0, 'rgba(61,255,165,0.28)'); wedge.addColorStop(1, 'rgba(61,255,165,0)');
+    ctx.fillStyle = wedge;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R, -0.42, 0); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(61,255,165,0.8)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(R, 0); ctx.stroke();
     ctx.restore();
-    // Étoiles : table en CACHE (positions déterministes) + scintillement.
-    for (let i = 0; i < menuStarPos.length; i++) {
-      ctx.globalAlpha = 0.25 + 0.4 * (0.5 + 0.5 * Math.sin(menuT * 0.02 + i * 1.7));
-      ctx.fillStyle = THEME.moon;
-      ctx.fillRect(menuStarPos[i].x, menuStarPos[i].y, 2, 2);
+    // 3 BLIPS déterministes (maquette variant-c, positions fixes) — les codes
+    // sont les COMPAGNIES DU CATALOGUE (AIRLINES, data/catalog.mjs) : le
+    // scope affiche du trafic « réel » du jeu, pas des codes fictifs.
+    const BLIPS = [
+      { a: 0.9, r: 0.62, code: 'SOLA 1234' }, // Solaire Air
+      { a: 2.4, r: 0.4, code: 'BORA 77' },   // Boréal Régions
+      { a: 3.9, r: 0.83, code: 'PAC 241' },  // PacificCargo
+    ];
+    for (const b of BLIPS) {
+      const bx = cx + Math.cos(b.a) * R * b.r, by = cy + Math.sin(b.a) * R * b.r;
+      // Après-glow : le blip brille tant que le balayage l'a FRANCHI
+      // récemment (delta petit → traîne de phosphore, maquette).
+      let delta = (sweep - b.a) % (Math.PI * 2); if (delta < 0) delta += Math.PI * 2;
+      const boost = Math.max(0, 1 - delta / 1.2); // 1 au passage → 0 à 1.2 rad
+      const gr = 14 + 10 * boost;
+      const gl = ctx.createRadialGradient(bx, by, 0, bx, by, gr);
+      gl.addColorStop(0, `rgba(61,255,165,${0.35 + 0.4 * boost})`);
+      gl.addColorStop(1, 'rgba(61,255,165,0)');
+      ctx.fillStyle = gl;
+      ctx.beginPath(); ctx.arc(bx, by, gr, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = THEME.accent;
+      ctx.beginPath(); ctx.arc(bx, by, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.font = `11px ${THEME.fontUi}`;
+      ctx.fillStyle = THEME.textDim;
+      ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText(b.code, bx + 10, by - 8);
     }
-    ctx.globalAlpha = 1;
-    // Sol + piste en perspective (trapèze) + ligne de centre en pointillés.
-    const gy = H * 0.62;
-    ctx.fillStyle = THEME.ground;
-    ctx.fillRect(0, gy, W, H - gy);
-    const cx = W * 0.5, rwY0 = gy + 12, rwY1 = H - 26;
-    const rwW0 = W * 0.04, rwW1 = W * 0.22;
-    ctx.fillStyle = THEME.runway;
-    ctx.beginPath();
-    ctx.moveTo(cx - rwW0 / 2, rwY0); ctx.lineTo(cx + rwW0 / 2, rwY0);
-    ctx.lineTo(cx + rwW1 / 2, rwY1); ctx.lineTo(cx - rwW1 / 2, rwY1);
-    ctx.closePath(); ctx.fill();
-    ctx.fillStyle = THEME.runwayLine;
-    for (let i = 0; i < 7; i++) {
-      const f = i / 6; // 0 (fond) → 1 (avant) : la perspective s'élargit
-      const y = rwY0 + (rwY1 - rwY0) * f;
-      const half = ((rwW0 + (rwW1 - rwW0) * f) / 2) * 0.06;
-      const len = 4 + 10 * f;
-      ctx.fillRect(cx - half, y - len / 2, Math.max(2, half * 2), len);
-    }
-    // Terminal : silhouette à gauche + 3 fenêtres allumées (doré).
-    const tw = W * 0.16, tx = W * 0.1, tyTop = gy - Math.min(46, H * 0.07);
-    ctx.fillStyle = THEME.surface;
-    ctx.fillRect(tx, tyTop, tw, gy - tyTop);
+    // Avion en transit (position figée, haut du scope) + lueur AMBRE
+    // (maquette : le contact « chaud » du scope).
+    const px = cx + R * 0.55, py = cy - R * 0.78;
+    ctx.save();
+    ctx.shadowColor = 'rgba(255,201,74,0.8)'; ctx.shadowBlur = 12;
     ctx.fillStyle = THEME.gold;
-    for (let c = 0; c < 3; c++) {
-      ctx.fillRect(tx + tw * (0.15 + c * 0.3), tyTop + (gy - tyTop) * 0.55, tw * 0.14, (gy - tyTop) * 0.22);
-    }
-    // Avion en transit (boucle ~80 frames) + feu rouge clignotant.
-    const tt = (menuT % 80) / 80;
-    const px = cx + (tt - 0.5) * rwW1 * 3.2;
-    const py = rwY1 - 16 - Math.sin(tt * Math.PI) * 14;
-    const acs = Math.max(26, H * 0.045);
-    ctx.save();
-    ctx.translate(px - acs / 2, py - acs / 2);
-    drawIcon(ctx, 'plane', acs, { color: THEME.text, accent: THEME.accent });
+    ctx.beginPath();
+    ctx.moveTo(px, py - 9); ctx.lineTo(px + 8, py + 7); ctx.lineTo(px, py + 3);
+    ctx.lineTo(px - 8, py + 7); ctx.closePath(); ctx.fill();
     ctx.restore();
-    ctx.globalAlpha = (menuT % 30) < 15 ? 1 : 0.3;
-    ctx.fillStyle = THEME.err;
-    ctx.beginPath(); ctx.arc(px - acs * 0.3, py, 2, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 1;
-    // Titre + sous-titre (ombre portée — lisible sur tout fond) + version.
+    ctx.font = `11px ${THEME.fontUi}`;
+    ctx.fillStyle = THEME.textDim;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('TRANSIT · FL320', px + 14, py + 4);
+    // Titre phosphore LUISSANT (maquette : glow 18 px) + sous-titre + version.
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = `bold ${THEME.titleSize}px ${THEME.fontUi}`;
-    ctx.fillStyle = 'rgba(5,9,20,0.6)';
+    ctx.save();
+    ctx.fillStyle = 'rgba(4,20,12,0.7)';
     ctx.fillText('AIRPORT TYCOON', W / 2 + 3, H * 0.4 + 3);
+    ctx.shadowColor = 'rgba(61,255,165,0.6)'; ctx.shadowBlur = 18;
     ctx.fillStyle = THEME.text;
     ctx.fillText('AIRPORT TYCOON', W / 2, H * 0.4);
+    ctx.restore();
     ctx.font = `${THEME.subtitleSize}px ${THEME.fontUi}`;
+    ctx.fillStyle = THEME.gold;
+    ctx.fillText('// RADAR RÉTRO · SCAN EN COURS', W / 2, H * 0.4 + THEME.titleSize * 0.8);
     ctx.fillStyle = THEME.textDim;
-    ctx.fillText('Un aéroport la nuit : du bitume au départ.', W / 2, H * 0.4 + THEME.titleSize * 0.8);
+    ctx.fillText('Direction de contrôle — du radar au départ.', W / 2, H * 0.4 + THEME.titleSize * 0.8 + 22);
     ctx.font = `11px ${THEME.fontUi}`;
     ctx.textAlign = 'right';
     ctx.fillText(`v${THEME.versionTag}`, W - 12, H - 12);
@@ -526,24 +1093,44 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
     //   canvas peint en haut à gauche était COUVERT (le bug mobile connu).
     //   Décision de layout T5a : le HUD DESCEND SOUS la stripe (y = 8 +
     //   .planning.offsetHeight + 8 — mesure DOM en lecture seule, la zone
-    //   canvas dessous reste libre et jouable) ; police 14 px (≥11 px exigés,
-    //   compact pour 8 lignes sur 390 px). Desktop : haut à gauche (12, 12),
-    //   16 px (13 px souhaités respectés).
+    //   canvas dessous reste libre et jouable) ; police mobile ADAPTIVE
+    //   (T5c : 13 → 12 → 11 px, seuil QA ≥ 11 px — le monospace phosphore
+    //   est plus large que le system-ui v1). Desktop : haut à gauche
+    //   (12, 12), 16 px.
     const vw = viewSize().width;
     const mobile = vw <= 560;
-    const fs = mobile ? 14 : 16;
+    // T5c : la police PHOSPHORE monospace (maquette variant-c) est plus
+    // LARGE que le system-ui v1 : en mobile, la police DÉMARRE à 13 px
+    // (cible T5a) et s'ADAPTE vers le bas (12 px — PLANCHER : exigence
+    // Elsay T5c « police min 12 px ») tant que la ligne la plus longue ne
+    // tient pas dans vw - 24. Desktop : 16 px (inchangé).
+    let fs = mobile ? 13 : 16;
+    ctx.font = fs + 'px ' + THEME.fontUi;
+    const widest = () => { let w0 = 0; for (const t of lines) w0 = Math.max(w0, ctx.measureText(t).width); return w0; };
+    let maxLine = widest();
+    if (mobile) {
+      const capW = Math.max(120, vw - 24);
+      while (maxLine + 24 > capW && fs > 12) {
+        fs -= 1;
+        ctx.font = fs + 'px ' + THEME.fontUi;
+        maxLine = widest();
+      }
+    }
     const lh = Math.round(fs * 1.5); // pas de ligne (24 px en desktop = avant)
-    ctx.font = fs + 'px system-ui, sans-serif';
-    let maxLine = 0;
-    for (const t of lines) maxLine = Math.max(maxLine, ctx.measureText(t).width);
     const w = Math.min(Math.ceil(maxLine) + 24, Math.max(120, vw - 24));
     const planEl = typeof document !== 'undefined' ? document.querySelector('.planning') : null;
     const planH = planEl && mobile ? planEl.offsetHeight : 0;
     const x = 12;
     const y = mobile ? 8 + planH + 8 : 12; // mobile : sous la stripe planning (top 8 + hauteur + 8)
     const h = lh * lines.length + 16;
-    ctx.fillStyle = 'rgba(10,18,32,0.82)'; // T4 : surface « nuit » (tokens)
+    // T5c : la surface du HUD EST le SCOPE (noir phosphore quasi opaque —
+    // le contraste texte/surface ≥ 4,5:1, tokens theme.mjs) + liseré
+    // phosphore (le panneau « flotte » sur la carte, comme la maquette).
+    ctx.fillStyle = 'rgba(5,8,7,0.9)'; // v2 : noir phosphore (v1 : « nuit » bleuté)
     ctx.fillRect(x, y, w, h);
+    ctx.strokeStyle = THEME.accentSoft;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
     ctx.fillStyle = THEME.text;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';

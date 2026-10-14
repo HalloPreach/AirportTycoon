@@ -13,12 +13,16 @@
 // le shake est en pixels écran.
 
 import { LANDING_FEE, GATE_FEE, PAX_REVENUE, PAX_REVENUE_DRY } from '../economy/economy.mjs';
+import { THEME } from './theme.mjs'; // T5c : police phosphore monospace (les nombres flottants lisent comme des contacts radars)
 
-const COLORS = Object.freeze({ gain: '#66bb6a', loss: '#ef5350', info: '#e0e0e0' });
-const BURST_COLORS = Object.freeze(['#ff7043', '#ffa726', '#ffee58', '#8d6e63']); // éclats construction
-const DANGER_COLORS = Object.freeze(['#ef5350', '#ff7043', '#b0bec5']); // panne / fermeture
-const GOLD = Object.freeze(['#ffd54f', '#ffe082', '#fff59d']); // objectif payé
-const PUFF = Object.freeze(['#cfd8dc', '#eceff1', '#b0bec5']); // atterrissage
+// T5c (t_bd4726e7) : couleurs v2 « RADAR RÉTRO » (tokens theme.mjs — même
+// phosphore + accents CRT : les nombres/particules lisent comme des
+// contacts radars, pas du Material gris/vert).
+const COLORS = Object.freeze({ gain: '#3DFFA5', loss: '#FF5A4E', info: '#B9F5CE' });
+const BURST_COLORS = Object.freeze(['#3DFFA5', '#FFC94A', '#FFD24A', '#8FD6AE']); // éclats construction
+const DANGER_COLORS = Object.freeze(['#FF5A4E', '#FFC94A', '#FFD24A']); // panne / fermeture
+const GOLD = Object.freeze(['#FFC94A', '#FFD24A', '#FFE082']); // objectif payé
+const PUFF = Object.freeze(['#8FD6AE', '#B9F5CE', '#3DFFA5']); // atterrissage
 
 const FLOAT_LIFE = 1.6; // s — durée de vie d'un nombre flottant
 const FLOAT_RISE = 26; // px monde / s — il s'élève en s'estompant
@@ -131,7 +135,7 @@ export function makeJuice(opts = {}) {
       ctx.fill();
     }
     ctx.globalAlpha = 1;
-    ctx.font = '13px system-ui, sans-serif';
+    ctx.font = `13px ${THEME.fontUi}, monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (const f of floats) {

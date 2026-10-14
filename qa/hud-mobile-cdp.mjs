@@ -8,8 +8,11 @@
 //      + zéro chevauchement entre ces panneaux eux-mêmes (régression T51).
 //      Le fix : en ≤560px le HUD est peint SOUS la stripe planning
 //      (y = 8 + .planning.offsetHeight + 8 — src/ui/renderer.mjs drawHud).
-//   2. POLICE DU HUD (hudRect().fontPx) ≥ 11 px (13 px souhaités) —
-//      16 px en desktop, 14 px en mobile.
+//   2. POLICE DU HUD (hudRect().fontPx) ≥ 12 px (plancher T5c : exigence
+//      Elsay « police min 12 px ») — 16 px en desktop, mobile adaptative
+//      13 → 12 px (le monospace phosphore est plus large que le system-ui
+//      v1 — la police descend jusqu'à ce que la plus longue ligne tienne
+//      dans vw - 24, plancher 12 px).
 //   3. POLICES DOM des éléments interactifs visibles (boutons planning,
 //      filtres, toolbar, consultation, toasts, intro) ≥ 11 px
 //      (getComputedStyle — les hausses T5a : 10→12 px filtres, 11→12/13 px…).
@@ -17,9 +20,10 @@
 //      (la largeur suit la plus longue ligne mesurée — pas le fixe 240 px
 //      qui faisait DÉBORDER « Files : … » hors du panneau).
 //   5. CONTRASTE WCAG (calcul Node sur les couleurs réelles du CSS) : texte
-//      principal/secondaire vs les fonds de panneaux (α lu dans index.html,
-//      pire cas = le monde le plus clair connu, terrainBorder de
-//      src/ui/palette.mjs) ≥ 4.5:1 (AA) ; texte du HUD #e8eef7 vs sa surface.
+//      principal/secondaire (--at-text / --at-text-dim, T5c v2) vs les
+//      fonds de panneaux (α lu dans index.html, pire cas v2 = le monde le
+//      plus clair = terminal phosphore #3DFFA5) ≥ 4.5:1 (AA) ; texte du
+//      HUD #B9F5CE vs sa surface noire phosphore rgba(5,8,7,0.9).
 // Sorties : rapport qa/hud-mobile-cdp-report.json + captures
 // evidence/t5a-hud-<viewport>.png. Code de sortie : 0 = PASS, 1 = FAIL.
 // Usage : node qa/hud-mobile-cdp.mjs
@@ -189,13 +193,15 @@ async function main() {
     report.problems.push(`alpha de fond non lues dans index.html (planning=${aPanel} panel=${aPanel2} toolbar=${aToolbar})`);
     report.verdict = 'FAIL';
   } else {
-    // Pire cas : le monde le plus clair connu (bordure de terrain, palette
-    // standard R43) — le plus lumineux derrière un panneau ; le plus sombre
-    // (nuit, #0a1220) ne fait qu'augmenter le contraste.
-    const bright = hex2rgb(getPalette(false).terrainBorder); // #cfd8dc
+    // Pire cas v2 (T5c) : le MONDE le plus clair derrière un panneau — en
+    // « Radar Rétro » le monde est un SCOPE sombre ; le plus lumineux est
+    // le bâtiment TERMINAL phosphore #3DFFA5 (buildings.terminal, v2).
+    // Le plus sombre (terrain #071510) ne fait qu'augmenter le contraste.
+    const bright = hex2rgb(getPalette(false).buildings.terminal); // #3DFFA5 (v2 phosphore)
     const worstBg = alphas.map((a) => blendOver(bright, [0, 0, 0], a));
     const worstLum = worstBg.map((c) => lum(c[0], c[1], c[2]));
-    const texts = { '#fff': hex2rgb('#ffffff'), '#b0bec5': hex2rgb('#b0bec5'), '#90a4ae': hex2rgb('#90a4ae') };
+    // Textes CSS réels v2 : --at-text / --at-text-dim (index.html :root).
+    const texts = { '#B9F5CE': hex2rgb('#B9F5CE'), '#8FD6AE': hex2rgb('#8FD6AE') };
     for (const [name, rgb] of Object.entries(texts)) {
       const tl = lum(rgb[0], rgb[1], rgb[2]);
       for (const wbg of worstLum) {
@@ -206,9 +212,10 @@ async function main() {
         }
       }
     }
-    // Le HUD canvas : surface rgba(10,18,32,0.82) (renderer.mjs, T4) + texte #e8eef7.
-    const hudBg = blendOver(bright, [10, 18, 32], 0.82);
-    const hudC = contrast(lum(...hex2rgb('#e8eef7')), lum(hudBg[0], hudBg[1], hudBg[2]));
+    // Le HUD canvas : surface rgba(5,8,7,0.9) (renderer.mjs, T5c v2 —
+    // noir phosphore) + texte THEME.text #B9F5CE.
+    const hudBg = blendOver(bright, [5, 8, 7], 0.9);
+    const hudC = contrast(lum(...hex2rgb('#B9F5CE')), lum(hudBg[0], hudBg[1], hudBg[2]));
     report.contrastHud = { ratio: Number(hudC.toFixed(2)), over: hudBg };
     if (hudC < 4.5) { report.problems.push(`contraste HUD ${hudC.toFixed(2)}:1 < 4.5:1`); report.verdict = 'FAIL'; }
     report.contrastPanel = {
@@ -276,9 +283,9 @@ async function main() {
       }
     }
 
-    // 2) Police du HUD (13 px souhaités ; 11 px minimum).
+    // 2) Police du HUD (plancher 12 px — exigence Elsay T5c).
     viewReport.checks.hudFont = hud.fontPx;
-    if (hud.fontPx < 11) { report.problems.push(`${v.name} : police HUD ${hud.fontPx}px < 11px`); report.verdict = 'FAIL'; }
+    if (hud.fontPx < 12) { report.problems.push(`${v.name} : police HUD ${hud.fontPx}px < 12px (plancher T5c)`); report.verdict = 'FAIL'; }
 
     // 3) Polices DOM interactives ≥ 11 px (13 px souhaités).
     const small = m.fonts.filter((f) => f.px < 11);

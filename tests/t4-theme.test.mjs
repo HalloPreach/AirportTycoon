@@ -2,13 +2,13 @@
  * T4 (t_eb78478e) : THEME (ui/theme.mjs), ICONS (ui/icons.mjs), TIPS (ui/tips.mjs).
  *
  * Ce que ces tests PROUVENT (aucun DOM, aucun canvas) :
- *  - THEME : un module GELÉ de design tokens (« tour de contrôle la nuit ») —
- *    les couleurs du canvas et du DOM DOIVENT passer par ici (pas de hex en
- *    dur dans les modules UI) ; les tokens existent, sont stables (Object.is
- *    après import multiple) et conformes au format attendu (hex 3/6, rgb,
- *    px, bool, chaîne) ; les couleurs du MONDE (palette.mjs, R43) ne sont
- *    PAS des tokens de thème (le thème ne surchargee jamais les couleurs du
- *    monde).
+ *  - THEME : un module GELÉ de design tokens (« RADAR RÉTRO » — maquette
+ *    variant-c, t_bd4726e7) ; les couleurs du canvas et du DOM DOIVENT
+ *    passer par ici (pas de hex en dur dans les modules UI) ; les tokens
+ *    existent, sont stables (Object.is après import multiple) et conformes
+ *    au format attendu (hex 3/6, rgb, px, bool, chaîne) ; les couleurs du
+ *    MONDE (palette.mjs, R43) ne sont PAS des tokens de thème (le thème
+ *    ne surchargee jamais les couleurs du monde).
  *  - ICONS : ICON_KINDS liste les 14 types ; drawIcon est PUR en lecture
  *    (aucune mutation de ctx non déclarée) ; iconCanvas crée un canvas
  *    (navigateur) ou null (Node) — le contrat « zéro asset » est celui du
@@ -40,11 +40,11 @@ function ok(name, fn) {
   catch (e) { console.error(`FAIL ${name}\n  ${e.message}`); process.exitCode = 1; }
 }
 
-// ---- THEME : tokens du design « tour de contrôle la nuit » ---------------
+// ---- THEME : tokens du design « RADAR RÉTRO » (v2, t_bd4726e7) -----------
 ok('theme: THEME est un objet GELÉ (pas de mutation possible)', () => {
   assert.equal(Object.isFrozen(THEME), true);
   assert.throws(() => { THEME.bg = '#ffffff'; }, TypeError);
-  assert.equal(THEME.bg, '#0a1220');
+  assert.equal(THEME.bg, '#050807'); // v2 : noir phosphore (v1 : « asphalte nuit » #0a1220)
 });
 
 ok('theme: les tokens miroirés sont tous présents et non vides', () => {

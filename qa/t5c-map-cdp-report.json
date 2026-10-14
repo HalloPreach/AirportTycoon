@@ -1,0 +1,54 @@
+{
+  "ts": "2026-10-14T15:20:42.048Z",
+  "head": "df0056f55d3dccc9a0fb8943d97ca8925f472e7c",
+  "pass": true,
+  "scenario": "capNord",
+  "aircraft": [
+    {
+      "phase": "landing",
+      "x": 580,
+      "y": 360,
+      "gate": false
+    },
+    {
+      "phase": "approach",
+      "x": 500,
+      "y": 100,
+      "gate": false
+    }
+  ],
+  "captures": [
+    {
+      "name": "menu",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5c-map-cdp\\t5c-map-cdp-2026-10-14T15-20-37-038Z-menu.png",
+      "bytes": 245550,
+      "kb": 239.8
+    },
+    {
+      "name": "jeu-defaut",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5c-map-cdp\\t5c-map-cdp-2026-10-14T15-20-37-038Z-jeu-defaut.png",
+      "bytes": 170473,
+      "kb": 166.5
+    },
+    {
+      "name": "jeu-zoom",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5c-map-cdp\\t5c-map-cdp-2026-10-14T15-20-37-038Z-jeu-zoom.png",
+      "bytes": 154925,
+      "kb": 151.3
+    },
+    {
+      "name": "jeu-zoom-piste",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5c-map-cdp\\t5c-map-cdp-2026-10-14T15-20-37-038Z-jeu-zoom-piste.png",
+      "bytes": 153559,
+      "kb": 150
+    },
+    {
+      "name": "jeu-pluie",
+      "path": "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t5c-map-cdp\\t5c-map-cdp-2026-10-14T15-20-37-038Z-jeu-pluie.png",
+      "bytes": 162328,
+      "kb": 158.5
+    }
+  ],
+  "consoleErrors": [],
+  "note": "captures DÉTERMINISTES : scénario capNord (seed + budget imposés) + 2 blips forcés (constantes, forme makeAircraft) + 900 ticks de 1 s du pipeline réel (tick.mjs) ; sim pausée avant chaque capture (le rendu rAF tourne, le temps sim non). Zooms RECADRÉS (terminal, puis centre nord) et pluie posés par le harness (state.camera, sim.weather) — le renderer reste en lecture seule. 5 captures : menu (scope), jeu-defaut (vue entière : silhouettes, tags, scope), jeu-zoom (zoom 1.6 centré terminal : fenêtres, portes G1-G4, tour, points d’attente), jeu-zoom-piste (zoom 1.6 centré nord : extrémités hautes R1/R2 — seuils piano, désignateurs, feux, ligne de centre — + avion en approche avec tag radar), jeu-pluie (streaks screen-space)."
+}

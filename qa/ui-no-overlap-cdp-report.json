@@ -1,7 +1,7 @@
 {
   "task": "t_cccfbc97",
   "test": "qa/ui-no-overlap-cdp.mjs",
-  "ts": "2026-10-14T14:02:52.191Z",
+  "ts": "2026-10-14T15:23:25.952Z",
   "rule": "aucun élément interactif visible ne chevauche un autre (zones + z-index) ; #game (zone de jeu) et .toasts (pointer-events:none) exclus des paires ; au menu, les 3 racines de panneaux de jeu sont masquées",
   "viewports": [
     {
@@ -76,7 +76,7 @@
               "x": 480,
               "y": 12,
               "w": 960,
-              "h": 110
+              "h": 141
             }
           ],
           "overlaps": [],
@@ -118,10 +118,10 @@
               "pos": "fixed",
               "z": "101",
               "pe": "auto",
-              "x": 1532,
+              "x": 1530,
               "y": 12,
-              "w": 376,
-              "h": 199
+              "w": 378,
+              "h": 203
             },
             {
               "sel": ".panels",
@@ -201,10 +201,10 @@
               "pos": "fixed",
               "z": "500",
               "pe": "none",
-              "x": 1806,
-              "y": 1033,
-              "w": 102,
-              "h": 35
+              "x": 1779,
+              "y": 1036,
+              "w": 129,
+              "h": 32
             },
             {
               "sel": ".planning",
@@ -213,10 +213,10 @@
               "pos": "fixed",
               "z": "101",
               "pe": "auto",
-              "x": 1532,
+              "x": 1530,
               "y": 12,
-              "w": 376,
-              "h": 199
+              "w": 378,
+              "h": 203
             },
             {
               "sel": ".panels",
@@ -346,7 +346,7 @@
               "x": 342,
               "y": 12,
               "w": 683,
-              "h": 168
+              "h": 196
             }
           ],
           "overlaps": [],
@@ -388,10 +388,10 @@
               "pos": "fixed",
               "z": "101",
               "pe": "auto",
-              "x": 978,
+              "x": 976,
               "y": 12,
-              "w": 376,
-              "h": 199
+              "w": 378,
+              "h": 203
             },
             {
               "sel": ".panels",
@@ -471,10 +471,10 @@
               "pos": "fixed",
               "z": "500",
               "pe": "none",
-              "x": 1252,
-              "y": 721,
-              "w": 102,
-              "h": 35
+              "x": 1225,
+              "y": 724,
+              "w": 129,
+              "h": 32
             },
             {
               "sel": ".planning",
@@ -483,10 +483,10 @@
               "pos": "fixed",
               "z": "101",
               "pe": "auto",
-              "x": 978,
+              "x": 976,
               "y": 12,
-              "w": 376,
-              "h": 199
+              "w": 378,
+              "h": 203
             },
             {
               "sel": ".panels",
@@ -613,10 +613,10 @@
               "pos": "fixed",
               "z": "100",
               "pe": "auto",
-              "x": 59,
+              "x": 20,
               "y": 12,
-              "w": 271,
-              "h": 444
+              "w": 350,
+              "h": 417
             }
           ],
           "overlaps": [],
@@ -649,7 +649,7 @@
               "x": 8,
               "y": 226,
               "w": 374,
-              "h": 54
+              "h": 48
             },
             {
               "sel": ".planning",
@@ -661,7 +661,7 @@
               "x": 8,
               "y": 8,
               "w": 374,
-              "h": 199
+              "h": 203
             },
             {
               "sel": ".panels",
@@ -744,7 +744,7 @@
               "x": 8,
               "y": 226,
               "w": 374,
-              "h": 35
+              "h": 32
             },
             {
               "sel": ".planning",
@@ -756,7 +756,7 @@
               "x": 8,
               "y": 8,
               "w": 374,
-              "h": 199
+              "h": 203
             },
             {
               "sel": ".panels",

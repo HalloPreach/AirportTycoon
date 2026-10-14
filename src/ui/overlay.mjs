@@ -16,6 +16,7 @@
 import { rebuildGraph } from '../pathfinding/path.mjs';
 import { gateReachable } from '../infra/infra.mjs';
 import { runwayClosed } from '../sim/incidents.mjs'; // R32 : la fermeture piste est lue PAR PISTE (attachée)
+import { THEME } from './theme.mjs'; // T5c : couleurs v2 Radar Rétro (ok/err = tokens)
 
 // Lecture pure de l'état de sim → structure platte pour le rendu.
 // Exportée telle quelle : les tests s'appuient sur cette LECTURE (zéro
@@ -72,26 +73,28 @@ export function drawNetworkOverlay(ctx, cam, viewSize, sim) {
     (y - (cam.y - viewSize.height / 2 / z)) * z,
   ];
   // Segments : coques (grises) / rouges s'ils sont OCCUPÉS (un avion dessus).
+  // T5c (t_bd4726e7) : couleurs v2 Radar Rétro (phosphore + rouge CRT,
+  // tokens theme.mjs — mêmes valeurs, lues dans le contexte du scope).
   ctx.lineCap = 'round';
   for (const s of ov.segs) {
     const [x, y] = p(s.x, s.y);
     ctx.beginPath();
     ctx.arc(x, y, (s.occupied ? 5 : 3.5) * Math.min(2, z), 0, Math.PI * 2);
-    ctx.fillStyle = s.occupied ? 'rgba(255,82,82,0.85)' : 'rgba(255,255,255,0.45)';
+    ctx.fillStyle = s.occupied ? 'rgba(255,90,78,0.85)' : 'rgba(185,245,206,0.45)';
     ctx.fill();
     ctx.strokeStyle = 'rgba(0,0,0,0.5)';
     ctx.lineWidth = 1;
     ctx.stroke();
   }
   // Portes : pastille colorée par l'état RÉSEAU de la porte —
-  //   verte  = joignable (gateReachable : la règle de la sim) ;
-  //   rouge  = COUPÉE (taxiway absent/coupé) OU avion bloqué dessus.
+  //   phosphore = joignable (gateReachable : la règle de la sim) ;
+  //   rouge CRT = COUPÉE (taxiway absent/coupé) OU avion bloqué dessus.
   for (const gt of ov.gates) {
     if (!gt.ac || gt.ac.x == null) continue; // porte sans avion : la sim la peint déjà
     const [x, y] = p(gt.ac.x, gt.ac.y);
     ctx.beginPath();
     ctx.arc(x, y, 10 * Math.min(2, z), 0, Math.PI * 2);
-    ctx.strokeStyle = gt.blocked || !gt.ok ? '#ff5252' : '#69f0ae';
+    ctx.strokeStyle = gt.blocked || !gt.ok ? THEME.err : THEME.ok;
     ctx.lineWidth = 2;
     ctx.stroke();
   }

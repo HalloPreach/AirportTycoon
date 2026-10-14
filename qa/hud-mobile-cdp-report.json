@@ -1,7 +1,7 @@
 {
   "task": "t_e4c3ffff",
   "test": "qa/hud-mobile-cdp.mjs",
-  "ts": "2026-10-14T14:02:38.022Z",
+  "ts": "2026-10-14T15:22:50.828Z",
   "rule": "T5a : zone HUD canvas sans chevauchement (panneaux + toolbar + intro) ; police HUD ≥11px (13 souhaités) ; polices DOM interactives ≥11px ; texte HUD non débordant (largeur = contenu) ; contraste WCAG AA ≥4.5:1 pire cas (fonds α lues du CSS sur le monde le plus clair, terrainBorder)",
   "viewports": [
     {
@@ -11,10 +11,10 @@
           "hud": {
             "x": 12,
             "y": 12,
-            "w": 295,
+            "w": 437,
             "h": 184,
             "fontPx": 16,
-            "maxLinePx": 271,
+            "maxLinePx": 413,
             "lines": 7,
             "mobile": false
           },
@@ -387,8 +387,8 @@
           }
         ],
         "textFits": {
-          "maxLinePx": 271,
-          "panelW": 295,
+          "maxLinePx": 413,
+          "panelW": 437,
           "fits": true
         }
       }
@@ -399,11 +399,11 @@
         "hudVsPanels": {
           "hud": {
             "x": 12,
-            "y": 215,
-            "w": 262,
-            "h": 163,
-            "fontPx": 14,
-            "maxLinePx": 238,
+            "y": 219,
+            "w": 360,
+            "h": 156,
+            "fontPx": 13,
+            "maxLinePx": 336,
             "lines": 7,
             "mobile": true
           },
@@ -416,7 +416,7 @@
           "hudOverlaps": [],
           "panelOverlaps": []
         },
-        "hudFont": 14,
+        "hudFont": 13,
         "domFonts": [
           {
             "sel": "toast toast--ok",
@@ -776,8 +776,8 @@
           }
         ],
         "textFits": {
-          "maxLinePx": 238,
-          "panelW": 262,
+          "maxLinePx": 336,
+          "panelW": 360,
           "fits": true
         }
       }
@@ -786,11 +786,11 @@
   "verdict": "PASS",
   "problems": [],
   "contrastHud": {
-    "ratio": 10.48,
+    "ratio": 13.68,
     "over": [
-      45,
-      54,
-      66
+      11,
+      33,
+      23
     ]
   },
   "contrastPanel": {
@@ -800,14 +800,13 @@
       0.82
     ],
     "overWorld": [
-      207,
-      216,
-      220
+      61,
+      255,
+      165
     ],
     "ratios": {
-      "#fff": 15.01,
-      "#b0bec5": 7.87,
-      "#90a4ae": 5.79
+      "#B9F5CE": 11.95,
+      "#8FD6AE": 8.71
     }
   }
 }

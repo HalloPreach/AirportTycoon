@@ -202,14 +202,16 @@ export function makeBuildTool({ canvas, state, camera, viewSize, toast, onPlaced
     const y0 = (g.y - (cam.y - view.height / 2 / cam.zoom)) * cam.zoom;
     const w = g.w * cam.zoom;
     const h = g.h * cam.zoom;
-    ctx.fillStyle = g.ok ? 'rgba(76,175,80,0.45)' : 'rgba(244,67,54,0.45)';
+    // T5c (t_bd4726e7) : couleurs v2 Radar Rétro — phosphore si posable
+    // (= THEME.ok, alpha 0,45), rouge CRT sinon (= THEME.err).
+    ctx.fillStyle = g.ok ? 'rgba(61,255,165,0.45)' : 'rgba(255,90,78,0.45)';
     ctx.fillRect(x0, y0, w, h);
-    ctx.strokeStyle = g.ok ? '#43a047' : '#e53935';
+    ctx.strokeStyle = g.ok ? THEME.ok : THEME.err;
     ctx.lineWidth = 2;
     ctx.strokeRect(x0, y0, w, h);
     if (!g.ok && g.why) {
-      ctx.fillStyle = '#fff';
-      ctx.font = '12px system-ui';
+      ctx.fillStyle = THEME.text;
+      ctx.font = `12px ${THEME.fontUi}`;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'bottom';
       ctx.fillText(g.why, x0, y0 - 4);
