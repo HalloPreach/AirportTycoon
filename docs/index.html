@@ -118,6 +118,9 @@
         <div class="tranche"><b>T3 — Profondeur</b><span class="done">✓ Livrée</span><br /><span>Météo, événements, contenu, jour/nuit + saisons, 2ᵉ aéroport</span></div>
         <div class="tranche"><b>T4 — Polish &amp; Release</b><span class="done">✓ Livrée</span><br /><span>Direction artistique, onboarding, release autonome</span></div>
         <div class="tranche"><b>T51 — UI</b><span class="done">✓ Livrée</span><br /><span>Chevauchements corrigés (8 → 0), hiérarchie z-index explicite</span></div>
+        <div class="tranche"><b>T5a — HUD</b><span class="done">✓ Livrée</span><br /><span>HUD lisible, portrait mobile corrigé (0 chevauchement, contraste AA)</span></div>
+        <div class="tranche"><b>T5b — Maquettes</b><span class="done">✓ Livrée</span><br /><span>3 directions visuelles A/B/C + page de revue (variante C retenue)</span></div>
+        <div class="tranche"><b>T5c — Design v2</b><span class="done">✓ Livrée</span><br /><span>« Radar Rétro » sur tous les écrans + carte enrichie (exigence Elsay)</span></div>
       </div>
     </section>
 
@@ -160,18 +163,33 @@
           <td><a class="hash" href="https://github.com/HalloPreach/AirportTycoon/commit/a3444b2">a3444b2</a></td>
           <td>QA CDP 17/17 (http + file:// hors-ligne)</td>
         </tr>
+        <tr>
+          <td>T5a — HUD lisible + layout portrait mobile (police HUD ≥ 11px, texte sans débordement, 0 chevauchement)</td>
+          <td><a class="hash" href="https://github.com/HalloPreach/AirportTycoon/commit/24825ad">24825ad</a></td>
+          <td>QA hud-mobile : 0 problème, contraste pire cas 8.71:1 (≥ AA 4.5:1) + 2 captures</td>
+        </tr>
+        <tr>
+          <td>T5b — 3 maquettes de direction visuelle (A « Nuit REV.2 », B « Tour de contrôle », C « Radar Rétro » phosphore CRT) + page de revue</td>
+          <td><a class="hash" href="https://github.com/HalloPreach/AirportTycoon/commit/df0056f">df0056f</a></td>
+          <td>QA CDP 6/6 captures déterministes, 0 erreur console</td>
+        </tr>
+        <tr>
+          <td>T5c — Design system v2 « Radar Rétro » (source unique <code>src/ui/theme.mjs</code>) sur TOUS les écrans + carte enrichie (détails, tags radar, scope)</td>
+          <td><a class="hash" href="https://github.com/HalloPreach/AirportTycoon/commit/db1b336">db1b336</a></td>
+          <td>QA CDP 5/5 (2 avions en scène, 0 erreur console) + 5 captures déterministes</td>
+        </tr>
       </table>
-      <p class="note">Rapports de livraison détaillés : <a href="https://github.com/HalloPreach/AirportTycoon/blob/main/RAPPORT_LIVRAISON_T1T2.md">T1+T2</a> · <a href="https://github.com/HalloPreach/AirportTycoon/blob/main/RAPPORT_LIVRAISON_T3T4.md">T3+T4</a> dans le dépôt.</p>
+      <p class="note">Rapports de livraison détaillés : <a href="https://github.com/HalloPreach/AirportTycoon/blob/main/RAPPORT_LIVRAISON_T1T2.md">T1+T2</a> · <a href="https://github.com/HalloPreach/AirportTycoon/blob/main/RAPPORT_LIVRAISON_T3T4.md">T3+T4</a> · <a href="https://github.com/HalloPreach/AirportTycoon/blob/main/RAPPORT_LIVRAISON_T5.md">T5 (a/b/c + état final)</a> dans le dépôt.</p>
     </section>
 
     <section>
       <h2>Preuves &amp; garantie qualité</h2>
       <ul class="proofs">
-        <li><b>440/440 tests Node</b> — <code>node --test tests/*.test.mjs</code>, sortie 0 (vérifié sur l'état final).</li>
-        <li><b>QA navigateur (CDP) 17/17</b> — boot HTTP et boot <code>file://</code> hors-ligne, 0 ressource externe, 0 exception.</li>
+        <li><b>440/440 tests Node</b> — <code>node --test tests/*.test.mjs</code>, sortie 0 (re-vérifié sur extraction isolée du commit final, carte t_2e94c5d2).</li>
+        <li><b>QA navigateur (CDP) 17/17</b> — boot HTTP et boot <code>file://</code> hors-ligne, 0 ressource externe, 0 exception (rapport <code>qa/t4-standalone-cdp-report.json</code>).</li>
+        <li><b>QA CDP tous états, 0 exception</b> — cdp-boot · maquettes T5b 6/6 · carte T5c 5/5 (2 avions en scène) · régression UI 0/9 (3 viewports × 3 états) · hud-mobile (contraste pire cas 8.71:1 ≥ AA).</li>
         <li><b>Endurance 1200 s de jeu</b> — 0 exception, 0 NaN/infini, heap stable (QA r42).</li>
-        <li><b>Régression UI 0/9</b> — aucun chevauchement sur 1920×1080, 1366×768, 390×844 (menu / partie neuve / rechargée).</li>
-        <li><b>0 dépendance npm, 0 appel réseau au runtime</b> — release autonome : 1 HTML + 1 JS (50 modules inlinés), jouable hors-ligne.</li>
+        <li><b>0 dépendance npm, 0 appel réseau au runtime</b> — release autonome : 1 HTML + 1 JS (50 modules inlinés), jouable hors-ligne ; <code>dist/</code> re-synchronisé sur la source finale (build re-productible à contenu près).</li>
       </ul>
     </section>
 
@@ -179,16 +197,24 @@
       <h2>Captures</h2>
       <div class="gallery">
         <figure>
-          <img src="./img/menu.png" alt="Écran-titre animé — direction artistique tour de contrôle la nuit" loading="lazy" />
-          <figcaption>Écran-titre animé (0 allocation/frame) — direction artistique « tour de contrôle la nuit ».</figcaption>
+          <img src="./img/menu.png" alt="Écran-titre — design « Radar Rétro » (scope radar, phosphore vert CRT)" loading="lazy" />
+          <figcaption>Écran-titre — design « Radar Rétro » (T5c) : scope radar phosphore vert, 0 allocation/frame.</figcaption>
         </figure>
         <figure>
-          <img src="./img/jeu.png" alt="Partie en cours — aéroport principal" loading="lazy" />
-          <figcaption>Partie en cours — aéroport principal (HUD nuit, panneaux, planning).</figcaption>
+          <img src="./img/jeu.png" alt="Partie en cours — carte enrichie, silhouettes et tags radar (capture déterministe, scénario capNord)" loading="lazy" />
+          <figcaption>Partie en cours — carte enrichie (T5c, exigence Elsay) : silhouettes d'avions, tags radar, scope ; capture déterministe (scénario capNord).</figcaption>
         </figure>
         <figure>
-          <img src="./img/cap-nord.png" alt="Second aéroport Cap Nord en cours de jeu" loading="lazy" />
-          <figcaption>Second aéroport « Cap Nord » — profil de spawn différent, livré en stretch T3.</figcaption>
+          <img src="./img/cap-nord.png" alt="Zoom 1.6 sur les extrémités de piste — seuils piano, désignateurs, feux" loading="lazy" />
+          <figcaption>Zoom 1.6 sur les extrémités R1/R2 (Cap Nord) : seuils « piano », désignateurs, feux, ligne de centre + avion en approche avec tag radar.</figcaption>
+        </figure>
+        <figure>
+          <img src="./img/t5a-hud-mobile.png" alt="HUD mobile portrait 390×844 — lisible, sans chevauchement" loading="lazy" />
+          <figcaption>Portrait mobile 390×844 (T5a) : HUD lisible, 0 chevauchement panneaux/toolbar, contraste ≥ AA.</figcaption>
+        </figure>
+        <figure>
+          <img src="./img/t5b-variant-c.png" alt="Maquette T5b — variante C « Radar Rétro » (retenue)" loading="lazy" />
+          <figcaption>T5b — variante C « Radar Rétro » retenue (maquette auto-suffisante, phosphore vert CRT).</figcaption>
         </figure>
       </div>
     </section>
@@ -196,16 +222,15 @@
     <section>
       <h2>Roadmap (à venir)</h2>
       <ul class="roadmap">
-        <li><b>HUD mobile (portrait)</b><span class="tag now">en tête de liste</span> — corriger le HUD canvas peint derrière les panneaux pleins largeur (finding connu, déclaré hors périmètre de la T51).</li>
+        <li><b>Playtest humain &amp; équilibrage</b><span class="tag now">en tête de liste</span> — valider le feel des 3 difficultés et du design v2 (le QA automatique ne remplace pas les joueurs).</li>
         <li><b>Endgame de campagne</b> — écran de victoire, réputation d'aéroport et objectifs méta à long terme.</li>
-        <li><b>Playtest humain &amp; équilibrage</b> — valider le feel des 3 difficultés (le QA automatique ne remplace pas les joueurs).</li>
         <li><b>Étendues</b><span class="tag">option</span> — 3ᵉ aéroport, éditeur d'événements, mode comparaison de deux aéroports.</li>
       </ul>
     </section>
 
     <footer>
       Site statique GitHub Pages — mis à jour automatiquement à chaque push sur <code>main</code> (dossier <code>docs/</code>).<br />
-      Dernière mise à jour : 2026-10-14 (commit <span class="hash">7a80c03</span>).
+      Dernière mise à jour : 2026-10-14 (T5d : dashboard + RAPPORT_LIVRAISON_T5.md + re-sync du build autonome dist/ et du site).
     </footer>
   </div>
 </body>
