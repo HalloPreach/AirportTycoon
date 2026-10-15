@@ -131,6 +131,9 @@ function addResponses(body, sim, which) {
 
 // Section : titre + zone. refresh(sigOf, paint) reconstruit la zone UNIQUEMENT
 // si la signature a changé (sinon DOM stable, comme planning-panel).
+// T7b (t_d1005365) : la box section est EXPOSÉE (el) — la barre d'onglets a
+// besoin de l'élément pour le masquer/afficher (attribution `hidden`, 1
+// panneau visible à la fois).
 function makeSection(parent, cls, title) {
   const box = document.createElement('section');
   box.className = cls;
@@ -147,6 +150,7 @@ function makeSection(parent, cls, title) {
       sig = s;
       paint(body);
     },
+    el: box,
   };
 }
 
@@ -189,8 +193,102 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   }
   document.body.appendChild(col);
 
+  // --- T7b (t_d1005365) : OGL — le contenu est piloté par BOUTONS, un
+  // panneau à la fois. Ordre utilisateur : « depuis quand on scroll dans les
+  // menus d'un jeu, fais des boutons qui ouvrent des menus différents ».
+  // Barre d'onglets (boutons ≥44 px) + zone du panneau actif : cliquer un
+  // onglet n'affiche QUE son panneau (les autres masqués par l'attribution
+  // `hidden`). Desktop : la colonne ne défile PLUS verticalement — elle est
+  // bornée top→bottom (CSS) et seul le panneau actif défile s'il déborde
+  // (rare). Mobile : la barre vit dans la bande CONSULTATION (le bouton
+  // « Vols » y est masqué — la bande PLANNING du haut porte le panneau Vols,
+  // exclusive avec CONSULTATION, hooks T7 conservés).
+  // Onglet par défaut = le plus utile (Vols). Panneaux : Vols (le bandeau
+  // planning, planning-panel.mjs — main.mjs le REGISTRE ici en pane 'vols'
+  // sur desktop) + les 9 sections ci-dessous.
+  const TABS = [
+    { id: 'vols', label: 'Vols' },
+    { id: 'inspect', label: 'Inspection' },
+    { id: 'fin', label: 'Bilan' },
+    { id: 'stats', label: 'Stats' },
+    { id: 'goals', label: 'Objectifs' },
+    { id: 'season', label: 'Saison' },
+    { id: 'unlocks', label: 'Déblocs' },
+    { id: 'contracts', label: 'Contrats' },
+    { id: 'alerts', label: 'Alertes' },
+    { id: 'net', label: 'Réseau' },
+  ];
+  const tabsBar = document.createElement('div');
+  tabsBar.className = 'tabs';
+  const tabButtons = [];
+  for (const t of TABS) {
+    const b = document.createElement('button');
+    b.className = 'tab';
+    b.type = 'button';
+    b.textContent = t.label;
+    b.setAttribute('data-tab', t.id);
+    b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', () => setTab(t.id));
+    tabsBar.appendChild(b);
+    tabButtons.push({ id: t.id, el: b });
+  }
+  // Zone du panneau actif : SEUL défilement possible (panneau qui déborde,
+  // cas rare) — la colonne / la bande d'accueil ne scrolle plus.
+  const zone = document.createElement('div');
+  zone.className = 'panelzone';
+  col.appendChild(tabsBar);
+  col.appendChild(zone);
+  // Registre des PANNEAUX : 9 sections internes (ci-dessous) + le pane 'vols'
+  // externe (le bandeau planning, registré par main.mjs sur desktop).
+  const panes = {};
+  function setHidden(el, on) {
+    if (!el) return;
+    if (on) { el.setAttribute('hidden', ''); return; }
+    if (el.removeAttribute) el.removeAttribute('hidden');
+    else el.setAttribute('hidden', null); // stub DOM des tests (pas de removeAttribute)
+  }
+  let activeTab = 'vols';
+  function applyTab() {
+    for (const t of TABS) {
+      const p = panes[t.id];
+      if (p) setHidden(p, t.id !== activeTab);
+      const tb = tabButtons.find((x) => x.id === t.id);
+      if (tb) {
+        const on = t.id === activeTab;
+        tb.el.setAttribute('aria-pressed', String(on));
+        tb.el.className = 'tab' + (on ? ' tab--on' : '');
+      }
+    }
+  }
+  function setTab(id) {
+    if (!panes[id]) {
+      // Le pane n'est pas registré (mobile : le bandeau Vols est sa propre
+      // bande du haut) → premier pane disponible (l'onglet reste « Vols »).
+      const first = TABS.map((t) => t.id).find((tid) => panes[tid]);
+      if (first) id = first;
+    }
+    activeTab = id;
+    applyTab();
+  }
+  function registerPane(id, el) {
+    panes[id] = el;
+    zone.appendChild(el); // RE-PARENT (desktop : le bandeau planning entre dans la colonne)
+    if (id === 'vols') activeTab = 'vols'; // défaut déclaré (desktop) — mobile : jamais régitré
+    else if (!panes[activeTab] && panes[id]) activeTab = id; // mobile : 1er pane interne
+    applyTab();
+  }
+  function unregisterPane(id) {
+    const el = panes[id];
+    if (!el) return;
+    delete panes[id];
+    setHidden(el, true);
+    if (activeTab === id) setTab(TABS.map((t) => t.id).find((tid) => panes[tid]) || id);
+    applyTab();
+  }
+
   // --- 1. Inspection avion + bâtiment (clic sur la carte) -------------------
-  const inspect = makeSection(col, 'panel', 'Inspection — clic sur la carte');
+  const inspect = makeSection(zone, 'panel', 'Inspection — clic sur la carte');
+  registerPane('inspect', inspect.el); // T7b : pane de l'onglet « Inspection »
   let pick = null; // { kind: 'ac' | 'bldg', id } — rendu live (l'objet peut partir)
   function refreshInspect() {
     inspect.refresh(
@@ -366,7 +464,8 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   canvas.addEventListener('click', (e) => pickAt(e.offsetX, e.offsetY));
 
   // --- 2. Bilan financier détaillé (surfacer economy.periodStatement) -------
-  const fin = makeSection(col, 'panel', 'Bilan financier');
+  const fin = makeSection(zone, 'panel', 'Bilan financier');
+  registerPane('fin', fin.el); // T7b : pane de l'onglet « Bilan »
   function refreshFin() {
     fin.refresh(
       () => {
@@ -422,7 +521,8 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   }
 
   // --- 3. Statistiques -------------------------------------------------------
-  const stats = makeSection(col, 'panel', 'Statistiques');
+  const stats = makeSection(zone, 'panel', 'Statistiques');
+  registerPane('stats', stats.el); // T7b : pane de l'onglet « Stats »
   function refreshStats() {
     stats.refresh(
       () => {
@@ -501,7 +601,8 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   // --- 3b. R22 : objectifs de progression (récompense payée une fois) ------
   // UI fine : LECTURE seule (objectiveView) — le paiement est fait par la sim
   // (tickObjectives), pas par le panneau.
-  const goals = makeSection(col, 'panel', 'Objectifs');
+  const goals = makeSection(zone, 'panel', 'Objectifs');
+  registerPane('goals', goals.el); // T7b : pane de l'onglet « Objectifs »
   function refreshGoals() {
     goals.refresh(
       () => {
@@ -529,7 +630,8 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   // UI fine : LECTURE seule (campaignView / statsView / achievementsView) —
   // la sim décide (tickCampaign/tickStats/tickAchievements), le panneau
   // affiche (même pattern que les objectifs R22).
-  const campaign = makeSection(col, 'panel', 'Saison, stats & succès');
+  const campaign = makeSection(zone, 'panel', 'Saison, stats & succès');
+  registerPane('season', campaign.el); // T7b : pane de l'onglet « Saison »
   function refreshCampaign() {
     campaign.refresh(
       () => {
@@ -573,7 +675,8 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   // UI fine : LECTURE seule (unlockView) — les conditions sont décidées par
   // tickUnlocks (unlocks.mjs), le panneau affiche le BÉNÉFICE + la condition
   // restante pour chaque service verrouillé (à l'avance, pas de seuil pax).
-  const unlocks = makeSection(col, 'panel', 'Déblocages services');
+  const unlocks = makeSection(zone, 'panel', 'Déblocages services');
+  registerPane('unlocks', unlocks.el); // T7b : pane de l'onglet « Déblocs »
   function refreshUnlocks() {
     unlocks.refresh(
       () => {
@@ -597,7 +700,8 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   // (tickContracts), le panneau affiche l'état (proposé/actif/finis) + la
   // mesure live (vols, pax, ponctualité, temps restant) + les décisions
   // accepter/refuser/annuler (les COMMANDES contracts, pas de règle ici).
-  const contracts = makeSection(col, 'panel', 'Contrats de compagnie');
+  const contracts = makeSection(zone, 'panel', 'Contrats de compagnie');
+  registerPane('contracts', contracts.el); // T7b : pane de l'onglet « Contrats »
   function refreshContracts() {
     contracts.refresh(
       () => {
@@ -663,7 +767,8 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
     );
   }
   // --- 4. Historique d'alertes (sim.alerts, les plus récentes d'abord) ------
-  const hist = makeSection(col, 'panel', 'Alertes (historique)');
+  const hist = makeSection(zone, 'panel', 'Alertes (historique)');
+  registerPane('alerts', hist.el); // T7b : pane de l'onglet « Alertes »
   function refreshHist() {
     hist.refresh(
       () => {
@@ -689,7 +794,8 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   }
 
   // --- 5. Diagnostic réseau : coupé / saturation ----------------------------
-  const net = makeSection(col, 'panel', 'Diagnostic réseau');
+  const net = makeSection(zone, 'panel', 'Diagnostic réseau');
+  registerPane('net', net.el); // T7b : pane de l'onglet « Réseau »
   function refreshNet() {
     net.refresh(
       () => {
@@ -813,6 +919,15 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
     // (null tant que main.mjs ne le branche pas ; desktop : aucun appelant).
     setFold,
     onFoldChange: null,
+    // T7b (t_d1005365) : OGL — commandes d'onglets (QA CDP + main.mjs qui
+    // registre le bandeau planning comme pane 'vols' sur desktop) + lecture
+    // de l'onglet actif + accès DOM (la barre + la zone du panneau actif).
+    setTab,
+    registerPane,
+    unregisterPane,
+    activeTab: () => activeTab,
+    tabs: tabsBar,
+    zone,
     col,
   };
   return api;

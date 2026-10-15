@@ -1,0 +1,99 @@
+{
+  "task": "t_d3df6f0d",
+  "battery": "t7-tabs-cdp",
+  "ts": "2026-10-15T06:23:52.606Z",
+  "results": [
+    {
+      "viewport": {
+        "name": "desktop 1920×1080",
+        "width": 1920,
+        "height": 1080,
+        "desktop": true,
+        "cdpPort": 9222
+      },
+      "checks": [
+        {
+          "id": "T1-tab-buttons",
+          "ok": true,
+          "msg": "10 onglets desktop visibles, tous ≥44×44 (min 44 px)"
+        },
+        {
+          "id": "T2-single-active",
+          "ok": true,
+          "msg": "exactement 1 bouton d'onglet actif (aria-pressed)"
+        },
+        {
+          "id": "T3-one-panel",
+          "ok": true,
+          "msg": "10/10 onglets : exactement 1 panneau visible à la fois + colonne non scrollable (max Δ scroll/client = 0px)"
+        },
+        {
+          "id": "T6-no-overlap",
+          "ok": true,
+          "msg": "0 chevauchement (26 éléments interactifs cliquables)"
+        },
+        {
+          "id": "T7-no-bleed",
+          "ok": true,
+          "msg": "0 bleed (3 sondes : surfaces opaques α=1.00, carte blanche exacte)"
+        }
+      ],
+      "fail": [],
+      "evidence": [
+        "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t7-hud-tabs\\desktop-vols.png",
+        "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t7-hud-tabs\\desktop-fin.png"
+      ]
+    },
+    {
+      "viewport": {
+        "name": "mobile 390×844",
+        "width": 390,
+        "height": 844,
+        "mobile": true,
+        "cdpPort": 9223
+      },
+      "checks": [
+        {
+          "id": "T1-tab-buttons",
+          "ok": true,
+          "msg": "9 onglets mobiles visibles (Vols masqué), tous ≥44×44 (min 44 px)"
+        },
+        {
+          "id": "T2-single-active",
+          "ok": true,
+          "msg": "exactement 1 bouton d'onglet actif (aria-pressed)"
+        },
+        {
+          "id": "T3-one-panel",
+          "ok": true,
+          "msg": "9/9 onglets : exactement 1 panneau visible à la fois + bande consultation non scrollable (le débordement défile dans la zone)"
+        },
+        {
+          "id": "T4-band-fit",
+          "ok": true,
+          "msg": "bande consultation non scrollable (scroll ≤ client, h=253px)"
+        },
+        {
+          "id": "T5-exclusive",
+          "ok": true,
+          "msg": "exclusivité conservée : bande planning dépliée ⟹ bande consultation repliée (1 bande à la fois)"
+        },
+        {
+          "id": "T6-no-overlap",
+          "ok": true,
+          "msg": "0 chevauchement (5 éléments interactifs cliquables)"
+        },
+        {
+          "id": "T7-no-bleed",
+          "ok": true,
+          "msg": "0 bleed (4 sondes : surfaces opaques α=1.00, carte blanche exacte)"
+        }
+      ],
+      "fail": [],
+      "evidence": [
+        "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t7-hud-tabs\\mobile-consultation.png",
+        "C:\\Users\\Lucas\\Documents\\AirportTycoon\\evidence\\t7-hud-tabs\\mobile-planning.png"
+      ]
+    }
+  ]
+}

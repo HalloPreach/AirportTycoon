@@ -392,6 +392,47 @@
       .planning-auto input { width: 22px; height: 22px; }
       .panel button, .panel select { min-height: 44px; padding: 8px 12px; }
     }
+  /* T7b (t_d1005365) — OGL (onglets) : le contenu des menus est piloté par
+     BOUTONS, un panneau à la fois (colonne desktop non scrollable, bandes
+     mobiles exclusives conservées). ZÉRO MODIF THÈME : tokens existants. */
+  .tabs { display: flex; flex-wrap: wrap; gap: 4px; flex: none; }
+  .tabs .tab {
+    min-height: 44px; min-width: 44px; flex: 1 1 auto; padding: 6px 8px;
+    background: var(--at-surface); color: var(--at-text);
+    border: 1px solid var(--at-border); border-radius: 3px;
+    font: 12px 'Courier New', monospace; cursor: pointer; white-space: nowrap;
+  }
+  .tabs .tab[aria-pressed="true"] {
+    background: var(--at-accent); color: #050807; border-color: var(--at-accent);
+  }
+  /* Zone du panneau actif : SEUL défilement possible (panneau qui déborde,
+     cas rare) — la colonne / la bande d'accueil ne scrolle plus (invariant
+     T7b : scrollHeight de la colonne ≤ clientHeight + 1). */
+  .panelzone {
+    flex: 1 1 auto; min-height: 0; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  /* La colonne / la bande porte le fond OPAQUE (var(--at-surface) = α 1.0) :
+     la zone peut être plus haute que le panneau actif (le panneau déborde
+     RAREMENT) et les gaps flex ne doivent laisser transpercer AUCUN pixel du
+     canvas (invariant T7 : 0 bleed, α ≥ 0.97). Le wrapper était transparent
+     (règle T51) — les onglets + la zone le rendent obligatoire. */
+  .panels { background: var(--at-surface); }
+  /* Le bandeau « Vols » re-parenté dans la colonne (desktop) : en flux
+     normal sous la barre d'onglets (plus d'élément fixed en haut à droite). */
+  .panels .planning {
+    position: static; top: auto; right: auto; z-index: auto; max-height: none;
+  }
+  @media (min-width: 561px) {
+    /* Desktop : la colonne OCCUPE TOUT le côté droit (haut → bas), non
+       scrollable — un onglet = un panneau affiché (les autres masqués). */
+    .panels { top: 12px; max-height: none; overflow: hidden; }
+  }
+  @media (max-width: 560px) {
+    /* Mobile : le bouton d'onglet « Vols » est MASQUÉ — le panneau Vols est
+       la bande du haut (bandes exclusives T7, hooks conservés). */
+    .tabs .tab[data-tab="vols"] { display: none; }
+  }
   </style>
 </head>
 <body>

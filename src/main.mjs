@@ -323,6 +323,32 @@ export function boot(canvas) {
     };
   }
 
+  // T7b (t_d1005365) — OGL DESKTOP : le bandeau « Vols » (planning) est
+  // RÉGISTRÉ comme pane de la colonne de consultation (panels.registerPane)
+  // — la barre d'onglets de la colonne pilote le contenu, un panneau à la
+  // fois (l'onglet actif par défaut = Vols, le plus utile). Le bandeau est
+  // re-parenté dans la zone du panneau (zone.appendChild) : sur desktop il
+  // n'est plus un élément fixed en haut à droite, il vit dans la colonne
+  // (CSS `.panels .planning { position: static }`).
+  // MOBILE (≤560px) : le bandeau reste SA PROPRE bande du haut (bandes
+  // exclusives T7 — le hook ci-dessus est conservé) → le pane 'vols' est
+  // désenregistré (le bouton d'onglet « Vols » est masqué par CSS dans la
+  // bande consultation, index.html) et le bandeau retourne au body.
+  // Sous Node (tests) : pas de matchMedia → aucun branchement (inerte).
+  const mqT7b = (typeof window !== 'undefined' && typeof window.matchMedia === 'function')
+    ? window.matchMedia('(min-width: 561px)') : null;
+  if (mqT7b) {
+    function syncVolsPane() {
+      if (mqT7b.matches) panels.registerPane('vols', planningPanel.box);
+      else {
+        panels.unregisterPane('vols');
+        document.body.appendChild(planningPanel.box); // le bandeau redevient sa bande du haut
+      }
+    }
+    syncVolsPane();
+    mqT7b.addEventListener('change', syncVolsPane); // resize traversant le seuil 560px
+  }
+
   // T51 (t_cccfbc97) : les 3 racines de panneaux de JEU entrent dans la
   // synchronisation menu/jeu (barre de construction / panneaux de consultation /
   // planning) — masquées au menu, réaffichées au retour en jeu.
