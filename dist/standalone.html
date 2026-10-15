@@ -394,14 +394,23 @@
     }
   /* T7b (t_d1005365) — OGL (onglets) : le contenu des menus est piloté par
      BOUTONS, un panneau à la fois (colonne desktop non scrollable, bandes
-     mobiles exclusives conservées). ZÉRO MODIF THÈME : tokens existants. */
+     mobiles exclusives conservées). ZÉRO MODIF THÈME : tokens existants.
+     T7c (t_605b9779) — les LIBELLÉS deviennent des ICÔNES vectorielles
+     (canvas 2D, icons.mjs — zéro asset image) : 5 onglets par rangée
+     (100 % − 4 gaps / 5) → 2 rangées équilibrées (desktop 5+5, mobile 5+4
+     puisque l'onglet Vols y est masqué). Cible ≥44 px conservée (T7) ;
+     le NOM du menu reste en TOOLTIP (title) + aria-label ; l'onglet actif
+     garde le fond accent (T7b) — l'icône est repointée sombre (THEME.bg). */
   .tabs { display: flex; flex-wrap: wrap; gap: 4px; flex: none; }
   .tabs .tab {
-    min-height: 44px; min-width: 44px; flex: 1 1 auto; padding: 6px 8px;
+    min-height: 44px; min-width: 44px; box-sizing: border-box;
+    flex: 0 0 calc((100% - 16px) / 5);
+    display: flex; align-items: center; justify-content: center; padding: 0;
     background: var(--at-surface); color: var(--at-text);
     border: 1px solid var(--at-border); border-radius: 3px;
-    font: 12px 'Courier New', monospace; cursor: pointer; white-space: nowrap;
+    cursor: pointer;
   }
+  .tabs .tab .icon { width: 24px; height: 24px; flex: none; }
   .tabs .tab[aria-pressed="true"] {
     background: var(--at-accent); color: #050807; border-color: var(--at-accent);
   }

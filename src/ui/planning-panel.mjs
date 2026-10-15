@@ -85,6 +85,9 @@ export function makePlanningPanel({ state, toast, onAutoChange }) {
   if (mqMobile) {
     if (mqMobile.matches) setFold(false); // mobile : replié par défaut (map dégagée)
     mqMobile.addEventListener('change', (e) => { if (!e.matches) setFold(true); });
+    // T7c : quand le viewport franchit le breakpoint, la barre de filtres
+    // bascule libellé court ↔ complet (addFilterButtons relit matchMedia).
+    mqMobile.addEventListener('change', () => addFilterButtons());
   }
   // Le fold est PREMIER enfant (bandeau au-dessus du contenu) — inséré dans
   // l'ordre d'append (le stub DOM des tests n'a pas prepend).
@@ -184,8 +187,17 @@ export function makePlanningPanel({ state, toast, onAutoChange }) {
   }
   function addFilterButtons() {
     filterBar.replaceChildren();
+    // T7c (t_605b9779) : les sous-onglets de COMPAGNIE conservent le TEXTE
+    // (noms de marques, pas des catégories — pas d'icônes). Sur mobile la
+    // bande est étroite → les noms à plusieurs mots surchargent : on les
+    // raccourcit au PREMIER MOT (« Solaire Air » → « Solaire »,
+    // « Boréal Régions » → « Boréal » ; « PacificCargo » = 1 mot, intact) ;
+    // desktop : noms complets. Le filtre (l'ID) ne change JAMAIS.
+    const short = (typeof window !== 'undefined' && typeof window.matchMedia === 'function')
+      ? window.matchMedia('(max-width: 560px)').matches : false;
+    const shortName = (n) => (short ? n.split(' ')[0] : n);
     const labels = [{ id: 'tous', name: 'tous' }];
-    for (const a of AIRLINES) labels.push({ id: `comp:${a.id}`, name: a.name });
+    for (const a of AIRLINES) labels.push({ id: `comp:${a.id}`, name: shortName(a.name) });
     for (const k of Object.keys(AIRCRAFT)) labels.push({ id: `taille:${k}`, name: k });
     for (const f of labels) {
       const b = document.createElement('button');

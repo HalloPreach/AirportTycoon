@@ -54,6 +54,8 @@ import { queueTotals, satisfactionCauses } from '../sim/passengers.mjs';
 // (buyUpgrade : la sim règle le coût/l'effet, le panneau émet l'intention —
 // UI fine, même pattern que setAssignment).
 import { upgradeView, buyUpgrade } from '../infra/upgrades.mjs';
+import { iconCanvas, drawIcon, ICON_KINDS } from './icons.mjs'; // T7c : icônes vectorielles des onglets (canvas 2D, pattern T4)
+import { THEME } from './theme.mjs'; // T7c : couleurs des icônes (tokens Radar Rétro — lecture seule)
 
 const PHASES_FR = Object.freeze({
   approach: 'approche', holding: 'attente', landing: 'atterrissage', exit: 'sortie de piste',
@@ -206,18 +208,29 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
   // Onglet par défaut = le plus utile (Vols). Panneaux : Vols (le bandeau
   // planning, planning-panel.mjs — main.mjs le REGISTRE ici en pane 'vols'
   // sur desktop) + les 9 sections ci-dessous.
+  // T7c (t_605b9779) : le LIBELLÉ de chaque onglet devient une ICÔNE
+  // vectorielle (icons.mjs, canvas 2D — zéro asset image, pattern T4). Le
+  // `label` reste : tooltip (title, lisible au survol sur desktop) +
+  // aria-label (accessibilité — le texte ne figure plus dans le libellé) +
+  // batterie CDP. « plane » existe déjà (T4, bouton du menu) — Vols le
+  // réutilise ; les 9 autres sont les glyphes T7c d'icons.mjs.
   const TABS = [
-    { id: 'vols', label: 'Vols' },
-    { id: 'inspect', label: 'Inspection' },
-    { id: 'fin', label: 'Bilan' },
-    { id: 'stats', label: 'Stats' },
-    { id: 'goals', label: 'Objectifs' },
-    { id: 'season', label: 'Saison' },
-    { id: 'unlocks', label: 'Déblocs' },
-    { id: 'contracts', label: 'Contrats' },
-    { id: 'alerts', label: 'Alertes' },
-    { id: 'net', label: 'Réseau' },
+    { id: 'vols', label: 'Vols', icon: 'plane' },
+    { id: 'inspect', label: 'Inspection', icon: 'inspect' },
+    { id: 'fin', label: 'Bilan', icon: 'fin' },
+    { id: 'stats', label: 'Stats', icon: 'stats' },
+    { id: 'goals', label: 'Objectifs', icon: 'goals' },
+    { id: 'season', label: 'Saison', icon: 'season' },
+    { id: 'unlocks', label: 'Déblocs', icon: 'unlocks' },
+    { id: 'contracts', label: 'Contrats', icon: 'contracts' },
+    { id: 'alerts', label: 'Alertes', icon: 'alerts' },
+    { id: 'net', label: 'Réseau', icon: 'net' },
   ];
+  for (const t of TABS) {
+    // Garde dev : un kind manquant dans ICON_KINDS dessinerait un carré
+    // neutre (zéro crash) — on le signale au lieu de le laisser muet.
+    if (!ICON_KINDS.includes(t.icon)) console.warn(`T7c : icône inconnue « ${t.icon} » (onglet ${t.id})`);
+  }
   const tabsBar = document.createElement('div');
   tabsBar.className = 'tabs';
   const tabButtons = [];
@@ -225,12 +238,17 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
     const b = document.createElement('button');
     b.className = 'tab';
     b.type = 'button';
-    b.textContent = t.label;
     b.setAttribute('data-tab', t.id);
     b.setAttribute('aria-pressed', 'false');
+    // T7c : le NOM du menu reste en TOOLTIP (title — desktop) + aria-label
+    // (accessibilité) ; le libellé lui-même est l'icône vectorielle (24 px).
+    b.title = t.label;
+    b.setAttribute('aria-label', t.label);
+    const ic = iconCanvas(t.icon, 24, { color: THEME.text, accent: THEME.accent });
+    if (ic) b.appendChild(ic);
     b.addEventListener('click', () => setTab(t.id));
     tabsBar.appendChild(b);
-    tabButtons.push({ id: t.id, el: b });
+    tabButtons.push({ id: t.id, el: b, icon: ic, iconKind: t.icon });
   }
   // Zone du panneau actif : SEUL défilement possible (panneau qui déborde,
   // cas rare) — la colonne / la bande d'accueil ne scrolle plus.
@@ -257,6 +275,17 @@ export function makePanels({ state, camera, viewSize, buildTool }) {
         const on = t.id === activeTab;
         tb.el.setAttribute('aria-pressed', String(on));
         tb.el.className = 'tab' + (on ? ' tab--on' : '');
+        // T7c : l'ICÔNE suit l'état actif — onglet actif = fond phosphore
+        // (accent) → glyphe sombré (THEME.bg, = le texte du bouton actif) ;
+        // inactif = texte phosphore + accent cyan (thème intact). Le stub
+        // DOM des tests n'a pas de canvas context → pas de repaint (0 crash).
+        const g = tb.icon && typeof tb.icon.getContext === 'function'
+          ? tb.icon.getContext('2d') : null;
+        if (g) {
+          g.clearRect(0, 0, 24, 24);
+          drawIcon(g, tb.iconKind, 24, on ? { color: THEME.bg, accent: THEME.bg }
+            : { color: THEME.text, accent: THEME.accent });
+        }
       }
     }
   }

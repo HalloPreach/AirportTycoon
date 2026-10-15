@@ -1,5 +1,5 @@
 /* Airport Tycoon — VERSION AUTONOME (T4, t_eb78478e) */
-/* Généré le 2026-10-15T06:24:04.479Z par tools/build-standalone.mjs — NE PAS ÉDITER À LA MAIN. */
+/* Généré le 2026-10-15T07:45:36.876Z par tools/build-standalone.mjs — NE PAS ÉDITER À LA MAIN. */
 /* 53 modules ESM inlinés (ordre topologique, cycles traités par substitution live), 0 dépendance, 0 appel réseau : jouable hors-ligne (file:// ou serveur statique). */
 (() => {
 'use strict';
@@ -2504,9 +2504,12 @@ __exports.runwayExitNode = runwayExitNode;
 // des 11 types de construction + avion + info, dessinés sur N'IMPORTE QUEL
 // contexte canvas 2D (boutons de la barre de construction, boutons-scénarios
 // du menu). Module PUR, testable Node (un faux ctx enregistre les appels —
-// tests/t4-icons.test.mjs). `iconCanvas()` est le SEUL point de contact DOM
+// tests/t4-theme.test.mjs). `iconCanvas()` est le SEUL point de contact DOM
 // (fabrique un <canvas> ; jamais appelé sous Node — la factory est
 // navigateur-only, comme le reste de la UI).
+// T7c (t_605b9779) : + 9 glyphes d'onglets de menu (inspect, fin, stats,
+// goals, season, unlocks, contracts, alerts, net — « plane » existe déjà et
+// sert à l'onglet Vols) → 23 glyphes au total.
 //
 // Règle de dessin : chaque glyphe occupe la boîte [0,size]² avec ~12 % de
 // marge ; 2 couleurs max (couleur principale + accent) — lisibilité au petit
@@ -2518,6 +2521,10 @@ const ICON_KINDS = Object.freeze([
   'runway', 'taxiway', 'terminal', 'gate', 'fueling', 'security',
   'catering', 'boarding', 'hotel', 'parking', 'cafe',
   'plane', 'info', 'gear',
+  // T7c (t_605b9779) : les 9 glyphes d'onglets de menu (« plane » est
+  // réutilisé par l'onglet Vols — pas dupliqué ici).
+  'inspect', 'fin', 'stats', 'goals', 'season', 'unlocks', 'contracts',
+  'alerts', 'net',
 ]);
 
 const PAD = 0.12; // marge relative (partie de la boîte laissée vide)
@@ -2719,6 +2726,160 @@ function drawIcon(ctx, kind, size, { color = THEME.text, accent = THEME.accent }
         }
         break;
       }
+      // T7c (t_605b9779) : les 9 glyphes des ONGLETS DE MENU (2 couleurs max,
+      // même style de trait — lisibles à 24 px ; l'onglet Vols réutilise 'plane').
+      case 'inspect': { // loupe : cercle + poignée (l'inspection)
+        const c = size * 0.40, r = size * 0.26;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size * 0.12;
+        ctx.beginPath();
+        ctx.arc(c, c, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = size * 0.14;
+        ctx.beginPath();
+        ctx.moveTo(c + r * 0.72, c + r * 0.72);
+        ctx.lineTo(size * 0.82, size * 0.82);
+        ctx.stroke();
+        break;
+      }
+      case 'fin': { // pièce « $ » : le bilan financier
+        const cx = size * 0.5, cy = size * 0.5, r = size * 0.34;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size * 0.1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = size * 0.1;
+        ctx.beginPath();
+        ctx.moveTo(cx, size * 0.34);
+        ctx.lineTo(cx, size * 0.66);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(size * 0.40, size * 0.42);
+        ctx.lineTo(size * 0.60, size * 0.42);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(size * 0.40, size * 0.58);
+        ctx.lineTo(size * 0.60, size * 0.58);
+        ctx.stroke();
+        break;
+      }
+      case 'stats': { // histogramme : 3 barres croissantes + ligne de base
+        const base = size * 0.78, bw = size * 0.16;
+        for (const [x, top] of [[size * 0.22, size * 0.48], [size * 0.42, size * 0.32], [size * 0.62, size * 0.18]]) {
+          ctx.fillStyle = color;
+          ctx.fillRect(x, top, bw, base - top);
+        }
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = size * 0.08;
+        ctx.beginPath();
+        ctx.moveTo(size * 0.16, base);
+        ctx.lineTo(size * 0.84, base);
+        ctx.stroke();
+        break;
+      }
+      case 'goals': { // cible : 2 anneaux concentriques + point central
+        const cx = size * 0.5, cy = size * 0.5;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size * 0.1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, size * 0.32, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.lineWidth = size * 0.09;
+        ctx.beginPath();
+        ctx.arc(cx, cy, size * 0.18, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        ctx.arc(cx, cy, size * 0.06, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+      case 'season': { // soleil : disque central + 8 rayons (les saisons)
+        const cx = size * 0.5, cy = size * 0.5;
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        ctx.arc(cx, cy, size * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size * 0.1;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const a = (Math.PI / 4) * i;
+          ctx.moveTo(cx + Math.cos(a) * size * 0.26, cy + Math.sin(a) * size * 0.26);
+          ctx.lineTo(cx + Math.cos(a) * size * 0.40, cy + Math.sin(a) * size * 0.40);
+        }
+        ctx.stroke();
+        break;
+      }
+      case 'unlocks': { // cadenas : anse (demi-arc) + corps + trousseau
+        const cx = size * 0.5;
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = size * 0.12;
+        ctx.beginPath();
+        ctx.arc(cx, size * 0.42, size * 0.18, Math.PI, 0);
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.fillRect(size * 0.30, size * 0.42, size * 0.40, size * 0.34);
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        ctx.arc(cx, size * 0.56, size * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+      case 'contracts': { // document : page + 3 lignes (les contrats)
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size * 0.09;
+        ctx.strokeRect(size * 0.28, size * 0.16, size * 0.44, size * 0.66);
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = size * 0.08;
+        for (const [y, w] of [[size * 0.36, size * 0.28], [size * 0.52, size * 0.28], [size * 0.68, size * 0.16]]) {
+          ctx.beginPath();
+          ctx.moveTo(size * 0.38, y);
+          ctx.lineTo(size * 0.38 + w, y);
+          ctx.stroke();
+        }
+        break;
+      }
+      case 'alerts': { // cloche : dôme + jupe trapézoïdale + languette
+        const cx = size * 0.5, cy = size * 0.46, r = size * 0.26;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, Math.PI, 0);
+        ctx.lineTo(cx + r * 0.75, cy + r * 0.62);
+        ctx.lineTo(cx - r * 0.75, cy + r * 0.62);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        ctx.arc(cx, cy + r * 0.62 + size * 0.07, size * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+      case 'net': { // globe : cercle + méridien (ellipse) + 2 parallèles
+        const cx = size * 0.5, cy = size * 0.5, r = size * 0.34;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size * 0.09;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.lineWidth = size * 0.07;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, r * 0.45, r, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = accent;
+        const dy = r * 0.55, hw = Math.sqrt(r * r - dy * dy);
+        for (const s of [-1, 1]) {
+          ctx.beginPath();
+          ctx.moveTo(cx - hw, cy + s * dy);
+          ctx.lineTo(cx + hw, cy + s * dy);
+          ctx.stroke();
+        }
+        break;
+      }
       default: { // inconnu : carré neutre (jamais d'exception)
         ctx.fillStyle = color;
         ctx.fillRect(0, 0, box, box);
@@ -2761,13 +2922,17 @@ function planeBody(ctx, cx, cy, w, color) {
 // Fabrique un <canvas> contenant le glyphe (boutons de la barre de
 // construction, boutons-scénarios du menu). Navigateur-only : sous Node la
 // factory de UI n'est jamais exécutée (guard explicite, zéro crash).
+// T7c (t_605b9779) : avec un STUB DOM dont le canvas n'a pas de context
+// (tests DOM sans canvas réel) on retourne le canvas sans le peindre —
+// jamais d'exception (contrat T4 : UI fine, 0 crash).
 function iconCanvas(kind, size, { color, accent } = {}) {
   if (typeof document === 'undefined') return null;
   const c = document.createElement('canvas');
   c.width = size; c.height = size;
   c.className = 'icon';
   c.setAttribute('aria-hidden', 'true');
-  drawIcon(c.getContext('2d'), kind, size, { color, accent });
+  const g = typeof c.getContext === 'function' ? c.getContext('2d') : null;
+  if (g) drawIcon(g, kind, size, { color, accent });
   return c;
 }
 
@@ -9672,6 +9837,8 @@ const { queueTotals, satisfactionCauses } = __ns('m_src_sim_passengers');
 // (buyUpgrade : la sim règle le coût/l'effet, le panneau émet l'intention —
 // UI fine, même pattern que setAssignment).
 const { upgradeView, buyUpgrade } = __ns('m_src_infra_upgrades');
+const { iconCanvas, drawIcon, ICON_KINDS } = __ns('m_src_ui_icons');
+const { THEME } = __ns('m_src_ui_theme');
 
 const PHASES_FR = Object.freeze({
   approach: 'approche', holding: 'attente', landing: 'atterrissage', exit: 'sortie de piste',
@@ -9824,18 +9991,29 @@ function makePanels({ state, camera, viewSize, buildTool }) {
   // Onglet par défaut = le plus utile (Vols). Panneaux : Vols (le bandeau
   // planning, planning-panel.mjs — main.mjs le REGISTRE ici en pane 'vols'
   // sur desktop) + les 9 sections ci-dessous.
+  // T7c (t_605b9779) : le LIBELLÉ de chaque onglet devient une ICÔNE
+  // vectorielle (icons.mjs, canvas 2D — zéro asset image, pattern T4). Le
+  // `label` reste : tooltip (title, lisible au survol sur desktop) +
+  // aria-label (accessibilité — le texte ne figure plus dans le libellé) +
+  // batterie CDP. « plane » existe déjà (T4, bouton du menu) — Vols le
+  // réutilise ; les 9 autres sont les glyphes T7c d'icons.mjs.
   const TABS = [
-    { id: 'vols', label: 'Vols' },
-    { id: 'inspect', label: 'Inspection' },
-    { id: 'fin', label: 'Bilan' },
-    { id: 'stats', label: 'Stats' },
-    { id: 'goals', label: 'Objectifs' },
-    { id: 'season', label: 'Saison' },
-    { id: 'unlocks', label: 'Déblocs' },
-    { id: 'contracts', label: 'Contrats' },
-    { id: 'alerts', label: 'Alertes' },
-    { id: 'net', label: 'Réseau' },
+    { id: 'vols', label: 'Vols', icon: 'plane' },
+    { id: 'inspect', label: 'Inspection', icon: 'inspect' },
+    { id: 'fin', label: 'Bilan', icon: 'fin' },
+    { id: 'stats', label: 'Stats', icon: 'stats' },
+    { id: 'goals', label: 'Objectifs', icon: 'goals' },
+    { id: 'season', label: 'Saison', icon: 'season' },
+    { id: 'unlocks', label: 'Déblocs', icon: 'unlocks' },
+    { id: 'contracts', label: 'Contrats', icon: 'contracts' },
+    { id: 'alerts', label: 'Alertes', icon: 'alerts' },
+    { id: 'net', label: 'Réseau', icon: 'net' },
   ];
+  for (const t of TABS) {
+    // Garde dev : un kind manquant dans ICON_KINDS dessinerait un carré
+    // neutre (zéro crash) — on le signale au lieu de le laisser muet.
+    if (!ICON_KINDS.includes(t.icon)) console.warn(`T7c : icône inconnue « ${t.icon} » (onglet ${t.id})`);
+  }
   const tabsBar = document.createElement('div');
   tabsBar.className = 'tabs';
   const tabButtons = [];
@@ -9843,12 +10021,17 @@ function makePanels({ state, camera, viewSize, buildTool }) {
     const b = document.createElement('button');
     b.className = 'tab';
     b.type = 'button';
-    b.textContent = t.label;
     b.setAttribute('data-tab', t.id);
     b.setAttribute('aria-pressed', 'false');
+    // T7c : le NOM du menu reste en TOOLTIP (title — desktop) + aria-label
+    // (accessibilité) ; le libellé lui-même est l'icône vectorielle (24 px).
+    b.title = t.label;
+    b.setAttribute('aria-label', t.label);
+    const ic = iconCanvas(t.icon, 24, { color: THEME.text, accent: THEME.accent });
+    if (ic) b.appendChild(ic);
     b.addEventListener('click', () => setTab(t.id));
     tabsBar.appendChild(b);
-    tabButtons.push({ id: t.id, el: b });
+    tabButtons.push({ id: t.id, el: b, icon: ic, iconKind: t.icon });
   }
   // Zone du panneau actif : SEUL défilement possible (panneau qui déborde,
   // cas rare) — la colonne / la bande d'accueil ne scrolle plus.
@@ -9875,6 +10058,17 @@ function makePanels({ state, camera, viewSize, buildTool }) {
         const on = t.id === activeTab;
         tb.el.setAttribute('aria-pressed', String(on));
         tb.el.className = 'tab' + (on ? ' tab--on' : '');
+        // T7c : l'ICÔNE suit l'état actif — onglet actif = fond phosphore
+        // (accent) → glyphe sombré (THEME.bg, = le texte du bouton actif) ;
+        // inactif = texte phosphore + accent cyan (thème intact). Le stub
+        // DOM des tests n'a pas de canvas context → pas de repaint (0 crash).
+        const g = tb.icon && typeof tb.icon.getContext === 'function'
+          ? tb.icon.getContext('2d') : null;
+        if (g) {
+          g.clearRect(0, 0, 24, 24);
+          drawIcon(g, tb.iconKind, 24, on ? { color: THEME.bg, accent: THEME.bg }
+            : { color: THEME.text, accent: THEME.accent });
+        }
       }
     }
   }
@@ -11292,6 +11486,9 @@ function makePlanningPanel({ state, toast, onAutoChange }) {
   if (mqMobile) {
     if (mqMobile.matches) setFold(false); // mobile : replié par défaut (map dégagée)
     mqMobile.addEventListener('change', (e) => { if (!e.matches) setFold(true); });
+    // T7c : quand le viewport franchit le breakpoint, la barre de filtres
+    // bascule libellé court ↔ complet (addFilterButtons relit matchMedia).
+    mqMobile.addEventListener('change', () => addFilterButtons());
   }
   // Le fold est PREMIER enfant (bandeau au-dessus du contenu) — inséré dans
   // l'ordre d'append (le stub DOM des tests n'a pas prepend).
@@ -11391,8 +11588,17 @@ function makePlanningPanel({ state, toast, onAutoChange }) {
   }
   function addFilterButtons() {
     filterBar.replaceChildren();
+    // T7c (t_605b9779) : les sous-onglets de COMPAGNIE conservent le TEXTE
+    // (noms de marques, pas des catégories — pas d'icônes). Sur mobile la
+    // bande est étroite → les noms à plusieurs mots surchargent : on les
+    // raccourcit au PREMIER MOT (« Solaire Air » → « Solaire »,
+    // « Boréal Régions » → « Boréal » ; « PacificCargo » = 1 mot, intact) ;
+    // desktop : noms complets. Le filtre (l'ID) ne change JAMAIS.
+    const short = (typeof window !== 'undefined' && typeof window.matchMedia === 'function')
+      ? window.matchMedia('(max-width: 560px)').matches : false;
+    const shortName = (n) => (short ? n.split(' ')[0] : n);
     const labels = [{ id: 'tous', name: 'tous' }];
-    for (const a of AIRLINES) labels.push({ id: `comp:${a.id}`, name: a.name });
+    for (const a of AIRLINES) labels.push({ id: `comp:${a.id}`, name: shortName(a.name) });
     for (const k of Object.keys(AIRCRAFT)) labels.push({ id: `taille:${k}`, name: k });
     for (const f of labels) {
       const b = document.createElement('button');

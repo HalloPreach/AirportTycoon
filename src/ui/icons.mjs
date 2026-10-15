@@ -2,9 +2,12 @@
 // des 11 types de construction + avion + info, dessinés sur N'IMPORTE QUEL
 // contexte canvas 2D (boutons de la barre de construction, boutons-scénarios
 // du menu). Module PUR, testable Node (un faux ctx enregistre les appels —
-// tests/t4-icons.test.mjs). `iconCanvas()` est le SEUL point de contact DOM
+// tests/t4-theme.test.mjs). `iconCanvas()` est le SEUL point de contact DOM
 // (fabrique un <canvas> ; jamais appelé sous Node — la factory est
 // navigateur-only, comme le reste de la UI).
+// T7c (t_605b9779) : + 9 glyphes d'onglets de menu (inspect, fin, stats,
+// goals, season, unlocks, contracts, alerts, net — « plane » existe déjà et
+// sert à l'onglet Vols) → 23 glyphes au total.
 //
 // Règle de dessin : chaque glyphe occupe la boîte [0,size]² avec ~12 % de
 // marge ; 2 couleurs max (couleur principale + accent) — lisibilité au petit
@@ -16,6 +19,10 @@ export const ICON_KINDS = Object.freeze([
   'runway', 'taxiway', 'terminal', 'gate', 'fueling', 'security',
   'catering', 'boarding', 'hotel', 'parking', 'cafe',
   'plane', 'info', 'gear',
+  // T7c (t_605b9779) : les 9 glyphes d'onglets de menu (« plane » est
+  // réutilisé par l'onglet Vols — pas dupliqué ici).
+  'inspect', 'fin', 'stats', 'goals', 'season', 'unlocks', 'contracts',
+  'alerts', 'net',
 ]);
 
 const PAD = 0.12; // marge relative (partie de la boîte laissée vide)
@@ -217,6 +224,160 @@ export function drawIcon(ctx, kind, size, { color = THEME.text, accent = THEME.a
         }
         break;
       }
+      // T7c (t_605b9779) : les 9 glyphes des ONGLETS DE MENU (2 couleurs max,
+      // même style de trait — lisibles à 24 px ; l'onglet Vols réutilise 'plane').
+      case 'inspect': { // loupe : cercle + poignée (l'inspection)
+        const c = size * 0.40, r = size * 0.26;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size * 0.12;
+        ctx.beginPath();
+        ctx.arc(c, c, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = size * 0.14;
+        ctx.beginPath();
+        ctx.moveTo(c + r * 0.72, c + r * 0.72);
+        ctx.lineTo(size * 0.82, size * 0.82);
+        ctx.stroke();
+        break;
+      }
+      case 'fin': { // pièce « $ » : le bilan financier
+        const cx = size * 0.5, cy = size * 0.5, r = size * 0.34;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size * 0.1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = size * 0.1;
+        ctx.beginPath();
+        ctx.moveTo(cx, size * 0.34);
+        ctx.lineTo(cx, size * 0.66);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(size * 0.40, size * 0.42);
+        ctx.lineTo(size * 0.60, size * 0.42);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(size * 0.40, size * 0.58);
+        ctx.lineTo(size * 0.60, size * 0.58);
+        ctx.stroke();
+        break;
+      }
+      case 'stats': { // histogramme : 3 barres croissantes + ligne de base
+        const base = size * 0.78, bw = size * 0.16;
+        for (const [x, top] of [[size * 0.22, size * 0.48], [size * 0.42, size * 0.32], [size * 0.62, size * 0.18]]) {
+          ctx.fillStyle = color;
+          ctx.fillRect(x, top, bw, base - top);
+        }
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = size * 0.08;
+        ctx.beginPath();
+        ctx.moveTo(size * 0.16, base);
+        ctx.lineTo(size * 0.84, base);
+        ctx.stroke();
+        break;
+      }
+      case 'goals': { // cible : 2 anneaux concentriques + point central
+        const cx = size * 0.5, cy = size * 0.5;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size * 0.1;
+        ctx.beginPath();
+        ctx.arc(cx, cy, size * 0.32, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.lineWidth = size * 0.09;
+        ctx.beginPath();
+        ctx.arc(cx, cy, size * 0.18, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        ctx.arc(cx, cy, size * 0.06, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+      case 'season': { // soleil : disque central + 8 rayons (les saisons)
+        const cx = size * 0.5, cy = size * 0.5;
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        ctx.arc(cx, cy, size * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size * 0.1;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const a = (Math.PI / 4) * i;
+          ctx.moveTo(cx + Math.cos(a) * size * 0.26, cy + Math.sin(a) * size * 0.26);
+          ctx.lineTo(cx + Math.cos(a) * size * 0.40, cy + Math.sin(a) * size * 0.40);
+        }
+        ctx.stroke();
+        break;
+      }
+      case 'unlocks': { // cadenas : anse (demi-arc) + corps + trousseau
+        const cx = size * 0.5;
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = size * 0.12;
+        ctx.beginPath();
+        ctx.arc(cx, size * 0.42, size * 0.18, Math.PI, 0);
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.fillRect(size * 0.30, size * 0.42, size * 0.40, size * 0.34);
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        ctx.arc(cx, size * 0.56, size * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+      case 'contracts': { // document : page + 3 lignes (les contrats)
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size * 0.09;
+        ctx.strokeRect(size * 0.28, size * 0.16, size * 0.44, size * 0.66);
+        ctx.strokeStyle = accent;
+        ctx.lineWidth = size * 0.08;
+        for (const [y, w] of [[size * 0.36, size * 0.28], [size * 0.52, size * 0.28], [size * 0.68, size * 0.16]]) {
+          ctx.beginPath();
+          ctx.moveTo(size * 0.38, y);
+          ctx.lineTo(size * 0.38 + w, y);
+          ctx.stroke();
+        }
+        break;
+      }
+      case 'alerts': { // cloche : dôme + jupe trapézoïdale + languette
+        const cx = size * 0.5, cy = size * 0.46, r = size * 0.26;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, Math.PI, 0);
+        ctx.lineTo(cx + r * 0.75, cy + r * 0.62);
+        ctx.lineTo(cx - r * 0.75, cy + r * 0.62);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        ctx.arc(cx, cy + r * 0.62 + size * 0.07, size * 0.05, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+      }
+      case 'net': { // globe : cercle + méridien (ellipse) + 2 parallèles
+        const cx = size * 0.5, cy = size * 0.5, r = size * 0.34;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size * 0.09;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.lineWidth = size * 0.07;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, r * 0.45, r, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = accent;
+        const dy = r * 0.55, hw = Math.sqrt(r * r - dy * dy);
+        for (const s of [-1, 1]) {
+          ctx.beginPath();
+          ctx.moveTo(cx - hw, cy + s * dy);
+          ctx.lineTo(cx + hw, cy + s * dy);
+          ctx.stroke();
+        }
+        break;
+      }
       default: { // inconnu : carré neutre (jamais d'exception)
         ctx.fillStyle = color;
         ctx.fillRect(0, 0, box, box);
@@ -259,12 +420,16 @@ function planeBody(ctx, cx, cy, w, color) {
 // Fabrique un <canvas> contenant le glyphe (boutons de la barre de
 // construction, boutons-scénarios du menu). Navigateur-only : sous Node la
 // factory de UI n'est jamais exécutée (guard explicite, zéro crash).
+// T7c (t_605b9779) : avec un STUB DOM dont le canvas n'a pas de context
+// (tests DOM sans canvas réel) on retourne le canvas sans le peindre —
+// jamais d'exception (contrat T4 : UI fine, 0 crash).
 export function iconCanvas(kind, size, { color, accent } = {}) {
   if (typeof document === 'undefined') return null;
   const c = document.createElement('canvas');
   c.width = size; c.height = size;
   c.className = 'icon';
   c.setAttribute('aria-hidden', 'true');
-  drawIcon(c.getContext('2d'), kind, size, { color, accent });
+  const g = typeof c.getContext === 'function' ? c.getContext('2d') : null;
+  if (g) drawIcon(g, kind, size, { color, accent });
   return c;
 }

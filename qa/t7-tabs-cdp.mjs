@@ -1,16 +1,22 @@
 #!/usr/bin/env node
-// T7b (t_d1005365) — BATTERIE CDP « MENUS PAR ONGLETS, ZÉRO SCROLL » (Edge
-// headless + CDP, 0 dépendance, comme qa/t7-no-bleed-cdp.mjs) :
-// - 1920×1080 (desktop) : la barre d'onglets est PRÉSENTE (10 boutons ≥44×44),
-//   EXACTEMENT 1 PANNEAU VISIBLE À LA FOIS (10/10 onglets parcourus via
-//   window.__game.panels.setTab), la colonne .panels N'EST PLUS SCROLLABLE
-//   (scrollHeight ≤ clientHeight + 1), 0 chevauchement, 0 bleed.
+// T7b (t_d1005365) + T7c (t_605b9779) — BATTERIE CDP « MENUS PAR ONGLETS,
+// ZÉRO SCROLL » (Edge headless + CDP, 0 dépendance, comme
+// qa/t7-no-bleed-cdp.mjs) :
+// - 1920×1080 (desktop) : la barre d'onglets est PRÉSENTE (10 boutons ≥44×44,
+//   5 par rangée — le libellé est une ICÔNE vectorielle), EXACTEMENT 1 PANNEAU
+//   VISIBLE À LA FOIS (10/10 onglets parcourus via window.__game.panels.setTab),
+//   la colonne .panels N'EST PLUS SCROLLABLE (scrollHeight ≤ clientHeight + 1),
+//   0 chevauchement, 0 bleed.
 // - 390×844 (mobile) : la bande CONSULTATION porte la barre (9 boutons —
 //   « Vols » masqué, sa bande est celle du haut), cibles ≥44 px, EXACTEMENT
 //   1 PANNEAU VISIBLE (9/9 onglets + la bande PLANNING), l'exclusivité T7
 //   est conservée (jamais les 2 bandes dépliées), bande non scrollable à
 //   l'état par défaut (le débordement d'un panneau défile DANS la zone),
 //   0 chevauchement, 0 bleed.
+// T7c : chaque onglet porte TOOLTIP (title = NOM DU MENU) + icône vectorielle
+// (canvas ≥16 px, le libellé texte est retiré) ; les sous-onglets COMPAGNIE
+// du planning gardent le TEXTE : mobile = PREMIER MOT (raccourci),
+// desktop = nom complet.
 // PNG dans evidence/t7-hud-tabs/ ; rapport qa/t7-tabs-cdp-report.json.
 // Usage : node qa/t7-tabs-cdp.mjs  → exit 0 si tout passe, 1 sinon.
 'use strict';
@@ -51,8 +57,10 @@ class Cdp {
 async function httpJson(url) { const r = await fetch(url); return r.json(); }
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-// --- JS exécutées dans la page (sans C$ pour rester lues dans l'outil) -----
+// --- JS exécutées dans la page (sans C$ pour rester lues dans l'outil) ----
 // Barre d'onglets : boutons présents + cibles ≥44×44 + bouton actif (1 seul).
+// T7c : TOOLTIP (title = nom du menu) + icône vectorielle (canvas) — le
+// libellé texte est retiré (text = '' attendu).
 const JS_TABS = () => {
   const tabs = [...document.querySelectorAll('.tabs .tab')];
   const vis = tabs.filter((b) => b.offsetWidth > 0);
@@ -60,11 +68,23 @@ const JS_TABS = () => {
     total: tabs.length,
     visible: vis.map((b) => {
       const r = b.getBoundingClientRect();
+      const ic = b.querySelector('canvas.icon');
       return { id: b.getAttribute('data-tab'), w: Math.round(r.width), h: Math.round(r.height),
         ok: r.width >= 44 && r.height >= 44,
-        pressed: b.getAttribute('aria-pressed') === 'true' };
+        pressed: b.getAttribute('aria-pressed') === 'true',
+        title: b.getAttribute('title') || '',
+        ariaLabel: b.getAttribute('aria-label') || '',
+        text: (b.textContent || '').trim(),
+        icon: !!ic, iconW: ic ? ic.width : 0 };
     }),
   };
+};
+// T7c : les sous-onglets COMPAGNIE du planning (barre de filtres) — le texte
+// est conservé (mobile : premier mot raccourci ; desktop : nom complet).
+const JS_FILTERS = () => {
+  const c = document.querySelector('.planning-filters');
+  if (!c) return null;
+  return [...c.querySelectorAll('button')].map((b) => (b.textContent || '').trim());
 };
 // État d'onglet : EXACTEMENT 1 panneau visible dans la zone + le bon.
 const JS_TAB_STATE = () => {
@@ -269,6 +289,37 @@ async function runViewport(vp) {
   if (pressed === 1) ok('T2-single-active', 'exactement 1 bouton d\'onglet actif (aria-pressed)');
   else bad('T2-single-active', `boutons actifs = ${pressed} (attendu : 1)`, tabs.visible);
 
+  // --- T7c : TOOLTIP (title = NOM DU MENU) + icône vectorielle (canvas) -----
+  // Le libellé texte est RETIRÉ : la lisibilité du nom repose sur le
+  // tooltip (desktop, au survol) + aria-label (accessibilité).
+  const expectLabel = { vols: 'Vols', inspect: 'Inspection', fin: 'Bilan', stats: 'Stats', goals: 'Objectifs', season: 'Saison', unlocks: 'Déblocs', contracts: 'Contrats', alerts: 'Alertes', net: 'Réseau' };
+  const nTabs = vp.desktop ? 10 : 9;
+  const tooltipMissing = tabs.visible.filter((t) => !t.title || t.title !== expectLabel[t.id]);
+  const iconMissing = tabs.visible.filter((t) => !t.icon || t.iconW < 16);
+  const textLeft = tabs.visible.filter((t) => t.text !== '');
+  if (tooltipMissing.length === 0 && iconMissing.length === 0 && textLeft.length === 0)
+    ok('T7c-tooltip-icon', `${nTabs}/${nTabs} onglets : tooltip (title) = NOM DU MENU + icône canvas ≥16 px + libellé texte retiré`);
+  else bad('T7c-tooltip-icon', `tooltips manquants=[${tooltipMissing.map((t) => t.id).join(',')}] icônes manquantes=[${iconMissing.map((t) => t.id).join(',')}] texte résiduel=[${textLeft.map((t) => t.id + ':' + t.text).join(',')}]`);
+
+  // T7c : les sous-onglets COMPAGNIE du planning CONSERVENT le TEXTE
+  // (noms de marques) — mobile : PREMIER MOT (raccourci anti-surcharge),
+  // desktop : nom complet. Le filtre (id) ne change jamais.
+  const filters = await ev(`(${JS_FILTERS.toString()})()`);
+  if (vp.desktop) {
+    const need = ['tous', 'Solaire Air', 'Atlantique', 'PacificCargo', 'Boréal Régions', 'Horizon Express'];
+    const missing = need.filter((s) => !(filters && filters.includes(s)));
+    if (!missing.length) ok('T7c-filters', `filtres planning (desktop) : noms de marques complets conservés (${need.slice(1).join(', ')})`);
+    else bad('T7c-filters', `desktop : noms complets manquants : ${missing.join(', ')} (filtres = ${filters ? filters.join(', ') : 'absentes'})`);
+  } else {
+    const need = ['tous', 'Solaire', 'Atlantique', 'PacificCargo', 'Boréal', 'Horizon'];
+    const longNames = ['Solaire Air', 'Boréal Régions', 'Horizon Express'];
+    const missing = need.filter((s) => !(filters && filters.includes(s)));
+    const longs = (filters || []).filter((s) => longNames.includes(s));
+    if (!missing.length && !longs.length)
+      ok('T7c-filters', `filtres planning (mobile) : TEXTE conservé, raccourci au 1er mot (Solaire, Boréal, Horizon — « PacificCargo » 1 mot intact)`);
+    else bad('T7c-filters', `mobile : manquants=[${missing.join(',')}] noms complets résiduels=[${longs.join(',')}] (filtres = ${filters ? filters.join(', ') : 'absentes'})`);
+  }
+
   // --- T3 : EXACTEMENT 1 panneau visible à la fois (tous les onglets) ------
   const tabIds = vp.desktop
     ? ['vols', 'inspect', 'fin', 'stats', 'goals', 'season', 'unlocks', 'contracts', 'alerts', 'net']
@@ -378,7 +429,7 @@ async function runViewport(vp) {
     { name: 'desktop 1920×1080', width: 1920, height: 1080, desktop: true, cdpPort: 9222 },
     { name: 'mobile 390×844', width: 390, height: 844, mobile: true, cdpPort: 9223 },
   ]) {
-    console.log(`\n=== T7b (onglets, zéro scroll) — ${vp.name} ===`);
+    console.log(`\n=== T7b+T7c (onglets-icônes, zéro scroll) — ${vp.name} ===`);
     const { out, proc, cdp } = await runViewport(vp);
     for (const c of out.checks) console.log(`  ${c.ok ? '✓' : '✗'} ${c.id} : ${c.msg}`);
     results.push(out);
@@ -387,10 +438,10 @@ async function runViewport(vp) {
     await sleep(1200);
     if (out.fail.length) code = 1;
   }
-  const report = { task: 't_d3df6f0d', battery: 't7-tabs-cdp', ts: new Date().toISOString(), results };
+  const report = { task: 't_605b9779', battery: 't7-tabs-cdp', ts: new Date().toISOString(), results };
   fs.writeFileSync(path.join(ROOT, 'qa', 't7-tabs-cdp-report.json'), JSON.stringify(report, null, 2));
   srv.close();
   const nFail = results.reduce((n, r) => n + r.fail.length, 0);
-  console.log(`\nT7b : ${nFail === 0 ? 'PASS' : 'FAIL'} — ${results.map((r) => `${r.viewport.name} : ${r.fail.length ? r.fail.join(', ') : 'tout OK'}`).join(' | ')}`);
+  console.log(`\nT7b+T7c : ${nFail === 0 ? 'PASS' : 'FAIL'} — ${results.map((r) => `${r.viewport.name} : ${r.fail.length ? r.fail.join(', ') : 'tout OK'}`).join(' | ')}`);
   process.exit(code);
 })().catch((e) => { console.error('ERREUR batterie :', e); process.exit(1); });

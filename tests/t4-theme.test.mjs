@@ -96,12 +96,16 @@ ok('theme: themeColor() = la couleur du token (null si non-couleur)', () => {
 });
 
 // ---- ICONS : glyphe vectoriel par type (zéro asset) ----------------------
-ok('icons: ICON_KINDS = les 14 types (11 constructions + plane, info, gear)', () => {
-  assert.equal(ICON_KINDS.length, 14);
+ok('icons: ICON_KINDS = les 23 types (11 constructions + plane, info, gear + 9 onglets T7c)', () => {
+  assert.equal(ICON_KINDS.length, 23);
   for (const k of ['runway', 'taxiway', 'terminal', 'gate', 'fueling', 'security', 'catering', 'boarding', 'hotel', 'parking', 'cafe']) {
     assert.ok(ICON_KINDS.includes(k), `icône manquante : ${k}`);
   }
   for (const k of ['plane', 'info', 'gear']) assert.ok(ICON_KINDS.includes(k), `icône manquante : ${k}`);
+  // T7c (t_605b9779) : les 9 glyphes d'onglets de menu.
+  for (const k of ['inspect', 'fin', 'stats', 'goals', 'season', 'unlocks', 'contracts', 'alerts', 'net']) {
+    assert.ok(ICON_KINDS.includes(k), `icône d'onglet manquante : ${k}`);
+  }
 });
 
 // Un ctx « sec » qui enregistre les appels (pas de canvas réel sous Node).
@@ -136,7 +140,7 @@ function makeSpyCtx() {
   };
 }
 
-ok('icons: drawIcon dessine pour CHAQUE des 14 types (≥3 ops de dessin chacune)', () => {
+ok('icons: drawIcon dessine pour CHAQUE des 23 types (≥3 ops de dessin chacune)', () => {
   for (const kind of ICON_KINDS) {
     const ctx = makeSpyCtx();
     drawIcon(ctx, kind, 32, { color: '#fff', accent: '#4fc3f7' });

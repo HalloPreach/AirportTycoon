@@ -1,7 +1,7 @@
 {
-  "task": "t_d3df6f0d",
+  "task": "t_605b9779",
   "battery": "t7-tabs-cdp",
-  "ts": "2026-10-15T06:23:52.606Z",
+  "ts": "2026-10-15T07:46:02.767Z",
   "results": [
     {
       "viewport": {
@@ -21,6 +21,16 @@
           "id": "T2-single-active",
           "ok": true,
           "msg": "exactement 1 bouton d'onglet actif (aria-pressed)"
+        },
+        {
+          "id": "T7c-tooltip-icon",
+          "ok": true,
+          "msg": "10/10 onglets : tooltip (title) = NOM DU MENU + icône canvas ≥16 px + libellé texte retiré"
+        },
+        {
+          "id": "T7c-filters",
+          "ok": true,
+          "msg": "filtres planning (desktop) : noms de marques complets conservés (Solaire Air, Atlantique, PacificCargo, Boréal Régions, Horizon Express)"
         },
         {
           "id": "T3-one-panel",
@@ -62,6 +72,16 @@
           "id": "T2-single-active",
           "ok": true,
           "msg": "exactement 1 bouton d'onglet actif (aria-pressed)"
+        },
+        {
+          "id": "T7c-tooltip-icon",
+          "ok": true,
+          "msg": "9/9 onglets : tooltip (title) = NOM DU MENU + icône canvas ≥16 px + libellé texte retiré"
+        },
+        {
+          "id": "T7c-filters",
+          "ok": true,
+          "msg": "filtres planning (mobile) : TEXTE conservé, raccourci au 1er mot (Solaire, Boréal, Horizon — « PacificCargo » 1 mot intact)"
         },
         {
           "id": "T3-one-panel",
