@@ -855,6 +855,7 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
   let menuBox = null;
   let resumeBtn = null;
   let diffBtns = []; // T2-1 (t_d5da994c) : les boutons de difficulté (rangée du menu)
+  let portfolioLink = null; // lien discret vers le portfolio de l'auteur (écran titre uniquement)
   let menuT = 0; // T4 : horloge d'animation du titre (frames)
   // T4 passe PERF : le dégradé du ciel + la table des 90 étoiles sont en
   // CACHE par (W,H) — recalculés UNIQUEMENT au redimensionnement (zéro
@@ -1027,6 +1028,23 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
       menuBox.appendChild(diffRow);
       document.body.appendChild(menuBox);
     }
+    // Lien DISCRET vers le portfolio de l'auteur : coin BAS GAUCHE de l'écran
+    // titre (zone libre : le scope est décoratif, la version est en bas à
+    // droite), faible contraste, même onglet. Affiché au MENU seulement —
+    // masqué en jeu (comme menuBox) : il ne recouvre ni la carte ni un
+    // élément interactif. Styles en ligne : l'élément reste correct quelle
+    // que soit la feuille de l'entrée (index.html, dist/, docs/game.html).
+    if (!portfolioLink) {
+      portfolioLink = document.createElement('a');
+      portfolioLink.className = 'menu-portfolio';
+      portfolioLink.href = 'https://portfolio.elsay.dev/';
+      portfolioLink.textContent = 'Portfolio de Lucas Tixier';
+      portfolioLink.style.cssText = 'position:fixed;left:12px;bottom:10px;z-index:100;'
+        + "font:12px 'Courier New',monospace;color:var(--at-text-dim,#8FD6AE);"
+        + 'opacity:0.6;text-decoration:none;padding:2px 4px;';
+      document.body.appendChild(portfolioLink);
+    }
+    if (portfolioLink.style.display) portfolioLink.style.display = '';
     resumeBtn.style.display = onMenuCommands.canResume() ? '' : 'none';
     // T2-1 : la sélection de difficulté suit la commande (aria-pressed) —
     // idempotent : la valeur ne change que sur setDifficulty.
@@ -1157,6 +1175,7 @@ export function makeRenderer(canvas, { overlays = [], onMenuCommands = null, sel
       drawMenu(pal);
     } else {
       if (menuBox) menuBox.style.display = 'none'; // R20 : les boutons du menu ne se superposent pas au jeu
+      if (portfolioLink) portfolioLink.style.display = 'none'; // lien portfolio : écran titre uniquement
       // Juice (t_5065be95) : le SHAKE (incident majeur) décale le monde entier
       // (particules + overlay compris) — le HUD, lui, reste stable (UI ≠ monde).
       ctx.save();

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-15T07:45:36.914Z",
+  "generatedAt": "2026-11-25T12:59:08.152Z",
   "entry": "src/main.mjs",
   "moduleCount": 53,
   "modules": [
@@ -72,6 +72,6 @@
       "nominalRotation ← src/sim/aircraft.mjs"
     ]
   },
-  "jsBytes": 653390,
+  "jsBytes": 651012,
   "htmlBytes": 27896
 }

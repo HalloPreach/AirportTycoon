@@ -1,0 +1,230 @@
+{
+ "docs/game.html|desktop-1920x1080|menu": {
+  "found": true,
+  "text": "Portfolio de Lucas Tixier",
+  "href": "https://portfolio.elsay.dev/",
+  "target": null,
+  "rect": [
+   12,
+   1052,
+   189,
+   18
+  ],
+  "display": "block",
+  "opacity": "0.6",
+  "overlaps": [],
+  "topIsLink": true,
+  "vw": 1920,
+  "vh": 1080,
+  "screen": "menu"
+ },
+ "docs/game.html|desktop-1920x1080|game": {
+  "found": true,
+  "text": "Portfolio de Lucas Tixier",
+  "href": "https://portfolio.elsay.dev/",
+  "target": null,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "display": "none",
+  "opacity": "0.6",
+  "overlaps": [],
+  "topIsLink": false,
+  "vw": 1920,
+  "vh": 1080,
+  "screen": "game"
+ },
+ "docs/game.html|desktop-1920x1080|menu-again": {
+  "found": true,
+  "text": "Portfolio de Lucas Tixier",
+  "href": "https://portfolio.elsay.dev/",
+  "target": null,
+  "rect": [
+   12,
+   1052,
+   189,
+   18
+  ],
+  "display": "block",
+  "opacity": "0.6",
+  "overlaps": [],
+  "topIsLink": true,
+  "vw": 1920,
+  "vh": 1080,
+  "screen": "menu"
+ },
+ "docs/game.html|mobile-390x844|menu": {
+  "found": true,
+  "text": "Portfolio de Lucas Tixier",
+  "href": "https://portfolio.elsay.dev/",
+  "target": null,
+  "rect": [
+   12,
+   816,
+   189,
+   18
+  ],
+  "display": "block",
+  "opacity": "0.6",
+  "overlaps": [],
+  "topIsLink": true,
+  "vw": 390,
+  "vh": 844,
+  "screen": "menu"
+ },
+ "docs/game.html|mobile-390x844|game": {
+  "found": true,
+  "text": "Portfolio de Lucas Tixier",
+  "href": "https://portfolio.elsay.dev/",
+  "target": null,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "display": "none",
+  "opacity": "0.6",
+  "overlaps": [],
+  "topIsLink": false,
+  "vw": 390,
+  "vh": 844,
+  "screen": "game"
+ },
+ "docs/game.html|mobile-390x844|menu-again": {
+  "found": true,
+  "text": "Portfolio de Lucas Tixier",
+  "href": "https://portfolio.elsay.dev/",
+  "target": null,
+  "rect": [
+   12,
+   816,
+   189,
+   18
+  ],
+  "display": "block",
+  "opacity": "0.6",
+  "overlaps": [],
+  "topIsLink": true,
+  "vw": 390,
+  "vh": 844,
+  "screen": "menu"
+ },
+ "index.html|desktop-1920x1080|menu": {
+  "found": true,
+  "text": "Portfolio de Lucas Tixier",
+  "href": "https://portfolio.elsay.dev/",
+  "target": null,
+  "rect": [
+   12,
+   1052,
+   189,
+   18
+  ],
+  "display": "block",
+  "opacity": "0.6",
+  "overlaps": [],
+  "topIsLink": true,
+  "vw": 1920,
+  "vh": 1080,
+  "screen": "menu"
+ },
+ "index.html|desktop-1920x1080|game": {
+  "found": true,
+  "text": "Portfolio de Lucas Tixier",
+  "href": "https://portfolio.elsay.dev/",
+  "target": null,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "display": "none",
+  "opacity": "0.6",
+  "overlaps": [],
+  "topIsLink": false,
+  "vw": 1920,
+  "vh": 1080,
+  "screen": "game"
+ },
+ "index.html|desktop-1920x1080|menu-again": {
+  "found": true,
+  "text": "Portfolio de Lucas Tixier",
+  "href": "https://portfolio.elsay.dev/",
+  "target": null,
+  "rect": [
+   12,
+   1052,
+   189,
+   18
+  ],
+  "display": "block",
+  "opacity": "0.6",
+  "overlaps": [],
+  "topIsLink": true,
+  "vw": 1920,
+  "vh": 1080,
+  "screen": "menu"
+ },
+ "index.html|mobile-390x844|menu": {
+  "found": true,
+  "text": "Portfolio de Lucas Tixier",
+  "href": "https://portfolio.elsay.dev/",
+  "target": null,
+  "rect": [
+   12,
+   816,
+   189,
+   18
+  ],
+  "display": "block",
+  "opacity": "0.6",
+  "overlaps": [],
+  "topIsLink": true,
+  "vw": 390,
+  "vh": 844,
+  "screen": "menu"
+ },
+ "index.html|mobile-390x844|game": {
+  "found": true,
+  "text": "Portfolio de Lucas Tixier",
+  "href": "https://portfolio.elsay.dev/",
+  "target": null,
+  "rect": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "display": "none",
+  "opacity": "0.6",
+  "overlaps": [],
+  "topIsLink": false,
+  "vw": 390,
+  "vh": 844,
+  "screen": "game"
+ },
+ "index.html|mobile-390x844|menu-again": {
+  "found": true,
+  "text": "Portfolio de Lucas Tixier",
+  "href": "https://portfolio.elsay.dev/",
+  "target": null,
+  "rect": [
+   12,
+   816,
+   189,
+   18
+  ],
+  "display": "block",
+  "opacity": "0.6",
+  "overlaps": [],
+  "topIsLink": true,
+  "vw": 390,
+  "vh": 844,
+  "screen": "menu"
+ }
+}
